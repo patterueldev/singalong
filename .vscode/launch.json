@@ -1,0 +1,61 @@
+{
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "krkctrl",
+      "request": "launch",
+      "type": "dart"
+    },
+    {
+      "name": "controller",
+      "cwd": "apps/controller",
+      "request": "launch",
+      "type": "dart"
+    },
+    {
+      "name": "controller - web",
+      "cwd": "apps/controller",
+      "request": "launch",
+      "type": "dart",
+      "flutterMode": "debug",
+      "args": ["-d", "chrome"]
+    },
+    {
+      "name": "controller (profile mode)",
+      "cwd": "apps/controller",
+      "request": "launch",
+      "type": "dart",
+      "flutterMode": "profile"
+    },
+    {
+      "name": "controller (release mode)",
+      "cwd": "apps/controller",
+      "request": "launch",
+      "type": "dart",
+      "flutterMode": "release"
+    },
+    {
+      "name": "player",
+      "cwd": "apps/player",
+      "request": "launch",
+      "type": "dart"
+    },
+    {
+      "name": "player (profile mode)",
+      "cwd": "apps/player",
+      "request": "launch",
+      "type": "dart",
+      "flutterMode": "profile"
+    },
+    {
+      "name": "player (release mode)",
+      "cwd": "apps/player",
+      "request": "launch",
+      "type": "dart",
+      "flutterMode": "release"
+    }
+  ]
+}
