@@ -1,0 +1,21 @@
+name: singalong_frontend
+
+packages:
+  - apps/singalong_controller
+  - apps/singalong_player
+
+scripts:
+  analyze:
+    exec: dart analyze .
+  format: 
+    name: "format"
+    description: "Format dart files using dart fix and import sorter"
+    run: | 
+      dart fix --dry-run --apply &&
+        (dart run import_sorter:main || (dart pub add --dev import_sorter && dart run import_sorter:main))
+    exec:
+      failFast: true
+  format:sort:
+    name: "format:sort"
+    description: "Sort dart imports using import sorter"
+    exec: dart pub add --dev import_sorter && dart run import_sorter:main
