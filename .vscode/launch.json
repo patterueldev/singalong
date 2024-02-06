@@ -11,13 +11,13 @@
     },
     {
       "name": "controller",
-      "cwd": "apps/controller",
+      "cwd": "frontend/apps/controller",
       "request": "launch",
       "type": "dart"
     },
     {
       "name": "controller - web",
-      "cwd": "apps/controller",
+      "cwd": "frontend/apps/controller",
       "request": "launch",
       "type": "dart",
       "flutterMode": "debug",
@@ -25,34 +25,34 @@
     },
     {
       "name": "controller (profile mode)",
-      "cwd": "apps/controller",
+      "cwd": "frontend/apps/controller",
       "request": "launch",
       "type": "dart",
       "flutterMode": "profile"
     },
     {
       "name": "controller (release mode)",
-      "cwd": "apps/controller",
+      "cwd": "frontend/apps/controller",
       "request": "launch",
       "type": "dart",
       "flutterMode": "release"
     },
     {
       "name": "player",
-      "cwd": "apps/player",
+      "cwd": "frontend/apps/player",
       "request": "launch",
       "type": "dart"
     },
     {
       "name": "player (profile mode)",
-      "cwd": "apps/player",
+      "cwd": "frontend/apps/player",
       "request": "launch",
       "type": "dart",
       "flutterMode": "profile"
     },
     {
       "name": "player (release mode)",
-      "cwd": "apps/player",
+      "cwd": "frontend/apps/player",
       "request": "launch",
       "type": "dart",
       "flutterMode": "release"
