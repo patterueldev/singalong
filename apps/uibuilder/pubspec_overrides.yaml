@@ -1,0 +1,4 @@
+# melos_managed_dependency_overrides: connectfeature
+dependency_overrides:
+  connectfeature:
+    path: ../../packages/connectfeature

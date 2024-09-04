@@ -5,6 +5,14 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "name": "uibuilder-web",
+      "cwd": "apps/uibuilder",
+      "request": "launch",
+      "type": "dart",
+      "flutterMode": "debug",
+      "args": ["-d", "chrome"]
+    },
+    {
       "name": "krkctrl",
       "request": "launch",
       "type": "dart"
