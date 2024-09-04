@@ -2,10 +2,12 @@ part of 'connectfeature.dart';
 
 abstract class ConnectViewModel {
   ValueNotifier<bool> get loadingNotifier;
+  ValueNotifier<String?> get errorNotifier;
   TextEditingController get nameController;
   TextEditingController get sessionIdController;
-  void connect(BuildContext context);
-  void clear(BuildContext context);
+  void connect();
+  void clear();
+  void dismissError();
 }
 
 class PreviewConnectViewModel implements ConnectViewModel {
@@ -25,18 +27,29 @@ class PreviewConnectViewModel implements ConnectViewModel {
   final ValueNotifier<bool> loadingNotifier = ValueNotifier(false);
 
   @override
-  void connect(BuildContext context) async {
+  final ValueNotifier<String?> errorNotifier = ValueNotifier(null);
+
+  bool didShowError = false;
+  @override
+  void connect() async {
     loadingNotifier.value = true;
+    errorNotifier.value = null;
 
     await Future.delayed(const Duration(seconds: 2));
 
+    errorNotifier.value = 'Failed to connect';
     loadingNotifier.value = false;
   }
 
   @override
-  void clear(BuildContext context) {
+  void clear() {
     nameController.clear();
     sessionIdController.clear();
+  }
+
+  @override
+  void dismissError() {
+    errorNotifier.value = null;
   }
 }
 
@@ -52,7 +65,10 @@ class DefaultConnectViewModel implements ConnectViewModel {
   final ValueNotifier<bool> loadingNotifier = ValueNotifier(false);
 
   @override
-  void connect(BuildContext context) async {
+  final ValueNotifier<String?> errorNotifier = ValueNotifier(null);
+
+  @override
+  void connect() async {
     loadingNotifier.value = true;
 
     await Future.delayed(const Duration(seconds: 2));
@@ -61,8 +77,13 @@ class DefaultConnectViewModel implements ConnectViewModel {
   }
 
   @override
-  void clear(BuildContext context) {
+  void clear() {
     nameController.clear();
     sessionIdController.clear();
+  }
+
+  @override
+  void dismissError() {
+    errorNotifier.value = null;
   }
 }

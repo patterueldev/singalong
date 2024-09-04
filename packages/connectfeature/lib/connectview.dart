@@ -14,6 +14,14 @@ class ConnectView extends StatefulWidget {
 
 class _ConnectViewState extends State<ConnectView> {
   ConnectViewModel get viewModel => widget.viewModel;
+
+  @override
+  void initState() {
+    super.initState();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {});
+  }
+
   @override
   Widget build(BuildContext context) => Stack(
         children: [
@@ -36,6 +44,29 @@ class _ConnectViewState extends State<ConnectView> {
                     ),
                   )
                 : const SizedBox.shrink(),
+          ),
+          ValueListenableBuilder(
+            valueListenable: viewModel.errorNotifier,
+            builder: (context, error, child) {
+              if (error != null) {
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(error),
+                      backgroundColor: Theme.of(context).colorScheme.error,
+                      action: SnackBarAction(
+                        label: 'Dismiss',
+                        textColor: Theme.of(context).colorScheme.onError,
+                        onPressed: () {
+                          viewModel.dismissError();
+                        },
+                      ),
+                    ),
+                  );
+                });
+              }
+              return const SizedBox.shrink();
+            },
           ),
         ],
       );
@@ -72,7 +103,7 @@ class _ConnectViewState extends State<ConnectView> {
                         width: buttonWidth,
                         height: 50,
                         child: ElevatedButton(
-                          onPressed: () => viewModel.connect(context),
+                          onPressed: () => viewModel.connect(),
                           style: ElevatedButton.styleFrom(
                             backgroundColor:
                                 Theme.of(context).colorScheme.primary,
@@ -86,7 +117,7 @@ class _ConnectViewState extends State<ConnectView> {
                         width: buttonWidth,
                         height: 50,
                         child: OutlinedButton(
-                          onPressed: () => viewModel.clear(context),
+                          onPressed: () => viewModel.clear(),
                           style: OutlinedButton.styleFrom(
                             side: BorderSide(
                                 color: Theme.of(context).colorScheme.secondary),
