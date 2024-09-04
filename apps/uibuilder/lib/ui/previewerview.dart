@@ -1,29 +1,5 @@
 part of '../main.dart';
 
-class NavigatorItem {
-  final String name;
-  final Widget Function(BuildContext) destination;
-
-  const NavigatorItem({required this.name, required this.destination});
-}
-
-abstract class PreviewerViewModel extends ChangeNotifier {
-  List<NavigatorItem> get navigators;
-}
-
-class DefaultPreviewerViewModel extends PreviewerViewModel {
-  DefaultPreviewerViewModel() {
-    navigators.addAll([
-      NavigatorItem(
-        name: "Connect",
-        destination: (context) => const ConnectView(),
-      ),
-    ]);
-  }
-  @override
-  List<NavigatorItem> navigators = [];
-}
-
 class PreviewerView extends StatefulWidget {
   const PreviewerView({super.key});
 
@@ -32,6 +8,23 @@ class PreviewerView extends StatefulWidget {
 }
 
 class _PrevierViewState extends State<PreviewerView> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final viewModel = context.read<PreviewerViewModel>();
+      if (viewModel.navigateOnStartup) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) =>
+                viewModel.navigators.first.destination(context),
+          ),
+        );
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) => Scaffold(
         backgroundColor: Colors.grey,

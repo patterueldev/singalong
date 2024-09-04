@@ -1,7 +1,10 @@
 import 'package:connectfeature/connectfeature.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:provider/provider.dart';
 
+part 'ui/navigatoritem.dart';
+part 'ui/previewerviewmodel.dart';
 part 'ui/previewerview.dart';
 
 void main() {
@@ -17,7 +20,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Singalong UI Builder',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.tealAccent),
         useMaterial3: true,
       ),
       home: ChangeNotifierProvider<PreviewerViewModel>(
