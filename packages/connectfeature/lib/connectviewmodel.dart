@@ -1,17 +1,15 @@
 part of 'connectfeature.dart';
 
 abstract class ConnectViewModel {
-  ValueNotifier<bool> get loadingNotifier;
-  ValueNotifier<String?> get errorNotifier;
+  ValueNotifier<ConnectViewState> get stateNotifier;
   TextEditingController get nameController;
   TextEditingController get sessionIdController;
   void connect();
   void clear();
-  void dismissError();
 }
 
-class PreviewConnectViewModel implements ConnectViewModel {
-  PreviewConnectViewModel({
+class DefaultConnectViewModel implements ConnectViewModel {
+  DefaultConnectViewModel({
     String name = '',
     String sessionId = '',
   }) {
@@ -24,66 +22,22 @@ class PreviewConnectViewModel implements ConnectViewModel {
   final TextEditingController sessionIdController = TextEditingController();
 
   @override
-  final ValueNotifier<bool> loadingNotifier = ValueNotifier(false);
-
-  @override
-  final ValueNotifier<String?> errorNotifier = ValueNotifier(null);
+  final ValueNotifier<ConnectViewState> stateNotifier =
+      ValueNotifier(ConnectViewState.initial());
 
   bool didShowError = false;
   @override
   void connect() async {
-    loadingNotifier.value = true;
-    errorNotifier.value = null;
+    stateNotifier.value = ConnectViewState.connecting();
 
     await Future.delayed(const Duration(seconds: 2));
 
-    errorNotifier.value = 'Failed to connect';
-    loadingNotifier.value = false;
+    stateNotifier.value = ConnectViewState.failure("Failed to connect");
   }
 
   @override
   void clear() {
     nameController.clear();
     sessionIdController.clear();
-  }
-
-  @override
-  void dismissError() {
-    errorNotifier.value = null;
-  }
-}
-
-class DefaultConnectViewModel implements ConnectViewModel {
-  DefaultConnectViewModel();
-
-  @override
-  final TextEditingController nameController = TextEditingController();
-  @override
-  final TextEditingController sessionIdController = TextEditingController();
-
-  @override
-  final ValueNotifier<bool> loadingNotifier = ValueNotifier(false);
-
-  @override
-  final ValueNotifier<String?> errorNotifier = ValueNotifier(null);
-
-  @override
-  void connect() async {
-    loadingNotifier.value = true;
-
-    await Future.delayed(const Duration(seconds: 2));
-
-    loadingNotifier.value = false;
-  }
-
-  @override
-  void clear() {
-    nameController.clear();
-    sessionIdController.clear();
-  }
-
-  @override
-  void dismissError() {
-    errorNotifier.value = null;
   }
 }

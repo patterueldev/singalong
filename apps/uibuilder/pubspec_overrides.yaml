@@ -1,4 +1,6 @@
-# melos_managed_dependency_overrides: connectfeature
+# melos_managed_dependency_overrides: connectfeature,sessionfeature
 dependency_overrides:
   connectfeature:
     path: ../../packages/connectfeature
+  sessionfeature:
+    path: ../../packages/sessionfeature

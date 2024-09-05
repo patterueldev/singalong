@@ -33,8 +33,8 @@ class _ConnectViewState extends State<ConnectView> {
             body: _buildBody(context, viewModel),
           ),
           ValueListenableBuilder(
-            valueListenable: viewModel.loadingNotifier,
-            builder: (context, isLoading, child) => isLoading
+            valueListenable: viewModel.stateNotifier,
+            builder: (context, state, child) => state is Connecting
                 ? Positioned.fill(
                     child: Container(
                       color: Colors.black54,
@@ -46,21 +46,14 @@ class _ConnectViewState extends State<ConnectView> {
                 : const SizedBox.shrink(),
           ),
           ValueListenableBuilder(
-            valueListenable: viewModel.errorNotifier,
-            builder: (context, error, child) {
-              if (error != null) {
+            valueListenable: viewModel.stateNotifier,
+            builder: (context, state, child) {
+              if (state is Failure) {
                 WidgetsBinding.instance.addPostFrameCallback((_) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text(error),
+                      content: Text(state.error),
                       backgroundColor: Theme.of(context).colorScheme.error,
-                      action: SnackBarAction(
-                        label: 'Dismiss',
-                        textColor: Theme.of(context).colorScheme.onError,
-                        onPressed: () {
-                          viewModel.dismissError();
-                        },
-                      ),
                     ),
                   );
                 });
