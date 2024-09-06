@@ -23,9 +23,7 @@ class DefaultPreviewerViewModel extends PreviewerViewModel {
     NavigatorItem(
       name: "Session",
       destination: (context) => sessionFeatureProvider.buildSessionView(
-        viewModel: DefaultSessionViewModel(
-          songList: generateSongSamples(),
-        ),
+        viewModel: DefaultSessionViewModel(),
       ),
     ),
     NavigatorItem(

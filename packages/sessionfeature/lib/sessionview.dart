@@ -19,7 +19,9 @@ class _SessionViewState extends State<SessionView> {
   void initState() {
     super.initState();
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {});
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      viewModel.setupSession();
+    });
   }
 
   @override

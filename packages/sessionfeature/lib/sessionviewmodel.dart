@@ -3,6 +3,8 @@ part of 'sessionfeature.dart';
 abstract class SessionViewModel {
   ValueNotifier<SessionViewState> get stateNotifier;
   ValueNotifier<List<SongItem>> get songListNotifier;
+
+  void setupSession();
 }
 
 class DefaultSessionViewModel extends SessionViewModel {
@@ -19,6 +21,44 @@ class DefaultSessionViewModel extends SessionViewModel {
       ValueNotifier(const Initial());
   @override
   ValueNotifier<List<SongItem>> songListNotifier = ValueNotifier([]);
+
+  Timer? _timer;
+
+  @override
+  void setupSession() async {
+    // this class will essentially "prepare" the session
+    // maybe processing some stuff at first
+    // then setup an active observer to listen to changes for the song list
+    stateNotifier.value = const Loading();
+    await Future.delayed(const Duration(seconds: 2));
+    // if there's an error, we can throw an exception; use Failure state instead of Loading
+    stateNotifier.value = const Loaded();
+
+    // then start listening to changes
+    startListening();
+  }
+
+  // mock observer; maybe add songs every 5 seconds
+  void startListening() {
+    _timer?.cancel();
+    _timer = Timer.periodic(const Duration(seconds: 5), (timer) {
+      if (songListNotifier.value.length >= 10) {
+        timer.cancel();
+        return;
+      }
+      songListNotifier.value = [
+        ...songListNotifier.value,
+        SongItem(
+          title: 'Song ${songListNotifier.value.length + 1}',
+          artist: 'Artist ${songListNotifier.value.length + 1}',
+          imageURL: Uri.parse(
+              'https://example.com/image${songListNotifier.value.length + 1}.jpg'),
+          currentPlaying: songListNotifier.value.isEmpty,
+          canDelete: true,
+        ),
+      ];
+    });
+  }
 }
 
 List<SongItem> generateSongSamples() {
