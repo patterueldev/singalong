@@ -8,6 +8,8 @@ part 'connectviewstate.dart';
 part 'connectviewmodel.dart';
 
 class ConnectFeatureProvider {
+  const ConnectFeatureProvider();
+
   Widget buildConnectView({ConnectViewModel? viewModel}) => ConnectView(
         viewModel: viewModel ?? DefaultConnectViewModel(),
       );

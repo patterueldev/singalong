@@ -13,6 +13,13 @@
       "args": ["-d", "chrome"]
     },
     {
+      "name": "uibuilder-mobile",
+      "cwd": "apps/uibuilder",
+      "request": "launch",
+      "type": "dart",
+      "flutterMode": "debug",
+    },
+    {
       "name": "krkctrl",
       "request": "launch",
       "type": "dart"

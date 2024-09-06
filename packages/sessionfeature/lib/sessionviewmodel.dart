@@ -1,14 +1,34 @@
 part of 'sessionfeature.dart';
 
+class PromptModel {
+  final String title;
+  final String message;
+  final String actionText;
+  final VoidCallback onAction;
+
+  const PromptModel({
+    required this.title,
+    required this.message,
+    required this.actionText,
+    required this.onAction,
+  });
+}
+
 abstract class SessionViewModel {
   ValueNotifier<SessionViewState> get stateNotifier;
   ValueNotifier<List<SongItem>> get songListNotifier;
+  ValueNotifier<PromptModel?> get promptNotifier;
 
   void setupSession();
+  void dismissSong(SongItem song);
+  void reorderSongList(oldIndex, newIndex);
 }
 
 class DefaultSessionViewModel extends SessionViewModel {
+  final ListenToSongListUpdatesUseCase listenToSongListUpdatesUseCase;
+
   DefaultSessionViewModel({
+    required this.listenToSongListUpdatesUseCase,
     List<SongItem>? songList,
   }) {
     if (songList != null) {
@@ -21,8 +41,10 @@ class DefaultSessionViewModel extends SessionViewModel {
       ValueNotifier(const Initial());
   @override
   ValueNotifier<List<SongItem>> songListNotifier = ValueNotifier([]);
+  @override
+  ValueNotifier<PromptModel?> promptNotifier = ValueNotifier(null);
 
-  Timer? _timer;
+  StreamSubscription<List<SongItem>>? _songListSubscription;
 
   @override
   void setupSession() async {
@@ -35,91 +57,48 @@ class DefaultSessionViewModel extends SessionViewModel {
     stateNotifier.value = const Loaded();
 
     // then start listening to changes
-    startListening();
-  }
-
-  // mock observer; maybe add songs every 5 seconds
-  void startListening() {
-    _timer?.cancel();
-    _timer = Timer.periodic(const Duration(seconds: 5), (timer) {
-      if (songListNotifier.value.length >= 10) {
-        timer.cancel();
-        return;
-      }
-      songListNotifier.value = [
-        ...songListNotifier.value,
-        SongItem(
-          title: 'Song ${songListNotifier.value.length + 1}',
-          artist: 'Artist ${songListNotifier.value.length + 1}',
-          imageURL: Uri.parse(
-              'https://example.com/image${songListNotifier.value.length + 1}.jpg'),
-          currentPlaying: songListNotifier.value.isEmpty,
-          canDelete: true,
-        ),
-      ];
+    _songListSubscription =
+        listenToSongListUpdatesUseCase.execute().listen((songList) {
+      songListNotifier.value = songList;
     });
   }
-}
 
-List<SongItem> generateSongSamples() {
-  return [
-    SongItem(
-      title: 'Song 1',
-      artist: 'Artist 1',
-      imageURL: Uri.parse('https://example.com/image1.jpg'),
-      currentPlaying: false,
-      canDelete: true,
-    ),
-    SongItem(
-      title: 'Song 2',
-      artist: 'Artist 2',
-      imageURL: Uri.parse('https://example.com/image2.jpg'),
-      currentPlaying: false,
-      canDelete: true,
-    ),
-    SongItem(
-      title: 'Song 3',
-      artist: 'Artist 3',
-      imageURL: Uri.parse('https://example.com/image3.jpg'),
-      currentPlaying: true,
-      canDelete: false,
-    ),
-  ];
-}
+  @override
+  void dismissSong(SongItem song) async {
+    final completer = Completer<bool>();
+    String title;
+    String message;
+    String actionText;
+    if (song.currentPlaying) {
+      title = 'Skip Song';
+      message = 'Are you sure you want to skip this song?';
+      actionText = 'Skip';
+    } else {
+      title = 'Cancel Song';
+      message = 'Are you sure you want to cancel this song?';
+      actionText = 'Cancel';
+    }
+    promptNotifier.value = PromptModel(
+      title: title,
+      message: message,
+      actionText: actionText,
+      onAction: () {
+        completer.complete(true);
+      },
+    );
 
-class SongItem {
-  final String title;
-  final String artist;
-  final Uri? imageURL;
-  final bool currentPlaying;
-  final bool canDelete;
+    final result = await completer.future;
+    promptNotifier.value = null;
 
-  const SongItem({
-    required this.title,
-    required this.artist,
-    required this.imageURL,
-    required this.currentPlaying,
-    required this.canDelete,
-  });
-}
+    if (!result) {
+      return;
+    }
 
-class SessionViewState {
-  const SessionViewState();
-}
+    // songListNotifier.value = songListNotifier.value
+    //     .map((e) => e == song ? e.copyWith(currentPlaying: false) : e)
+    //     .toList();
+  }
 
-class Initial extends SessionViewState {
-  const Initial();
-}
-
-class Loading extends SessionViewState {
-  const Loading();
-}
-
-class Loaded extends SessionViewState {
-  const Loaded();
-}
-
-class Failure extends SessionViewState {
-  final String error;
-  const Failure(this.error);
+  @override
+  void reorderSongList(oldIndex, newIndex) {}
 }

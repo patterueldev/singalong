@@ -7,13 +7,13 @@ abstract class PreviewerViewModel extends ChangeNotifier {
 
 class DefaultPreviewerViewModel extends PreviewerViewModel {
   DefaultPreviewerViewModel({
+    required this.connectFeatureProvider,
+    required this.sessionFeatureProvider,
     this.navigateOnStartup = true,
   });
 
-  late final ConnectFeatureProvider connectFeatureProvider =
-      ConnectFeatureProvider();
-  late final SessionFeatureProvider sessionFeatureProvider =
-      SessionFeatureProvider();
+  final ConnectFeatureProvider connectFeatureProvider;
+  final SessionFeatureProvider sessionFeatureProvider;
 
   @override
   final bool navigateOnStartup;
@@ -22,9 +22,7 @@ class DefaultPreviewerViewModel extends PreviewerViewModel {
   late List<NavigatorItem> navigators = [
     NavigatorItem(
       name: "Session",
-      destination: (context) => sessionFeatureProvider.buildSessionView(
-        viewModel: DefaultSessionViewModel(),
-      ),
+      destination: (context) => sessionFeatureProvider.buildSessionView(),
     ),
     NavigatorItem(
       name: "Connect",
