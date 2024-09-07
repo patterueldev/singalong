@@ -1,17 +1,17 @@
 part of 'sessionfeature.dart';
 
-class SongItem {
+class ReservedSongItem {
   final String title;
   final String artist;
-  final Uri? imageURL;
+  final String imageURL;
+  final String reservingUser;
   final bool currentPlaying;
-  final bool canDelete;
 
-  const SongItem({
+  const ReservedSongItem({
     required this.title,
     required this.artist,
     required this.imageURL,
+    required this.reservingUser,
     required this.currentPlaying,
-    required this.canDelete,
   });
 }

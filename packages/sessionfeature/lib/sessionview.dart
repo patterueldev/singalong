@@ -1,15 +1,28 @@
 part of 'sessionfeature.dart';
 
-class SessionView extends StatefulWidget {
+class SessionView extends StatefulWidget
+    implements SessionViewCallbackDelegate {
   const SessionView({
     super.key,
     required this.viewModel,
+    required this.navigationDelegate,
   });
 
   final SessionViewModel viewModel;
+  final SessionNavigationDelegate navigationDelegate;
 
   @override
   State<SessionView> createState() => _SessionViewState();
+
+  @override
+  void onAdded() {
+    // viewModel.refresh();
+  }
+
+  @override
+  void onCancel() {
+    // viewModel.canceled();
+  }
 }
 
 class _SessionViewState extends State<SessionView> {
@@ -29,11 +42,15 @@ class _SessionViewState extends State<SessionView> {
         children: [
           Scaffold(
             appBar: AppBar(
-              title: const Text('Session'),
               backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
               automaticallyImplyLeading: false,
             ),
             body: _buildBody(context, viewModel),
+            floatingActionButton: FloatingActionButton(
+              onPressed: () =>
+                  widget.navigationDelegate.openSongBook(context, widget),
+              child: const Icon(Icons.menu_book),
+            ),
           ),
           ValueListenableBuilder(
             valueListenable: viewModel.stateNotifier,
@@ -103,30 +120,28 @@ class _SessionViewState extends State<SessionView> {
         ],
       );
   Widget _buildBody(BuildContext context, SessionViewModel viewModel) {
-    return ValueListenableBuilder<List<SongItem>>(
+    return ValueListenableBuilder<List<ReservedSongItem>>(
       valueListenable: viewModel.songListNotifier,
       builder: (context, songList, child) {
-        return ReorderableListView.builder(
-          onReorder: (oldIndex, newIndex) {
-            viewModel.reorderSongList(oldIndex, newIndex);
-          },
+        return ListView.builder(
           itemCount: songList.length,
           itemBuilder: (context, index) {
             final song = songList[index];
             return Slidable(
               key: Key(song.title),
-              endActionPane: ActionPane(
+              startActionPane: ActionPane(
                 motion: const ScrollMotion(),
                 children: [
-                  SlidableAction(
-                    onPressed: (context) => viewModel.dismissSong(song),
-                    backgroundColor:
-                        song.currentPlaying ? Colors.blue : Colors.red,
-                    foregroundColor: Colors.white,
-                    icon: song.currentPlaying ? Icons.skip_next : Icons.cancel,
-                    label: song.currentPlaying ? 'Skip' : 'Cancel',
-                  ),
                   if (song.currentPlaying) ...[
+                    // Skip
+                    SlidableAction(
+                      onPressed: (context) => viewModel.dismissSong(song),
+                      backgroundColor: Colors.blue,
+                      foregroundColor: Colors.white,
+                      icon: Icons.skip_next,
+                      label: 'Skip',
+                    ),
+                    // Pause
                     SlidableAction(
                       onPressed: (context) {
                         // Handle pause action
@@ -140,16 +155,61 @@ class _SessionViewState extends State<SessionView> {
                       label: 'Pause',
                     ),
                   ],
+                  if (!song.currentPlaying) ...[
+                    // Play Next
+                    SlidableAction(
+                      onPressed: (context) =>
+                          viewModel.reorderSongList(index, 1),
+                      backgroundColor: Colors.green,
+                      foregroundColor: Colors.white,
+                      icon: Icons.play_arrow,
+                      label: 'Play Next',
+                    ),
+                    // Cancel
+                    SlidableAction(
+                      onPressed: (context) => viewModel.dismissSong(song),
+                      backgroundColor: Colors.red,
+                      foregroundColor: Colors.white,
+                      icon: Icons.cancel,
+                      label: 'Cancel',
+                    ),
+                  ],
                 ],
               ),
               child: ListTile(
-                leading: song.imageURL != null
-                    ? Image.network(song.imageURL.toString())
-                    : null,
+                leading: Container(
+                  width: 50.0, // Set a fixed width for the image container
+                  height: 50.0, // Set a fixed height for the image container
+                  decoration: BoxDecoration(
+                    color: Colors.grey, // Set the background color to grey
+                    borderRadius: BorderRadius.circular(
+                        8.0), // Optional: Add border radius
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(
+                        8.0), // Optional: Match border radius
+                    child: CachedNetworkImage(
+                      imageUrl: song.imageURL.toString(),
+                      placeholder: (context, url) => const Center(
+                        child: CircularProgressIndicator(),
+                      ),
+                      errorWidget: (context, url, error) =>
+                          const Icon(Icons.music_note),
+                      fit:
+                          BoxFit.cover, // Ensure the image covers the container
+                    ),
+                  ),
+                ),
                 title: Text(song.title),
-                subtitle: Text(song.artist),
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(song.artist),
+                    Text('Reserved by: ${song.reservingUser}'),
+                  ],
+                ),
                 trailing: song.currentPlaying
-                    ? Icon(Icons.play_arrow, color: Colors.green)
+                    ? const Icon(Icons.play_arrow, color: Colors.green)
                     : null,
                 onTap: null,
               ),

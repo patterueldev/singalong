@@ -1,27 +1,29 @@
 part of 'sessionfeature.dart';
 
-class PromptModel {
-  final String title;
-  final String message;
-  final String actionText;
-  final VoidCallback onAction;
+abstract class SessionViewCallbackDelegate {
+  void onAdded();
+  void onCancel();
+}
 
-  const PromptModel({
-    required this.title,
-    required this.message,
-    required this.actionText,
-    required this.onAction,
-  });
+abstract class SessionNavigationDelegate {
+  void openSongBook(
+    BuildContext context,
+    SessionViewCallbackDelegate callbackDelegate,
+  );
 }
 
 abstract class SessionViewModel {
   ValueNotifier<SessionViewState> get stateNotifier;
-  ValueNotifier<List<SongItem>> get songListNotifier;
+  ValueNotifier<List<ReservedSongItem>> get songListNotifier;
   ValueNotifier<PromptModel?> get promptNotifier;
+  ValueNotifier<ReservedSongItem?> get songDetailsNotifier;
+  ValueNotifier<bool> get isSongBookOpenNotifier;
 
   void setupSession();
-  void dismissSong(SongItem song);
+  void dismissSong(ReservedSongItem song);
   void reorderSongList(oldIndex, newIndex);
+  void openSongDetails(ReservedSongItem song);
+  void openSongBook();
 }
 
 class DefaultSessionViewModel extends SessionViewModel {
@@ -29,7 +31,7 @@ class DefaultSessionViewModel extends SessionViewModel {
 
   DefaultSessionViewModel({
     required this.listenToSongListUpdatesUseCase,
-    List<SongItem>? songList,
+    List<ReservedSongItem>? songList,
   }) {
     if (songList != null) {
       songListNotifier.value = songList;
@@ -40,11 +42,13 @@ class DefaultSessionViewModel extends SessionViewModel {
   ValueNotifier<SessionViewState> stateNotifier =
       ValueNotifier(const Initial());
   @override
-  ValueNotifier<List<SongItem>> songListNotifier = ValueNotifier([]);
+  ValueNotifier<List<ReservedSongItem>> songListNotifier = ValueNotifier([]);
   @override
   ValueNotifier<PromptModel?> promptNotifier = ValueNotifier(null);
-
-  StreamSubscription<List<SongItem>>? _songListSubscription;
+  @override
+  ValueNotifier<ReservedSongItem?> songDetailsNotifier = ValueNotifier(null);
+  @override
+  ValueNotifier<bool> isSongBookOpenNotifier = ValueNotifier(false);
 
   @override
   void setupSession() async {
@@ -57,14 +61,14 @@ class DefaultSessionViewModel extends SessionViewModel {
     stateNotifier.value = const Loaded();
 
     // then start listening to changes
-    _songListSubscription =
-        listenToSongListUpdatesUseCase.execute().listen((songList) {
+
+    listenToSongListUpdatesUseCase.execute().listen((songList) {
       songListNotifier.value = songList;
     });
   }
 
   @override
-  void dismissSong(SongItem song) async {
+  void dismissSong(ReservedSongItem song) async {
     final completer = Completer<bool>();
     String title;
     String message;
@@ -101,4 +105,12 @@ class DefaultSessionViewModel extends SessionViewModel {
 
   @override
   void reorderSongList(oldIndex, newIndex) {}
+
+  @override
+  void openSongDetails(ReservedSongItem song) {}
+
+  @override
+  void openSongBook() {
+    isSongBookOpenNotifier.value = true;
+  }
 }

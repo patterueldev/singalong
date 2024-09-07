@@ -3,3 +3,11 @@ name: singalong
 packages:
   - apps/**
   - packages/**
+
+scripts:
+  outdated:
+    exec: flutter pub outdated
+  upgrade:
+    exec: flutter pub upgrade
+  update:
+    exec: dart pub update
