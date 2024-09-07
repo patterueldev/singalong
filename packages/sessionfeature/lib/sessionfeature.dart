@@ -9,7 +9,7 @@ import 'package:provider/provider.dart';
 import 'package:provider/single_child_widget.dart';
 
 part 'sessionview.dart';
-part 'songitem.dart';
+part 'reservedsongitem.dart';
 part 'sessionviewmodel.dart';
 part 'sessionviewstate.dart';
 part 'listentosonglistupdatesusecase.dart';
