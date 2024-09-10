@@ -1,14 +1,8 @@
 part of 'sessionfeature.dart';
 
-abstract class SessionViewCallbackDelegate {
-  void onAdded();
-  void onCancel();
-}
-
 abstract class SessionNavigationDelegate {
   void openSongBook(
     BuildContext context,
-    SessionViewCallbackDelegate callbackDelegate,
   );
 }
 

@@ -1,7 +1,6 @@
 part of 'sessionfeature.dart';
 
-class SessionView extends StatefulWidget
-    implements SessionViewCallbackDelegate {
+class SessionView extends StatefulWidget {
   const SessionView({
     super.key,
     required this.viewModel,
@@ -13,16 +12,6 @@ class SessionView extends StatefulWidget
 
   @override
   State<SessionView> createState() => _SessionViewState();
-
-  @override
-  void onAdded() {
-    // viewModel.refresh();
-  }
-
-  @override
-  void onCancel() {
-    // viewModel.canceled();
-  }
 }
 
 class _SessionViewState extends State<SessionView> {
@@ -47,8 +36,7 @@ class _SessionViewState extends State<SessionView> {
             ),
             body: _buildBody(context, viewModel),
             floatingActionButton: FloatingActionButton(
-              onPressed: () =>
-                  widget.navigationDelegate.openSongBook(context, widget),
+              onPressed: () => widget.navigationDelegate.openSongBook(context),
               child: const Icon(Icons.menu_book),
             ),
           ),

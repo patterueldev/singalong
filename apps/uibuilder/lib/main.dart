@@ -17,13 +17,15 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const connectFeatureProvider = ConnectFeatureProvider();
+    final connectFeatureProvider = ConnectFeatureProvider();
     final sessionFeatureProvider = SessionFeatureProvider();
 
     return MultiProvider(
       providers: [
         Provider.value(value: connectFeatureProvider),
         Provider.value(value: sessionFeatureProvider),
+        ...connectFeatureProvider
+            .providers, // Include providers from ConnectFeatureProvider
         ...sessionFeatureProvider
             .providers, // Include providers from SessionFeatureProvider
         ChangeNotifierProvider<PreviewerViewModel>(

@@ -4,9 +4,11 @@ class ConnectView extends StatefulWidget {
   const ConnectView({
     super.key,
     required this.viewModel,
+    this.localizations = const DefaultConnectViewLocalizations(),
   });
 
   final ConnectViewModel viewModel;
+  final ConnectViewLocalizations localizations;
 
   @override
   State<ConnectView> createState() => _ConnectViewState();
@@ -14,6 +16,7 @@ class ConnectView extends StatefulWidget {
 
 class _ConnectViewState extends State<ConnectView> {
   ConnectViewModel get viewModel => widget.viewModel;
+  ConnectViewLocalizations get localizations => widget.localizations;
 
   @override
   void initState() {
@@ -27,7 +30,7 @@ class _ConnectViewState extends State<ConnectView> {
         children: [
           Scaffold(
             appBar: AppBar(
-              title: const Text('Connect'),
+              title: Text(localizations.connect(context)),
               backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
             ),
             body: _buildBody(context, viewModel),
@@ -52,7 +55,7 @@ class _ConnectViewState extends State<ConnectView> {
                 WidgetsBinding.instance.addPostFrameCallback((_) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text(state.error),
+                      content: Text(state.error.localizedOf(context)),
                       backgroundColor: Theme.of(context).colorScheme.error,
                     ),
                   );
@@ -73,15 +76,15 @@ class _ConnectViewState extends State<ConnectView> {
             children: [
               TextField(
                 controller: viewModel.nameController,
-                decoration: const InputDecoration(
-                  labelText: 'Name',
+                decoration: InputDecoration(
+                  labelText: localizations.name(context),
                 ),
               ),
               const SizedBox(height: 16),
               TextField(
                 controller: viewModel.sessionIdController,
-                decoration: const InputDecoration(
-                  labelText: 'Session ID',
+                decoration: InputDecoration(
+                  labelText: localizations.sessionId(context),
                 ),
               ),
               const SizedBox(height: 32),
@@ -102,7 +105,7 @@ class _ConnectViewState extends State<ConnectView> {
                                 Theme.of(context).colorScheme.primary,
                             foregroundColor: Colors.white,
                           ),
-                          child: const Text('Connect'),
+                          child: Text(localizations.connect(context)),
                         ),
                       ),
                       const SizedBox(height: 16),
@@ -117,7 +120,7 @@ class _ConnectViewState extends State<ConnectView> {
                             foregroundColor:
                                 Theme.of(context).colorScheme.secondary,
                           ),
-                          child: const Text('Clear'),
+                          child: Text(localizations.clear(context)),
                         ),
                       ),
                     ],

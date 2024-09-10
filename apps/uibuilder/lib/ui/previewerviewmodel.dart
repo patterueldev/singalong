@@ -30,6 +30,7 @@ class DefaultPreviewerViewModel extends PreviewerViewModel {
       name: "Connect",
       destination: (context) => connectFeatureProvider.buildConnectView(
         viewModel: DefaultConnectViewModel(
+          connectUseCase: context.read(),
           name: "John Doe",
           sessionId: "123456",
         ),
@@ -40,8 +41,7 @@ class DefaultPreviewerViewModel extends PreviewerViewModel {
 
 class TemporaryCoordinator implements SessionNavigationDelegate {
   @override
-  void openSongBook(
-      BuildContext context, SessionViewCallbackDelegate callbackDelegate) {
+  void openSongBook(BuildContext context) {
     double screenHeight = MediaQuery.of(context).size.height;
     double modalHeight = screenHeight * 0.8; // 3/4 of the screen height
 

@@ -6,7 +6,7 @@ class ConnectViewState {
   factory ConnectViewState.initial() = Initial;
   factory ConnectViewState.connecting() = Connecting;
   factory ConnectViewState.connected() = Connected;
-  factory ConnectViewState.failure(String error) = Failure;
+  factory ConnectViewState.failure(ConnectException error) = Failure;
 }
 
 class Initial extends ConnectViewState {
@@ -22,6 +22,6 @@ class Connected extends ConnectViewState {
 }
 
 class Failure extends ConnectViewState {
-  final String error;
+  final ConnectException error;
   const Failure(this.error);
 }

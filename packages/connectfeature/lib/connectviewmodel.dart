@@ -9,7 +9,9 @@ abstract class ConnectViewModel {
 }
 
 class DefaultConnectViewModel implements ConnectViewModel {
+  final ConnectUseCase connectUseCase;
   DefaultConnectViewModel({
+    required this.connectUseCase,
     String name = '',
     String sessionId = '',
   }) {
@@ -30,9 +32,18 @@ class DefaultConnectViewModel implements ConnectViewModel {
   void connect() async {
     stateNotifier.value = ConnectViewState.connecting();
 
-    await Future.delayed(const Duration(seconds: 2));
+    final name = nameController.text;
+    final sessionId = sessionIdController.text;
 
-    stateNotifier.value = ConnectViewState.failure("Failed to connect");
+    final result = await connectUseCase.connect(name, sessionId).run();
+    result.fold(
+      (e) {
+        stateNotifier.value = ConnectViewState.failure(e);
+      },
+      (_) {
+        stateNotifier.value = ConnectViewState.connected();
+      },
+    );
   }
 
   @override
@@ -40,4 +51,33 @@ class DefaultConnectViewModel implements ConnectViewModel {
     nameController.clear();
     sessionIdController.clear();
   }
+}
+
+class ConnectException {
+  final String message;
+  ConnectException(this.message);
+
+  String localizedOf(BuildContext context) {
+    return message;
+  }
+}
+
+abstract class ConnectUseCase {
+  TaskEither<ConnectException, Unit> connect(String name, String sessionId);
+}
+
+class DefaultConnectUseCase implements ConnectUseCase {
+  @override
+  TaskEither<ConnectException, Unit> connect(String name, String sessionId) =>
+      TaskEither.tryCatch(() async {
+        await Future.delayed(const Duration(seconds: 2));
+
+        throw ConnectException("Failed to connect!!!!!!");
+        return unit;
+      }, (e, s) {
+        if (e is ConnectException) {
+          return e;
+        }
+        return ConnectException("An unknown error occurred");
+      });
 }
