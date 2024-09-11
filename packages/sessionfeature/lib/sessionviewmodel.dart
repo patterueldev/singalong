@@ -64,13 +64,13 @@ class DefaultSessionViewModel extends SessionViewModel {
     LocalizedString message;
     LocalizedString actionText;
     if (song.currentPlaying) {
-      title = LocalizedString(localizations.skipSongTitle);
-      message = LocalizedString(localizations.skipSongMessage);
-      actionText = LocalizedString(localizations.skipSongActionText);
+      title = localizations.skipSongTitle;
+      message = localizations.skipSongMessage;
+      actionText = localizations.skipSongActionText;
     } else {
-      title = LocalizedString(localizations.cancelSongTitle);
-      message = LocalizedString(localizations.cancelSongMessage);
-      actionText = LocalizedString(localizations.cancelSongActionText);
+      title = localizations.cancelSongTitle;
+      message = localizations.cancelSongMessage;
+      actionText = localizations.cancelSongActionText;
     }
     promptNotifier.value = PromptModel(
       title: title,

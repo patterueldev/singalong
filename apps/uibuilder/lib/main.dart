@@ -1,8 +1,11 @@
+import 'dart:html';
+
 import 'package:connectfeature/connectfeature.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sessionfeature/sessionfeature.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:shared/shared.dart';
 
 part 'applocalizations.dart';
 part 'appcoordinator.dart';

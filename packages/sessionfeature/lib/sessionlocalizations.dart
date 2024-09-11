@@ -1,18 +1,18 @@
 part of 'sessionfeature.dart';
 
 abstract class SessionLocalizations implements GenericLocalizations {
-  String disconnectButtonText(BuildContext context);
-  String cancelButtonText(BuildContext context);
-  String skipButtonText(BuildContext context);
-  String pauseButtonText(BuildContext context);
-  String playNextButtonText(BuildContext context);
-  String reservedByText(BuildContext context, String name);
+  LocalizedString get disconnectButtonText;
+  LocalizedString get cancelButtonText;
+  LocalizedString get skipButtonText;
+  LocalizedString get pauseButtonText;
+  LocalizedString get playNextButtonText;
+  LocalizedString reservedByText(String name);
 
-  String skipSongTitle(BuildContext context);
-  String skipSongMessage(BuildContext context);
-  String skipSongActionText(BuildContext context);
+  LocalizedString get skipSongTitle;
+  LocalizedString get skipSongMessage;
+  LocalizedString get skipSongActionText;
 
-  String cancelSongTitle(BuildContext context);
-  String cancelSongMessage(BuildContext context);
-  String cancelSongActionText(BuildContext context);
+  LocalizedString get cancelSongTitle;
+  LocalizedString get cancelSongMessage;
+  LocalizedString get cancelSongActionText;
 }

@@ -15,19 +15,13 @@ class DefaultConnectUseCase implements ConnectUseCase {
         final temporaryValidSessionIDs = ["123456"];
 
         if (!temporaryValidSessionIDs.contains(sessionId)) {
-          throw ConnectException(
-            messageBuilder: (context) {
-              return localizable.invalidSessionId(context, sessionId);
-            },
-          );
+          throw ConnectException(localizable.invalidSessionId(sessionId));
         }
         return unit;
       }, (e, s) {
         if (e is ConnectException) {
           return e;
         }
-        return ConnectException(
-          messageBuilder: (context) => localizable.unknownError(context),
-        );
+        return ConnectException(localizable.unknownError);
       });
 }

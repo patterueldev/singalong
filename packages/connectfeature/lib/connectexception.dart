@@ -1,10 +1,10 @@
 part of 'connectfeature.dart';
 
 class ConnectException {
-  final String Function(BuildContext context) messageBuilder;
-  ConnectException({required this.messageBuilder});
+  final LocalizedString localizedString;
+  ConnectException(this.localizedString);
 
   String localizedOf(BuildContext context) {
-    return messageBuilder(context);
+    return localizedString.localizedOf(context);
   }
 }

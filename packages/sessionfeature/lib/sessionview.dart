@@ -46,7 +46,8 @@ class _SessionViewState extends State<SessionView> {
                   return [
                     PopupMenuItem<String>(
                       value: 'disconnect',
-                      child: Text(localizations.disconnectButtonText(context)),
+                      child: localizations.disconnectButtonText
+                          .localizedTextOf(context),
                     ),
                   ];
                 },
@@ -105,7 +106,8 @@ class _SessionViewState extends State<SessionView> {
                           onPressed: () {
                             Navigator.of(context).pop();
                           },
-                          child: Text(localizations.cancelButtonText(context)),
+                          child: localizations.cancelButtonText
+                              .localizedTextOf(context),
                         ),
                         TextButton(
                           onPressed: () {
@@ -148,7 +150,7 @@ class _SessionViewState extends State<SessionView> {
                       backgroundColor: Colors.blue,
                       foregroundColor: Colors.white,
                       icon: Icons.skip_next,
-                      label: localizations.skipButtonText(context),
+                      label: localizations.skipButtonText.localizedOf(context),
                     ),
                     // Pause
                     SlidableAction(
@@ -161,7 +163,7 @@ class _SessionViewState extends State<SessionView> {
                       backgroundColor: Colors.orange,
                       foregroundColor: Colors.white,
                       icon: Icons.pause,
-                      label: localizations.pauseButtonText(context),
+                      label: localizations.pauseButtonText.localizedOf(context),
                     ),
                   ],
                   if (!song.currentPlaying) ...[
@@ -172,7 +174,8 @@ class _SessionViewState extends State<SessionView> {
                       backgroundColor: Colors.green,
                       foregroundColor: Colors.white,
                       icon: Icons.play_arrow,
-                      label: localizations.playNextButtonText(context),
+                      label:
+                          localizations.playNextButtonText.localizedOf(context),
                     ),
                     // Cancel
                     SlidableAction(
@@ -180,7 +183,8 @@ class _SessionViewState extends State<SessionView> {
                       backgroundColor: Colors.red,
                       foregroundColor: Colors.white,
                       icon: Icons.cancel,
-                      label: localizations.cancelButtonText(context),
+                      label:
+                          localizations.cancelButtonText.localizedOf(context),
                     ),
                   ],
                 ],
@@ -214,8 +218,9 @@ class _SessionViewState extends State<SessionView> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(song.artist),
-                    Text(localizations.reservedByText(
-                        context, song.reservingUser)),
+                    localizations
+                        .reservedByText(song.reservingUser)
+                        .localizedTextOf(context),
                   ],
                 ),
                 trailing: song.currentPlaying

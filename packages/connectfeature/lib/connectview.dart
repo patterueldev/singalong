@@ -33,7 +33,7 @@ class _ConnectViewState extends State<ConnectView> {
         children: [
           Scaffold(
             appBar: AppBar(
-              title: Text(localizable.screenTitleText(context)),
+              title: localizable.screenTitleText.localizedTextOf(context),
               backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
             ),
             body: _buildBody(context, viewModel),
@@ -65,7 +65,8 @@ class _ConnectViewState extends State<ConnectView> {
                 WidgetsBinding.instance.addPostFrameCallback((_) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text(localizable.connectionSuccess(context)),
+                      content: localizable.connectionSuccess
+                          .localizedTextOf(context),
                       backgroundColor: Theme.of(context).colorScheme.primary,
                     ),
                   );
@@ -90,14 +91,16 @@ class _ConnectViewState extends State<ConnectView> {
               TextField(
                 controller: viewModel.nameController,
                 decoration: InputDecoration(
-                  labelText: localizable.namePlaceholderText(context),
+                  labelText:
+                      localizable.namePlaceholderText.localizedOf(context),
                 ),
               ),
               const SizedBox(height: 16),
               TextField(
                 controller: viewModel.sessionIdController,
                 decoration: InputDecoration(
-                  labelText: localizable.sessionIdPlaceholderText(context),
+                  labelText:
+                      localizable.sessionIdPlaceholderText.localizedOf(context),
                 ),
               ),
               const SizedBox(height: 32),
@@ -118,7 +121,8 @@ class _ConnectViewState extends State<ConnectView> {
                                 Theme.of(context).colorScheme.primary,
                             foregroundColor: Colors.white,
                           ),
-                          child: Text(localizable.connectButtonText(context)),
+                          child: localizable.connectButtonText
+                              .localizedTextOf(context),
                         ),
                       ),
                       const SizedBox(height: 16),
@@ -133,7 +137,8 @@ class _ConnectViewState extends State<ConnectView> {
                             foregroundColor:
                                 Theme.of(context).colorScheme.secondary,
                           ),
-                          child: Text(localizable.clearButtonText(context)),
+                          child: localizable.clearButtonText
+                              .localizedTextOf(context),
                         ),
                       ),
                     ],

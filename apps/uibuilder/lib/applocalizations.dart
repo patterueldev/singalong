@@ -1,119 +1,119 @@
 part of 'main.dart';
 
 class DefaultAppLocalizations
-    with ConnectLocalizationsMixin, SessionLocalizationsMixin
+    with
+        GenericLocalizationsMixin,
+        ConnectLocalizationsMixin,
+        SessionLocalizationsMixin
     implements ConnectLocalizations, SessionLocalizations {}
+
+LocalizedString _getLocalizedString(
+        String Function(AppLocalizations) getString) =>
+    LocalizedString((context) {
+      final localizations = AppLocalizations.of(context);
+      if (localizations == null) {
+        throw FlutterError(
+            'AppLocalizations not found in the widget tree. Ensure that the MaterialApp has the localizationsDelegates and supportedLocales properly set.');
+      }
+      return getString(localizations);
+    });
+
+mixin GenericLocalizationsMixin implements GenericLocalizations {
+  @override
+  final unknownError = _getLocalizedString((l) => l.unknownError);
+}
 
 mixin ConnectLocalizationsMixin implements ConnectLocalizations {
   @override
-  String screenTitleText(BuildContext context) {
-    return AppLocalizations.of(context)!.screenTitleText;
+  final screenTitleText =
+      _getLocalizedString((localizations) => localizations.screenTitleText);
+
+  @override
+  final connectButtonText =
+      _getLocalizedString((localizations) => localizations.connectButtonText);
+
+  @override
+  final clearButtonText =
+      _getLocalizedString((localizations) => localizations.clearButtonText);
+
+  @override
+  final namePlaceholderText =
+      _getLocalizedString((localizations) => localizations.namePlaceholderText);
+
+  @override
+  final sessionIdPlaceholderText = _getLocalizedString(
+      (localizations) => localizations.sessionIdPlaceholderText);
+
+  @override
+  final connectionSuccess =
+      _getLocalizedString((localizations) => localizations.connectionSuccess);
+
+  @override
+  LocalizedString connectionError(String message) {
+    return _getLocalizedString(
+        (localizations) => localizations.connectionError(message));
   }
 
   @override
-  String connectButtonText(BuildContext context) {
-    return AppLocalizations.of(context)!.connectButtonText;
+  LocalizedString invalidName(String name) {
+    return _getLocalizedString(
+        (localizations) => localizations.invalidName(name));
   }
 
   @override
-  String clearButtonText(BuildContext context) {
-    return AppLocalizations.of(context)!.clearButtonText;
-  }
-
-  @override
-  String namePlaceholderText(BuildContext context) {
-    return AppLocalizations.of(context)!.namePlaceholderText;
-  }
-
-  @override
-  String sessionIdPlaceholderText(BuildContext context) {
-    return AppLocalizations.of(context)!.sessionIdPlaceholderText;
-  }
-
-  @override
-  String connectionSuccess(BuildContext context) {
-    return AppLocalizations.of(context)!.connectionSuccess;
-  }
-
-  @override
-  String connectionError(BuildContext context, String message) {
-    return AppLocalizations.of(context)!.connectionError(message);
-  }
-
-  @override
-  String invalidName(BuildContext context, String name) {
-    return AppLocalizations.of(context)!.invalidName(name);
-  }
-
-  @override
-  String invalidSessionId(BuildContext context, String sessionId) {
-    return AppLocalizations.of(context)!.invalidSessionId(sessionId);
-  }
-
-  @override
-  String unknownError(BuildContext context) {
-    return AppLocalizations.of(context)!.unknownError;
+  LocalizedString invalidSessionId(String sessionId) {
+    return _getLocalizedString(
+        (localizations) => localizations.invalidSessionId(sessionId));
   }
 }
-
 mixin SessionLocalizationsMixin implements SessionLocalizations {
   @override
-  String disconnectButtonText(BuildContext context) {
-    return AppLocalizations.of(context)!.disconnectButtonText;
+  final LocalizedString disconnectButtonText = _getLocalizedString(
+      (localizations) => localizations.disconnectButtonText);
+
+  @override
+  final LocalizedString cancelButtonText =
+      _getLocalizedString((localizations) => localizations.cancelButtonText);
+
+  @override
+  final LocalizedString skipButtonText =
+      _getLocalizedString((localizations) => localizations.skipButtonText);
+
+  @override
+  final LocalizedString pauseButtonText =
+      _getLocalizedString((localizations) => localizations.pauseButtonText);
+
+  @override
+  final LocalizedString playNextButtonText =
+      _getLocalizedString((localizations) => localizations.playNextButtonText);
+
+  @override
+  LocalizedString reservedByText(String name) {
+    return _getLocalizedString(
+        (localizations) => localizations.reservedByText(name));
   }
 
   @override
-  String cancelButtonText(BuildContext context) {
-    return AppLocalizations.of(context)!.cancelButtonText;
-  }
+  final LocalizedString skipSongTitle =
+      _getLocalizedString((localizations) => localizations.skipSongTitle);
 
   @override
-  String skipButtonText(BuildContext context) {
-    return AppLocalizations.of(context)!.skipButtonText;
-  }
+  final LocalizedString skipSongMessage =
+      _getLocalizedString((localizations) => localizations.skipSongMessage);
 
   @override
-  String pauseButtonText(BuildContext context) {
-    return AppLocalizations.of(context)!.pauseButtonText;
-  }
+  final LocalizedString skipSongActionText =
+      _getLocalizedString((localizations) => localizations.skipSongActionText);
 
   @override
-  String playNextButtonText(BuildContext context) {
-    return AppLocalizations.of(context)!.playNextButtonText;
-  }
+  final LocalizedString cancelSongTitle =
+      _getLocalizedString((localizations) => localizations.cancelSongTitle);
 
   @override
-  String reservedByText(BuildContext context, String name) {
-    return AppLocalizations.of(context)!.reservedByText(name);
-  }
+  final LocalizedString cancelSongMessage =
+      _getLocalizedString((localizations) => localizations.cancelSongMessage);
 
   @override
-  String skipSongTitle(BuildContext context) {
-    return AppLocalizations.of(context)!.skipSongTitle;
-  }
-
-  @override
-  String skipSongMessage(BuildContext context) {
-    return AppLocalizations.of(context)!.skipSongMessage;
-  }
-
-  @override
-  String skipSongActionText(BuildContext context) {
-    return AppLocalizations.of(context)!.skipSongActionText;
-  }
-
-  @override
-  String cancelSongTitle(BuildContext context) {
-    return AppLocalizations.of(context)!.cancelSongTitle;
-  }
-
-  @override
-  String cancelSongMessage(BuildContext context) {
-    return AppLocalizations.of(context)!.cancelSongMessage;
-  }
-
-  @override
-  String cancelSongActionText(BuildContext context) {
-    return AppLocalizations.of(context)!.cancelSongActionText;
-  }
+  final LocalizedString cancelSongActionText = _getLocalizedString(
+      (localizations) => localizations.cancelSongActionText);
 }

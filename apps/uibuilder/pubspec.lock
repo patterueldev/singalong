@@ -359,7 +359,7 @@ packages:
     source: path
     version: "0.0.1"
   shared:
-    dependency: "direct overridden"
+    dependency: "direct main"
     description:
       path: "../../packages/shared"
       relative: true
