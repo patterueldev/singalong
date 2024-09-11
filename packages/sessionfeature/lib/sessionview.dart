@@ -98,8 +98,8 @@ class _SessionViewState extends State<SessionView> {
                   showDialog(
                     context: context,
                     builder: (context) => AlertDialog(
-                      title: Text(prompt.title),
-                      content: Text(prompt.message),
+                      title: prompt.title.localizedTextOf(context),
+                      content: prompt.message.localizedTextOf(context),
                       actions: [
                         TextButton(
                           onPressed: () {
@@ -116,7 +116,7 @@ class _SessionViewState extends State<SessionView> {
                             foregroundColor:
                                 Theme.of(context).colorScheme.error,
                           ),
-                          child: Text(prompt.actionText),
+                          child: prompt.actionText.localizedTextOf(context),
                         ),
                       ],
                     ),

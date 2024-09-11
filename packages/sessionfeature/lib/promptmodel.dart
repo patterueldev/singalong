@@ -1,9 +1,9 @@
 part of 'sessionfeature.dart';
 
 class PromptModel {
-  final String title;
-  final String message;
-  final String actionText;
+  final LocalizedString title;
+  final LocalizedString message;
+  final LocalizedString actionText;
   final VoidCallback onAction;
 
   const PromptModel({

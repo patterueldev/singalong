@@ -1,4 +1,5 @@
 {
+  "@@locale": "en",
   "screenTitleText": "Connect",
   "screenTitleTextDescription": "Title for the connect screen",
   
@@ -45,5 +46,23 @@
   "playNextButtonTextDescription": "Text for the play next button",
 
   "reservedByText": "Reserved by {name}",
-  "reservedByTextDescription": "Text for reserved by"
+  "reservedByTextDescription": "Text for reserved by",
+
+  "skipSongTitle": "Skip Song?",
+  "skipSongTitleDescription": "Title for the skip song prompt",
+
+  "skipSongMessage": "Are you sure you want to skip this song?",
+  "skipSongMessageDescription": "Message for the skip song prompt",
+
+  "skipSongActionText": "Skip",
+  "skipSongActionTextDescription": "Action text for the skip song prompt",
+
+  "cancelSongTitle": "Cancel Song?",
+  "cancelSongTitleDescription": "Title for the cancel song prompt",
+
+  "cancelSongMessage": "Are you sure you want to cancel this song?",
+  "cancelSongMessageDescription": "Message for the cancel song prompt",
+
+  "cancelSongActionText": "Cancel",
+  "cancelSongActionTextDescription": "Action text for the cancel song prompt"
 }

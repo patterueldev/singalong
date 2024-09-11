@@ -7,4 +7,12 @@ abstract class SessionLocalizations implements GenericLocalizations {
   String pauseButtonText(BuildContext context);
   String playNextButtonText(BuildContext context);
   String reservedByText(BuildContext context, String name);
+
+  String skipSongTitle(BuildContext context);
+  String skipSongMessage(BuildContext context);
+  String skipSongActionText(BuildContext context);
+
+  String cancelSongTitle(BuildContext context);
+  String cancelSongMessage(BuildContext context);
+  String cancelSongActionText(BuildContext context);
 }

@@ -86,4 +86,34 @@ mixin SessionLocalizationsMixin implements SessionLocalizations {
   String reservedByText(BuildContext context, String name) {
     return AppLocalizations.of(context)!.reservedByText(name);
   }
+
+  @override
+  String skipSongTitle(BuildContext context) {
+    return AppLocalizations.of(context)!.skipSongTitle;
+  }
+
+  @override
+  String skipSongMessage(BuildContext context) {
+    return AppLocalizations.of(context)!.skipSongMessage;
+  }
+
+  @override
+  String skipSongActionText(BuildContext context) {
+    return AppLocalizations.of(context)!.skipSongActionText;
+  }
+
+  @override
+  String cancelSongTitle(BuildContext context) {
+    return AppLocalizations.of(context)!.cancelSongTitle;
+  }
+
+  @override
+  String cancelSongMessage(BuildContext context) {
+    return AppLocalizations.of(context)!.cancelSongMessage;
+  }
+
+  @override
+  String cancelSongActionText(BuildContext context) {
+    return AppLocalizations.of(context)!.cancelSongActionText;
+  }
 }

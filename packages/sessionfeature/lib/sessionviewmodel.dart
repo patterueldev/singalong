@@ -17,9 +17,11 @@ abstract class SessionViewModel {
 
 class DefaultSessionViewModel extends SessionViewModel {
   final ListenToSongListUpdatesUseCase listenToSongListUpdatesUseCase;
+  final SessionLocalizations localizations;
 
   DefaultSessionViewModel({
     required this.listenToSongListUpdatesUseCase,
+    required this.localizations,
     List<ReservedSongItem>? songList,
   }) {
     if (songList != null) {
@@ -58,17 +60,17 @@ class DefaultSessionViewModel extends SessionViewModel {
   @override
   void dismissSong(ReservedSongItem song) async {
     final completer = Completer<bool>();
-    String title;
-    String message;
-    String actionText;
+    LocalizedString title;
+    LocalizedString message;
+    LocalizedString actionText;
     if (song.currentPlaying) {
-      title = 'Skip Song';
-      message = 'Are you sure you want to skip this song?';
-      actionText = 'Skip';
+      title = LocalizedString(localizations.skipSongTitle);
+      message = LocalizedString(localizations.skipSongMessage);
+      actionText = LocalizedString(localizations.skipSongActionText);
     } else {
-      title = 'Cancel Song';
-      message = 'Are you sure you want to cancel this song?';
-      actionText = 'Cancel';
+      title = LocalizedString(localizations.cancelSongTitle);
+      message = LocalizedString(localizations.cancelSongMessage);
+      actionText = LocalizedString(localizations.cancelSongActionText);
     }
     promptNotifier.value = PromptModel(
       title: title,

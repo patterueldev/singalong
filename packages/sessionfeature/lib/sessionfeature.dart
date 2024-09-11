@@ -37,6 +37,7 @@ class SessionFeatureProvider {
       SessionView(
         viewModel: DefaultSessionViewModel(
           listenToSongListUpdatesUseCase: context.read(),
+          localizations: context.read(),
         ),
         localizations: localizations,
         coordinator: coordinator,
