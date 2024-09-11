@@ -9,12 +9,15 @@ class DefaultPreviewerViewModel extends PreviewerViewModel {
   DefaultPreviewerViewModel({
     required this.connectFeatureProvider,
     required this.sessionFeatureProvider,
-    this.navigateOnStartup = true,
+    this.navigateOnStartup = false,
   });
 
   final ConnectFeatureProvider connectFeatureProvider;
   final SessionFeatureProvider sessionFeatureProvider;
-  final TemporaryCoordinator coordinator = TemporaryCoordinator();
+  late final AppCoordinator coordinator = AppCoordinator(
+    connectFeatureProvider: connectFeatureProvider,
+    sessionFeatureProvider: sessionFeatureProvider,
+  );
 
   @override
   final bool navigateOnStartup;
@@ -23,40 +26,22 @@ class DefaultPreviewerViewModel extends PreviewerViewModel {
   late List<NavigatorItem> navigators = [
     NavigatorItem(
       name: "Session",
-      destination: (context) => sessionFeatureProvider.buildSessionView(
-          navigationDelegate: coordinator),
+      build: (context) => sessionFeatureProvider.buildSessionView(
+        context: context,
+        coordinator: coordinator,
+      ),
     ),
     NavigatorItem(
       name: "Connect",
-      destination: (context) => connectFeatureProvider.buildConnectView(
-        viewModel: DefaultConnectViewModel(
-          connectUseCase: context.read(),
-          name: "John Doe",
-          sessionId: "123456",
-        ),
+      build: (context) => connectFeatureProvider.buildConnectView(
+        context: context,
+        coordinator: coordinator,
+        localizable: context.read(),
+        name: "John Doe",
+        sessionId: "123456",
       ),
     ),
   ];
-}
-
-class TemporaryCoordinator implements SessionNavigationDelegate {
-  @override
-  void openSongBook(BuildContext context) {
-    double screenHeight = MediaQuery.of(context).size.height;
-    double modalHeight = screenHeight * 0.8; // 3/4 of the screen height
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      builder: (BuildContext context) {
-        return Container(
-          height: modalHeight,
-          color: Colors.white,
-          child: TemporarySongBookView(),
-        );
-      },
-    );
-  }
 }
 
 class TemporarySongBookView extends StatefulWidget {

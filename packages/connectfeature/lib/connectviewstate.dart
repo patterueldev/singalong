@@ -1,27 +1,27 @@
 part of 'connectfeature.dart';
 
 class ConnectViewState {
-  const ConnectViewState();
+  const ConnectViewState(this.type);
 
-  factory ConnectViewState.initial() = Initial;
-  factory ConnectViewState.connecting() = Connecting;
-  factory ConnectViewState.connected() = Connected;
-  factory ConnectViewState.failure(ConnectException error) = Failure;
-}
+  final ConnectViewStateType type;
 
-class Initial extends ConnectViewState {
-  const Initial();
-}
-
-class Connecting extends ConnectViewState {
-  const Connecting();
-}
-
-class Connected extends ConnectViewState {
-  const Connected();
+  factory ConnectViewState.initial() =>
+      const ConnectViewState(ConnectViewStateType.initial);
+  factory ConnectViewState.connecting() =>
+      const ConnectViewState(ConnectViewStateType.connecting);
+  factory ConnectViewState.connected() =>
+      const ConnectViewState(ConnectViewStateType.connected);
+  factory ConnectViewState.failure(ConnectException error) => Failure(error);
 }
 
 class Failure extends ConnectViewState {
   final ConnectException error;
-  const Failure(this.error);
+  const Failure(this.error) : super(ConnectViewStateType.failure);
+}
+
+enum ConnectViewStateType {
+  initial,
+  connecting,
+  connected,
+  failure;
 }

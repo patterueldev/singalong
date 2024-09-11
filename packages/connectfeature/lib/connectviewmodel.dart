@@ -30,6 +30,13 @@ class DefaultConnectViewModel implements ConnectViewModel {
   bool didShowError = false;
   @override
   void connect() async {
+    const stoppers = [
+      ConnectViewStateType.connecting,
+      ConnectViewStateType.connected
+    ];
+    if (stoppers.contains(stateNotifier.value.type)) {
+      return;
+    }
     stateNotifier.value = ConnectViewState.connecting();
 
     final name = nameController.text;
@@ -53,31 +60,15 @@ class DefaultConnectViewModel implements ConnectViewModel {
   }
 }
 
+abstract class GenericLocalizations {
+  String unknownError(BuildContext context);
+}
+
 class ConnectException {
-  final String message;
-  ConnectException(this.message);
+  final String Function(BuildContext context) messageBuilder;
+  ConnectException({required this.messageBuilder});
 
   String localizedOf(BuildContext context) {
-    return message;
+    return messageBuilder(context);
   }
-}
-
-abstract class ConnectUseCase {
-  TaskEither<ConnectException, Unit> connect(String name, String sessionId);
-}
-
-class DefaultConnectUseCase implements ConnectUseCase {
-  @override
-  TaskEither<ConnectException, Unit> connect(String name, String sessionId) =>
-      TaskEither.tryCatch(() async {
-        await Future.delayed(const Duration(seconds: 2));
-
-        throw ConnectException("Failed to connect!!!!!!");
-        return unit;
-      }, (e, s) {
-        if (e is ConnectException) {
-          return e;
-        }
-        return ConnectException("An unknown error occurred");
-      });
 }

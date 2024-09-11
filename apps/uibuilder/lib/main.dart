@@ -1,9 +1,11 @@
 import 'package:connectfeature/connectfeature.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sessionfeature/sessionfeature.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
+part 'applocalizations.dart';
+part 'appcoordinator.dart';
 part 'ui/navigatoritem.dart';
 part 'ui/previewerviewmodel.dart';
 part 'ui/previewerview.dart';
@@ -19,21 +21,12 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     final connectFeatureProvider = ConnectFeatureProvider();
     final sessionFeatureProvider = SessionFeatureProvider();
-
     return MultiProvider(
       providers: [
-        Provider.value(value: connectFeatureProvider),
-        Provider.value(value: sessionFeatureProvider),
-        ...connectFeatureProvider
-            .providers, // Include providers from ConnectFeatureProvider
-        ...sessionFeatureProvider
-            .providers, // Include providers from SessionFeatureProvider
-        ChangeNotifierProvider<PreviewerViewModel>(
-          create: (ctx) => DefaultPreviewerViewModel(
-            connectFeatureProvider: ctx.read(),
-            sessionFeatureProvider: ctx.read(),
-          ),
-        ),
+        Provider<ConnectLocalizable>(
+            create: (context) => DefaultAppLocalizable()),
+        connectFeatureProvider.providers,
+        sessionFeatureProvider.providers,
       ],
       child: MaterialApp(
         title: 'Singalong UI Builder',
@@ -41,7 +34,15 @@ class MyApp extends StatelessWidget {
           colorScheme: ColorScheme.fromSeed(seedColor: Colors.tealAccent),
           useMaterial3: true,
         ),
-        home: const PreviewerView(),
+        localizationsDelegates: const [AppLocalizations.delegate],
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: ChangeNotifierProvider<PreviewerViewModel>(
+          create: (ctx) => DefaultPreviewerViewModel(
+            connectFeatureProvider: connectFeatureProvider,
+            sessionFeatureProvider: sessionFeatureProvider,
+          ),
+          child: const PreviewerView(),
+        ),
       ),
     );
   }

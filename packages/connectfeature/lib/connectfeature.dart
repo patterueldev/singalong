@@ -8,39 +8,37 @@ import 'package:provider/single_child_widget.dart';
 part 'connectview.dart';
 part 'connectviewstate.dart';
 part 'connectviewmodel.dart';
+part 'connectusecase.dart';
+part 'connectlocalizations.dart';
+part 'connectnavigationdelegate.dart';
 
 class ConnectFeatureProvider {
   ConnectFeatureProvider();
 
-  final List<SingleChildStatelessWidget> providers = [
-    Provider<ConnectUseCase>(
-      create: (context) => DefaultConnectUseCase(),
-    ),
-  ];
+  final providers = MultiProvider(
+    providers: [
+      ProxyProvider<ConnectLocalizable, ConnectUseCase>(
+        update: (context, localizable, previous) => DefaultConnectUseCase(
+          localizable: localizable,
+        ),
+      ),
+    ],
+  );
 
-  Widget buildConnectView({required ConnectViewModel viewModel}) =>
-      ConnectView(viewModel: viewModel);
-}
-
-abstract class ConnectViewLocalizations {
-  String connect(BuildContext context);
-  String clear(BuildContext context);
-  String name(BuildContext context);
-  String sessionId(BuildContext context);
-}
-
-class DefaultConnectViewLocalizations implements ConnectViewLocalizations {
-  const DefaultConnectViewLocalizations();
-
-  @override
-  String connect(BuildContext context) => 'Connect';
-
-  @override
-  String clear(BuildContext context) => 'Clear';
-
-  @override
-  String name(BuildContext context) => 'Name';
-
-  @override
-  String sessionId(BuildContext context) => 'Session ID';
+  Widget buildConnectView({
+    required BuildContext context,
+    required ConnectNavigationCoordinator coordinator,
+    required ConnectLocalizable localizable,
+    String name = '',
+    String sessionId = '',
+  }) =>
+      ConnectView(
+        viewModel: DefaultConnectViewModel(
+          connectUseCase: context.read(),
+          name: name,
+          sessionId: sessionId,
+        ),
+        coordinator: coordinator,
+        localizable: localizable,
+      );
 }

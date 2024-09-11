@@ -1,9 +1,8 @@
 part of 'sessionfeature.dart';
 
-abstract class SessionNavigationDelegate {
-  void openSongBook(
-    BuildContext context,
-  );
+abstract class SessionNavigationCoordinator {
+  void openSongBook(BuildContext context);
+  void backToConnectScreen(BuildContext context);
 }
 
 abstract class SessionViewModel {
@@ -18,6 +17,7 @@ abstract class SessionViewModel {
   void reorderSongList(oldIndex, newIndex);
   void openSongDetails(ReservedSongItem song);
   void openSongBook();
+  void disconnect();
 }
 
 class DefaultSessionViewModel extends SessionViewModel {
@@ -34,7 +34,7 @@ class DefaultSessionViewModel extends SessionViewModel {
 
   @override
   ValueNotifier<SessionViewState> stateNotifier =
-      ValueNotifier(const Initial());
+      ValueNotifier(SessionViewState.initial());
   @override
   ValueNotifier<List<ReservedSongItem>> songListNotifier = ValueNotifier([]);
   @override
@@ -49,11 +49,10 @@ class DefaultSessionViewModel extends SessionViewModel {
     // this class will essentially "prepare" the session
     // maybe processing some stuff at first
     // then setup an active observer to listen to changes for the song list
-    stateNotifier.value = const Loading();
+    stateNotifier.value = SessionViewState.loading();
     await Future.delayed(const Duration(seconds: 2));
     // if there's an error, we can throw an exception; use Failure state instead of Loading
-    stateNotifier.value = const Loaded();
-
+    stateNotifier.value = SessionViewState.loaded();
     // then start listening to changes
 
     listenToSongListUpdatesUseCase.execute().listen((songList) {
@@ -106,5 +105,11 @@ class DefaultSessionViewModel extends SessionViewModel {
   @override
   void openSongBook() {
     isSongBookOpenNotifier.value = true;
+  }
+
+  @override
+  void disconnect() {
+    // dispose of the observer
+    stateNotifier.value = SessionViewState.disconnected();
   }
 }

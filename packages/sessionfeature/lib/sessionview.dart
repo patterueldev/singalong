@@ -4,11 +4,11 @@ class SessionView extends StatefulWidget {
   const SessionView({
     super.key,
     required this.viewModel,
-    required this.navigationDelegate,
+    required this.coordinator,
   });
 
   final SessionViewModel viewModel;
-  final SessionNavigationDelegate navigationDelegate;
+  final SessionNavigationCoordinator coordinator;
 
   @override
   State<SessionView> createState() => _SessionViewState();
@@ -16,6 +16,7 @@ class SessionView extends StatefulWidget {
 
 class _SessionViewState extends State<SessionView> {
   SessionViewModel get viewModel => widget.viewModel;
+  SessionNavigationCoordinator get navigationDelegate => widget.coordinator;
 
   @override
   void initState() {
@@ -32,30 +33,42 @@ class _SessionViewState extends State<SessionView> {
           Scaffold(
             appBar: AppBar(
               backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
-              automaticallyImplyLeading: false,
+              leading: PopupMenuButton<String>(
+                onSelected: (value) {
+                  if (value == 'disconnect') {
+                    viewModel.disconnect();
+                  }
+                },
+                itemBuilder: (BuildContext context) {
+                  return [
+                    const PopupMenuItem<String>(
+                      value: 'disconnect',
+                      child: Text('Disconnect'),
+                    ),
+                  ];
+                },
+                icon: const Icon(Icons.menu),
+              ),
             ),
             body: _buildBody(context, viewModel),
             floatingActionButton: FloatingActionButton(
-              onPressed: () => widget.navigationDelegate.openSongBook(context),
+              onPressed: () => widget.coordinator.openSongBook(context),
               child: const Icon(Icons.menu_book),
             ),
           ),
           ValueListenableBuilder(
             valueListenable: viewModel.stateNotifier,
-            builder: (context, state, child) => state is Loading
-                ? Positioned.fill(
-                    child: Container(
-                      color: Colors.black54,
-                      child: const Center(
-                        child: CircularProgressIndicator(),
-                      ),
-                    ),
-                  )
-                : const SizedBox.shrink(),
-          ),
-          ValueListenableBuilder(
-            valueListenable: viewModel.stateNotifier,
             builder: (context, state, child) {
+              if (state.type == SessionViewStateType.loading) {
+                return Positioned.fill(
+                  child: Container(
+                    color: Colors.black54,
+                    child: const Center(
+                      child: CircularProgressIndicator(),
+                    ),
+                  ),
+                );
+              }
               if (state is Failure) {
                 WidgetsBinding.instance.addPostFrameCallback((_) {
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -64,6 +77,11 @@ class _SessionViewState extends State<SessionView> {
                       backgroundColor: Theme.of(context).colorScheme.error,
                     ),
                   );
+                });
+              }
+              if (state.type == SessionViewStateType.disconnected) {
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  navigationDelegate.backToConnectScreen(context);
                 });
               }
               return const SizedBox.shrink();

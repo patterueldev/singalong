@@ -4,11 +4,13 @@ class ConnectView extends StatefulWidget {
   const ConnectView({
     super.key,
     required this.viewModel,
-    this.localizations = const DefaultConnectViewLocalizations(),
+    required this.coordinator,
+    required this.localizable,
   });
 
   final ConnectViewModel viewModel;
-  final ConnectViewLocalizations localizations;
+  final ConnectNavigationCoordinator coordinator;
+  final ConnectLocalizable localizable;
 
   @override
   State<ConnectView> createState() => _ConnectViewState();
@@ -16,7 +18,8 @@ class ConnectView extends StatefulWidget {
 
 class _ConnectViewState extends State<ConnectView> {
   ConnectViewModel get viewModel => widget.viewModel;
-  ConnectViewLocalizations get localizations => widget.localizations;
+  ConnectNavigationCoordinator get delegate => widget.coordinator;
+  ConnectLocalizable get localizable => widget.localizable;
 
   @override
   void initState() {
@@ -30,27 +33,24 @@ class _ConnectViewState extends State<ConnectView> {
         children: [
           Scaffold(
             appBar: AppBar(
-              title: Text(localizations.connect(context)),
+              title: Text(localizable.screenTitleText(context)),
               backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
             ),
             body: _buildBody(context, viewModel),
           ),
           ValueListenableBuilder(
             valueListenable: viewModel.stateNotifier,
-            builder: (context, state, child) => state is Connecting
-                ? Positioned.fill(
-                    child: Container(
-                      color: Colors.black54,
-                      child: const Center(
-                        child: CircularProgressIndicator(),
-                      ),
+            builder: (_, state, child) {
+              if (state.type == ConnectViewStateType.connecting) {
+                return Positioned.fill(
+                  child: Container(
+                    color: Colors.black54,
+                    child: const Center(
+                      child: CircularProgressIndicator(),
                     ),
-                  )
-                : const SizedBox.shrink(),
-          ),
-          ValueListenableBuilder(
-            valueListenable: viewModel.stateNotifier,
-            builder: (context, state, child) {
+                  ),
+                );
+              }
               if (state is Failure) {
                 WidgetsBinding.instance.addPostFrameCallback((_) {
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -59,6 +59,19 @@ class _ConnectViewState extends State<ConnectView> {
                       backgroundColor: Theme.of(context).colorScheme.error,
                     ),
                   );
+                });
+              }
+              if (state.type == ConnectViewStateType.connected) {
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text("Connected!"),
+                      backgroundColor: Theme.of(context).colorScheme.primary,
+                    ),
+                  );
+                  Future.delayed(const Duration(seconds: 2), () {
+                    delegate.openSession(context);
+                  });
                 });
               }
               return const SizedBox.shrink();
@@ -77,14 +90,14 @@ class _ConnectViewState extends State<ConnectView> {
               TextField(
                 controller: viewModel.nameController,
                 decoration: InputDecoration(
-                  labelText: localizations.name(context),
+                  labelText: localizable.namePlaceholderText(context),
                 ),
               ),
               const SizedBox(height: 16),
               TextField(
                 controller: viewModel.sessionIdController,
                 decoration: InputDecoration(
-                  labelText: localizations.sessionId(context),
+                  labelText: localizable.sessionIdPlaceholderText(context),
                 ),
               ),
               const SizedBox(height: 32),
@@ -105,7 +118,7 @@ class _ConnectViewState extends State<ConnectView> {
                                 Theme.of(context).colorScheme.primary,
                             foregroundColor: Colors.white,
                           ),
-                          child: Text(localizations.connect(context)),
+                          child: Text(localizable.connectButtonText(context)),
                         ),
                       ),
                       const SizedBox(height: 16),
@@ -120,7 +133,7 @@ class _ConnectViewState extends State<ConnectView> {
                             foregroundColor:
                                 Theme.of(context).colorScheme.secondary,
                           ),
-                          child: Text(localizations.clear(context)),
+                          child: Text(localizable.clearButtonText(context)),
                         ),
                       ),
                     ],

@@ -18,22 +18,22 @@ part 'promptmodel.dart';
 class SessionFeatureProvider {
   SessionFeatureProvider();
 
-  final List<SingleChildStatelessWidget> providers = [
-    Provider<ListenToSongListUpdatesUseCase>(
-      create: (context) => DefaultListenToSongListUpdatesUseCase(),
-    ),
-  ];
+  final providers = MultiProvider(
+    providers: [
+      Provider<ListenToSongListUpdatesUseCase>(
+        create: (context) => DefaultListenToSongListUpdatesUseCase(),
+      ),
+    ],
+  );
 
-  Widget buildSessionView(
-          {required SessionNavigationDelegate navigationDelegate}) =>
-      Builder(
-        builder: (context) {
-          return SessionView(
-            viewModel: DefaultSessionViewModel(
-              listenToSongListUpdatesUseCase: context.read(),
-            ),
-            navigationDelegate: navigationDelegate,
-          );
-        },
+  Widget buildSessionView({
+    required BuildContext context,
+    required SessionNavigationCoordinator coordinator,
+  }) =>
+      SessionView(
+        viewModel: DefaultSessionViewModel(
+          listenToSongListUpdatesUseCase: context.read(),
+        ),
+        coordinator: coordinator,
       );
 }

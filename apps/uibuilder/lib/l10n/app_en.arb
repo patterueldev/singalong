@@ -1,0 +1,28 @@
+{
+  "screenTitleText": "Connect",
+  "screenTitleTextDescription": "Title for the connect screen",
+  
+  "connectButtonText": "Connect",
+  "connectButtonTextDescription": "Text for the connect button",
+  
+  "clearButtonText": "Clear",
+  "clearButtonTextDescription": "Text for the clear button",
+  
+  "namePlaceholderText": "Enter your name",
+  "namePlaceholderTextDescription": "Placeholder text for the name input field",
+  
+  "sessionIdPlaceholderText": "Enter the Session ID",
+  "sessionIdPlaceholderTextDescription": "Placeholder text for the session ID input field",
+  
+  "unknownError": "Unknown error occurred",
+  "unknownErrorDescription": "Message for unknown error",
+  
+  "connectionError": "Error connecting to {message}",
+  "connectionErrorDescription": "Error message when connection fails",
+  
+  "invalidName": "Invalid name: {name}",
+  "invalidNameDescription": "Error message for invalid name",
+  
+  "invalidSessionId": "You have entered an invalid session ID: {sessionId}",
+  "invalidSessionIdDescription": "Error message for invalid session ID"
+}

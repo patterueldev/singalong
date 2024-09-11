@@ -17,8 +17,7 @@ class _PrevierViewState extends State<PreviewerView> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) =>
-                viewModel.navigators.first.destination(context),
+            builder: (context) => viewModel.navigators.first.build(context),
           ),
         );
       }
@@ -45,8 +44,7 @@ class _PrevierViewState extends State<PreviewerView> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                        builder: (context) =>
-                            navigatorItem.destination(context)),
+                        builder: (context) => navigatorItem.build(context)),
                   );
                 },
               );
