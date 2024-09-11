@@ -5,7 +5,7 @@ abstract class ConnectUseCase {
 }
 
 class DefaultConnectUseCase implements ConnectUseCase {
-  final ConnectLocalizable localizable;
+  final ConnectLocalizations localizable;
   DefaultConnectUseCase({required this.localizable});
   @override
   TaskEither<ConnectException, Unit> connect(String name, String sessionId) =>

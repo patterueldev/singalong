@@ -3,21 +3,22 @@ library connectfeature;
 import 'package:flutter/material.dart';
 import 'package:fpdart/fpdart.dart' show TaskEither, Unit, unit;
 import 'package:provider/provider.dart';
-import 'package:provider/single_child_widget.dart';
+import 'package:shared/shared.dart';
 
 part 'connectview.dart';
 part 'connectviewstate.dart';
 part 'connectviewmodel.dart';
 part 'connectusecase.dart';
 part 'connectlocalizations.dart';
-part 'connectnavigationdelegate.dart';
+part 'connectnavigationcoordinator.dart';
+part 'connectexception.dart';
 
 class ConnectFeatureProvider {
   ConnectFeatureProvider();
 
   final providers = MultiProvider(
     providers: [
-      ProxyProvider<ConnectLocalizable, ConnectUseCase>(
+      ProxyProvider<ConnectLocalizations, ConnectUseCase>(
         update: (context, localizable, previous) => DefaultConnectUseCase(
           localizable: localizable,
         ),
@@ -28,7 +29,7 @@ class ConnectFeatureProvider {
   Widget buildConnectView({
     required BuildContext context,
     required ConnectNavigationCoordinator coordinator,
-    required ConnectLocalizable localizable,
+    required ConnectLocalizations localizations,
     String name = '',
     String sessionId = '',
   }) =>
@@ -39,6 +40,6 @@ class ConnectFeatureProvider {
           sessionId: sessionId,
         ),
         coordinator: coordinator,
-        localizable: localizable,
+        localizations: localizations,
       );
 }

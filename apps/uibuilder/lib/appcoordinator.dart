@@ -35,6 +35,7 @@ class AppCoordinator
         builder: (context) => sessionFeatureProvider.buildSessionView(
           context: context,
           coordinator: this,
+          localizations: context.read(),
         ),
       ),
     );

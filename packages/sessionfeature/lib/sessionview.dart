@@ -4,10 +4,12 @@ class SessionView extends StatefulWidget {
   const SessionView({
     super.key,
     required this.viewModel,
+    required this.localizations,
     required this.coordinator,
   });
 
   final SessionViewModel viewModel;
+  final SessionLocalizations localizations;
   final SessionNavigationCoordinator coordinator;
 
   @override
@@ -16,6 +18,7 @@ class SessionView extends StatefulWidget {
 
 class _SessionViewState extends State<SessionView> {
   SessionViewModel get viewModel => widget.viewModel;
+  SessionLocalizations get localizations => widget.localizations;
   SessionNavigationCoordinator get navigationDelegate => widget.coordinator;
 
   @override
@@ -41,9 +44,9 @@ class _SessionViewState extends State<SessionView> {
                 },
                 itemBuilder: (BuildContext context) {
                   return [
-                    const PopupMenuItem<String>(
+                    PopupMenuItem<String>(
                       value: 'disconnect',
-                      child: Text('Disconnect'),
+                      child: Text(localizations.disconnectButtonText(context)),
                     ),
                   ];
                 },
@@ -102,7 +105,7 @@ class _SessionViewState extends State<SessionView> {
                           onPressed: () {
                             Navigator.of(context).pop();
                           },
-                          child: const Text('Cancel'),
+                          child: Text(localizations.cancelButtonText(context)),
                         ),
                         TextButton(
                           onPressed: () {
@@ -145,7 +148,7 @@ class _SessionViewState extends State<SessionView> {
                       backgroundColor: Colors.blue,
                       foregroundColor: Colors.white,
                       icon: Icons.skip_next,
-                      label: 'Skip',
+                      label: localizations.skipButtonText(context),
                     ),
                     // Pause
                     SlidableAction(
@@ -158,7 +161,7 @@ class _SessionViewState extends State<SessionView> {
                       backgroundColor: Colors.orange,
                       foregroundColor: Colors.white,
                       icon: Icons.pause,
-                      label: 'Pause',
+                      label: localizations.pauseButtonText(context),
                     ),
                   ],
                   if (!song.currentPlaying) ...[
@@ -169,7 +172,7 @@ class _SessionViewState extends State<SessionView> {
                       backgroundColor: Colors.green,
                       foregroundColor: Colors.white,
                       icon: Icons.play_arrow,
-                      label: 'Play Next',
+                      label: localizations.playNextButtonText(context),
                     ),
                     // Cancel
                     SlidableAction(
@@ -177,7 +180,7 @@ class _SessionViewState extends State<SessionView> {
                       backgroundColor: Colors.red,
                       foregroundColor: Colors.white,
                       icon: Icons.cancel,
-                      label: 'Cancel',
+                      label: localizations.cancelButtonText(context),
                     ),
                   ],
                 ],
@@ -211,7 +214,8 @@ class _SessionViewState extends State<SessionView> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(song.artist),
-                    Text('Reserved by: ${song.reservingUser}'),
+                    Text(localizations.reservedByText(
+                        context, song.reservingUser)),
                   ],
                 ),
                 trailing: song.currentPlaying

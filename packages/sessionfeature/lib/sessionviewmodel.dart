@@ -1,10 +1,5 @@
 part of 'sessionfeature.dart';
 
-abstract class SessionNavigationCoordinator {
-  void openSongBook(BuildContext context);
-  void backToConnectScreen(BuildContext context);
-}
-
 abstract class SessionViewModel {
   ValueNotifier<SessionViewState> get stateNotifier;
   ValueNotifier<List<ReservedSongItem>> get songListNotifier;
@@ -90,10 +85,6 @@ class DefaultSessionViewModel extends SessionViewModel {
     if (!result) {
       return;
     }
-
-    // songListNotifier.value = songListNotifier.value
-    //     .map((e) => e == song ? e.copyWith(currentPlaying: false) : e)
-    //     .toList();
   }
 
   @override

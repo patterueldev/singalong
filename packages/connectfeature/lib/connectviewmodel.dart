@@ -59,16 +59,3 @@ class DefaultConnectViewModel implements ConnectViewModel {
     sessionIdController.clear();
   }
 }
-
-abstract class GenericLocalizations {
-  String unknownError(BuildContext context);
-}
-
-class ConnectException {
-  final String Function(BuildContext context) messageBuilder;
-  ConnectException({required this.messageBuilder});
-
-  String localizedOf(BuildContext context) {
-    return messageBuilder(context);
-  }
-}

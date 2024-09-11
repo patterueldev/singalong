@@ -1,6 +1,10 @@
 part of 'main.dart';
 
-class DefaultAppLocalizable implements ConnectLocalizable {
+class DefaultAppLocalizations
+    with ConnectLocalizationsMixin, SessionLocalizationsMixin
+    implements ConnectLocalizations, SessionLocalizations {}
+
+mixin ConnectLocalizationsMixin implements ConnectLocalizations {
   @override
   String screenTitleText(BuildContext context) {
     return AppLocalizations.of(context)!.screenTitleText;
@@ -27,8 +31,8 @@ class DefaultAppLocalizable implements ConnectLocalizable {
   }
 
   @override
-  String unknownError(BuildContext context) {
-    return AppLocalizations.of(context)!.unknownError;
+  String connectionSuccess(BuildContext context) {
+    return AppLocalizations.of(context)!.connectionSuccess;
   }
 
   @override
@@ -44,5 +48,42 @@ class DefaultAppLocalizable implements ConnectLocalizable {
   @override
   String invalidSessionId(BuildContext context, String sessionId) {
     return AppLocalizations.of(context)!.invalidSessionId(sessionId);
+  }
+
+  @override
+  String unknownError(BuildContext context) {
+    return AppLocalizations.of(context)!.unknownError;
+  }
+}
+
+mixin SessionLocalizationsMixin implements SessionLocalizations {
+  @override
+  String disconnectButtonText(BuildContext context) {
+    return AppLocalizations.of(context)!.disconnectButtonText;
+  }
+
+  @override
+  String cancelButtonText(BuildContext context) {
+    return AppLocalizations.of(context)!.cancelButtonText;
+  }
+
+  @override
+  String skipButtonText(BuildContext context) {
+    return AppLocalizations.of(context)!.skipButtonText;
+  }
+
+  @override
+  String pauseButtonText(BuildContext context) {
+    return AppLocalizations.of(context)!.pauseButtonText;
+  }
+
+  @override
+  String playNextButtonText(BuildContext context) {
+    return AppLocalizations.of(context)!.playNextButtonText;
+  }
+
+  @override
+  String reservedByText(BuildContext context, String name) {
+    return AppLocalizations.of(context)!.reservedByText(name);
   }
 }

@@ -21,10 +21,18 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     final connectFeatureProvider = ConnectFeatureProvider();
     final sessionFeatureProvider = SessionFeatureProvider();
+    final localizations = DefaultAppLocalizations();
+    final appCoordinator = AppCoordinator(
+      connectFeatureProvider: connectFeatureProvider,
+      sessionFeatureProvider: sessionFeatureProvider,
+    );
     return MultiProvider(
       providers: [
-        Provider<ConnectLocalizable>(
-            create: (context) => DefaultAppLocalizable()),
+        Provider<AppCoordinator>.value(value: appCoordinator),
+        Provider<ConnectNavigationCoordinator>.value(value: appCoordinator),
+        Provider<SessionNavigationCoordinator>.value(value: appCoordinator),
+        Provider<ConnectLocalizations>.value(value: localizations),
+        Provider<SessionLocalizations>.value(value: localizations),
         connectFeatureProvider.providers,
         sessionFeatureProvider.providers,
       ],

@@ -14,10 +14,6 @@ class DefaultPreviewerViewModel extends PreviewerViewModel {
 
   final ConnectFeatureProvider connectFeatureProvider;
   final SessionFeatureProvider sessionFeatureProvider;
-  late final AppCoordinator coordinator = AppCoordinator(
-    connectFeatureProvider: connectFeatureProvider,
-    sessionFeatureProvider: sessionFeatureProvider,
-  );
 
   @override
   final bool navigateOnStartup;
@@ -28,15 +24,16 @@ class DefaultPreviewerViewModel extends PreviewerViewModel {
       name: "Session",
       build: (context) => sessionFeatureProvider.buildSessionView(
         context: context,
-        coordinator: coordinator,
+        coordinator: context.read(),
+        localizations: context.read(),
       ),
     ),
     NavigatorItem(
       name: "Connect",
       build: (context) => connectFeatureProvider.buildConnectView(
         context: context,
-        coordinator: coordinator,
-        localizable: context.read(),
+        coordinator: context.read(),
+        localizations: context.read(),
         name: "John Doe",
         sessionId: "123456",
       ),

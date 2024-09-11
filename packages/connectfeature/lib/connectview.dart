@@ -5,12 +5,12 @@ class ConnectView extends StatefulWidget {
     super.key,
     required this.viewModel,
     required this.coordinator,
-    required this.localizable,
+    required this.localizations,
   });
 
   final ConnectViewModel viewModel;
   final ConnectNavigationCoordinator coordinator;
-  final ConnectLocalizable localizable;
+  final ConnectLocalizations localizations;
 
   @override
   State<ConnectView> createState() => _ConnectViewState();
@@ -19,7 +19,7 @@ class ConnectView extends StatefulWidget {
 class _ConnectViewState extends State<ConnectView> {
   ConnectViewModel get viewModel => widget.viewModel;
   ConnectNavigationCoordinator get delegate => widget.coordinator;
-  ConnectLocalizable get localizable => widget.localizable;
+  ConnectLocalizations get localizable => widget.localizations;
 
   @override
   void initState() {
@@ -65,7 +65,7 @@ class _ConnectViewState extends State<ConnectView> {
                 WidgetsBinding.instance.addPostFrameCallback((_) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text("Connected!"),
+                      content: Text(localizable.connectionSuccess(context)),
                       backgroundColor: Theme.of(context).colorScheme.primary,
                     ),
                   );
