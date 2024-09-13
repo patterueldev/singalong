@@ -49,9 +49,9 @@ mixin ConnectLocalizationsMixin implements ConnectLocalizations {
       _getLocalizedString((localizations) => localizations.connectionSuccess);
 
   @override
-  LocalizedString connectionError(String message) {
+  LocalizedString unhandled(String message) {
     return _getLocalizedString(
-        (localizations) => localizations.connectionError(message));
+        (localizations) => localizations.unhandled(message));
   }
 
   @override

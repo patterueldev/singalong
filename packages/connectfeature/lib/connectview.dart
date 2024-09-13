@@ -55,7 +55,9 @@ class _ConnectViewState extends State<ConnectView> {
                 WidgetsBinding.instance.addPostFrameCallback((_) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text(state.error.localizedOf(context)),
+                      content: state.error
+                          .localizedFrom(localizable)
+                          .localizedTextOf(context),
                       backgroundColor: Theme.of(context).colorScheme.error,
                     ),
                   );

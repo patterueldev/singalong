@@ -11,11 +11,11 @@ class ConnectViewState {
       const ConnectViewState(ConnectViewStateType.connecting);
   factory ConnectViewState.connected() =>
       const ConnectViewState(ConnectViewStateType.connected);
-  factory ConnectViewState.failure(ConnectException error) => Failure(error);
+  factory ConnectViewState.failure(GenericException error) => Failure(error);
 }
 
 class Failure extends ConnectViewState {
-  final ConnectException error;
+  final GenericException error;
   const Failure(this.error) : super(ConnectViewStateType.failure);
 }
 

@@ -1,10 +1,47 @@
 part of 'connectfeature.dart';
 
-class ConnectException {
-  final LocalizedString localizedString;
-  ConnectException(this.localizedString);
+class ConnectException extends GenericException {
+  final ExceptionType type;
+  const ConnectException._(this.type) : super();
 
-  String localizedOf(BuildContext context) {
-    return localizedString.localizedOf(context);
+  @override
+  LocalizedString localizedFrom(GenericLocalizations localizations) {
+    final connectLocalizations = localizations as ConnectLocalizations;
+    switch (type) {
+      case ExceptionType.invalidName:
+        final exception = this as InvalidNameException;
+        return connectLocalizations.invalidName(exception.name);
+      case ExceptionType.invalidSessionId:
+        final exception = this as InvalidSessionIDException;
+        return connectLocalizations.invalidSessionId(exception.sessionId);
+      default:
+        return super.localizedFrom(localizations);
+    }
   }
+
+  factory ConnectException.emptyName() =>
+      const ConnectException._(ExceptionType.emptyName);
+  factory ConnectException.emptySessionId() =>
+      const ConnectException._(ExceptionType.emptySessionId);
+  factory ConnectException.invalidSessionId(String sessionId) =
+      InvalidSessionIDException._;
+  factory ConnectException.invalidName(String name) = InvalidNameException._;
+}
+
+enum ExceptionType {
+  emptyName,
+  emptySessionId,
+  invalidName,
+  invalidSessionId,
+}
+
+class InvalidNameException extends ConnectException {
+  final String name;
+  const InvalidNameException._(this.name) : super._(ExceptionType.invalidName);
+}
+
+class InvalidSessionIDException extends ConnectException {
+  final String sessionId;
+  const InvalidSessionIDException._(this.sessionId)
+      : super._(ExceptionType.invalidSessionId);
 }

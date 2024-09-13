@@ -18,10 +18,8 @@ class ConnectFeatureProvider {
 
   final providers = MultiProvider(
     providers: [
-      ProxyProvider<ConnectLocalizations, ConnectUseCase>(
-        update: (context, localizable, previous) => DefaultConnectUseCase(
-          localizable: localizable,
-        ),
+      Provider<ConnectUseCase>(
+        create: (context) => DefaultConnectUseCase(),
       ),
     ],
   );

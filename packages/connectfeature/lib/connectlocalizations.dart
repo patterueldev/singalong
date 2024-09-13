@@ -8,7 +8,6 @@ abstract class ConnectLocalizations implements GenericLocalizations {
   LocalizedString get sessionIdPlaceholderText;
 
   LocalizedString get connectionSuccess;
-  LocalizedString connectionError(String message);
   LocalizedString invalidName(String name);
   LocalizedString invalidSessionId(String sessionId);
 }

@@ -21,8 +21,8 @@
   "connectionSuccess": "Successfully connected!",
   "connectionSuccessDescription": "Message for successful connection",
   
-  "connectionError": "Error connecting to {message}",
-  "connectionErrorDescription": "Error message when connection fails",
+  "unhandled": "Unhandled exception: {message}",
+  "unhandledDescription": "Error message when unhandled exception is thrown",
   
   "invalidName": "Invalid name: {name}",
   "invalidNameDescription": "Error message for invalid name",
