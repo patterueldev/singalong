@@ -1,4 +1,4 @@
-part of 'sessionfeature.dart';
+part of 'shared.dart';
 
 class PromptModel {
   final LocalizedString title;

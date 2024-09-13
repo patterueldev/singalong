@@ -9,12 +9,11 @@ import 'package:provider/provider.dart';
 import 'package:provider/single_child_widget.dart';
 import 'package:shared/shared.dart';
 
-part 'sessionview.dart';
-part 'reservedsongitem.dart';
-part 'sessionviewmodel.dart';
-part 'sessionviewstate.dart';
-part 'listentosonglistupdatesusecase.dart';
-part 'promptmodel.dart';
+part 'sessionview/sessionview.dart';
+part 'entities/reservedsongitem.dart';
+part 'sessionview/sessionviewmodel.dart';
+part 'sessionview/sessionviewstate.dart';
+part 'usecases/listentosonglistupdatesusecase.dart';
 part 'sessionnavigationcoordinator.dart';
 part 'sessionlocalizations.dart';
 

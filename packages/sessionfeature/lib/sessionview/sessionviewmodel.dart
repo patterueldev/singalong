@@ -1,4 +1,4 @@
-part of 'sessionfeature.dart';
+part of '../sessionfeature.dart';
 
 abstract class SessionViewModel {
   ValueNotifier<SessionViewState> get stateNotifier;

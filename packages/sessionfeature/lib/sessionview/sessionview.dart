@@ -1,4 +1,4 @@
-part of 'sessionfeature.dart';
+part of '../sessionfeature.dart';
 
 class SessionView extends StatefulWidget {
   const SessionView({
