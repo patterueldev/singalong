@@ -27,7 +27,7 @@
   "invalidName": "Invalid name: {name}",
   "invalidNameDescription": "Error message for invalid name",
   
-  "invalidSessionId": "You have entered an invalid session ID: {sessionId}",
+  "invalidSessionId": "Unable to connect to session with ID: {sessionId}",
   "invalidSessionIdDescription": "Error message for invalid session ID",
   
   "disconnectButtonText": "Disconnect",

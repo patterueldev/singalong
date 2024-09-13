@@ -23,9 +23,9 @@ class ConnectException extends GenericException {
       const ConnectException._(ExceptionType.emptyName);
   factory ConnectException.emptySessionId() =>
       const ConnectException._(ExceptionType.emptySessionId);
+  factory ConnectException.invalidName(String name) = InvalidNameException._;
   factory ConnectException.invalidSessionId(String sessionId) =
       InvalidSessionIDException._;
-  factory ConnectException.invalidName(String name) = InvalidNameException._;
 }
 
 enum ExceptionType {
