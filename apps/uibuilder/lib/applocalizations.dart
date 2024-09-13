@@ -49,6 +49,14 @@ mixin ConnectLocalizationsMixin implements ConnectLocalizations {
       _getLocalizedString((localizations) => localizations.connectionSuccess);
 
   @override
+  final emptyName =
+      _getLocalizedString((localizations) => localizations.emptyName);
+
+  @override
+  final emptySessionId =
+      _getLocalizedString((localizations) => localizations.emptySessionId);
+
+  @override
   LocalizedString unhandled(String message) {
     return _getLocalizedString(
         (localizations) => localizations.unhandled(message));

@@ -24,8 +24,14 @@
   "unhandled": "Unhandled exception: {message}",
   "unhandledDescription": "Error message when unhandled exception is thrown",
   
-  "invalidName": "Invalid name: {name}",
+  "emptyName": "Name cannot be empty",
+  "emptyNameDescription": "Error message for empty name",
+  
+  "invalidName": "Name already used: {name}",
   "invalidNameDescription": "Error message for invalid name",
+  
+  "emptySessionId": "Session ID cannot be empty",
+  "emptySessionIdDescription": "Error message for empty session ID",
   
   "invalidSessionId": "Unable to connect to session with ID: {sessionId}",
   "invalidSessionIdDescription": "Error message for invalid session ID",

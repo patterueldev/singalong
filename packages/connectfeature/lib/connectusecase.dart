@@ -9,6 +9,7 @@ class DefaultConnectUseCase implements ConnectUseCase {
   @override
   TaskEither<GenericException, Unit> connect(String name, String sessionId) =>
       TaskEither.tryCatch(() async {
+        debugPrint("Attempting to connect");
         if (name.isEmpty) {
           throw ConnectException.emptyName();
         }
@@ -17,22 +18,26 @@ class DefaultConnectUseCase implements ConnectUseCase {
         }
         await Future.delayed(const Duration(seconds: 2));
 
+        // obviously, session connection goes first; actually alongside the name
+        // if app can't find session, throw session error
+        // otherwise, app will check if session already uses the name
+        final temporaryValidSessionIDs = ["123456"];
+        if (!temporaryValidSessionIDs.contains(sessionId)) {
+          throw ConnectException.invalidSessionId(sessionId);
+        }
+
         final temporaryExistingName = ["thor"];
         if (temporaryExistingName.contains(name)) {
           throw ConnectException.invalidName(name);
-        }
-
-        final temporaryValidSessionIDs = ["123456"];
-
-        if (!temporaryValidSessionIDs.contains(sessionId)) {
-          throw ConnectException.invalidSessionId(sessionId);
         }
 
         return unit;
       }, (e, s) {
         if (e is ConnectException) {
           return e;
+        } else if (e is GenericException) {
+          return e;
         }
-        return GenericException.unknown();
+        return GenericException.unhandled(e);
       });
 }

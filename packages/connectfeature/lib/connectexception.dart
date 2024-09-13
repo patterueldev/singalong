@@ -8,6 +8,10 @@ class ConnectException extends GenericException {
   LocalizedString localizedFrom(GenericLocalizations localizations) {
     final connectLocalizations = localizations as ConnectLocalizations;
     switch (type) {
+      case ExceptionType.emptyName:
+        return connectLocalizations.emptyName;
+      case ExceptionType.emptySessionId:
+        return connectLocalizations.emptySessionId;
       case ExceptionType.invalidName:
         final exception = this as InvalidNameException;
         return connectLocalizations.invalidName(exception.name);
