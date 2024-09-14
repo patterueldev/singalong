@@ -15,4 +15,7 @@ abstract class SessionLocalizations implements GenericLocalizations {
   LocalizedString get cancelSongTitle;
   LocalizedString get cancelSongMessage;
   LocalizedString get cancelSongActionText;
+
+  LocalizedString get lyricsLabelText;
+  LocalizedString get noLyricsText;
 }

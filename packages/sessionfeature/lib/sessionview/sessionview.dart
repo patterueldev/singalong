@@ -73,7 +73,7 @@ class _SessionViewState extends State<SessionView> {
                   ),
                 );
               }
-              if (state is Failure) {
+              if (state is SessionFailure) {
                 WidgetsBinding.instance.addPostFrameCallback((_) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
@@ -130,6 +130,7 @@ class _SessionViewState extends State<SessionView> {
           ),
         ],
       );
+
   Widget _buildBody(BuildContext context, SessionViewModel viewModel) {
     return ValueListenableBuilder<List<ReservedSongItem>>(
       valueListenable: viewModel.songListNotifier,
@@ -226,7 +227,18 @@ class _SessionViewState extends State<SessionView> {
                 trailing: song.currentPlaying
                     ? const Icon(Icons.play_arrow, color: Colors.green)
                     : null,
-                onTap: null,
+                onTap: () => showModalBottomSheet(
+                  context: context,
+                  isScrollControlled: true,
+                  builder: (context) => SizedBox(
+                    height: MediaQuery.of(context).size.height * 0.90,
+                    child: ChangeNotifierProvider<SongViewModel>(
+                      create: (context) =>
+                          DefaultSongViewModel(songId: song.id),
+                      child: SongView(localizations: localizations),
+                    ),
+                  ),
+                ),
               ),
             );
           },

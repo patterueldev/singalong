@@ -12,6 +12,7 @@ part 'connectusecase.dart';
 part 'connectlocalizations.dart';
 part 'connectnavigationcoordinator.dart';
 part 'connectexception.dart';
+part 'connectassets.dart';
 
 class ConnectFeatureProvider {
   ConnectFeatureProvider();
@@ -28,6 +29,7 @@ class ConnectFeatureProvider {
     required BuildContext context,
     required ConnectNavigationCoordinator coordinator,
     required ConnectLocalizations localizations,
+    required ConnectAssets assets,
     String name = '',
     String sessionId = '',
   }) =>
@@ -39,5 +41,6 @@ class ConnectFeatureProvider {
         ),
         coordinator: coordinator,
         localizations: localizations,
+        assets: assets,
       );
 }

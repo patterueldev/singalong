@@ -20,6 +20,8 @@ class DefaultListenToSongListUpdatesUseCase
       _mockSongList = [
         ..._mockSongList,
         ReservedSongItem(
+          id: 'id${_mockSongList.length + 1}',
+          songId: 'songId${_mockSongList.length + 1}',
           title: 'Song ${_mockSongList.length + 1}',
           artist: 'Singer ${_mockSongList.length + 1}',
           imageURL: 'https://example.com/image${_mockSongList.length + 1}.jpg',

@@ -13,12 +13,12 @@ class SessionViewState {
       const SessionViewState(SessionViewStateType.loaded);
   factory SessionViewState.disconnected() =>
       const SessionViewState(SessionViewStateType.disconnected);
-  factory SessionViewState.failure(String error) => Failure(error);
+  factory SessionViewState.failure(String error) => SessionFailure(error);
 }
 
-class Failure extends SessionViewState {
+class SessionFailure extends SessionViewState {
   final String error;
-  const Failure(this.error) : super(SessionViewStateType.failure);
+  const SessionFailure(this.error) : super(SessionViewStateType.failure);
 }
 
 enum SessionViewStateType {

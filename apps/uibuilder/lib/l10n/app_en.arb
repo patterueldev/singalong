@@ -70,5 +70,11 @@
   "cancelSongMessageDescription": "Message for the cancel song prompt",
 
   "cancelSongActionText": "Cancel",
-  "cancelSongActionTextDescription": "Action text for the cancel song prompt"
+  "cancelSongActionTextDescription": "Action text for the cancel song prompt",
+
+  "lyricsLabelText": "Lyrics",
+  "lyricsLabelTextDescription": "Text for the lyrics label",
+
+  "lyricsNotAvailable": "Lyrics not available",
+  "lyricsNotAvailableDescription": "Message for lyrics not available"
 }

@@ -41,7 +41,7 @@ dependencies:
   provider: ^6.1.2
   flutter_localizations:
     sdk: flutter
-  intl: any
+  intl: ^0.18.1
 
 dev_dependencies:
   flutter_test:
@@ -53,6 +53,8 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^3.0.0
+  flutter_gen_runner: ^5.7.0
+  build_runner: ^2.4.9
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -64,6 +66,9 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+
+  assets:
+    - assets/images/
 
   # To add assets to your application, add an assets section, like this:
   # assets:
@@ -97,3 +102,7 @@ flutter:
   # see https://flutter.dev/custom-fonts/#from-packages
   
   generate: true
+
+flutter_gen:
+  assets:
+    enabled: true

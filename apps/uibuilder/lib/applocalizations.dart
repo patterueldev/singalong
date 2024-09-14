@@ -124,4 +124,12 @@ mixin SessionLocalizationsMixin implements SessionLocalizations {
   @override
   final LocalizedString cancelSongActionText = _getLocalizedString(
       (localizations) => localizations.cancelSongActionText);
+
+  @override
+  LocalizedString get lyricsLabelText =>
+      _getLocalizedString((localizations) => localizations.lyricsLabelText);
+
+  @override
+  LocalizedString get noLyricsText =>
+      _getLocalizedString((localizations) => localizations.lyricsNotAvailable);
 }

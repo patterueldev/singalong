@@ -22,7 +22,9 @@ class AppCoordinator
         return Container(
           height: modalHeight,
           color: Colors.white,
-          child: TemporarySongBookView(),
+          child: const TemporaryScreenView(
+            name: "Song Book",
+          ),
         );
       },
     );
@@ -32,12 +34,9 @@ class AppCoordinator
   void openSession(BuildContext context) {
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(
-        builder: (context) => sessionFeatureProvider.buildSessionView(
-          context: context,
-          coordinator: this,
-          localizations: context.read(),
-        ),
-      ),
+          builder: (context) => const TemporaryScreenView(
+                name: "Song Book",
+              )),
     );
   }
 

@@ -6,11 +6,13 @@ class ConnectView extends StatefulWidget {
     required this.viewModel,
     required this.coordinator,
     required this.localizations,
+    required this.assets,
   });
 
   final ConnectViewModel viewModel;
   final ConnectNavigationCoordinator coordinator;
   final ConnectLocalizations localizations;
+  final ConnectAssets assets;
 
   @override
   State<ConnectView> createState() => _ConnectViewState();
@@ -20,6 +22,7 @@ class _ConnectViewState extends State<ConnectView> {
   ConnectViewModel get viewModel => widget.viewModel;
   ConnectNavigationCoordinator get delegate => widget.coordinator;
   ConnectLocalizations get localizable => widget.localizations;
+  ConnectAssets get assets => widget.assets;
 
   @override
   void initState() {
@@ -95,6 +98,7 @@ class _ConnectViewState extends State<ConnectView> {
                 decoration: InputDecoration(
                   labelText:
                       localizable.namePlaceholderText.localizedOf(context),
+                  icon: const Icon(Icons.person),
                 ),
               ),
               const SizedBox(height: 16),
@@ -103,6 +107,7 @@ class _ConnectViewState extends State<ConnectView> {
                 decoration: InputDecoration(
                   labelText:
                       localizable.sessionIdPlaceholderText.localizedOf(context),
+                  icon: const Icon(Icons.meeting_room),
                 ),
               ),
               const SizedBox(height: 32),

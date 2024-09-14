@@ -1,21 +1,17 @@
 part of '../sessionfeature.dart';
 
-class ReservedSongItem {
-  final String id;
-  final String songId;
+class SongModel {
   final String title;
   final String artist;
   final String imageURL;
-  final String reservingUser;
   final bool currentPlaying;
+  final String? lyrics;
 
-  const ReservedSongItem({
-    required this.id,
-    required this.songId,
+  SongModel({
     required this.title,
     required this.artist,
     required this.imageURL,
-    required this.reservingUser,
     required this.currentPlaying,
+    this.lyrics,
   });
 }
