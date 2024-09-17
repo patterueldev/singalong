@@ -49,7 +49,7 @@ class DefaultSongBookViewModel extends SongBookViewModel {
     final String? searchQuery =
         _searchQuery.trim().isNotEmpty ? _searchQuery : null;
     stateNotifier.value =
-        SongBookViewState.loaded([], searchQuery: searchQuery);
+        SongBookViewState.loaded(songList, searchQuery: searchQuery);
   }
 
   @override

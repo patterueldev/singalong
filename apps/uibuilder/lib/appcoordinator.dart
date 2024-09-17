@@ -1,14 +1,11 @@
 part of 'main.dart';
 
 class AppCoordinator
-    implements ConnectNavigationCoordinator, SessionNavigationCoordinator {
-  final ConnectFeatureProvider connectFeatureProvider;
-  final SessionFeatureProvider sessionFeatureProvider;
-
-  const AppCoordinator({
-    required this.connectFeatureProvider,
-    required this.sessionFeatureProvider,
-  });
+    implements
+        ConnectNavigationCoordinator,
+        SessionNavigationCoordinator,
+        SongBookNavigationCoordinator {
+  const AppCoordinator();
 
   @override
   void openSongBook(BuildContext context) {
@@ -43,5 +40,15 @@ class AppCoordinator
   @override
   void backToConnectScreen(BuildContext context) {
     Navigator.of(context).pop();
+  }
+
+  @override
+  void openDownloadScreen(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+          builder: (context) => const TemporaryScreenView(
+                name: "Download",
+              )),
+    );
   }
 }

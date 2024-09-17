@@ -33,21 +33,20 @@ class MyApp extends StatelessWidget {
     final songBookFeatureProvider = SongBookFeatureProvider();
     final localizations = DefaultAppLocalizations();
     final assets = DefaultAppAssets();
-    final appCoordinator = AppCoordinator(
-      connectFeatureProvider: connectFeatureProvider,
-      sessionFeatureProvider: sessionFeatureProvider,
-    );
+    const appCoordinator = AppCoordinator();
     return MultiProvider(
       providers: [
         Provider<AppCoordinator>.value(value: appCoordinator),
         Provider<ConnectNavigationCoordinator>.value(value: appCoordinator),
         Provider<SessionNavigationCoordinator>.value(value: appCoordinator),
+        Provider<SongBookNavigationCoordinator>.value(value: appCoordinator),
         Provider<ConnectLocalizations>.value(value: localizations),
         Provider<ConnectAssets>.value(value: assets),
         Provider<SessionLocalizations>.value(value: localizations),
         Provider<SongBookLocalizations>.value(value: localizations),
         connectFeatureProvider.providers,
         sessionFeatureProvider.providers,
+        // songBookFeatureProvider.providers,
       ],
       child: MaterialApp(
         title: 'Singalong UI Builder',

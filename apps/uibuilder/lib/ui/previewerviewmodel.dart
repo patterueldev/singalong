@@ -26,6 +26,7 @@ class DefaultPreviewerViewModel extends PreviewerViewModel {
       name: "Song Book",
       build: (context) => songBookFeatureProvider.buildSongBookView(
         context: context,
+        coordinator: context.read(),
         localizations: context.read(),
       ),
     ),
