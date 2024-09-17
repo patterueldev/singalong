@@ -9,18 +9,18 @@ class SongViewState {
       const SongViewState(SongViewStateType.initial);
   factory SongViewState.loading() =>
       const SongViewState(SongViewStateType.loading);
-  factory SongViewState.loaded(SongModel song) => SongLoaded(song);
-  factory SongViewState.failure(String error) => SongFailure(error);
+  factory SongViewState.loaded(SongModel song) => Loaded(song);
+  factory SongViewState.failure(String error) => Failure(error);
 }
 
-class SongLoaded extends SongViewState {
+class Loaded extends SongViewState {
   final SongModel song;
-  const SongLoaded(this.song) : super(SongViewStateType.loaded);
+  const Loaded(this.song) : super(SongViewStateType.loaded);
 }
 
-class SongFailure extends SongViewState {
+class Failure extends SongViewState {
   final String error;
-  const SongFailure(this.error) : super(SongViewStateType.failure);
+  const Failure(this.error) : super(SongViewStateType.failure);
 }
 
 enum SongViewStateType {

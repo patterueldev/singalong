@@ -91,8 +91,7 @@ class _ConnectViewState extends State<ConnectView> {
         child: Column(
           children: [
             const SizedBox(height: 50),
-            Image.asset(
-              assets.connectBannerImage.path,
+            assets.connectBannerImage.image(
               width: MediaQuery.of(context).size.width * 0.5,
             ),
             TextField(

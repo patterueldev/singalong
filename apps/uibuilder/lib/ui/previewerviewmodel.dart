@@ -28,6 +28,7 @@ class DefaultPreviewerViewModel extends PreviewerViewModel {
         context: context,
         coordinator: context.read(),
         localizations: context.read(),
+        assets: context.read(),
       ),
     ),
     NavigatorItem(

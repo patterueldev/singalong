@@ -13,6 +13,8 @@ scripts:
     exec: flutter pub upgrade
   update:
     exec: dart pub update
+  build_runner:
+    exec: flutter pub run build_runner build --delete-conflicting-outputs
     
   generate_localization:
     run: |

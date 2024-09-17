@@ -5,11 +5,7 @@ class DefaultAppLocalizations
         GenericLocalizationsMixin,
         ConnectLocalizationsMixin,
         SessionLocalizationsMixin,
-        SongBookLocalizationsMixin
-    implements
-        ConnectLocalizations,
-        SessionLocalizations,
-        SongBookLocalizations {}
+        SongBookLocalizationsMixin {}
 
 LocalizedString _getLocalizedString(
         String Function(AppLocalizations) getString) =>

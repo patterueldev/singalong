@@ -31,10 +31,10 @@ class _SongViewState extends State<SongView> {
               case SongViewStateType.loading:
                 return const Center(child: CircularProgressIndicator());
               case SongViewStateType.loaded:
-                final loaded = viewModel.state as SongLoaded;
+                final loaded = viewModel.state as Loaded;
                 return _buildLoaded(loaded.song);
               case SongViewStateType.failure:
-                final failure = viewModel.state as SongFailure;
+                final failure = viewModel.state as Failure;
                 return Center(child: Text(failure.error));
             }
           },

@@ -6,11 +6,13 @@ class SongBookView extends StatefulWidget {
     required this.viewModel,
     required this.navigationCoordinator,
     required this.localizations,
+    required this.assets,
   });
 
   final SongBookViewModel viewModel;
   final SongBookNavigationCoordinator navigationCoordinator;
   final SongBookLocalizations localizations;
+  final SongBookAssets assets;
   @override
   State<SongBookView> createState() => _SongBookViewState();
 }
@@ -20,6 +22,7 @@ class _SongBookViewState extends State<SongBookView> {
   SongBookNavigationCoordinator get navigationCoordinator =>
       widget.navigationCoordinator;
   SongBookLocalizations get localizations => widget.localizations;
+  SongBookAssets get assets => widget.assets;
 
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
@@ -75,92 +78,124 @@ class _SongBookViewState extends State<SongBookView> {
                 icon: isSearching
                     ? const Icon(Icons.close)
                     : const Icon(Icons.search),
-                onPressed: () => viewModel.toggleSearch(),
+                onPressed: () => {
+                  if (isSearching) _searchController.clear(),
+                  viewModel.toggleSearch(),
+                },
               ),
             ),
           ],
         ),
         body: Container(
-          padding: EdgeInsets.all(20),
+          padding: const EdgeInsets.all(20),
           color: Colors.grey[200],
           child: ValueListenableBuilder<SongBookViewState>(
             valueListenable: viewModel.stateNotifier,
             builder: (context, state, child) {
-              bool isLoading = false;
-              List<SongItem> songList = [];
-              String? searchQuery;
               switch (state.type) {
+                case SongBookViewStateType.initial:
                 case SongBookViewStateType.loading:
-                  isLoading = true;
-                  songList = (state as Loading).songList;
-                  break;
                 case SongBookViewStateType.loaded:
-                  final loadedState = state as Loaded;
-                  songList = loadedState.songList;
-                  searchQuery = loadedState.searchQuery;
-                  break;
+                  List<SongItem> songList = [];
+                  bool isLoading = false;
+                  if (state is Loading) {
+                    songList = state.songList;
+                    isLoading = true;
+                  } else if (state is Loaded) {
+                    songList = state.songList;
+                  }
+                  return _buildSongList(songList, isLoading);
+
+                case SongBookViewStateType.empty:
+                  final emptyState = state as Empty;
+                  return _buildEmpty(emptyState);
+
                 case SongBookViewStateType.failure:
-                  return Center(
-                    child: Text((state as Failure).error),
-                  );
-                default:
-                  break;
+                  final failureState = state as Failure;
+                  return _buildError(failureState);
               }
-              return Skeletonizer(
-                enabled: isLoading,
-                child: songList.isEmpty
-                    ? Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Text(
-                            searchQuery == null
-                                ? localizations.emptySongBook
-                                    .localizedOf(context)
-                                : localizations
-                                    .songNotFound(searchQuery)
-                                    .localizedOf(context),
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              fontSize: 16,
-                              color: Colors.grey,
-                            ),
-                          ),
-                          TextButton(
-                            onPressed: () => widget.navigationCoordinator
-                                .openDownloadScreen(context),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(Icons.download),
-                                const SizedBox(width: 8),
-                                Text(
-                                  localizations.download.localizedOf(context),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      )
-                    : ListView.builder(
-                        itemCount: songList.length,
-                        itemBuilder: (context, index) {
-                          final song = songList[index];
-                          return Card(
-                            child: ListTile(
-                              title: Text(song.title),
-                              subtitle: Text(song.artist),
-                              leading: Image.network(song.imageURL),
-                              trailing: song.alreadyPlayed
-                                  ? const Icon(Icons.music_note_sharp)
-                                  : null,
-                            ),
-                          );
-                        },
-                      ),
-              );
             },
           ),
         ),
+      );
+
+  Widget _buildEmpty(Empty state) => Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const SizedBox(height: 150),
+          assets.errorBannerImage.image(
+            height: 200,
+          ),
+          state.localizedFrom(localizations).localizedTextOf(
+                context,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 16,
+                  color: Colors.grey,
+                ),
+              ),
+          TextButton(
+            onPressed: () =>
+                widget.navigationCoordinator.openDownloadScreen(context),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.download),
+                const SizedBox(width: 8),
+                Text(
+                  localizations.download.localizedOf(context),
+                ),
+              ],
+            ),
+          ),
+        ],
+      );
+
+  Widget _buildSongList(List<SongItem> songList, bool isLoading) =>
+      Skeletonizer(
+        enabled: isLoading,
+        child: ListView.builder(
+          itemCount: songList.length,
+          itemBuilder: (context, index) {
+            final song = songList[index];
+            return Card(
+              child: ListTile(
+                title: Text(song.title),
+                subtitle: Text(song.artist),
+                leading: Image.network(song.imageURL),
+                trailing: song.alreadyPlayed
+                    ? const Icon(Icons.music_note_sharp)
+                    : null,
+              ),
+            );
+          },
+        ),
+      );
+
+  Widget _buildError(Failure state) => Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          assets.errorBannerImage.image(),
+          Text(
+            state.error,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 16,
+              color: Colors.grey,
+            ),
+          ),
+          TextButton(
+            onPressed: viewModel.fetchSongs,
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.refresh),
+                const SizedBox(width: 8),
+                Text("Retry"),
+              ],
+            ),
+          ),
+        ],
       );
 }
