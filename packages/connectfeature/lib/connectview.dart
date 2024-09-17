@@ -36,7 +36,6 @@ class _ConnectViewState extends State<ConnectView> {
         children: [
           Scaffold(
             appBar: AppBar(
-              title: localizable.screenTitleText.localizedTextOf(context),
               backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
             ),
             body: _buildBody(context, viewModel),
@@ -89,71 +88,72 @@ class _ConnectViewState extends State<ConnectView> {
   Widget _buildBody(BuildContext context, ConnectViewModel viewModel) =>
       Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              TextField(
-                controller: viewModel.nameController,
-                decoration: InputDecoration(
-                  labelText:
-                      localizable.namePlaceholderText.localizedOf(context),
-                  icon: const Icon(Icons.person),
-                ),
+        child: Column(
+          children: [
+            const SizedBox(height: 50),
+            Image.asset(
+              assets.connectBannerImage.path,
+              width: MediaQuery.of(context).size.width * 0.5,
+            ),
+            TextField(
+              controller: viewModel.nameController,
+              decoration: InputDecoration(
+                labelText: localizable.namePlaceholderText.localizedOf(context),
+                icon: const Icon(Icons.person),
               ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: viewModel.sessionIdController,
-                decoration: InputDecoration(
-                  labelText:
-                      localizable.sessionIdPlaceholderText.localizedOf(context),
-                  icon: const Icon(Icons.meeting_room),
-                ),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: viewModel.sessionIdController,
+              decoration: InputDecoration(
+                labelText:
+                    localizable.sessionIdPlaceholderText.localizedOf(context),
+                icon: const Icon(Icons.meeting_room),
               ),
-              const SizedBox(height: 32),
-              LayoutBuilder(
-                builder: (context, constraints) {
-                  final buttonWidth = constraints.maxWidth * 0.5 < 250
-                      ? constraints.maxWidth * 0.5
-                      : 250.0;
-                  return Column(
-                    children: [
-                      SizedBox(
-                        width: buttonWidth,
-                        height: 50,
-                        child: ElevatedButton(
-                          onPressed: () => viewModel.connect(),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor:
-                                Theme.of(context).colorScheme.primary,
-                            foregroundColor: Colors.white,
-                          ),
-                          child: localizable.connectButtonText
-                              .localizedTextOf(context),
+            ),
+            const SizedBox(height: 32),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final buttonWidth = constraints.maxWidth * 0.5 < 250
+                    ? constraints.maxWidth * 0.5
+                    : 250.0;
+                return Column(
+                  children: [
+                    SizedBox(
+                      width: buttonWidth,
+                      height: 50,
+                      child: ElevatedButton(
+                        onPressed: () => viewModel.connect(),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor:
+                              Theme.of(context).colorScheme.primary,
+                          foregroundColor: Colors.white,
                         ),
+                        child: localizable.connectButtonText
+                            .localizedTextOf(context),
                       ),
-                      const SizedBox(height: 16),
-                      SizedBox(
-                        width: buttonWidth,
-                        height: 50,
-                        child: OutlinedButton(
-                          onPressed: () => viewModel.clear(),
-                          style: OutlinedButton.styleFrom(
-                            side: BorderSide(
-                                color: Theme.of(context).colorScheme.secondary),
-                            foregroundColor:
-                                Theme.of(context).colorScheme.secondary,
-                          ),
-                          child: localizable.clearButtonText
-                              .localizedTextOf(context),
+                    ),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: buttonWidth,
+                      height: 50,
+                      child: OutlinedButton(
+                        onPressed: () => viewModel.clear(),
+                        style: OutlinedButton.styleFrom(
+                          side: BorderSide(
+                              color: Theme.of(context).colorScheme.secondary),
+                          foregroundColor:
+                              Theme.of(context).colorScheme.secondary,
                         ),
+                        child: localizable.clearButtonText
+                            .localizedTextOf(context),
                       ),
-                    ],
-                  );
-                },
-              ),
-            ],
-          ),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ],
         ),
       );
 

@@ -1,4 +1,4 @@
-# melos_managed_dependency_overrides: connectfeature,sessionfeature,shared
+# melos_managed_dependency_overrides: connectfeature,sessionfeature,shared,songbookfeature
 dependency_overrides:
   connectfeature:
     path: ../../packages/connectfeature
@@ -6,3 +6,5 @@ dependency_overrides:
     path: ../../packages/sessionfeature
   shared:
     path: ../../packages/shared
+  songbookfeature:
+    path: ../../packages/songbookfeature

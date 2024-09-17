@@ -1,7 +1,7 @@
 part of 'connectfeature.dart';
 
 abstract class ConnectLocalizations implements GenericLocalizations {
-  LocalizedString get screenTitleText;
+  LocalizedString get connectScreenTitleText;
   LocalizedString get connectButtonText;
   LocalizedString get clearButtonText;
   LocalizedString get namePlaceholderText;

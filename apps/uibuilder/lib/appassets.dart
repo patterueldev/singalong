@@ -4,5 +4,7 @@ class DefaultAppAssets with ConnectAssetsMixin implements ConnectAssetsMixin {}
 
 mixin ConnectAssetsMixin implements ConnectAssets {
   @override
-  final sessionIdLogo = AssetSource(Assets.images.meetingRoom);
+  final connectBannerImage = AssetSource(
+    Assets.images.karaokeNessyou.path,
+  );
 }

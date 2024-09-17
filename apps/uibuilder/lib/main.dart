@@ -4,11 +4,16 @@ import 'package:provider/provider.dart';
 import 'package:sessionfeature/sessionfeature.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:shared/shared.dart';
+import 'package:songbookfeature/songbookfeature.dart';
 import 'package:uibuilder/gen/assets.gen.dart';
 
 part 'applocalizations.dart';
 part 'appcoordinator.dart';
 part 'appassets.dart';
+part '_genericlocalizations.dart';
+part '_connectlocalizations.dart';
+part '_sessionlocalizations.dart';
+part '_songbooklocalizations.dart';
 part 'ui/navigatoritem.dart';
 part 'ui/previewerviewmodel.dart';
 part 'ui/previewerview.dart';
@@ -25,6 +30,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     final connectFeatureProvider = ConnectFeatureProvider();
     final sessionFeatureProvider = SessionFeatureProvider();
+    final songBookFeatureProvider = SongBookFeatureProvider();
     final localizations = DefaultAppLocalizations();
     final assets = DefaultAppAssets();
     final appCoordinator = AppCoordinator(
@@ -39,6 +45,7 @@ class MyApp extends StatelessWidget {
         Provider<ConnectLocalizations>.value(value: localizations),
         Provider<ConnectAssets>.value(value: assets),
         Provider<SessionLocalizations>.value(value: localizations),
+        Provider<SongBookLocalizations>.value(value: localizations),
         connectFeatureProvider.providers,
         sessionFeatureProvider.providers,
       ],
@@ -54,6 +61,7 @@ class MyApp extends StatelessWidget {
           create: (ctx) => DefaultPreviewerViewModel(
             connectFeatureProvider: connectFeatureProvider,
             sessionFeatureProvider: sessionFeatureProvider,
+            songBookFeatureProvider: songBookFeatureProvider,
           ),
           child: const PreviewerView(),
         ),

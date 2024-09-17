@@ -8,7 +8,21 @@ class LocalizedString {
     return textBuilder(context);
   }
 
-  Widget localizedTextOf(BuildContext context) {
-    return Text(localizedOf(context));
+  Widget localizedTextOf(
+    BuildContext context, {
+    TextStyle? style,
+    TextAlign? textAlign,
+    int? maxLines,
+    TextOverflow? overflow,
+    bool? softWrap,
+  }) {
+    return Text(
+      localizedOf(context),
+      style: style,
+      textAlign: textAlign,
+      maxLines: maxLines,
+      overflow: overflow,
+      softWrap: softWrap,
+    );
   }
 }

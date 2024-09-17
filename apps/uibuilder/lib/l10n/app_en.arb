@@ -1,7 +1,7 @@
 {
   "@@locale": "en",
-  "screenTitleText": "Connect",
-  "screenTitleTextDescription": "Title for the connect screen",
+  "connectScreenTitle": "Connect",
+  "connectScreenTitleDescription": "Title for the connect screen",
   
   "connectButtonText": "Connect",
   "connectButtonTextDescription": "Text for the connect button",
@@ -76,5 +76,21 @@
   "lyricsLabelTextDescription": "Text for the lyrics label",
 
   "lyricsNotAvailable": "Lyrics not available",
-  "lyricsNotAvailableDescription": "Message for lyrics not available"
+  "lyricsNotAvailableDescription": "Message for lyrics not available",
+
+  "songBookScreenTitle": "Song Book",
+  "songBookScreenTitleDescription": "Title for the song book screen",
+
+  "searchPlaceholderText": "Search songs...",
+  "searchPlaceholderTextDescription": "Placeholder text for the search input field",
+
+  "downloadButtonText": "Download",
+  "downloadButtonTextDescription": "Text for the download button",
+
+  "emptySongBook": "Song book is empty",
+  "emptySongBookDescription": "Message for empty song book",
+
+  "songNotFound": "\"{query}\" was not found from the song book.",
+  "songNotFoundDescription": "Message for song not found"
+
 }
