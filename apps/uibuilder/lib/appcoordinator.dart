@@ -5,7 +5,17 @@ class AppCoordinator
         ConnectNavigationCoordinator,
         SessionNavigationCoordinator,
         SongBookNavigationCoordinator {
-  const AppCoordinator();
+  const AppCoordinator({
+    required this.connectFeatureProvider,
+    required this.sessionFeatureProvider,
+    required this.songBookFeatureProvider,
+    required this.downloadFeatureProvider,
+  });
+
+  final ConnectFeatureProvider connectFeatureProvider;
+  final SessionFeatureProvider sessionFeatureProvider;
+  final SongBookFeatureProvider songBookFeatureProvider;
+  final DownloadFeatureProvider downloadFeatureProvider;
 
   @override
   void openSongBook(BuildContext context) {
@@ -15,15 +25,16 @@ class AppCoordinator
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      builder: (BuildContext context) {
-        return Container(
-          height: modalHeight,
-          color: Colors.white,
-          child: const TemporaryScreenView(
-            name: "Song Book",
-          ),
-        );
-      },
+      builder: (BuildContext context) => Container(
+        height: modalHeight,
+        color: Colors.white,
+        child: songBookFeatureProvider.buildSongBookView(
+          context: context,
+          coordinator: this,
+          localizations: context.read(),
+          assets: context.read(),
+        ),
+      ),
     );
   }
 
@@ -44,11 +55,11 @@ class AppCoordinator
 
   @override
   void openDownloadScreen(BuildContext context) {
-    Navigator.of(context).push(
+    Navigator.of(context).pushReplacement(
       MaterialPageRoute(
-          builder: (context) => const TemporaryScreenView(
-                name: "Download",
-              )),
+        builder: (context) =>
+            downloadFeatureProvider.buildSongDetailsView(context: context),
+      ),
     );
   }
 }

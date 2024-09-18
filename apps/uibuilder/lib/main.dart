@@ -1,4 +1,5 @@
 import 'package:connectfeature/connectfeature.dart';
+import 'package:downloadfeature/downloadfeature.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sessionfeature/sessionfeature.dart';
@@ -31,9 +32,15 @@ class MyApp extends StatelessWidget {
     final connectFeatureProvider = ConnectFeatureProvider();
     final sessionFeatureProvider = SessionFeatureProvider();
     final songBookFeatureProvider = SongBookFeatureProvider();
+    final downloadFeatureProvider = DownloadFeatureProvider();
     final localizations = DefaultAppLocalizations();
     final assets = DefaultAppAssets();
-    const appCoordinator = AppCoordinator();
+    final appCoordinator = AppCoordinator(
+      connectFeatureProvider: connectFeatureProvider,
+      sessionFeatureProvider: sessionFeatureProvider,
+      songBookFeatureProvider: songBookFeatureProvider,
+      downloadFeatureProvider: downloadFeatureProvider,
+    );
     return MultiProvider(
       providers: [
         Provider<AppCoordinator>.value(value: appCoordinator),
@@ -62,6 +69,7 @@ class MyApp extends StatelessWidget {
             connectFeatureProvider: connectFeatureProvider,
             sessionFeatureProvider: sessionFeatureProvider,
             songBookFeatureProvider: songBookFeatureProvider,
+            downloadFeatureProvider: downloadFeatureProvider,
           ),
           child: const PreviewerView(),
         ),

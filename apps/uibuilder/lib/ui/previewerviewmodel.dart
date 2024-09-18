@@ -10,18 +10,26 @@ class DefaultPreviewerViewModel extends PreviewerViewModel {
     required this.connectFeatureProvider,
     required this.sessionFeatureProvider,
     required this.songBookFeatureProvider,
-    this.navigateOnStartup = true,
+    required this.downloadFeatureProvider,
+    this.navigateOnStartup = false,
   });
 
   final ConnectFeatureProvider connectFeatureProvider;
   final SessionFeatureProvider sessionFeatureProvider;
   final SongBookFeatureProvider songBookFeatureProvider;
+  final DownloadFeatureProvider downloadFeatureProvider;
 
   @override
   final bool navigateOnStartup;
 
   @override
   late List<NavigatorItem> navigators = [
+    NavigatorItem(
+      name: "Download",
+      build: (context) => downloadFeatureProvider.buildSongDetailsView(
+        context: context,
+      ),
+    ),
     NavigatorItem(
       name: "Song Book",
       build: (context) => songBookFeatureProvider.buildSongBookView(
