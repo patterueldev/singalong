@@ -1,7 +1,9 @@
-# melos_managed_dependency_overrides: connectfeature,sessionfeature,shared,songbookfeature
+# melos_managed_dependency_overrides: connectfeature,sessionfeature,shared,songbookfeature,downloadfeature
 dependency_overrides:
   connectfeature:
     path: ../../packages/connectfeature
+  downloadfeature:
+    path: ../../packages/downloadfeature
   sessionfeature:
     path: ../../packages/sessionfeature
   shared:
