@@ -102,6 +102,7 @@ class _IdentifySongViewState extends State<IdentifySongView> {
                   border: const OutlineInputBorder(),
                   labelText: localizations.identifySongUrlPlaceholderText
                       .localizedOf(context),
+                  alignLabelWithHint: true,
                 ),
               ),
               const SizedBox(height: 16),

@@ -36,7 +36,7 @@ class DefaultPreviewerViewModel extends PreviewerViewModel {
       ),
     ),
     NavigatorItem(
-      name: "Download",
+      name: "Identified Song Details",
       build: (context) => downloadFeatureProvider.buildSongDetailsView(
         context: context,
         identifiedSongDetails: IdentifiedSongDetails.fake(),
