@@ -1,4 +1,4 @@
-part of 'connectfeature.dart';
+part of '../connectfeature.dart';
 
 class ConnectException extends GenericException {
   final ExceptionType type;

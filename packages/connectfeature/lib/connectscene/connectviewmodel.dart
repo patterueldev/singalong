@@ -1,4 +1,4 @@
-part of 'connectfeature.dart';
+part of '../connectfeature.dart';
 
 abstract class ConnectViewModel {
   ValueNotifier<ConnectViewState> get stateNotifier;
@@ -9,7 +9,7 @@ abstract class ConnectViewModel {
 }
 
 class DefaultConnectViewModel implements ConnectViewModel {
-  final ConnectUseCase connectUseCase;
+  final EstablishConnectionUseCase connectUseCase;
   DefaultConnectViewModel({
     required this.connectUseCase,
     String name = '',
@@ -31,10 +31,10 @@ class DefaultConnectViewModel implements ConnectViewModel {
   @override
   void connect() async {
     const stoppers = [
-      ConnectViewStateType.connecting,
-      ConnectViewStateType.connected
+      ConnectViewStatus.connecting,
+      ConnectViewStatus.connected
     ];
-    if (stoppers.contains(stateNotifier.value.type)) {
+    if (stoppers.contains(stateNotifier.value.status)) {
       return;
     }
     stateNotifier.value = ConnectViewState.connecting();

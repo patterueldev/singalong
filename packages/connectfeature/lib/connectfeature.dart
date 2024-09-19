@@ -5,13 +5,13 @@ import 'package:fpdart/fpdart.dart' show TaskEither, Unit, unit;
 import 'package:provider/provider.dart';
 import 'package:shared/shared.dart';
 
-part 'connectview.dart';
-part 'connectviewstate.dart';
-part 'connectviewmodel.dart';
-part 'connectusecase.dart';
+part 'connectscene/connectview.dart';
+part 'connectscene/connectviewstate.dart';
+part 'connectscene/connectviewmodel.dart';
+part 'connectscene/establishconnectionusecase.dart';
 part 'connectlocalizations.dart';
-part 'connectnavigationcoordinator.dart';
-part 'connectexception.dart';
+part 'connectflowcontroller.dart';
+part 'connectscene/connectexception.dart';
 part 'connectassets.dart';
 
 class ConnectFeatureProvider {
@@ -19,15 +19,15 @@ class ConnectFeatureProvider {
 
   final providers = MultiProvider(
     providers: [
-      Provider<ConnectUseCase>(
-        create: (context) => DefaultConnectUseCase(),
+      Provider<EstablishConnectionUseCase>(
+        create: (context) => DefaultEstablishConnectionUseCase(),
       ),
     ],
   );
 
   Widget buildConnectView({
     required BuildContext context,
-    required ConnectNavigationCoordinator coordinator,
+    required ConnectFlowController coordinator,
     required ConnectLocalizations localizations,
     required ConnectAssets assets,
     String name = '',
@@ -39,7 +39,7 @@ class ConnectFeatureProvider {
           name: name,
           sessionId: sessionId,
         ),
-        coordinator: coordinator,
+        flow: coordinator,
         localizations: localizations,
         assets: assets,
       );

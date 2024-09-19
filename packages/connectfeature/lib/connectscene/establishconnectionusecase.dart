@@ -1,11 +1,11 @@
-part of 'connectfeature.dart';
+part of '../connectfeature.dart';
 
-abstract class ConnectUseCase {
+abstract class EstablishConnectionUseCase {
   TaskEither<GenericException, Unit> connect(String name, String sessionId);
 }
 
-class DefaultConnectUseCase implements ConnectUseCase {
-  DefaultConnectUseCase();
+class DefaultEstablishConnectionUseCase implements EstablishConnectionUseCase {
+  DefaultEstablishConnectionUseCase();
   @override
   TaskEither<GenericException, Unit> connect(String name, String sessionId) =>
       TaskEither.tryCatch(() async {

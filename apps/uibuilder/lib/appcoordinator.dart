@@ -3,7 +3,7 @@ part of 'main.dart';
 // TODO: Move these to mixins
 class AppCoordinator
     implements
-        ConnectNavigationCoordinator,
+        ConnectFlowController,
         SessionNavigationCoordinator,
         SongBookNavigationCoordinator,
         DownloadFlowController {
@@ -41,7 +41,7 @@ class AppCoordinator
   }
 
   @override
-  void openSession(BuildContext context) {
+  void onConnected(BuildContext context) {
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(
           builder: (context) => const TemporaryScreenView(

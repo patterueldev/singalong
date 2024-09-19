@@ -46,7 +46,7 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         Provider<AppCoordinator>.value(value: appCoordinator),
-        Provider<ConnectNavigationCoordinator>.value(value: appCoordinator),
+        Provider<ConnectFlowController>.value(value: appCoordinator),
         Provider<ConnectLocalizations>.value(value: localizations),
         Provider<ConnectAssets>.value(value: assets),
         Provider<SessionNavigationCoordinator>.value(value: appCoordinator),

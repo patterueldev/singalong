@@ -1,16 +1,16 @@
-part of 'connectfeature.dart';
+part of '../connectfeature.dart';
 
 class ConnectView extends StatefulWidget {
   const ConnectView({
     super.key,
     required this.viewModel,
-    required this.coordinator,
+    required this.flow,
     required this.localizations,
     required this.assets,
   });
 
   final ConnectViewModel viewModel;
-  final ConnectNavigationCoordinator coordinator;
+  final ConnectFlowController flow;
   final ConnectLocalizations localizations;
   final ConnectAssets assets;
 
@@ -20,8 +20,8 @@ class ConnectView extends StatefulWidget {
 
 class _ConnectViewState extends State<ConnectView> {
   ConnectViewModel get viewModel => widget.viewModel;
-  ConnectNavigationCoordinator get delegate => widget.coordinator;
-  ConnectLocalizations get localizable => widget.localizations;
+  ConnectFlowController get flow => widget.flow;
+  ConnectLocalizations get localizations => widget.localizations;
   ConnectAssets get assets => widget.assets;
 
   @override
@@ -48,14 +48,14 @@ class _ConnectViewState extends State<ConnectView> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content:
-              state.error.localizedFrom(localizable).localizedTextOf(context),
+              state.error.localizedFrom(localizations).localizedTextOf(context),
           backgroundColor: Theme.of(context).colorScheme.error,
         ),
       );
     }
 
-    if (state.type == ConnectViewStateType.connected) {
-      delegate.openSession(context);
+    if (state.status == ConnectViewStatus.connected) {
+      flow.onConnected(context);
     }
   }
 
@@ -71,7 +71,7 @@ class _ConnectViewState extends State<ConnectView> {
           ValueListenableBuilder(
             valueListenable: viewModel.stateNotifier,
             builder: (_, state, child) {
-              if (state.type == ConnectViewStateType.connecting) {
+              if (state.status == ConnectViewStatus.connecting) {
                 return Positioned.fill(
                   child: Container(
                     color: Colors.black54,
@@ -99,7 +99,8 @@ class _ConnectViewState extends State<ConnectView> {
             TextField(
               controller: viewModel.nameController,
               decoration: InputDecoration(
-                labelText: localizable.namePlaceholderText.localizedOf(context),
+                labelText:
+                    localizations.namePlaceholderText.localizedOf(context),
                 icon: const Icon(Icons.person),
               ),
             ),
@@ -108,7 +109,7 @@ class _ConnectViewState extends State<ConnectView> {
               controller: viewModel.sessionIdController,
               decoration: InputDecoration(
                 labelText:
-                    localizable.sessionIdPlaceholderText.localizedOf(context),
+                    localizations.sessionIdPlaceholderText.localizedOf(context),
                 icon: const Icon(Icons.meeting_room),
               ),
             ),
@@ -130,7 +131,7 @@ class _ConnectViewState extends State<ConnectView> {
                               Theme.of(context).colorScheme.primary,
                           foregroundColor: Colors.white,
                         ),
-                        child: localizable.connectButtonText
+                        child: localizations.connectButtonText
                             .localizedTextOf(context),
                       ),
                     ),
@@ -146,7 +147,7 @@ class _ConnectViewState extends State<ConnectView> {
                           foregroundColor:
                               Theme.of(context).colorScheme.secondary,
                         ),
-                        child: localizable.clearButtonText
+                        child: localizations.clearButtonText
                             .localizedTextOf(context),
                       ),
                     ),
