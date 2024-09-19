@@ -52,6 +52,9 @@ class MyApp extends StatelessWidget {
         Provider<SongBookNavigationCoordinator>.value(value: appCoordinator),
         Provider<SongBookLocalizations>.value(value: localizations),
         Provider<SongBookAssets>.value(value: assets),
+        Provider<DownloadFlowController>.value(value: appCoordinator),
+        Provider<DownloadLocalizations>.value(
+            value: TemplateDownloadLocalizations()),
         connectFeatureProvider.providers,
         sessionFeatureProvider.providers,
         songBookFeatureProvider.providers,

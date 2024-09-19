@@ -27,6 +27,7 @@ class _SessionViewState extends State<SessionView> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       viewModel.setupSession();
+      viewModel.stateNotifier.addListener(_stateListener);
     });
   }
 
@@ -72,21 +73,6 @@ class _SessionViewState extends State<SessionView> {
                     ),
                   ),
                 );
-              }
-              if (state is SessionFailure) {
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(state.error),
-                      backgroundColor: Theme.of(context).colorScheme.error,
-                    ),
-                  );
-                });
-              }
-              if (state.type == SessionViewStateType.disconnected) {
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  navigationDelegate.backToConnectScreen(context);
-                });
               }
               return const SizedBox.shrink();
             },
@@ -246,6 +232,27 @@ class _SessionViewState extends State<SessionView> {
       },
     );
   }
+
+  void _stateListener() {
+    final state = viewModel.stateNotifier.value;
+    if (state is SessionFailure) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(state.error),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      });
+    }
+    if (state.type == SessionViewStateType.disconnected) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        navigationDelegate.backToConnectScreen(context);
+      });
+    }
+  }
+
+  void _promptListener() {}
 
   @override
   void dispose() {

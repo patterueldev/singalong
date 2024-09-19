@@ -1,10 +1,12 @@
 part of 'main.dart';
 
+// TODO: Move these to mixins
 class AppCoordinator
     implements
         ConnectNavigationCoordinator,
         SessionNavigationCoordinator,
-        SongBookNavigationCoordinator {
+        SongBookNavigationCoordinator,
+        DownloadFlowController {
   const AppCoordinator({
     required this.connectFeatureProvider,
     required this.sessionFeatureProvider,
@@ -57,8 +59,22 @@ class AppCoordinator
   void openDownloadScreen(BuildContext context) {
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(
-        builder: (context) =>
-            downloadFeatureProvider.buildSongDetailsView(context: context),
+        builder: (context) => downloadFeatureProvider.buildSongDetailsView(
+          context: context,
+          localizations: context.read(),
+        ),
+      ),
+    );
+  }
+
+  @override
+  void navigateToIdentifiedSongDetailsView(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => downloadFeatureProvider.buildSongDetailsView(
+          context: context,
+          localizations: context.read(),
+        ),
       ),
     );
   }
