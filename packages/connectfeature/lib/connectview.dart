@@ -28,7 +28,35 @@ class _ConnectViewState extends State<ConnectView> {
   void initState() {
     super.initState();
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {});
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      viewModel.stateNotifier.addListener(_stateListener);
+    });
+  }
+
+  @override
+  void dispose() {
+    viewModel.stateNotifier.removeListener(_stateListener);
+    viewModel.nameController.dispose();
+    viewModel.sessionIdController.dispose();
+    super.dispose();
+  }
+
+  void _stateListener() {
+    final state = viewModel.stateNotifier.value;
+
+    if (state is Failure) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content:
+              state.error.localizedFrom(localizable).localizedTextOf(context),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
+      );
+    }
+
+    if (state.type == ConnectViewStateType.connected) {
+      delegate.openSession(context);
+    }
   }
 
   @override
@@ -52,32 +80,6 @@ class _ConnectViewState extends State<ConnectView> {
                     ),
                   ),
                 );
-              }
-              if (state is Failure) {
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: state.error
-                          .localizedFrom(localizable)
-                          .localizedTextOf(context),
-                      backgroundColor: Theme.of(context).colorScheme.error,
-                    ),
-                  );
-                });
-              }
-              if (state.type == ConnectViewStateType.connected) {
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: localizable.connectionSuccess
-                          .localizedTextOf(context),
-                      backgroundColor: Theme.of(context).colorScheme.primary,
-                    ),
-                  );
-                  Future.delayed(const Duration(seconds: 2), () {
-                    delegate.openSession(context);
-                  });
-                });
               }
               return const SizedBox.shrink();
             },
@@ -155,11 +157,4 @@ class _ConnectViewState extends State<ConnectView> {
           ],
         ),
       );
-
-  @override
-  void dispose() {
-    viewModel.nameController.dispose();
-    viewModel.sessionIdController.dispose();
-    super.dispose();
-  }
 }

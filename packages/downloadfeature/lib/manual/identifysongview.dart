@@ -95,6 +95,14 @@ class _IdentifySongViewState extends State<IdentifySongView> {
     });
   }
 
+  @override
+  void dispose() {
+    final viewModel = context.read<IdentifySongViewModel>();
+    viewModel.submissionResultNotifier
+        .removeListener(_submissionResultListener);
+    super.dispose();
+  }
+
   void _submissionResultListener() {
     final viewModel = context.read<IdentifySongViewModel>();
     final submissionResult = viewModel.submissionResultNotifier.value;
@@ -120,9 +128,12 @@ class _IdentifySongViewState extends State<IdentifySongView> {
               valueListenable: viewModel.submissionResultNotifier,
               builder: (context, submissionResult, child) {
                 if (submissionResult.status == SubmissionStatus.loading) {
-                  return const Positioned.fill(
-                    child: Center(
-                      child: CircularProgressIndicator(),
+                  return Positioned.fill(
+                    child: Container(
+                      color: Colors.black54,
+                      child: const Center(
+                        child: CircularProgressIndicator(),
+                      ),
                     ),
                   );
                 }

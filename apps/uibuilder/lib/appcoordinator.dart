@@ -59,8 +59,9 @@ class AppCoordinator
   void openDownloadScreen(BuildContext context) {
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(
-        builder: (context) => downloadFeatureProvider.buildSongDetailsView(
+        builder: (context) => downloadFeatureProvider.buildIdentifyUrlView(
           context: context,
+          flow: this,
           localizations: context.read(),
         ),
       ),

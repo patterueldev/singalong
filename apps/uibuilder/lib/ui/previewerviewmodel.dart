@@ -1,7 +1,7 @@
 part of '../main.dart';
 
 abstract class PreviewerViewModel extends ChangeNotifier {
-  bool get navigateOnStartup;
+  int get autoNavigationIndex;
   List<NavigatorItem> get navigators;
 }
 
@@ -11,7 +11,7 @@ class DefaultPreviewerViewModel extends PreviewerViewModel {
     required this.sessionFeatureProvider,
     required this.songBookFeatureProvider,
     required this.downloadFeatureProvider,
-    this.navigateOnStartup = true,
+    this.autoIndex = 0,
   });
 
   final ConnectFeatureProvider connectFeatureProvider;
@@ -19,8 +19,10 @@ class DefaultPreviewerViewModel extends PreviewerViewModel {
   final SongBookFeatureProvider songBookFeatureProvider;
   final DownloadFeatureProvider downloadFeatureProvider;
 
+  final int autoIndex;
+
   @override
-  final bool navigateOnStartup;
+  int get autoNavigationIndex => min(autoIndex, navigators.length - 1);
 
   @override
   late List<NavigatorItem> navigators = [

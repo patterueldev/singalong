@@ -13,11 +13,13 @@ class _PrevierViewState extends State<PreviewerView> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final viewModel = context.read<PreviewerViewModel>();
-      if (viewModel.navigateOnStartup) {
+      final navigationIndex = viewModel.autoNavigationIndex;
+      if (navigationIndex >= 0) {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => viewModel.navigators.first.build(context),
+            builder: (context) =>
+                viewModel.navigators[navigationIndex].build(context),
           ),
         );
       }
