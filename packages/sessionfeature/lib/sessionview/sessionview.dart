@@ -4,13 +4,13 @@ class SessionView extends StatefulWidget {
   const SessionView({
     super.key,
     required this.viewModel,
+    required this.flow,
     required this.localizations,
-    required this.coordinator,
   });
 
   final SessionViewModel viewModel;
+  final SessionFlowController flow;
   final SessionLocalizations localizations;
-  final SessionNavigationCoordinator coordinator;
 
   @override
   State<SessionView> createState() => _SessionViewState();
@@ -19,7 +19,7 @@ class SessionView extends StatefulWidget {
 class _SessionViewState extends State<SessionView> {
   SessionViewModel get viewModel => widget.viewModel;
   SessionLocalizations get localizations => widget.localizations;
-  SessionNavigationCoordinator get navigationDelegate => widget.coordinator;
+  SessionFlowController get flow => widget.flow;
 
   @override
   void initState() {
@@ -57,14 +57,14 @@ class _SessionViewState extends State<SessionView> {
             ),
             body: _buildBody(context, viewModel),
             floatingActionButton: FloatingActionButton(
-              onPressed: () => widget.coordinator.openSongBook(context),
+              onPressed: () => widget.flow.onSongBook(context),
               child: const Icon(Icons.menu_book),
             ),
           ),
           ValueListenableBuilder(
             valueListenable: viewModel.stateNotifier,
             builder: (context, state, child) {
-              if (state.type == SessionViewStateType.loading) {
+              if (state.status == SessionViewStatus.loading) {
                 return Positioned.fill(
                   child: Container(
                     color: Colors.black54,
@@ -73,43 +73,6 @@ class _SessionViewState extends State<SessionView> {
                     ),
                   ),
                 );
-              }
-              return const SizedBox.shrink();
-            },
-          ),
-          ValueListenableBuilder(
-            valueListenable: viewModel.promptNotifier,
-            builder: (context, prompt, child) {
-              if (prompt != null) {
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  showDialog(
-                    context: context,
-                    builder: (context) => AlertDialog(
-                      title: prompt.title.localizedTextOf(context),
-                      content: prompt.message.localizedTextOf(context),
-                      actions: [
-                        TextButton(
-                          onPressed: () {
-                            Navigator.of(context).pop();
-                          },
-                          child: localizations.cancelButtonText
-                              .localizedTextOf(context),
-                        ),
-                        TextButton(
-                          onPressed: () {
-                            prompt.onAction();
-                            Navigator.of(context).pop();
-                          },
-                          style: TextButton.styleFrom(
-                            foregroundColor:
-                                Theme.of(context).colorScheme.error,
-                          ),
-                          child: prompt.actionText.localizedTextOf(context),
-                        ),
-                      ],
-                    ),
-                  );
-                });
               }
               return const SizedBox.shrink();
             },
@@ -245,14 +208,45 @@ class _SessionViewState extends State<SessionView> {
         );
       });
     }
-    if (state.type == SessionViewStateType.disconnected) {
+    if (state.status == SessionViewStatus.disconnected) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        navigationDelegate.backToConnectScreen(context);
+        flow.onDisconnected(context);
       });
     }
   }
 
-  void _promptListener() {}
+  void _promptListener() {
+    final prompt = viewModel.promptNotifier.value;
+    if (prompt != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: prompt.title.localizedTextOf(context),
+            content: prompt.message.localizedTextOf(context),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: localizations.cancelButtonText.localizedTextOf(context),
+              ),
+              TextButton(
+                onPressed: () {
+                  prompt.onAction();
+                  Navigator.of(context).pop();
+                },
+                style: TextButton.styleFrom(
+                  foregroundColor: Theme.of(context).colorScheme.error,
+                ),
+                child: prompt.actionText.localizedTextOf(context),
+              ),
+            ],
+          ),
+        );
+      });
+    }
+  }
 
   @override
   void dispose() {

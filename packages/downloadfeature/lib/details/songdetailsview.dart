@@ -59,7 +59,7 @@ class _SongDetailsViewState extends State<SongDetailsView> {
                     ClipRRect(
                       borderRadius: BorderRadius.circular(8.0),
                       child: CachedNetworkImage(
-                        imageUrl: "",
+                        imageUrl: viewModel.imageUrl,
                         placeholder: (context, url) => const Center(
                           child: CircularProgressIndicator(),
                         ),

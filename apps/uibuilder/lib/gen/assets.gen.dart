@@ -20,8 +20,13 @@ class $AssetsImagesGen {
   AssetGenImage get karaokeNessyou =>
       const AssetGenImage('assets/images/karaoke_nessyou.png');
 
+  /// File path: assets/images/magnifier4_woman.png
+  AssetGenImage get magnifier4Woman =>
+      const AssetGenImage('assets/images/magnifier4_woman.png');
+
   /// List of all assets
-  List<AssetGenImage> get values => [gakkariTameikiWoman, karaokeNessyou];
+  List<AssetGenImage> get values =>
+      [gakkariTameikiWoman, karaokeNessyou, magnifier4Woman];
 }
 
 class Assets {

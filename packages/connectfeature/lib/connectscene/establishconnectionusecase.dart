@@ -33,9 +33,7 @@ class DefaultEstablishConnectionUseCase implements EstablishConnectionUseCase {
 
         return unit;
       }, (e, s) {
-        if (e is ConnectException) {
-          return e;
-        } else if (e is GenericException) {
+        if (e is GenericException) {
           return e;
         }
         return GenericException.unhandled(e);

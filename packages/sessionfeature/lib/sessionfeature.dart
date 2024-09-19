@@ -33,7 +33,7 @@ class SessionFeatureProvider {
 
   Widget buildSessionView({
     required BuildContext context,
-    required SessionNavigationCoordinator coordinator,
+    required SessionFlowController coordinator,
     required SessionLocalizations localizations,
   }) =>
       SessionView(
@@ -42,6 +42,6 @@ class SessionFeatureProvider {
           localizations: context.read(),
         ),
         localizations: localizations,
-        coordinator: coordinator,
+        flow: coordinator,
       );
 }

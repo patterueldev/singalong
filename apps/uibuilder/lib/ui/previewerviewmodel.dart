@@ -30,6 +30,7 @@ class DefaultPreviewerViewModel extends PreviewerViewModel {
       name: "Identify Song",
       build: (context) => downloadFeatureProvider.buildIdentifyUrlView(
         context: context,
+        assets: context.read(),
         flow: context.read(),
         localizations: context.read(),
       ),
@@ -38,6 +39,7 @@ class DefaultPreviewerViewModel extends PreviewerViewModel {
       name: "Download",
       build: (context) => downloadFeatureProvider.buildSongDetailsView(
         context: context,
+        identifiedSongDetails: IdentifiedSongDetails.fake(),
         localizations: context.read(),
       ),
     ),

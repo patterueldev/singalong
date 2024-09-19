@@ -20,11 +20,25 @@ abstract class SongDetailsViewModel extends ChangeNotifier {
 }
 
 class DefaultSongDetailsViewModel extends SongDetailsViewModel {
+  final IdentifiedSongDetails identifiedSongDetails;
+
+  DefaultSongDetailsViewModel({
+    required this.identifiedSongDetails,
+  }) {
+    imageUrl = identifiedSongDetails.imageUrl;
+    songTitle = identifiedSongDetails.songTitle;
+    songArtist = identifiedSongDetails.songArtist;
+    songLanguage = identifiedSongDetails.songLanguage;
+    isOffVocal = identifiedSongDetails.isOffVocal;
+    videoHasLyrics = identifiedSongDetails.videoHasLyrics;
+    songLyrics = identifiedSongDetails.songLyrics;
+  }
+
   @override
   ValueNotifier<bool> isLoadingNotifier = ValueNotifier(false);
 
   @override
-  String imageUrl = 'https://via.placeholder.com/150';
+  String imageUrl = '';
 
   @override
   String songTitle = '';

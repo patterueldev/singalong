@@ -1,28 +1,28 @@
 part of '../sessionfeature.dart';
 
 class SessionViewState {
-  const SessionViewState(this.type);
+  const SessionViewState(this.status);
 
-  final SessionViewStateType type;
+  final SessionViewStatus status;
 
   factory SessionViewState.initial() =>
-      const SessionViewState(SessionViewStateType.initial);
+      const SessionViewState(SessionViewStatus.idle);
   factory SessionViewState.loading() =>
-      const SessionViewState(SessionViewStateType.loading);
+      const SessionViewState(SessionViewStatus.loading);
   factory SessionViewState.loaded() =>
-      const SessionViewState(SessionViewStateType.loaded);
+      const SessionViewState(SessionViewStatus.loaded);
   factory SessionViewState.disconnected() =>
-      const SessionViewState(SessionViewStateType.disconnected);
+      const SessionViewState(SessionViewStatus.disconnected);
   factory SessionViewState.failure(String error) => SessionFailure(error);
 }
 
 class SessionFailure extends SessionViewState {
   final String error;
-  const SessionFailure(this.error) : super(SessionViewStateType.failure);
+  const SessionFailure(this.error) : super(SessionViewStatus.failure);
 }
 
-enum SessionViewStateType {
-  initial,
+enum SessionViewStatus {
+  idle,
   loading,
   loaded,
   disconnected,

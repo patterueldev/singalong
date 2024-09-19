@@ -4,7 +4,7 @@ part of 'main.dart';
 class AppCoordinator
     implements
         ConnectFlowController,
-        SessionNavigationCoordinator,
+        SessionFlowController,
         SongBookNavigationCoordinator,
         DownloadFlowController {
   const AppCoordinator({
@@ -20,7 +20,7 @@ class AppCoordinator
   final DownloadFeatureProvider downloadFeatureProvider;
 
   @override
-  void openSongBook(BuildContext context) {
+  void onSongBook(BuildContext context) {
     double screenHeight = MediaQuery.of(context).size.height;
     double modalHeight = screenHeight * 0.8; // 3/4 of the screen height
 
@@ -51,7 +51,7 @@ class AppCoordinator
   }
 
   @override
-  void backToConnectScreen(BuildContext context) {
+  void onDisconnected(BuildContext context) {
     Navigator.of(context).pop();
   }
 
@@ -61,6 +61,7 @@ class AppCoordinator
       MaterialPageRoute(
         builder: (context) => downloadFeatureProvider.buildIdentifyUrlView(
           context: context,
+          assets: context.read(),
           flow: this,
           localizations: context.read(),
         ),
@@ -69,11 +70,13 @@ class AppCoordinator
   }
 
   @override
-  void navigateToIdentifiedSongDetailsView(BuildContext context) {
+  void navigateToIdentifiedSongDetailsView(BuildContext context,
+      {required IdentifiedSongDetails details}) {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => downloadFeatureProvider.buildSongDetailsView(
           context: context,
+          identifiedSongDetails: details,
           localizations: context.read(),
         ),
       ),

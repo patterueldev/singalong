@@ -46,20 +46,22 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         Provider<AppCoordinator>.value(value: appCoordinator),
+        Provider<ConnectAssets>.value(value: assets),
         Provider<ConnectFlowController>.value(value: appCoordinator),
         Provider<ConnectLocalizations>.value(value: localizations),
-        Provider<ConnectAssets>.value(value: assets),
-        Provider<SessionNavigationCoordinator>.value(value: appCoordinator),
+        Provider<SessionFlowController>.value(value: appCoordinator),
         Provider<SessionLocalizations>.value(value: localizations),
         Provider<SongBookNavigationCoordinator>.value(value: appCoordinator),
-        Provider<SongBookLocalizations>.value(value: localizations),
         Provider<SongBookAssets>.value(value: assets),
+        Provider<SongBookLocalizations>.value(value: localizations),
+        Provider<DownloadAssets>.value(value: assets),
         Provider<DownloadFlowController>.value(value: appCoordinator),
         Provider<DownloadLocalizations>.value(
             value: TemplateDownloadLocalizations()),
         connectFeatureProvider.providers,
         sessionFeatureProvider.providers,
         songBookFeatureProvider.providers,
+        downloadFeatureProvider.providers,
       ],
       child: MaterialApp(
         title: 'Singalong UI Builder',

@@ -3,10 +3,12 @@ part of '../downloadfeature.dart';
 class IdentifySongView extends StatefulWidget {
   const IdentifySongView({
     super.key,
+    required this.assets,
     required this.flow,
     required this.localizations,
   }) : super();
 
+  final DownloadAssets assets;
   final DownloadFlowController flow;
   final DownloadLocalizations localizations;
 
@@ -14,75 +16,8 @@ class IdentifySongView extends StatefulWidget {
   State<IdentifySongView> createState() => _IdentifySongViewState();
 }
 
-class SubmissionResult {
-  final SubmissionStatus status;
-
-  const SubmissionResult({
-    required this.status,
-  });
-
-  factory SubmissionResult.idle() =>
-      const SubmissionResult(status: SubmissionStatus.idle);
-  factory SubmissionResult.loading() =>
-      const SubmissionResult(status: SubmissionStatus.loading);
-  factory SubmissionResult.success() =>
-      const SubmissionResult(status: SubmissionStatus.success);
-
-  factory SubmissionResult.failure({
-    required LocalizedString message,
-  }) =>
-      SubmissionFailure(message: message);
-}
-
-enum SubmissionStatus {
-  idle,
-  loading,
-  success,
-  failure,
-}
-
-class SubmissionFailure extends SubmissionResult {
-  final LocalizedString message;
-
-  const SubmissionFailure({
-    required this.message,
-  }) : super(status: SubmissionStatus.failure);
-}
-
-abstract class IdentifySongViewModel extends ChangeNotifier {
-  ValueNotifier<SubmissionResult> get submissionResultNotifier;
-  String get songUrl;
-
-  void identifySong();
-}
-
-class DefaultIdentifySongViewModel extends IdentifySongViewModel {
-  DefaultIdentifySongViewModel();
-
-  @override
-  final ValueNotifier<SubmissionResult> submissionResultNotifier =
-      ValueNotifier(SubmissionResult.idle());
-
-  @override
-  @override
-  String songUrl = '';
-
-  @override
-  void identifySong() async {
-    submissionResultNotifier.value = SubmissionResult.loading();
-
-    await Future.delayed(const Duration(seconds: 2));
-
-    // submissionResultNotifier.value = SubmissionResult.success();
-    submissionResultNotifier.value = SubmissionResult.failure(
-      message: LocalizedString(
-        (context) => 'Failed to identify song',
-      ),
-    );
-  }
-}
-
 class _IdentifySongViewState extends State<IdentifySongView> {
+  DownloadAssets get assets => widget.assets;
   DownloadFlowController get coordinator => widget.flow;
   DownloadLocalizations get localizations => widget.localizations;
 
@@ -105,16 +40,20 @@ class _IdentifySongViewState extends State<IdentifySongView> {
 
   void _submissionResultListener() {
     final viewModel = context.read<IdentifySongViewModel>();
-    final submissionResult = viewModel.submissionResultNotifier.value;
+    final result = viewModel.submissionResultNotifier.value;
 
-    if (submissionResult.status == SubmissionStatus.success) {
-      coordinator.navigateToIdentifiedSongDetailsView(context);
+    if (result is SubmissionSuccess) {
+      coordinator.navigateToIdentifiedSongDetailsView(
+        context,
+        details: result.identifiedSongDetails,
+      );
     }
 
-    if (submissionResult.status == SubmissionStatus.failure) {
-      final message = (submissionResult as SubmissionFailure).message;
+    if (result is SubmissionFailure) {
+      final exception = result.exception;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: message.localizedTextOf(context),
+        content:
+            exception.localizedFrom(localizations).localizedTextOf(context),
       ));
     }
   }
@@ -146,27 +85,30 @@ class _IdentifySongViewState extends State<IdentifySongView> {
 
   Widget _buildBody(IdentifySongViewModel viewModel) => Scaffold(
         appBar: AppBar(
-          title: const Text('Identify Song'),
+          title: localizations.identifySongScreenTitleText
+              .localizedTextOf(context),
         ),
         body: Padding(
           padding: const EdgeInsets.all(16.0),
           child: ListView(
             children: [
-              const Text(
-                'Identify Song',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-              ),
+              assets.identifySongBannerImage.image(height: 200),
               const SizedBox(height: 16),
-              const TextField(
+              TextField(
+                maxLines: 5,
+                onChanged: viewModel.updateSongUrl,
+                controller: TextEditingController(text: viewModel.songUrl),
                 decoration: InputDecoration(
-                  border: OutlineInputBorder(),
-                  labelText: 'Enter Song URL',
+                  border: const OutlineInputBorder(),
+                  labelText: localizations.identifySongUrlPlaceholderText
+                      .localizedOf(context),
                 ),
               ),
               const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: viewModel.identifySong,
-                child: const Text('Identify'),
+                child: localizations.identifySongSubmitButtonText
+                    .localizedTextOf(context),
               ),
             ],
           ),
