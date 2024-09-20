@@ -1,7 +1,7 @@
 part of '../downloadfeature.dart';
 
 abstract class IdentifySongViewModel extends ChangeNotifier {
-  ValueNotifier<SubmissionResult> get submissionResultNotifier;
+  ValueNotifier<IdentifySubmissionState> get submissionStateNotifier;
   String get songUrl;
 
   void identifySong();
@@ -16,24 +16,26 @@ class DefaultIdentifySongViewModel extends IdentifySongViewModel {
   });
 
   @override
-  final ValueNotifier<SubmissionResult> submissionResultNotifier =
-      ValueNotifier(SubmissionResult.idle());
+  final ValueNotifier<IdentifySubmissionState> submissionStateNotifier =
+      ValueNotifier(IdentifySubmissionState.idle());
 
   @override
   String songUrl = '';
 
   @override
   void identifySong() async {
-    submissionResultNotifier.value = SubmissionResult.loading();
+    submissionStateNotifier.value = IdentifySubmissionState.loading();
 
     final result = await identifySongUrlUseCase(songUrl).run();
 
     result.fold(
       (exception) {
-        submissionResultNotifier.value = SubmissionResult.failure(exception);
+        submissionStateNotifier.value =
+            IdentifySubmissionState.failure(exception);
       },
       (details) {
-        submissionResultNotifier.value = SubmissionResult.success(details);
+        submissionStateNotifier.value =
+            IdentifySubmissionState.success(details);
       },
     );
   }

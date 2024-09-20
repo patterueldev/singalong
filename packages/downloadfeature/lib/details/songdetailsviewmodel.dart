@@ -1,7 +1,7 @@
 part of '../downloadfeature.dart';
 
 abstract class SongDetailsViewModel extends ChangeNotifier {
-  ValueNotifier<bool> get isLoadingNotifier => ValueNotifier(false);
+  ValueNotifier<SongDownloadState> get songDownloadStateNotifier;
   String get imageUrl;
   String get songTitle;
   String get songArtist;
@@ -20,9 +20,11 @@ abstract class SongDetailsViewModel extends ChangeNotifier {
 }
 
 class DefaultSongDetailsViewModel extends SongDetailsViewModel {
+  final DownloadUseCase downloadUseCase;
   final IdentifiedSongDetails identifiedSongDetails;
 
   DefaultSongDetailsViewModel({
+    required this.downloadUseCase,
     required this.identifiedSongDetails,
   }) {
     imageUrl = identifiedSongDetails.imageUrl;
@@ -35,7 +37,8 @@ class DefaultSongDetailsViewModel extends SongDetailsViewModel {
   }
 
   @override
-  ValueNotifier<bool> isLoadingNotifier = ValueNotifier(false);
+  ValueNotifier<SongDownloadState> songDownloadStateNotifier =
+      ValueNotifier(SongDownloadState.idle());
 
   @override
   String imageUrl = '';
@@ -92,11 +95,26 @@ class DefaultSongDetailsViewModel extends SongDetailsViewModel {
 
   @override
   void download(bool andReserve) async {
-    debugPrint('Download and reserve: $andReserve');
-    isLoadingNotifier.value = true;
+    songDownloadStateNotifier.value = SongDownloadState.loading();
 
-    await Future.delayed(const Duration(seconds: 2));
+    final details = identifiedSongDetails.copyWith(
+      songTitle: songTitle,
+      songArtist: songArtist,
+      songLanguage: songLanguage,
+      isOffVocal: isOffVocal,
+      videoHasLyrics: videoHasLyrics,
+      songLyrics: songLyrics,
+    );
+    final result =
+        await downloadUseCase.downloadSong(details, reserve: andReserve).run();
 
-    isLoadingNotifier.value = false;
+    result.fold(
+      (exception) {
+        songDownloadStateNotifier.value = SongDownloadState.failure(exception);
+      },
+      (_) {
+        songDownloadStateNotifier.value = SongDownloadState.success();
+      },
+    );
   }
 }

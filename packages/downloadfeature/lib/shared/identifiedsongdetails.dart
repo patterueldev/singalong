@@ -34,4 +34,27 @@ class IdentifiedSongDetails {
         videoHasLyrics: false,
         songLyrics: 'Fake Lyrics',
       );
+
+  IdentifiedSongDetails copyWith({
+    String? id,
+    String? source,
+    String? imageUrl,
+    String? songTitle,
+    String? songArtist,
+    String? songLanguage,
+    bool? isOffVocal,
+    bool? videoHasLyrics,
+    String? songLyrics,
+  }) =>
+      IdentifiedSongDetails(
+        id: id ?? this.id,
+        source: source ?? this.source,
+        imageUrl: imageUrl ?? this.imageUrl,
+        songTitle: songTitle ?? this.songTitle,
+        songArtist: songArtist ?? this.songArtist,
+        songLanguage: songLanguage ?? this.songLanguage,
+        isOffVocal: isOffVocal ?? this.isOffVocal,
+        videoHasLyrics: videoHasLyrics ?? this.videoHasLyrics,
+        songLyrics: songLyrics ?? this.songLyrics,
+      );
 }

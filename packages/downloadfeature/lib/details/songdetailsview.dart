@@ -3,9 +3,11 @@ part of '../downloadfeature.dart';
 class SongDetailsView extends StatefulWidget {
   const SongDetailsView({
     super.key,
+    required this.flow,
     required this.localizations,
   }) : super();
 
+  final DownloadFlowController flow;
   final DownloadLocalizations localizations;
 
   @override
@@ -13,7 +15,38 @@ class SongDetailsView extends StatefulWidget {
 }
 
 class _SongDetailsViewState extends State<SongDetailsView> {
+  DownloadFlowController get flow => widget.flow;
   DownloadLocalizations get localizations => widget.localizations;
+
+  @override
+  void initState() {
+    super.initState();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context
+          .read<SongDetailsViewModel>()
+          .songDownloadStateNotifier
+          .addListener(_stateListener);
+    });
+  }
+
+  void _stateListener() {
+    final viewModel = context.read<SongDetailsViewModel>();
+    viewModel.songDownloadStateNotifier.addListener(() {
+      final state = viewModel.songDownloadStateNotifier.value;
+      if (state.status == SongDownloadStatus.success) {
+        flow.onDownloadSuccess(context);
+      } else if (state is SongDownloadFailure) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: state.exception
+                .localizedFrom(localizations)
+                .localizedTextOf(context),
+          ),
+        );
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) => Consumer<SongDetailsViewModel>(
@@ -26,16 +59,17 @@ class _SongDetailsViewState extends State<SongDetailsView> {
               ),
               body: _buildBody(context, viewModel),
             ),
-            ValueListenableBuilder<bool>(
-              valueListenable: viewModel.isLoadingNotifier,
-              builder: (context, isLoading, child) => isLoading
-                  ? Container(
-                      color: Colors.black.withOpacity(0.5),
-                      child: const Center(
-                        child: CircularProgressIndicator(),
-                      ),
-                    )
-                  : const SizedBox.shrink(),
+            ValueListenableBuilder<SongDownloadState>(
+              valueListenable: viewModel.songDownloadStateNotifier,
+              builder: (context, state, child) =>
+                  state.status == SongDownloadStatus.loading
+                      ? Container(
+                          color: Colors.black.withOpacity(0.5),
+                          child: const Center(
+                            child: CircularProgressIndicator(),
+                          ),
+                        )
+                      : const SizedBox.shrink(),
             ),
           ],
         ),

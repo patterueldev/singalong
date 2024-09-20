@@ -2,7 +2,7 @@ library downloadfeature;
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:fpdart/fpdart.dart' show TaskEither;
+import 'package:fpdart/fpdart.dart' show TaskEither, Unit, unit;
 import 'package:provider/provider.dart';
 import 'package:shared/shared.dart';
 
@@ -14,10 +14,12 @@ part 'shared/identifiedsongdetails.dart';
 part 'manual/identifysongview.dart';
 part 'manual/identifysongviewmodel.dart';
 part 'manual/identifysongusecase.dart';
-part 'manual/submissionresult.dart';
+part 'manual/identifysubmissionstate.dart';
 part 'search/songsearchview.dart';
 part 'details/songdetailsview.dart';
 part 'details/songdetailsviewmodel.dart';
+part 'details/songdetailsdownloadstate.dart';
+part 'details/downloadusecase.dart';
 
 class DownloadFeatureProvider {
   DownloadFeatureProvider();
@@ -26,13 +28,14 @@ class DownloadFeatureProvider {
     Provider<IdentifySongUrlUseCase>(
       create: (context) => DefaultIdentifySongUrlUseCase(),
     ),
+    Provider<DownloadUseCase>(
+      create: (context) => DefaultDownloadUseCase(),
+    ),
   ]);
 
   Widget buildIdentifyUrlView({
     required BuildContext context,
     required DownloadAssets assets,
-    required DownloadFlowController flow,
-    required DownloadLocalizations localizations,
   }) =>
       ChangeNotifierProvider<IdentifySongViewModel>(
         create: (context) => DefaultIdentifySongViewModel(
@@ -40,20 +43,23 @@ class DownloadFeatureProvider {
         ),
         child: IdentifySongView(
           assets: assets,
-          flow: flow,
-          localizations: localizations,
+          flow: context.read(),
+          localizations: context.read(),
         ),
       );
 
   Widget buildSongDetailsView({
     required BuildContext context,
     required IdentifiedSongDetails identifiedSongDetails,
-    required DownloadLocalizations localizations,
   }) =>
       ChangeNotifierProvider<SongDetailsViewModel>(
         create: (context) => DefaultSongDetailsViewModel(
+          downloadUseCase: context.read(),
           identifiedSongDetails: identifiedSongDetails,
         ),
-        child: SongDetailsView(localizations: localizations),
+        child: SongDetailsView(
+          flow: context.read(),
+          localizations: context.read(),
+        ),
       );
 }

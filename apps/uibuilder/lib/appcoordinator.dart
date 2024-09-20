@@ -44,9 +44,8 @@ class AppCoordinator
   void onConnected(BuildContext context) {
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(
-          builder: (context) => const TemporaryScreenView(
-                name: "Song Book",
-              )),
+          settings: const RouteSettings(name: "Song Book"),
+          builder: (context) => const TemporaryScreenView(name: "Song Book")),
     );
   }
 
@@ -62,8 +61,6 @@ class AppCoordinator
         builder: (context) => downloadFeatureProvider.buildIdentifyUrlView(
           context: context,
           assets: context.read(),
-          flow: this,
-          localizations: context.read(),
         ),
       ),
     );
@@ -77,9 +74,16 @@ class AppCoordinator
         builder: (context) => downloadFeatureProvider.buildSongDetailsView(
           context: context,
           identifiedSongDetails: details,
-          localizations: context.read(),
         ),
       ),
     );
+  }
+
+  @override
+  void onDownloadSuccess(BuildContext context) {
+    Navigator.of(context).popUntil((route) {
+      return route.settings.name == "Session" ||
+          route.isFirst; // fallback to root
+    });
   }
 }

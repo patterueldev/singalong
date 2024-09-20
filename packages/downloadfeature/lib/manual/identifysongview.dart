@@ -26,30 +26,29 @@ class _IdentifySongViewState extends State<IdentifySongView> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final viewModel = context.read<IdentifySongViewModel>();
-      viewModel.submissionResultNotifier.addListener(_submissionResultListener);
+      viewModel.submissionStateNotifier.addListener(_submissionResultListener);
     });
   }
 
   @override
   void dispose() {
     final viewModel = context.read<IdentifySongViewModel>();
-    viewModel.submissionResultNotifier
-        .removeListener(_submissionResultListener);
+    viewModel.submissionStateNotifier.removeListener(_submissionResultListener);
     super.dispose();
   }
 
   void _submissionResultListener() {
     final viewModel = context.read<IdentifySongViewModel>();
-    final result = viewModel.submissionResultNotifier.value;
+    final result = viewModel.submissionStateNotifier.value;
 
-    if (result is SubmissionSuccess) {
+    if (result is IdentifySubmissionSuccess) {
       coordinator.navigateToIdentifiedSongDetailsView(
         context,
         details: result.identifiedSongDetails,
       );
     }
 
-    if (result is SubmissionFailure) {
+    if (result is IdentifySubmissionFailure) {
       final exception = result.exception;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content:
@@ -63,10 +62,11 @@ class _IdentifySongViewState extends State<IdentifySongView> {
         builder: (context, viewModel, child) => Stack(
           children: [
             _buildBody(viewModel),
-            ValueListenableBuilder<SubmissionResult>(
-              valueListenable: viewModel.submissionResultNotifier,
+            ValueListenableBuilder<IdentifySubmissionState>(
+              valueListenable: viewModel.submissionStateNotifier,
               builder: (context, submissionResult, child) {
-                if (submissionResult.status == SubmissionStatus.loading) {
+                if (submissionResult.status ==
+                    IdentifySubmissionStatus.loading) {
                   return Positioned.fill(
                     child: Container(
                       color: Colors.black54,
@@ -98,6 +98,7 @@ class _IdentifySongViewState extends State<IdentifySongView> {
                 maxLines: 5,
                 onChanged: viewModel.updateSongUrl,
                 controller: TextEditingController(text: viewModel.songUrl),
+                autocorrect: false,
                 decoration: InputDecoration(
                   border: const OutlineInputBorder(),
                   labelText: localizations.identifySongUrlPlaceholderText
