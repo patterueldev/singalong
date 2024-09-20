@@ -10,6 +10,8 @@ class DownloadableSongSearchView extends StatefulWidget {
 class _DownloadableSongSearchViewState
     extends State<DownloadableSongSearchView> {
   final TextEditingController _searchController = TextEditingController();
+  final FocusNode _searchFocusNode = FocusNode();
+
   List<DownloadableSong> _songs = []; // Replace with your song model
   List<DownloadableSong> _filteredSongs = [];
 
@@ -37,43 +39,73 @@ class _DownloadableSongSearchViewState
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Song Search'),
-      ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: TextField(
-              controller: _searchController,
-              decoration: InputDecoration(
-                labelText: 'Search',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.search),
+  Widget build(BuildContext context) => Consumer<DownloadableSearchViewModel>(
+        builder: (context, viewModel, _) => Scaffold(
+          appBar: AppBar(
+            title: ValueListenableBuilder(
+              valueListenable: viewModel.searchFieldStatusNotifier,
+              builder: (context, status, child) => status.isSearching()
+                  ? TextField(
+                      autocorrect: false,
+                      controller: _searchController,
+                      focusNode: _searchFocusNode,
+                      onChanged: viewModel.updateSearchQuery,
+                      decoration: InputDecoration(
+                        hintText: "search something",
+                        border: InputBorder.none,
+                        fillColor: Colors.grey,
+                      ),
+                      style: const TextStyle(color: Colors.black),
+                    )
+                  : Text("Search"),
+            ),
+            actions: [
+              ValueListenableBuilder(
+                valueListenable: viewModel.searchFieldStatusNotifier,
+                builder: (context, status, child) => IconButton(
+                  icon: status.isSearching()
+                      ? const Icon(Icons.close)
+                      : const Icon(Icons.search),
+                  onPressed: () => {
+                    if (status.isSearching()) _searchController.clear(),
+                    viewModel.toggleSearch(),
+                  },
+                ),
               ),
-              onChanged: _filterSongs,
-            ),
+            ],
           ),
-          Expanded(
-            child: ListView.builder(
-              itemCount: _filteredSongs.length,
-              itemBuilder: (context, index) {
-                final song = _filteredSongs[index];
-                return ListTile(
-                  leading: Image.network(
-                      song.thumbnailUrl), // Replace with your thumbnail URL
-                  title: Text(song.title),
-                  subtitle: Text('${song.artist} • ${song.duration}'),
-                );
-              },
-            ),
+          body: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: TextField(
+                  controller: _searchController,
+                  decoration: InputDecoration(
+                    labelText: 'Search',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.search),
+                  ),
+                  onChanged: _filterSongs,
+                ),
+              ),
+              Expanded(
+                child: ListView.builder(
+                  itemCount: _filteredSongs.length,
+                  itemBuilder: (context, index) {
+                    final song = _filteredSongs[index];
+                    return ListTile(
+                      leading: Image.network(
+                          song.thumbnailUrl), // Replace with your thumbnail URL
+                      title: Text(song.title),
+                      subtitle: Text('${song.artist} • ${song.duration}'),
+                    );
+                  },
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
-    );
-  }
+        ),
+      );
 }
 
 // Replace with your song model

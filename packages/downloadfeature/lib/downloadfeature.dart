@@ -11,11 +11,12 @@ part 'downloadexception.dart';
 part 'downloadlocalizations.dart';
 part 'downloadflowcontroller.dart';
 part 'shared/identifiedsongdetails.dart';
+part 'shared/identifysongusecase.dart';
 part 'manual/identifysongview.dart';
 part 'manual/identifysongviewmodel.dart';
-part 'shared/identifysongusecase.dart';
 part 'manual/identifysubmissionstate.dart';
 part 'search/songsearchview.dart';
+part 'search/downloadablesearchviewmodel.dart';
 part 'details/songdetailsview.dart';
 part 'details/songdetailsviewmodel.dart';
 part 'details/songdetailsdownloadstate.dart';
@@ -48,7 +49,11 @@ class DownloadFeatureProvider {
         ),
       );
 
-  Widget buildSongSearchView() => DownloadableSongSearchView();
+  Widget buildSongSearchView() =>
+      ChangeNotifierProvider<DownloadableSearchViewModel>(
+        create: (context) => DefaultDownloadableSearchViewModel(),
+        child: DownloadableSongSearchView(),
+      );
 
   Widget buildSongDetailsView({
     required BuildContext context,
