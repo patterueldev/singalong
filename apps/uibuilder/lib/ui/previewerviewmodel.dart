@@ -27,6 +27,10 @@ class DefaultPreviewerViewModel extends PreviewerViewModel {
   @override
   late List<NavigatorItem> navigators = [
     NavigatorItem(
+      name: "Downloadable Song Search",
+      build: (context) => downloadFeatureProvider.buildSongSearchView(),
+    ),
+    NavigatorItem(
       name: "Identify Song",
       build: (context) => downloadFeatureProvider.buildIdentifyUrlView(
         context: context,

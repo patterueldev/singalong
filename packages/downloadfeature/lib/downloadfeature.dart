@@ -13,7 +13,7 @@ part 'downloadflowcontroller.dart';
 part 'shared/identifiedsongdetails.dart';
 part 'manual/identifysongview.dart';
 part 'manual/identifysongviewmodel.dart';
-part 'manual/identifysongusecase.dart';
+part 'shared/identifysongusecase.dart';
 part 'manual/identifysubmissionstate.dart';
 part 'search/songsearchview.dart';
 part 'details/songdetailsview.dart';
@@ -47,6 +47,8 @@ class DownloadFeatureProvider {
           localizations: context.read(),
         ),
       );
+
+  Widget buildSongSearchView() => DownloadableSongSearchView();
 
   Widget buildSongDetailsView({
     required BuildContext context,
