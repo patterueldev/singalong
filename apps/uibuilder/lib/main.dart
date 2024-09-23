@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:connectfeature/connectfeature.dart';
 import 'package:downloadfeature/downloadfeature.dart';
+import 'package:downloadfeature_ds/downloadfeature_ds.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sessionfeature/sessionfeature.dart';
@@ -35,6 +36,10 @@ class MyApp extends StatelessWidget {
     final sessionFeatureProvider = SessionFeatureProvider();
     final songBookFeatureProvider = SongBookFeatureProvider();
     final downloadFeatureProvider = DownloadFeatureProvider();
+    final downloadFeatureDSProvider = DownloadFeatureDSProvider(
+      configuration:
+          DownloadFeatureDSConfiguration(baseUrl: "http://localhost:3000"),
+    );
     final localizations = DefaultAppLocalizations();
     final assets = DefaultAppAssets();
     final appCoordinator = AppCoordinator(
@@ -61,6 +66,7 @@ class MyApp extends StatelessWidget {
         connectFeatureProvider.providers,
         sessionFeatureProvider.providers,
         songBookFeatureProvider.providers,
+        downloadFeatureDSProvider.providers,
         downloadFeatureProvider.providers,
       ],
       child: MaterialApp(

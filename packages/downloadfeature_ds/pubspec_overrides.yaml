@@ -1,0 +1,6 @@
+# melos_managed_dependency_overrides: downloadfeature,shared
+dependency_overrides:
+  downloadfeature:
+    path: ../downloadfeature
+  shared:
+    path: ../shared

@@ -231,6 +231,13 @@ packages:
       relative: true
     source: path
     version: "0.0.1"
+  downloadfeature_ds:
+    dependency: "direct main"
+    description:
+      path: "../../packages/downloadfeature_ds"
+      relative: true
+    source: path
+    version: "0.0.1"
   fake_async:
     dependency: transitive
     description:

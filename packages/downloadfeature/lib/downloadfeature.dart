@@ -12,6 +12,7 @@ part 'downloadlocalizations.dart';
 part 'downloadflowcontroller.dart';
 part 'shared/identifiedsongdetails.dart';
 part 'shared/identifysongusecase.dart';
+part 'shared/songidentifierrepository.dart';
 part 'manual/identifysongview.dart';
 part 'manual/identifysongviewmodel.dart';
 part 'manual/identifysubmissionstate.dart';
@@ -27,7 +28,9 @@ class DownloadFeatureProvider {
 
   final providers = MultiProvider(providers: [
     Provider<IdentifySongUrlUseCase>(
-      create: (context) => DefaultIdentifySongUrlUseCase(),
+      create: (context) => DefaultIdentifySongUrlUseCase(
+        songIdentifierRepository: context.read(),
+      ),
     ),
     Provider<DownloadUseCase>(
       create: (context) => DefaultDownloadUseCase(),
