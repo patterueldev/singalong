@@ -10,6 +10,7 @@ internal class IdentifySongUseCase(
 ) : ServiceUseCase<IdentifySongParameters, IdentifySongResponse> {
     override suspend fun execute(parameters: IdentifySongParameters): IdentifySongResponse {
         try {
+            // TODO: VERY IMPORTANT; add logic to check if the song is already in the database
             val identifiedSong = identifiedSongRepository.identifySong(parameters.url)
                 ?: return GenericResponse.failure(
                     message = "Song not found",

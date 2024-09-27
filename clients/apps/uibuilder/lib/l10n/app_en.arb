@@ -1,0 +1,96 @@
+{
+  "@@locale": "en",
+  "connectScreenTitle": "Connect",
+  "connectScreenTitleDescription": "Title for the connect screen",
+  
+  "connectButtonText": "Connect",
+  "connectButtonTextDescription": "Text for the connect button",
+  
+  "clearButtonText": "Clear",
+  "clearButtonTextDescription": "Text for the clear button",
+  
+  "namePlaceholderText": "Enter name",
+  "namePlaceholderTextDescription": "Placeholder text for the name input field",
+  
+  "sessionIdPlaceholderText": "Enter Session ID",
+  "sessionIdPlaceholderTextDescription": "Placeholder text for the session ID input field",
+  
+  "unknownError": "Unknown error occurred",
+  "unknownErrorDescription": "Message for unknown error",
+
+  "connectionSuccess": "Successfully connected!",
+  "connectionSuccessDescription": "Message for successful connection",
+  
+  "unhandled": "Unhandled exception: {message}",
+  "unhandledDescription": "Error message when unhandled exception is thrown",
+  
+  "emptyName": "Name cannot be empty",
+  "emptyNameDescription": "Error message for empty name",
+  
+  "invalidName": "Name already used: {name}",
+  "invalidNameDescription": "Error message for invalid name",
+  
+  "emptySessionId": "Session ID cannot be empty",
+  "emptySessionIdDescription": "Error message for empty session ID",
+  
+  "invalidSessionId": "Unable to connect to session with ID: {sessionId}",
+  "invalidSessionIdDescription": "Error message for invalid session ID",
+  
+  "disconnectButtonText": "Disconnect",
+  "disconnectButtonTextDescription": "Text for the disconnect button",
+  
+  "cancelButtonText": "Cancel",
+  "cancelButtonTextDescription": "Text for the cancel button",
+
+  "skipButtonText": "Skip",
+  "skipButtonTextDescription": "Text for the skip button",
+
+  "pauseButtonText": "Pause",
+  "pauseButtonTextDescription": "Text for the pause button",
+
+  "playNextButtonText": "Play Next",
+  "playNextButtonTextDescription": "Text for the play next button",
+
+  "reservedByText": "Reserved by {name}",
+  "reservedByTextDescription": "Text for reserved by",
+
+  "skipSongTitle": "Skip Song?",
+  "skipSongTitleDescription": "Title for the skip song prompt",
+
+  "skipSongMessage": "Are you sure you want to skip this song?",
+  "skipSongMessageDescription": "Message for the skip song prompt",
+
+  "skipSongActionText": "Skip",
+  "skipSongActionTextDescription": "Action text for the skip song prompt",
+
+  "cancelSongTitle": "Cancel Song?",
+  "cancelSongTitleDescription": "Title for the cancel song prompt",
+
+  "cancelSongMessage": "Are you sure you want to cancel this song?",
+  "cancelSongMessageDescription": "Message for the cancel song prompt",
+
+  "cancelSongActionText": "Cancel",
+  "cancelSongActionTextDescription": "Action text for the cancel song prompt",
+
+  "lyricsLabelText": "Lyrics",
+  "lyricsLabelTextDescription": "Text for the lyrics label",
+
+  "lyricsNotAvailable": "Lyrics not available",
+  "lyricsNotAvailableDescription": "Message for lyrics not available",
+
+  "songBookScreenTitle": "Song Book",
+  "songBookScreenTitleDescription": "Title for the song book screen",
+
+  "searchPlaceholderText": "Search songs...",
+  "searchPlaceholderTextDescription": "Placeholder text for the search input field",
+
+  "downloadButtonText": "Download",
+  "downloadButtonTextDescription": "Text for the download button",
+
+  "emptySongBook": "Song book is empty",
+  "emptySongBookDescription": "Message for empty song book",
+
+  "songNotFound": "\"{query}\" was not found from the song book.",
+  "songNotFoundDescription": "Message for song not found"
+
+}
