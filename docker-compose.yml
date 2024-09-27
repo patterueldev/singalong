@@ -1,0 +1,65 @@
+services:
+  api:
+    image: singalong-api:1.0.0
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    container_name: api-container
+    ports:
+      - "8080:8080" # App port
+      - "5005:5005" # Debug port
+    depends_on:
+      - songdownloader
+      - mongodb
+    environment:
+      - SERVER_PORT=8080
+      - SPRING_PROFILES_ACTIVE=docker,secrets
+      - SPRING_APPLICATION_NAME=singalong-server
+      - SPRING_DATA_MONGODB_AUTHENTICATION_DATABASE=$MONGO_DB
+      - SPRING_DATA_MONGODB_AUTO_INDEX_CREATION=$MONGO_AUTO_INDEX_CREATION
+      - SPRING_DATA_MONGODB_HOST=mongodb
+      - SPRING_DATA_MONGODB_PORT=27017
+      - SPRING_DATA_MONGODB_USERNAME=$MONGO_DB_USERNAME
+      - SPRING_DATA_MONGODB_PASSWORD=$MONGO_DB_PASSWORD
+      - SPRING_DATA_MONGODB_DATABASE=$MONGO_DB
+      - JAVA_TOOL_OPTIONS=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
+    networks:
+      - singalong-server
+
+  songdownloader:
+    image: song-downloader-service:1.0.0
+    build:
+      context: microservices/songdownloader
+      dockerfile: Dockerfile
+    container_name: songdownloader-container
+    networks:
+      - singalong-server
+    ports:
+      - "3000:3000"
+    volumes:
+      - $SONG_DOWNLOAD_PATH:/app/songs
+
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb-container
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: $MONGO_INITDB_ROOT_USERNAME
+      MONGO_INITDB_ROOT_PASSWORD: $MONGO_INITDB_ROOT_PASSWORD
+      MONGO_INITDB_DATABASE: $MONGO_INITDB_DATABASE
+      MONGO_DB_USERNAME: $MONGO_DB_USERNAME
+      MONGO_DB_PASSWORD: $MONGO_DB_PASSWORD
+    volumes:
+      - mongodb_data:/data/db
+      - ./init-mongo:/docker-entrypoint-initdb.d
+    networks:
+      - singalong-server
+    command: ["--bind_ip", "0.0.0.0"]
+
+networks:
+  singalong-server:
+    driver: bridge
+
+volumes:
+  mongodb_data:

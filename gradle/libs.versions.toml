@@ -1,0 +1,31 @@
+[versions]
+springBoot = "3.3.4"
+spring = "6.1.13"
+kotlin = "2.0.20"
+jackson = "2.13.3"
+kotlinx = "1.8.1"
+ktor = "2.3.12"
+openai = "3.8.2"
+
+[libraries]
+#org.jetbrains.kotlin.jvm
+springBootWeb = { module = "org.springframework.boot:spring-boot-starter-web", version.ref = "springBoot" }
+springBootDataMongo = { module = "org.springframework.boot:spring-boot-starter-data-mongodb", version.ref = "springBoot" }
+springBootWebSocket = { module = "org.springframework.boot:spring-boot-starter-websocket", version.ref = "springBoot" }
+springBootWebflux = { module = "org.springframework.boot:spring-boot-starter-webflux", version.ref = "springBoot" }
+springContext = { module = "org.springframework:spring-context", version.ref = "spring" }
+jacksonKotlin = { module = "com.fasterxml.jackson.module:jackson-module-kotlin", version.ref = "jackson" }
+kotlinReflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin" }
+springBootStarterTest = { module = "org.springframework.boot:spring-boot-starter-test", version.ref = "springBoot" }
+kotlinTestJunit5 = { module = "org.jetbrains.kotlin:kotlin-test-junit5", version.ref = "kotlin" }
+junitPlatformLauncher = { module = "org.junit.platform:junit-platform-launcher", version = "1.8.2" }
+kotlinxCoroutinesReactor = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-reactor", version.ref = "kotlinx" }
+kotlinxCoroutinesCore = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx" }
+openAIClient = { module = "com.aallam.openai:openai-client", version.ref = "openai" }
+ktorClientCIO = { module = "io.ktor:ktor-client-cio", version.ref = "ktor" }
+
+[plugins]
+kotlinJvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+kotlinSpring = { id = "org.jetbrains.kotlin.plugin.spring", version.ref = "kotlin" }
+springBoot = { id = "org.springframework.boot", version.ref = "springBoot" }
+springDependencyManagement = { id = "io.spring.dependency-management", version = "1.1.6" }
