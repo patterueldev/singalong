@@ -46,6 +46,11 @@ class DefaultSongIdentifierRepository implements SongIdentifierRepository {
         songLyrics: data['songLyrics'],
       );
       return identified;
+    } on ClientException catch (e) {
+      debugPrint("ClientException: $e");
+      debugPrint("message: ${e.message}");
+      debugPrint("uri: ${e.uri}");
+      rethrow;
     } catch (e, st) {
       debugPrint("Error: $e");
       rethrow;

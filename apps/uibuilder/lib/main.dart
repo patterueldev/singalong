@@ -38,7 +38,7 @@ class MyApp extends StatelessWidget {
     final downloadFeatureProvider = DownloadFeatureProvider();
     final downloadFeatureDSProvider = DownloadFeatureDSProvider(
       configuration:
-          DownloadFeatureDSConfiguration(baseUrl: "http://localhost:3000"),
+          DownloadFeatureDSConfiguration(baseUrl: "http://localhost:8080"),
     );
     final localizations = DefaultAppLocalizations();
     final assets = DefaultAppAssets();
