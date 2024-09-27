@@ -1,6 +1,9 @@
 #!/bin/bash
 set -e
 
+root=$(pwd)
+flutterapp="$root/clients/apps/uibuilder"
+
 # Function to handle errors
 handle_error() {
     echo "Error occurred in script at line: $1"
@@ -13,6 +16,12 @@ trap 'handle_error $LINENO' ERR
 # Build the project
 ./gradlew build
 echo "Gradle build completed successfully."
+
+# Build the Flutter web project
+cd $flutterapp
+flutter build web
+echo "Flutter web build completed successfully."
+cd $root
 
 # Bring down any running containers
 docker compose down --remove-orphans
