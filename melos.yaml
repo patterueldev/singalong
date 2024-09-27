@@ -1,7 +1,7 @@
 name: singalong
 
 packages:
-  - apps/**
+  - clients/**
   - packages/**
 
 scripts:

@@ -2,7 +2,7 @@
 set -e
 
 root=$(pwd)
-flutterapp="$root/clients/apps/uibuilder"
+flutterapp="$root/clients/uibuilder"
 
 # Function to handle errors
 handle_error() {

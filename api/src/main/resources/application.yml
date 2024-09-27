@@ -1,6 +1,0 @@
-#spring:
-#  data:
-#    mongodb:
-#      user: root
-#      password: example
-#      url: mongodb://mongoserver:27017/singalong

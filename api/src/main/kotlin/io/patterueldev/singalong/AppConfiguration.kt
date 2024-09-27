@@ -11,9 +11,29 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.web.reactive.function.client.WebClient
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
+import org.springframework.web.servlet.config.annotation.CorsRegistry
 
 @Configuration
 class AppConfiguration {
+    @Value("\${cors.allowedOrigins}")
+    private lateinit var allowedOrigins: String
+
+    @Bean
+    fun corsConfigurer(): WebMvcConfigurer {
+        return object : WebMvcConfigurer {
+            override fun addCorsMappings(registry: CorsRegistry) {
+                val origins = allowedOrigins.split(",").toTypedArray()
+                println("Allowed origins: ${origins.joinToString(" | ")}")
+                registry.addMapping("/**")
+                    .allowedOrigins(*origins)
+                    .allowedMethods("GET", "POST", "PUT", "DELETE", "PATCH")
+                    .allowedHeaders("*")
+                    .allowCredentials(true)
+            }
+        }
+    }
+
     @Bean
     fun songDownloaderClient(
         @Value("\${baseurl.songdownloader}") songDownloaderUrl: String
