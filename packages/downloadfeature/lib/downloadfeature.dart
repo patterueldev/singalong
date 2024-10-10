@@ -33,7 +33,9 @@ class DownloadFeatureProvider {
       ),
     ),
     Provider<DownloadUseCase>(
-      create: (context) => DefaultDownloadUseCase(),
+      create: (context) => DefaultDownloadUseCase(
+        identifiedSongRepository: context.read(),
+      ),
     ),
   ]);
 

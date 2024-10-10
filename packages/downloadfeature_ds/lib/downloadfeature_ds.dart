@@ -7,6 +7,8 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart';
 import 'package:provider/provider.dart';
 
+part 'downloadfeatureds_provider.dart';
+
 class DefaultSongIdentifierRepository implements SongIdentifierRepository {
   final Client client;
   final DownloadFeatureDSConfiguration configuration;
@@ -56,31 +58,19 @@ class DefaultSongIdentifierRepository implements SongIdentifierRepository {
       rethrow;
     }
   }
+
+  @override
+  Future<void> saveSong(IdentifiedSongDetails details,
+      {required bool reserve}) {
+    // TODO: implement downloadSong
+    throw UnimplementedError();
+  }
 }
 
-class DownloadFeatureDSProvider {
-  final DownloadFeatureDSConfiguration configuration;
-  DownloadFeatureDSProvider({
-    required this.configuration,
-  });
-
-  late final providers = MultiProvider(providers: [
-    Provider<Client>(
-      create: (context) => Client(),
-      dispose: (context, client) => client.close(),
-    ),
-    Provider<SongIdentifierRepository>(
-      create: (context) => DefaultSongIdentifierRepository(
-        client: context.read(),
-        configuration: configuration,
-      ),
-    ),
-  ]);
-}
+class DownloadSongParameters {}
 
 class DownloadFeatureDSConfiguration {
-  final String
-      baseUrl; // e.g. http://localhost or http://192.168.0.1 or https://www.example.com
+  final String baseUrl;
 
   const DownloadFeatureDSConfiguration({
     required this.baseUrl,

@@ -22,6 +22,7 @@ dependencies {
     implementation(libs.springBootWeb)
     implementation(libs.springBootDataMongo)
     implementation(libs.springBootWebSocket)
+    implementation(libs.springBootSecurity)
     implementation(libs.jacksonKotlin)
     implementation(libs.kotlinReflect)
     testRuntimeOnly(libs.junitPlatformLauncher)

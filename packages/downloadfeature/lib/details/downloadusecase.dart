@@ -8,7 +8,10 @@ abstract class DownloadUseCase {
 }
 
 class DefaultDownloadUseCase implements DownloadUseCase {
-  DefaultDownloadUseCase();
+  final SongIdentifierRepository identifiedSongRepository;
+  DefaultDownloadUseCase({
+    required this.identifiedSongRepository,
+  });
 
   @override
   TaskEither<GenericException, Unit> downloadSong(

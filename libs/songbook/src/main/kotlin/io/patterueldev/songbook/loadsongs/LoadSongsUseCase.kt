@@ -6,7 +6,7 @@ import io.patterueldev.songbook.common.LoadSongsResponse
 import io.patterueldev.songbook.common.SongRepository
 
 
-class LoadSongsUseCase(
+internal class LoadSongsUseCase(
     private val songRepository: SongRepository,
 ): ServiceUseCase<LoadSongsParameters, LoadSongsResponse> {
     override suspend fun execute(parameters: LoadSongsParameters): LoadSongsResponse {

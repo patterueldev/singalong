@@ -1,5 +1,7 @@
+enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 pluginManagement {
+    settings.extra[""] = ""
     repositories {
         google()
         gradlePluginPortal()
@@ -30,6 +32,9 @@ project(":shared").projectDir = file("./libs/shared")
 
 include(":mongo-ds")
 project(":mongo-ds").projectDir = file("./libs/mongo-ds")
+
+include(":sessionroom")
+project(":sessionroom").projectDir = file("./libs/sessionroom")
 
 include(":songidentifier")
 project(":songidentifier").projectDir = file("./libs/songidentifier")

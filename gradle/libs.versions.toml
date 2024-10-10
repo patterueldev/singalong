@@ -1,11 +1,13 @@
 [versions]
 springBoot = "3.3.4"
 spring = "6.1.13"
+dependencyManagement = "1.1.6"
 kotlin = "2.0.20"
 jackson = "2.13.3"
 kotlinx = "1.8.1"
 ktor = "2.3.12"
 openai = "3.8.2"
+jws = "0.12.6"
 
 [libraries]
 #org.jetbrains.kotlin.jvm
@@ -13,6 +15,7 @@ springBootWeb = { module = "org.springframework.boot:spring-boot-starter-web", v
 springBootDataMongo = { module = "org.springframework.boot:spring-boot-starter-data-mongodb", version.ref = "springBoot" }
 springBootWebSocket = { module = "org.springframework.boot:spring-boot-starter-websocket", version.ref = "springBoot" }
 springBootWebflux = { module = "org.springframework.boot:spring-boot-starter-webflux", version.ref = "springBoot" }
+springBootSecurity = { module = "org.springframework.boot:spring-boot-starter-security", version.ref = "springBoot" }
 springContext = { module = "org.springframework:spring-context", version.ref = "spring" }
 jacksonKotlin = { module = "com.fasterxml.jackson.module:jackson-module-kotlin", version.ref = "jackson" }
 kotlinReflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin" }
@@ -23,9 +26,12 @@ kotlinxCoroutinesReactor = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-
 kotlinxCoroutinesCore = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx" }
 openAIClient = { module = "com.aallam.openai:openai-client", version.ref = "openai" }
 ktorClientCIO = { module = "io.ktor:ktor-client-cio", version.ref = "ktor" }
+jsonWebTokenApi = { module = "io.jsonwebtoken:jjwt-api", version.ref = "jws" }
+jsonWebTokenImpl = { module = "io.jsonwebtoken:jjwt-impl", version.ref = "jws" }
+jsonWebTokenJackson = { module = "io.jsonwebtoken:jjwt-jackson", version.ref = "jws" }
 
 [plugins]
 kotlinJvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlinSpring = { id = "org.jetbrains.kotlin.plugin.spring", version.ref = "kotlin" }
 springBoot = { id = "org.springframework.boot", version.ref = "springBoot" }
-springDependencyManagement = { id = "io.spring.dependency-management", version = "1.1.6" }
+springDependencyManagement = { id = "io.spring.dependency-management", version.ref = "dependencyManagement" }

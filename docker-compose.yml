@@ -4,7 +4,7 @@ services:
     build:
       context: ./clients/uibuilder #TODO: Change to the correct path; this is just a temporary project
       dockerfile: Dockerfile
-    container_name: client-container
+    container_name: singalong-client-container
     ports:
       - "80:80"
     networks:

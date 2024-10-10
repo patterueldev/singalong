@@ -10,11 +10,16 @@ import io.ktor.client.engine.cio.CIO
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
+import org.springframework.security.config.web.server.ServerHttpSecurity
+import org.springframework.security.web.server.SecurityWebFilterChain
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
 import org.springframework.web.servlet.config.annotation.CorsRegistry
+import org.springframework.web.servlet.config.annotation.ViewControllerRegistry
 
 @Configuration
+@EnableWebSecurity
 class AppConfiguration {
     @Value("\${cors.allowedOrigins}")
     private lateinit var allowedOrigins: String
@@ -32,6 +37,11 @@ class AppConfiguration {
                     .allowCredentials(true)
             }
         }
+    }
+
+    @Bean
+    fun securityFilterChain(http: ServerHttpSecurity): SecurityWebFilterChain {
+        return http.build()
     }
 
     @Bean
