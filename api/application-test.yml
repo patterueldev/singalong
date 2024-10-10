@@ -7,3 +7,5 @@ openai:
   model: "TheBloke/Mistral-7B-Instruct-v0.2-GGUF/mistral-7b-instruct-v0.2.Q4_K_S.gguf"
 cors:
   allowedOrigins: "http://example.io:8080"
+jwt:
+  secret: "secret"

@@ -22,6 +22,9 @@ include(":api")
 include(":shared")
 project(":shared").projectDir = file("./libs/shared")
 
+include(":common")
+project(":common").projectDir = file("./libs/common")
+
 ////include(":sharedds")
 ////project(":sharedds").projectDir = file("./libs/sharedds")
 ////
@@ -33,6 +36,9 @@ project(":mongo-ds").projectDir = file("./libs/mongo-ds")
 
 include(":sessionroom")
 project(":sessionroom").projectDir = file("./libs/sessionroom")
+
+include(":sessionroomds")
+project(":sessionroomds").projectDir = file("./libs/sessionroomds")
 
 include(":songidentifier")
 project(":songidentifier").projectDir = file("./libs/songidentifier")

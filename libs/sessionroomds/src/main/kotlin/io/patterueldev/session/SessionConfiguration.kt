@@ -1,0 +1,10 @@
+package io.patterueldev.session
+
+import SessionService
+import io.patterueldev.session.auth.AuthRepository
+import io.patterueldev.session.room.RoomRepository
+import io.patterueldev.session.auth.AuthUserRepository
+import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Configuration
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
+import org.springframework.security.crypto.password.PasswordEncoder

@@ -8,6 +8,7 @@ kotlinx = "1.8.1"
 ktor = "2.3.12"
 openai = "3.8.2"
 jws = "0.12.6"
+nimbus = "9.15.1"
 
 [libraries]
 #org.jetbrains.kotlin.jvm
@@ -16,6 +17,7 @@ springBootDataMongo = { module = "org.springframework.boot:spring-boot-starter-d
 springBootWebSocket = { module = "org.springframework.boot:spring-boot-starter-websocket", version.ref = "springBoot" }
 springBootWebflux = { module = "org.springframework.boot:spring-boot-starter-webflux", version.ref = "springBoot" }
 springBootSecurity = { module = "org.springframework.boot:spring-boot-starter-security", version.ref = "springBoot" }
+springBootOAuth2ResourceServer = { module = "org.springframework.boot:spring-boot-starter-oauth2-resource-server", version.ref = "springBoot" }
 springContext = { module = "org.springframework:spring-context", version.ref = "spring" }
 jacksonKotlin = { module = "com.fasterxml.jackson.module:jackson-module-kotlin", version.ref = "jackson" }
 kotlinReflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin" }
@@ -29,6 +31,7 @@ ktorClientCIO = { module = "io.ktor:ktor-client-cio", version.ref = "ktor" }
 jsonWebTokenApi = { module = "io.jsonwebtoken:jjwt-api", version.ref = "jws" }
 jsonWebTokenImpl = { module = "io.jsonwebtoken:jjwt-impl", version.ref = "jws" }
 jsonWebTokenJackson = { module = "io.jsonwebtoken:jjwt-jackson", version.ref = "jws" }
+nimbus-jose-jwt = { module = "com.nimbusds:nimbus-jose-jwt", version.ref = "nimbus" }
 
 [plugins]
 kotlinJvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
