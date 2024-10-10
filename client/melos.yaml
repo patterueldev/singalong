@@ -1,0 +1,21 @@
+name: singalong
+
+packages:
+  - apps/**
+  - packages/**
+
+scripts:
+  get:
+    exec: flutter pub get
+  outdated:
+    exec: flutter pub outdated
+  upgrade:
+    exec: flutter pub upgrade
+  update:
+    exec: dart pub update
+  build_runner:
+    exec: flutter pub run build_runner build --delete-conflicting-outputs
+    
+  generate_localization:
+    run: |
+      melos exec -- flutter pub run intl_translation:generate_from_arb --output-dir=lib/l10n lib/app_localizations.dart lib/l10n/*.arb

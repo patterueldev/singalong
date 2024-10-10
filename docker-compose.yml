@@ -2,7 +2,7 @@ services:
   client:
     image: singalong-client:1.0.0
     build:
-      context: ./clients/uibuilder #TODO: Change to the correct path; this is just a temporary project
+      context: client #TODO: Change to the correct path; this is just a temporary project
       dockerfile: Dockerfile
     container_name: singalong-client-container
     ports:
