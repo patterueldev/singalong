@@ -1,6 +1,8 @@
 package io.patterueldev.reservation.reservedsong
 
+import io.patterueldev.roomuser.RoomUser
+
 interface ReservedSongsRepository {
-    suspend fun reserveSong(roomId: String, songId: String)
-    fun loadReservedSongs(roomId: String): List<ReservedSong>
+    suspend fun reserveSong(roomUser: RoomUser, songId: String)
+    suspend fun loadReservedSongs(roomId: String): List<ReservedSong>
 }
