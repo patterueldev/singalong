@@ -1,4 +1,4 @@
-package io.patterueldev.songbook.common
+package io.patterueldev.songbook.song
 
 import io.patterueldev.shared.Pagination
 import io.patterueldev.songbook.loadsongs.PaginatedSongs

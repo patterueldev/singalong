@@ -13,7 +13,6 @@ repositories {
 dependencies {
     implementation(libs.kotlinxCoroutinesCore)
     implementation(libs.kotlinxCoroutinesReactor)
-    implementation(libs.springContext) // TODO: Remove this and move to a DS layer
     implementation(project(":shared"))
     testImplementation(kotlin("test"))
 }

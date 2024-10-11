@@ -17,13 +17,11 @@ open class SessionConfiguration {
         @Autowired authUserRepository: AuthUserRepository,
         @Autowired roomRepository: RoomRepository,
         @Autowired authRepository: AuthRepository,
-    ): SessionService {
-        return SessionService(
-            authUserRepository = authUserRepository,
-            roomRepository = roomRepository,
-            authRepository = authRepository,
-        )
-    }
+    ) = SessionService(
+        authUserRepository = authUserRepository,
+        roomRepository = roomRepository,
+        authRepository = authRepository,
+    )
 
     @Bean
     open fun passwordEncoder(): PasswordEncoder {

@@ -4,9 +4,9 @@ import io.patterueldev.mongods.song.SongDocument
 import io.patterueldev.mongods.song.SongDocumentRepository
 import io.patterueldev.shared.PaginatedData
 import io.patterueldev.shared.Pagination
-import io.patterueldev.songbook.common.SongRepository
 import io.patterueldev.songbook.loadsongs.PaginatedSongs
 import io.patterueldev.songbook.loadsongs.SongListItem
+import io.patterueldev.songbook.song.SongRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.springframework.beans.factory.annotation.Autowired
