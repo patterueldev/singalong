@@ -1,7 +1,7 @@
 package io.patterueldev.session.connect
 
 import io.patterueldev.session.auth.AuthRepository
-import io.patterueldev.session.auth.AuthUserRepository
+import io.patterueldev.session.authuser.AuthUserRepository
 import io.patterueldev.session.common.ConnectResponse
 import io.patterueldev.session.room.RoomRepository
 import io.patterueldev.shared.GenericResponse
@@ -16,6 +16,10 @@ internal class ConnectUseCase(
         println("ConnectUseCase: $parameters")
         // step1: find the room
         val room = roomRepository.findRoomById(parameters.roomId) ?: return GenericResponse.failure("Room not found")
+        // step1.1: check if the room is archived
+        if (room.isArchived) {
+            return GenericResponse.failure("Room is archived")
+        }
         // step2: fetch the user
         var user = authUserRepository.findUserByUsername(parameters.username)
         // step2.1: if the user does not exist, create it
@@ -33,22 +37,20 @@ internal class ConnectUseCase(
 
         // Check parameters if passcode(s) were not provided
         if (requiresUserPasscode || requiresRoomPasscode) {
-            val isUserPasscodeRequiredAndProvided = requiresUserPasscode && parameters.userPasscode != null
-            val isRoomPasscodeRequiredAndProvided = requiresRoomPasscode && parameters.roomPasscode != null
+            val bothAreRequired = requiresUserPasscode && requiresRoomPasscode
 
-            // Check if any required passcode was not provided
-            if (!isUserPasscodeRequiredAndProvided || !isRoomPasscodeRequiredAndProvided) {
-                // Compose appropriate error message based on which passcodes are missing
-                val message =
-                    when {
-                        !isUserPasscodeRequiredAndProvided && !isRoomPasscodeRequiredAndProvided ->
-                            "User and io.patterueldev.room.Room passcodes are required"
-                        !isUserPasscodeRequiredAndProvided ->
-                            "User passcode is required"
-                        else ->
-                            "io.patterueldev.room.Room passcode is required"
-                    }
+            val message: String?
+            if (bothAreRequired && (parameters.userPasscode == null && parameters.roomPasscode == null)) {
+                message = "User and Room passcodes are required"
+            } else if (requiresUserPasscode && parameters.userPasscode == null) {
+                message = "User passcode is required"
+            } else if (requiresRoomPasscode && parameters.roomPasscode == null) {
+                message = "Room passcode is required"
+            } else {
+                message = null
+            }
 
+            if (message != null) {
                 // Return response with passcode requirement flags and message
                 return ConnectResponse(
                     success = false,

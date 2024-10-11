@@ -27,8 +27,8 @@ data class SongDocument(
     // this will be the session id where the song was added; 'admin' if added by an admin somewhere else
     val addedAtSession: String,
     val lastModifiedBy: String,
-    @CreatedDate val createdAt: LocalDateTime? = null,
-    @LastModifiedDate val updatedAt: LocalDateTime? = null,
+    @CreatedDate val createdAt: LocalDateTime = LocalDateTime.now(),
+    @LastModifiedDate val updatedAt: LocalDateTime = LocalDateTime.now(),
 ) {
     companion object {
         fun new(

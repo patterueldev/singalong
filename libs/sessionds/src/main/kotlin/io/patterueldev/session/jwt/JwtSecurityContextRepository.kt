@@ -20,7 +20,7 @@ class JwtSecurityContextRepository(
 
         if (token != null && jwtUtil.isTokenValid(token)) {
             val userDetails = jwtUtil.getUserDetails(token)
-            val authentication = JwtAuthenticationToken(userDetails.username, token, userDetails.authorities)
+            val authentication = JwtAuthenticationToken(userDetails, token, userDetails.authorities)
             securityContext.authentication = authentication
         }
 

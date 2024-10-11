@@ -57,7 +57,7 @@ services:
       MONGO_DB_USERNAME: $MONGO_DB_USERNAME
       MONGO_DB_PASSWORD: $MONGO_DB_PASSWORD
     volumes:
-      - mongodb_data:/data/db
+      - mongodb_data_v6:/data/db
       - ./init-mongo:/docker-entrypoint-initdb.d
     networks:
       - singalong-server
@@ -69,3 +69,4 @@ networks:
 
 volumes:
   mongodb_data:
+  mongodb_data_v6:

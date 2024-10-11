@@ -15,7 +15,7 @@ data class SessionDocument(
     @Id val id: String? = null,
     @DBRef val userDocument: UserDocument,
     @DBRef val roomDocument: RoomDocument,
-    @CreatedDate val createdAt: LocalDateTime? = null,
+    @CreatedDate val createdAt: LocalDateTime = LocalDateTime.now(),
 )
 
 @Repository

@@ -3,11 +3,11 @@ package io.patterueldev.session.jwt
 import io.jsonwebtoken.Claims
 import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.security.Keys
+import io.patterueldev.mongods.room.RoomDocumentRepository
 import io.patterueldev.mongods.user.UserDocumentRepository
 import io.patterueldev.session.room.RoomUserDetails
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.security.core.authority.SimpleGrantedAuthority
-import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.stereotype.Component
 import java.nio.charset.StandardCharsets
 import java.time.Instant
@@ -17,6 +17,7 @@ import java.util.Date
 class JwtUtil(
     @Value("\${jwt.secret}") private val secret: String,
     private val userDocumentRepository: UserDocumentRepository,
+    private val roomDocumentRepository: RoomDocumentRepository,
 ) {
     private val key = Keys.hmacShaKeyFor(secret.toByteArray(StandardCharsets.UTF_8))
 
@@ -80,21 +81,21 @@ class JwtUtil(
         }
     }
 
-    fun getUserDetails(token: String): UserDetails {
-        val jwtSubject = extractSubject(token)
-        val jwtRoomId = extractRoomId(token)
-        if (jwtSubject != null) {
-            val user = userDocumentRepository.findByUsername(jwtSubject)
-            if (user != null) {
-                println("User: $user")
-                return RoomUserDetails(
-                    user = user,
-                    roomId = jwtRoomId ?: "",
-                    rawAuthorities = listOf(SimpleGrantedAuthority("ROLE_USER")),
-                )
-            }
+    fun getUserDetails(token: String): RoomUserDetails {
+        val jwtSubject = extractSubject(token) ?: throw Exception("Subject not found")
+        val jwtRoomId = extractRoomId(token) ?: throw Exception("Room ID not found")
+
+        val user = userDocumentRepository.findByUsername(jwtSubject) ?: throw Exception("User not found")
+        val room = roomDocumentRepository.findRoomById(jwtRoomId) ?: throw Exception("Room not found")
+        if (room.archivedAt != null) {
+            throw Exception("Room is not active anymore")
         }
-        throw Exception("jwtSubject is null")
+        val role = user.role.name
+        return RoomUserDetails(
+            user = user,
+            roomId = jwtRoomId,
+            rawAuthorities = listOf(SimpleGrantedAuthority("ROLE_$role")),
+        )
     }
 
     companion object {

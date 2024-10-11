@@ -17,7 +17,7 @@ class JwtAuthenticationProvider(
         }
 
         val userDetails = jwtUtil.getUserDetails(token)
-        return JwtAuthenticationToken(userDetails.username, token, userDetails.authorities)
+        return JwtAuthenticationToken(userDetails, token, userDetails.authorities)
     }
 
     override fun supports(authentication: Class<*>): Boolean {

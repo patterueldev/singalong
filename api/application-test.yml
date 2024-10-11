@@ -8,4 +8,15 @@ openai:
 cors:
   allowedOrigins: "http://example.io:8080"
 jwt:
-  secret: "secret"
+  secret: "abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890"
+spring:
+  config:
+    activate:
+      on-profile: test
+  data:
+    mongodb:
+      port: 27017
+      username: root
+      password: root
+      database: db
+    auto-index-creation: $MONGO_AUTO_INDEX_CREATION

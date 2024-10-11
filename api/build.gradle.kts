@@ -34,6 +34,8 @@ dependencies {
     testImplementation(libs.springBootStarterTest)
     testImplementation(libs.kotlinTestJunit5)
     implementation(projects.shared)
+    implementation(projects.common)
+    implementation(projects.mongoDs)
     implementation(projects.session)
     implementation(projects.sessionds)
     implementation(projects.songidentifier)

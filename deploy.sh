@@ -13,6 +13,9 @@ handle_error() {
 # Trap errors and call handle_error function
 trap 'handle_error $LINENO' ERR
 
+# Format
+./gradlew ktlintFormat
+
 # Build the project
 ./gradlew build
 echo "Gradle build completed successfully."

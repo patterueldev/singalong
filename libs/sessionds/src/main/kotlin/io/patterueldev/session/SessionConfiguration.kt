@@ -2,7 +2,7 @@ package io.patterueldev.session
 
 import SessionService
 import io.patterueldev.session.auth.AuthRepository
-import io.patterueldev.session.auth.AuthUserRepository
+import io.patterueldev.session.authuser.AuthUserRepository
 import io.patterueldev.session.room.RoomRepository
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Bean

@@ -13,6 +13,6 @@ data class ReversedSongDocument(
     val sessionId: String,
     val orderNumber: Int,
     val reservedBy: String,
-    @CreatedDate val createdAt: LocalDateTime? = null,
-    @LastModifiedDate val updatedAt: LocalDateTime? = null,
+    @CreatedDate val createdAt: LocalDateTime = LocalDateTime.now(),
+    @LastModifiedDate val updatedAt: LocalDateTime = LocalDateTime.now(),
 )

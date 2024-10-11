@@ -13,7 +13,7 @@ data class UserDocument(
     @Id val username: String,
     // nullable, because the user might not have a passcode; can be used by any user to authenticate if not protected by a passcode
     var passcode: String?,
-    var role: Role = Role.USER,
-    @CreatedDate val createdAt: LocalDateTime? = null,
-    @LastModifiedDate val updatedAt: LocalDateTime? = null,
+    var role: Role = Role.USER_GUEST,
+    @CreatedDate val createdAt: LocalDateTime = LocalDateTime.now(),
+    @LastModifiedDate val updatedAt: LocalDateTime = LocalDateTime.now(),
 )

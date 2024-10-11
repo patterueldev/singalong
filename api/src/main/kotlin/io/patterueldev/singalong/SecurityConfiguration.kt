@@ -51,7 +51,7 @@ class SecurityConfiguration {
             .authenticationProvider(jwtAuthenticationProvider)
             .securityContext { it.securityContextRepository(jwtSecurityContextRepository) }
             .authorizeHttpRequests {
-                it.requestMatchers("/connect/**").permitAll()
+                it.requestMatchers("/session/connect").permitAll()
                 it.anyRequest().authenticated()
             }
             .build()

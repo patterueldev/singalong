@@ -1,11 +1,11 @@
 package io.patterueldev.session.jwt
 
+import io.patterueldev.session.room.RoomUserDetails
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.GrantedAuthority
 
 class JwtAuthenticationToken(
-    // Username or ID
-    private val principal: String,
+    private val principal: RoomUserDetails,
     // JWT token
     private val token: String,
     authorities: Collection<GrantedAuthority>,

@@ -1,10 +1,11 @@
 package io.patterueldev.session.auth
 
+import io.patterueldev.session.authuser.AuthUser
 import io.patterueldev.session.room.Room
 
 interface AuthRepository {
     fun matchPasscode(
-        passcode: String,
+        plainPasscode: String,
         hashedPasscode: String,
     ): Boolean
 

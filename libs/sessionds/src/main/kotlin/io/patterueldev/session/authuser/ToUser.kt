@@ -1,4 +1,4 @@
-package io.patterueldev.session.auth
+package io.patterueldev.session.authuser
 
 import io.patterueldev.mongods.user.UserDocument
 

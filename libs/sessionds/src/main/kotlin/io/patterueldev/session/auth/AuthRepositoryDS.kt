@@ -4,6 +4,7 @@ import io.patterueldev.mongods.room.RoomDocumentRepository
 import io.patterueldev.mongods.session.SessionDocument
 import io.patterueldev.mongods.session.SessionDocumentRepository
 import io.patterueldev.mongods.user.UserDocumentRepository
+import io.patterueldev.session.authuser.AuthUser
 import io.patterueldev.session.jwt.JwtUtil
 import io.patterueldev.session.room.Room
 import org.springframework.beans.factory.annotation.Autowired
@@ -23,10 +24,10 @@ class AuthRepositoryDS : AuthRepository {
     @Autowired private lateinit var jwtUtil: JwtUtil
 
     override fun matchPasscode(
-        passcode: String,
+        plainPasscode: String,
         hashedPasscode: String,
     ): Boolean {
-        return passwordEncoder.matches(passcode, hashedPasscode)
+        return passwordEncoder.matches(plainPasscode, hashedPasscode)
     }
 
     override fun addUserToRoom(
