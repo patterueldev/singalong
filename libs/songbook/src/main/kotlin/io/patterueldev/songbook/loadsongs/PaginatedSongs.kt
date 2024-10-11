@@ -1,5 +1,5 @@
 package io.patterueldev.songbook.loadsongs
 
-import io.patterueldev.shared.PaginatedData
+import io.patterueldev.common.PaginatedData
 
 typealias PaginatedSongs = PaginatedData<SongListItem>

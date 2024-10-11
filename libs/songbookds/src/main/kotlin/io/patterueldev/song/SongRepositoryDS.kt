@@ -2,7 +2,7 @@ package io.patterueldev.song
 
 import io.patterueldev.mongods.song.SongDocument
 import io.patterueldev.mongods.song.SongDocumentRepository
-import io.patterueldev.shared.PaginatedData
+import io.patterueldev.common.PaginatedData
 import io.patterueldev.common.Pagination
 import io.patterueldev.songbook.loadsongs.PaginatedSongs
 import io.patterueldev.songbook.loadsongs.SongListItem

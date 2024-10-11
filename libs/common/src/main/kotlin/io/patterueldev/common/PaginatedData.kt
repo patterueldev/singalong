@@ -1,4 +1,4 @@
-package io.patterueldev.shared
+package io.patterueldev.common
 
 open class PaginatedData<T>(
     val data: List<T>,

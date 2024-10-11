@@ -45,3 +45,9 @@ project(":songbook").projectDir = file("./libs/songbook")
 
 include(":songbookds")
 project(":songbookds").projectDir = file("./libs/songbookds")
+
+include(":reservation")
+project(":reservation").projectDir = file("./libs/reservation")
+
+include(":reservationds")
+project(":reservationds").projectDir = file("./libs/reservationds")
