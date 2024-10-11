@@ -86,6 +86,7 @@ class JwtUtil(
         if (jwtSubject != null) {
             val user = userDocumentRepository.findByUsername(jwtSubject)
             if (user != null) {
+                println("User: $user")
                 return RoomUserDetails(
                     user = user,
                     roomId = jwtRoomId ?: "",

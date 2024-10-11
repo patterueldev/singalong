@@ -9,6 +9,7 @@ version = "1.0-SNAPSHOT"
 
 dependencies {
     implementation(libs.springBootDataMongo)
+    implementation(projects.common)
     testImplementation(kotlin("test"))
 }
 tasks.test {

@@ -1,14 +1,13 @@
-package io.patterueldev.user
+package io.patterueldev.session.auth
 
 import io.patterueldev.mongods.user.UserDocument
 import io.patterueldev.mongods.user.UserDocumentRepository
-import io.patterueldev.session.auth.AuthUser
-import io.patterueldev.session.auth.AuthUserRepository
+import io.patterueldev.role.Role
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 
 @Service
-class UserRepositoryDS : AuthUserRepository {
+class AuthUserRepositoryDS : AuthUserRepository {
     @Autowired private lateinit var userDocumentRepository: UserDocumentRepository
 
     override fun findUserByUsername(username: String): AuthUser? {

@@ -1,5 +1,6 @@
 package io.patterueldev.mongods.user
 
+import io.patterueldev.role.Role
 import org.springframework.data.annotation.CreatedDate
 import org.springframework.data.annotation.Id
 import org.springframework.data.annotation.LastModifiedDate
@@ -11,7 +12,8 @@ data class UserDocument(
     // for simplicity, we will use the username directly
     @Id val username: String,
     // nullable, because the user might not have a passcode; can be used by any user to authenticate if not protected by a passcode
-    val passcode: String?,
+    var passcode: String?,
+    var role: Role = Role.USER,
     @CreatedDate val createdAt: LocalDateTime? = null,
     @LastModifiedDate val updatedAt: LocalDateTime? = null,
 )
