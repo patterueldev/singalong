@@ -21,7 +21,7 @@ dependencies {
     implementation(projects.shared)
     implementation(projects.common)
     implementation(projects.mongoDs)
-    implementation(projects.sessionroom)
+    implementation(projects.session)
     testImplementation(kotlin("test"))
 }
 tasks.test {

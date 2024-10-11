@@ -26,7 +26,6 @@ class JwtUtil(
     @Value("\${jwt.secret}") private val secret: String,
     private val userDocumentRepository: UserDocumentRepository
 ) {
-    private val logger = LoggerFactory.getLogger(this.javaClass)
     private val key = Keys.hmacShaKeyFor(secret.toByteArray(StandardCharsets.UTF_8))
 
     fun generateToken(username: String, roomid: String): String {
@@ -45,7 +44,7 @@ class JwtUtil(
             return claims.subject
         } catch (e: Exception) {
             e.printStackTrace()
-            logger.error("- - - - [MALFORMED TOKEN] - - - -")
+            println("- - - - [MALFORMED TOKEN] - - - -")
         }
         return null
     }
@@ -56,7 +55,7 @@ class JwtUtil(
             return claims["roomId"] as String
         } catch (e: Exception) {
             e.printStackTrace()
-            logger.error("- - - - [MALFORMED TOKEN] - - - -")
+            println("- - - - [MALFORMED TOKEN] - - - -")
         }
         return null
     }
@@ -67,32 +66,22 @@ class JwtUtil(
 
 
     fun isTokenValid(token: String): Boolean {
-        val isValid = !isTokenExpired(token) && isSignatureValid(token)
+        val isValid = !isTokenExpired(token)
         println("Is Valid: $isValid")
         return isValid
-    }
-
-    private fun isSignatureValid(token: String): Boolean {
-        return try {
-            val claims = extractAllClaims(token) // TODO: Find out how to verify signature
-            return true
-//            val signedJWT = SignedJWT.parse(token)
-//            val verifier = MACVerifier(secret)
-//            signedJWT.verify(verifier)
-        } catch (e: Exception) {
-            logger.error("- - - - [INVALID TOKEN SIGNATURE] - - - -")
-            false
-        }
     }
 
     private fun isTokenExpired(token: String): Boolean {
         return try {
             val claims = extractAllClaims(token)
+            val now = Date()
             val expirationTime = claims.expiration.time
-            val currentTime = Date().time
+            val currentTime = now.time
+            println("Expiration Time: ${claims.expiration}")
+            println("Current Time: $now")
             expirationTime < currentTime
         } catch (e: Exception) {
-            logger.error("-  - - - [EXPIRED TOKEN] - - - -")
+            println("-  - - - [EXPIRED TOKEN] - - - -")
             true
         }
     }

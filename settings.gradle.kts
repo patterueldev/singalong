@@ -34,11 +34,11 @@ project(":common").projectDir = file("./libs/common")
 include(":mongo-ds")
 project(":mongo-ds").projectDir = file("./libs/mongo-ds")
 
-include(":sessionroom")
-project(":sessionroom").projectDir = file("./libs/sessionroom")
+include(":session")
+project(":session").projectDir = file("./libs/session")
 
-include(":sessionroomds")
-project(":sessionroomds").projectDir = file("./libs/sessionroomds")
+include(":sessionds")
+project(":sessionds").projectDir = file("./libs/sessionds")
 
 include(":songidentifier")
 project(":songidentifier").projectDir = file("./libs/songidentifier")
