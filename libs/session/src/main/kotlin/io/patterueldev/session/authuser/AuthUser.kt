@@ -1,4 +1,4 @@
-package io.patterueldev.authuser
+package io.patterueldev.session.authuser
 
 interface AuthUser {
     val username: String

@@ -1,9 +1,8 @@
 package io.patterueldev.songidentifier.savesong
 
-import io.patterueldev.authuser.AuthUserRepository
 import io.patterueldev.roomuser.RoomUserRepository
-import io.patterueldev.shared.GenericResponse
-import io.patterueldev.shared.ServiceUseCase
+import io.patterueldev.common.GenericResponse
+import io.patterueldev.common.ServiceUseCase
 import io.patterueldev.songidentifier.common.IdentifiedSongRepository
 import io.patterueldev.songidentifier.common.SaveSongResponse
 
@@ -11,7 +10,6 @@ internal open class SaveSongUseCase(
     private val identifiedSongRepository: IdentifiedSongRepository,
     private val roomUserRepository: RoomUserRepository,
 ) : ServiceUseCase<SaveSongParameters, SaveSongResponse> {
-
     override suspend fun execute(parameters: SaveSongParameters): SaveSongResponse {
         val user = roomUserRepository.currentUser()
 

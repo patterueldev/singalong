@@ -1,5 +1,5 @@
 package io.patterueldev.roomuser
 
 interface RoomUserRepository {
-    fun currentUser(): RoomUser
+    suspend fun currentUser(): RoomUser
 }

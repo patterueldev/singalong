@@ -1,8 +1,7 @@
 package io.patterueldev.session
 
-import SessionService
+import io.patterueldev.session.authuser.AuthUserRepository
 import io.patterueldev.session.auth.AuthRepository
-import io.patterueldev.authuser.AuthUserRepository
 import io.patterueldev.session.room.RoomRepository
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Bean
@@ -12,6 +11,11 @@ import org.springframework.security.crypto.password.PasswordEncoder
 
 @Configuration
 open class SessionConfiguration {
+    @Bean
+    open fun passwordEncoder(): PasswordEncoder {
+        return BCryptPasswordEncoder()
+    }
+
     @Bean
     open fun sessionService(
         @Autowired authUserRepository: AuthUserRepository,

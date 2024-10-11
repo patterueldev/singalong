@@ -4,4 +4,3 @@ interface RoomUser {
     val username: String
     val roomId: String
 }
-

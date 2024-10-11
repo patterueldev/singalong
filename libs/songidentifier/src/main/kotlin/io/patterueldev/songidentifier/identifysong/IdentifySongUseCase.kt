@@ -1,7 +1,7 @@
 package io.patterueldev.songidentifier.identifysong
 
-import io.patterueldev.shared.GenericResponse
-import io.patterueldev.shared.ServiceUseCase
+import io.patterueldev.common.GenericResponse
+import io.patterueldev.common.ServiceUseCase
 import io.patterueldev.songidentifier.common.IdentifiedSongRepository
 import io.patterueldev.songidentifier.common.IdentifySongResponse
 

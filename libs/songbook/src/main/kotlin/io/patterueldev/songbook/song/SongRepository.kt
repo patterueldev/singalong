@@ -1,6 +1,6 @@
 package io.patterueldev.songbook.song
 
-import io.patterueldev.shared.Pagination
+import io.patterueldev.common.Pagination
 import io.patterueldev.songbook.loadsongs.PaginatedSongs
 
 interface SongRepository {

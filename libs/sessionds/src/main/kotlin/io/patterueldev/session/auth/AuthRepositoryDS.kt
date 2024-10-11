@@ -1,10 +1,10 @@
 package io.patterueldev.session.auth
 
+import io.patterueldev.session.authuser.AuthUser
 import io.patterueldev.mongods.room.RoomDocumentRepository
 import io.patterueldev.mongods.session.SessionDocument
 import io.patterueldev.mongods.session.SessionDocumentRepository
 import io.patterueldev.mongods.user.UserDocumentRepository
-import io.patterueldev.authuser.AuthUser
 import io.patterueldev.session.jwt.JwtUtil
 import io.patterueldev.session.room.Room
 import org.springframework.beans.factory.annotation.Autowired

@@ -1,6 +1,6 @@
 package io.patterueldev.singalong.controllers
 
-import SessionService
+import io.patterueldev.session.SessionService
 import io.patterueldev.session.connect.ConnectParameters
 import io.patterueldev.session.setuserpasscode.SetUserPasscodeParameters
 import org.springframework.web.bind.annotation.PostMapping

@@ -13,10 +13,9 @@ repositories {
 dependencies {
     implementation(libs.kotlinxCoroutinesCore)
     implementation(libs.springBootDataMongo)
-    implementation(projects.shared)
     implementation(projects.common)
     implementation(projects.mongoDs)
-    implementation(projects.songbook)
+    api(projects.songbook)
     testImplementation(kotlin("test"))
 }
 tasks.test {

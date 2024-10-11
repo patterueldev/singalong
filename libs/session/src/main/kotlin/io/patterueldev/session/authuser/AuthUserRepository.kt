@@ -1,12 +1,15 @@
-package io.patterueldev.authuser
+package io.patterueldev.session.authuser
 
 interface AuthUserRepository {
     fun createUser(
         username: String,
         passcode: String?,
     ): AuthUser
+
     fun currentUser(): AuthUser
+
     fun findUserByUsername(username: String): AuthUser?
+
     fun updateUser(
         username: String,
         passcode: String?,

@@ -1,10 +1,10 @@
 package io.patterueldev.session.setuserpasscode
 
+import io.patterueldev.session.authuser.AuthUser
+import io.patterueldev.session.authuser.AuthUserRepository
 import io.patterueldev.session.auth.AuthRepository
-import io.patterueldev.authuser.AuthUser
-import io.patterueldev.authuser.AuthUserRepository
-import io.patterueldev.shared.GenericResponse
-import io.patterueldev.shared.ServiceUseCase
+import io.patterueldev.common.GenericResponse
+import io.patterueldev.common.ServiceUseCase
 
 internal class SetUserPasscodeUseCase(
     private val authRepository: AuthRepository,

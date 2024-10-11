@@ -1,7 +1,7 @@
 package io.patterueldev.songbook.loadsongs
 
-import io.patterueldev.shared.GenericResponse
-import io.patterueldev.shared.ServiceUseCase
+import io.patterueldev.common.GenericResponse
+import io.patterueldev.common.ServiceUseCase
 import io.patterueldev.songbook.song.SongRepository
 
 internal class LoadSongsUseCase(

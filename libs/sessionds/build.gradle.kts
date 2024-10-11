@@ -19,11 +19,9 @@ dependencies {
     implementation(libs.jacksonKotlin)
     runtimeOnly(libs.jsonWebTokenImpl)
     runtimeOnly(libs.jsonWebTokenJackson)
-    implementation(projects.shared)
     implementation(projects.mongoDs)
-    implementation(projects.common)
     implementation(projects.commonds)
-    implementation(projects.session)
+    api(projects.session)
     testImplementation(kotlin("test"))
 }
 tasks.test {

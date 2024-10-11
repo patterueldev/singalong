@@ -1,4 +1,4 @@
-package io.patterueldev.shared
+package io.patterueldev.common
 
 data class GenericResponse<T>(
     val success: Boolean,

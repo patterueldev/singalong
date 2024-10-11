@@ -1,4 +1,4 @@
-package io.patterueldev.shared
+package io.patterueldev.common
 
 interface ServiceUseCase<P, R> {
     suspend fun execute(parameters: P): R

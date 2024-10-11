@@ -1,6 +1,6 @@
 package io.patterueldev.songbook.loadsongs
 
-import io.patterueldev.shared.Pagination
+import io.patterueldev.common.Pagination
 
 data class LoadSongsParameters(
     val limit: Int = 20,

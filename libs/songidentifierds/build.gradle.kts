@@ -15,10 +15,10 @@ dependencies {
     implementation(libs.openAIClient)
     implementation(libs.springBootWebflux)
     implementation(libs.springBootDataMongo)
-    implementation(projects.shared)
+    implementation(libs.ktorClientCIO)
     implementation(projects.mongoDs)
-    implementation(projects.songidentifier)
-    implementation(project(":common"))
+    implementation(projects.common)
+    api(projects.songidentifier)
     testImplementation(kotlin("test"))
 }
 tasks.test {

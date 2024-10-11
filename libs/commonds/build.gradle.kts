@@ -11,11 +11,10 @@ repositories {
 }
 
 dependencies {
-    implementation(libs.kotlinxCoroutinesCore)
     implementation(libs.springBootDataMongo)
     implementation(libs.springBootSecurity)
-    implementation(projects.common)
     implementation(projects.mongoDs)
+    api(projects.common)
     testImplementation(kotlin("test"))
 }
 tasks.test {

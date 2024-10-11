@@ -1,4 +1,4 @@
-package io.patterueldev.singalong
+package io.patterueldev.seeder
 
 import io.patterueldev.mongods.room.RoomDocument
 import io.patterueldev.mongods.room.RoomDocumentRepository

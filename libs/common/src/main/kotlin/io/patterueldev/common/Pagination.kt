@@ -1,4 +1,4 @@
-package io.patterueldev.shared
+package io.patterueldev.common
 
 sealed class Pagination {
     data class OffsetPagination(val nextOffset: Int) : Pagination()
