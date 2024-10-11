@@ -1,10 +1,5 @@
 package io.patterueldev.session.jwt
 
-// import com.nimbusds.jose.JWSAlgorithm
-// import com.nimbusds.jose.crypto.MACSigner
-// import com.nimbusds.jose.crypto.MACVerifier
-// import com.nimbusds.jwt.JWTClaimsSet
-// import com.nimbusds.jwt.SignedJWT
 import io.jsonwebtoken.Claims
 import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.security.Keys
