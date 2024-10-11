@@ -8,17 +8,24 @@ package io.patterueldev.session.jwt
 import io.jsonwebtoken.Claims
 import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.security.Keys
+import io.patterueldev.mongods.user.UserDocumentRepository
+import io.patterueldev.session.room.RoomUserDetails
 import java.nio.charset.StandardCharsets
 import java.time.Instant
 import java.util.*
 import javax.crypto.Cipher.SECRET_KEY
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.security.core.authority.SimpleGrantedAuthority
+import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.stereotype.Component
 
 
 @Component
-class JwtUtil(@Value("\${jwt.secret}") private val secret: String) {
+class JwtUtil(
+    @Value("\${jwt.secret}") private val secret: String,
+    private val userDocumentRepository: UserDocumentRepository
+) {
     private val logger = LoggerFactory.getLogger(this.javaClass)
     private val key = Keys.hmacShaKeyFor(secret.toByteArray(StandardCharsets.UTF_8))
 
@@ -88,6 +95,22 @@ class JwtUtil(@Value("\${jwt.secret}") private val secret: String) {
             logger.error("-  - - - [EXPIRED TOKEN] - - - -")
             true
         }
+    }
+
+    fun getUserDetails(token: String): UserDetails {
+        val jwtSubject = extractSubject(token)
+        val jwtRoomId = extractRoomId(token)
+        if (jwtSubject != null) {
+            val user = userDocumentRepository.findByUsername(jwtSubject)
+            if(user != null) {
+                return RoomUserDetails(
+                    user = user,
+                    roomId = jwtRoomId ?: "",
+                    rawAuthorities = listOf(SimpleGrantedAuthority("ROLE_USER"))
+                )
+            }
+        }
+        throw Exception("jwtSubject is null")
     }
 
     companion object {
