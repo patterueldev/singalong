@@ -15,9 +15,9 @@ dependencies {
     implementation(libs.openAIClient)
     implementation(libs.springBootWebflux)
     implementation(libs.springBootDataMongo)
-    implementation(project(":shared"))
-    implementation(project(":mongo-ds"))
-    implementation(project(":songidentifier"))
+    implementation(projects.shared)
+    implementation(projects.mongoDs)
+    implementation(projects.songidentifier)
     testImplementation(kotlin("test"))
 }
 tasks.test {
