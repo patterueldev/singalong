@@ -20,3 +20,12 @@ spring:
       password: root
       database: db
     auto-index-creation: $MONGO_AUTO_INDEX_CREATION
+singalong:
+  seeders:
+    admin:
+      username: "user"
+      passcode: "pass"
+    room:
+      id: "room"
+      name: "The Room"
+      passcode: "pass"

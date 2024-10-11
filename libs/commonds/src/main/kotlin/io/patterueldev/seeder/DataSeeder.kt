@@ -6,6 +6,7 @@ import io.patterueldev.mongods.user.UserDocument
 import io.patterueldev.mongods.user.UserDocumentRepository
 import io.patterueldev.role.Role
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.CommandLineRunner
 import org.springframework.context.annotation.Profile
 import org.springframework.security.crypto.password.PasswordEncoder
@@ -20,16 +21,26 @@ class DataSeeder : CommandLineRunner {
 
     @Autowired private lateinit var passwordEncoder: PasswordEncoder
 
+    @Value("\${singalong.seeders.room.id}")
+    private lateinit var roomId: String
+    @Value("\${singalong.seeders.room.name}")
+    private lateinit var roomName: String
+    @Value("\${singalong.seeders.room.passcode}")
+    private lateinit var roomPasscode: String
+
+    @Value("\${singalong.seeders.admin.username}")
+    private lateinit var adminUsername: String
+    @Value("\${singalong.seeders.admin.passcode}")
+    private lateinit var adminPasscode: String
+
     override fun run(vararg args: String?) {
-        val adminRoomId = "admin" // TODO: Move this to application.properties
-        val roomPasscode = "admin" // TODO: Move this to application.properties
-        val adminRoom = roomDocumentRepository.findRoomById(adminRoomId)
+        val adminRoom = roomDocumentRepository.findRoomById(roomId)
 
         if (adminRoom == null) {
             val newAdminRoom =
                 RoomDocument(
-                    id = adminRoomId,
-                    name = "Admin",
+                    id = roomId,
+                    name = roomName,
                     passcode = passwordEncoder.encode(roomPasscode),
                     archivedAt = null,
                 )
@@ -39,16 +50,14 @@ class DataSeeder : CommandLineRunner {
             println("Admin room already exists")
         }
 
-        // create user 'pat' as admin
-        val adminUsername = "pat" // TODO: Move this to application.properties
-        val userPasscode = "1234" // TODO: Move this to application.properties
+        // create admin user
         val admin = userDocumentRepository.findByUsername(adminUsername)
 
         if (admin == null) {
             val newAdmin =
                 UserDocument(
                     username = adminUsername,
-                    passcode = passwordEncoder.encode(userPasscode),
+                    passcode = passwordEncoder.encode(adminPasscode),
                     role = Role.ADMIN,
                 )
             userDocumentRepository.save(newAdmin)
