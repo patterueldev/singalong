@@ -1,6 +1,5 @@
 package io.patterueldev.singalong
 
-import SessionService
 import com.aallam.openai.api.model.ModelId
 import com.aallam.openai.client.OpenAI
 import com.aallam.openai.client.OpenAIConfig
@@ -8,12 +7,9 @@ import com.aallam.openai.client.OpenAIHost
 import com.aallam.openai.client.RetryStrategy
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
-import io.patterueldev.session.auth.AuthRepository
-import io.patterueldev.session.auth.AuthUserRepository
 import io.patterueldev.session.jwt.JwtAuthenticationEntryPoint
 import io.patterueldev.session.jwt.JwtAuthenticationProvider
 import io.patterueldev.session.jwt.JwtSecurityContextRepository
-import io.patterueldev.session.room.RoomRepository
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
@@ -21,8 +17,6 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.config.http.SessionCreationPolicy
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
-import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.servlet.config.annotation.CorsRegistry
@@ -105,22 +99,4 @@ class AppConfiguration {
     fun openAIModel(
         @Value("\${openai.model}") model: String,
     ): ModelId = ModelId(model)
-
-    @Bean
-    fun sessionService(
-        @Autowired authUserRepository: AuthUserRepository,
-        @Autowired roomRepository: RoomRepository,
-        @Autowired authRepository: AuthRepository,
-    ): SessionService {
-        return SessionService(
-            authUserRepository = authUserRepository,
-            roomRepository = roomRepository,
-            authRepository = authRepository,
-        )
-    }
-
-    @Bean
-    fun passwordEncoder(): PasswordEncoder {
-        return BCryptPasswordEncoder()
-    }
 }
