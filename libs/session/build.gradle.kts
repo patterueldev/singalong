@@ -13,8 +13,8 @@ repositories {
 dependencies {
     implementation(libs.kotlinxCoroutinesCore)
     implementation(libs.kotlinxCoroutinesReactor)
-    implementation(project(":shared"))
-    implementation(project(":common"))
+    implementation(projects.shared)
+    implementation(projects.common)
     testImplementation(kotlin("test"))
 }
 
