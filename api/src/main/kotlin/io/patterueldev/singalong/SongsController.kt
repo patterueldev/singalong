@@ -3,22 +3,27 @@ package io.patterueldev.singalong
 import io.patterueldev.session.room.RoomUserDetails
 import io.patterueldev.songbook.SongBookService
 import io.patterueldev.songbook.loadsongs.LoadSongsParameters
-import io.patterueldev.songidentifier.identifysong.IdentifySongParameters
 import io.patterueldev.songidentifier.SongIdentifierService
 import io.patterueldev.songidentifier.common.IdentifySongResponse
+import io.patterueldev.songidentifier.identifysong.IdentifySongParameters
 import io.patterueldev.songidentifier.savesong.SaveSongParameters
 import org.springframework.security.core.context.SecurityContextHolder
-import org.springframework.web.bind.annotation.*
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
+import org.springframework.web.bind.annotation.RestController
 
 @RestController
 @RequestMapping("/songs")
 class SongsController(
     private val songIdentifierService: SongIdentifierService,
-    private val songBookService: SongBookService
+    private val songBookService: SongBookService,
 ) {
     @PostMapping("/identify")
     suspend fun identifySong(
-        @RequestBody identifySongParameters: IdentifySongParameters
+        @RequestBody identifySongParameters: IdentifySongParameters,
     ): IdentifySongResponse {
         val authentication = SecurityContextHolder.getContext().authentication
         val userDetails = authentication.principal as RoomUserDetails
@@ -31,14 +36,14 @@ class SongsController(
         println("Room ID: $roomId")
         println("Authorities: $authorities")
 
-        val result = songIdentifierService.identifySong(identifySongParameters);
+        val result = songIdentifierService.identifySong(identifySongParameters)
         println("Success Identified song: ${result.data?.songTitle}")
         return result
     }
 
     @PostMapping
     suspend fun saveSong(
-        @RequestBody saveSongParameters: SaveSongParameters
+        @RequestBody saveSongParameters: SaveSongParameters,
     ) = songIdentifierService.saveSong(saveSongParameters)
 
     @GetMapping
@@ -47,18 +52,17 @@ class SongsController(
         @RequestParam limit: Int = 20,
         @RequestParam nextOffset: Int?,
         @RequestParam nextCursor: String?,
-        @RequestParam nextPage: Int?
+        @RequestParam nextPage: Int?,
     ) = songBookService.loadSongs(
         LoadSongsParameters(
             keyword = keyword,
             limit = limit,
             offset = nextOffset,
             cursor = nextCursor,
-            page = nextPage
-        )
+            page = nextPage,
+        ),
     )
 }
-
 
 /*
 Possible routes:

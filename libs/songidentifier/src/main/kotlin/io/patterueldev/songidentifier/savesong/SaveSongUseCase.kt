@@ -6,7 +6,7 @@ import io.patterueldev.songidentifier.common.IdentifiedSongRepository
 import io.patterueldev.songidentifier.common.SaveSongResponse
 
 internal open class SaveSongUseCase(
-    private val identifiedSongRepository: IdentifiedSongRepository
+    private val identifiedSongRepository: IdentifiedSongRepository,
 ) : ServiceUseCase<SaveSongParameters, SaveSongResponse> {
     override suspend fun execute(parameters: SaveSongParameters): SaveSongResponse {
         val identifiedSong = parameters.song
@@ -15,7 +15,7 @@ internal open class SaveSongUseCase(
         val savedSongId = identifiedSongRepository.saveSong(parameters.song, parameters.userId, parameters.sessionId)
 
         val fileTitle = videoTitle.replace(Regex("[/\\\\?%*:|\"<>]"), "-").replace(Regex("\\s+"), "-").lowercase()
-        val filename = "${fileTitle}[$videoId].mp4"
+        val filename = "$fileTitle[$videoId].mp4"
 
         // I want to encapsulate this area ---- to under some thread
         val didFinish = identifiedSongRepository.downloadSong(identifiedSong.source, filename)

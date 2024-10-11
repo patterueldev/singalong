@@ -1,6 +1,6 @@
 package io.patterueldev.songidentifier
 
-data class DownloadSongResponse (
+data class DownloadSongResponse(
     val success: Boolean,
-    val message: String
+    val message: String,
 )

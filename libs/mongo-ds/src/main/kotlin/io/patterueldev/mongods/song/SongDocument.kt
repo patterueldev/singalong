@@ -1,15 +1,16 @@
 package io.patterueldev.mongods.song
 
-import java.time.LocalDateTime
 import org.springframework.data.annotation.CreatedDate
 import org.springframework.data.annotation.Id
 import org.springframework.data.annotation.LastModifiedDate
 import org.springframework.data.mongodb.core.mapping.Document
+import java.time.LocalDateTime
 
 @Document(collection = "song")
 data class SongDocument(
     @Id val id: String? = null,
-    val filename: String? = null, // if this is null, then the song is not yet downloaded
+    // if this is null, then the song is not yet downloaded
+    val filename: String? = null,
     val source: String,
     val sourceId: String,
     val imageUrl: String,
@@ -21,8 +22,10 @@ data class SongDocument(
     val songLyrics: String,
     val lengthSeconds: Int,
     val metadata: Map<String, String>,
-    val addedBy: String, // this should be nullable, but, for simplicity, we will assume that the song is always added by someone
-    val addedAtSession: String, // this will be the session id where the song was added; 'admin' if added by an admin somewhere else
+    // this should be nullable, but, for simplicity, we will assume that the song is always added by someone
+    val addedBy: String,
+    // this will be the session id where the song was added; 'admin' if added by an admin somewhere else
+    val addedAtSession: String,
     val lastModifiedBy: String,
     @CreatedDate val createdAt: LocalDateTime? = null,
     @LastModifiedDate val updatedAt: LocalDateTime? = null,

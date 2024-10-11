@@ -11,7 +11,7 @@ data class IdentifiedSong(
     val videoHasLyrics: Boolean,
     val songLyrics: String,
     val lengthSeconds: Int,
-    val metadata: Map<String, Any>?
+    val metadata: Map<String, Any>?,
 ) {
     fun copy(
         id: String? = this.id,
@@ -24,7 +24,7 @@ data class IdentifiedSong(
         videoHasLyrics: Boolean? = this.videoHasLyrics,
         songLyrics: String? = this.songLyrics,
         lengthSeconds: Int? = this.lengthSeconds,
-        metadata: Map<String, Any>? = this.metadata
+        metadata: Map<String, Any>? = this.metadata,
     ) = IdentifiedSong(
         id = id ?: this.id,
         source = source ?: this.source,
@@ -36,6 +36,6 @@ data class IdentifiedSong(
         videoHasLyrics = videoHasLyrics ?: this.videoHasLyrics,
         songLyrics = songLyrics ?: this.songLyrics,
         lengthSeconds = lengthSeconds ?: this.lengthSeconds,
-        metadata = metadata ?: this.metadata
+        metadata = metadata ?: this.metadata,
     )
 }

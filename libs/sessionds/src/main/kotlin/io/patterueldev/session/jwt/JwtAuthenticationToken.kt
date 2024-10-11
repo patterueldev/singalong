@@ -4,13 +4,15 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.GrantedAuthority
 
 class JwtAuthenticationToken(
-    private val principal: String,  // Username or ID
-    private val token: String,      // JWT token
-    private val authorities: Collection<GrantedAuthority>
+    // Username or ID
+    private val principal: String,
+    // JWT token
+    private val token: String,
+    authorities: Collection<GrantedAuthority>,
 ) : UsernamePasswordAuthenticationToken(principal, null, authorities) {
-
     override fun getCredentials(): Any? {
-        return null // No credentials required for JWT
+        // No credentials required for JWT
+        return null
     }
 
     override fun getPrincipal(): Any {

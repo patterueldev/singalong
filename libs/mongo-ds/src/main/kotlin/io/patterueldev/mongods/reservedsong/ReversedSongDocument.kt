@@ -1,10 +1,10 @@
 package io.patterueldev.mongods.reservedsong
 
-import java.time.LocalDateTime
 import org.springframework.data.annotation.CreatedDate
 import org.springframework.data.annotation.Id
 import org.springframework.data.annotation.LastModifiedDate
 import org.springframework.data.mongodb.core.mapping.Document
+import java.time.LocalDateTime
 
 @Document(collection = "reservedSong")
 data class ReversedSongDocument(

@@ -7,11 +7,11 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
-class ConnectController (
-    private val sessionService: SessionService
+class ConnectController(
+    private val sessionService: SessionService,
 ) {
     @PostMapping("/connect")
     suspend fun connect(
-        @RequestBody connectParameters: ConnectParameters
+        @RequestBody connectParameters: ConnectParameters,
     ) = sessionService.connect(connectParameters)
 }

@@ -7,7 +7,7 @@ import org.springframework.security.core.userdetails.UserDetails
 data class RoomUserDetails(
     val user: UserDocument,
     val roomId: String,
-    val rawAuthorities: Collection<GrantedAuthority>
+    val rawAuthorities: Collection<GrantedAuthority>,
 ) : UserDetails {
     override fun getAuthorities(): Collection<GrantedAuthority> {
         return rawAuthorities

@@ -19,11 +19,7 @@ class SongIdentifierService {
         SaveSongUseCase(identifiedSongRepository)
     }
 
-    suspend fun identifySong(
-        parameters: IdentifySongParameters
-    ) = identifySongUseCase(parameters)
+    suspend fun identifySong(parameters: IdentifySongParameters) = identifySongUseCase(parameters)
 
-    suspend fun saveSong(
-        parameters: SaveSongParameters
-    ) = saveSongUseCase(parameters)
+    suspend fun saveSong(parameters: SaveSongParameters) = saveSongUseCase(parameters)
 }

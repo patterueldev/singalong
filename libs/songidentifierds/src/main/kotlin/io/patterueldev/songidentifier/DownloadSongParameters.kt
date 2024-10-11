@@ -1,6 +1,6 @@
 package io.patterueldev.songidentifier
 
-data class DownloadSongParameters (
+data class DownloadSongParameters(
     val url: String,
-    val filename: String
+    val filename: String,
 )

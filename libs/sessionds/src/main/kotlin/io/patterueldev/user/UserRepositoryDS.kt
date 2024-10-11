@@ -8,7 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 
 @Service
-class UserRepositoryDS: AuthUserRepository {
+class UserRepositoryDS : AuthUserRepository {
     @Autowired private lateinit var userDocumentRepository: UserDocumentRepository
 
     override fun findUserByUsername(username: String): AuthUser? {
@@ -16,14 +16,19 @@ class UserRepositoryDS: AuthUserRepository {
         return userDocument.toUser()
     }
 
-    override fun createUser(username: String, passcode: String?): AuthUser {
+    override fun createUser(
+        username: String,
+        passcode: String?,
+    ): AuthUser {
         val userDocument = UserDocument(username, passcode)
         userDocumentRepository.save(userDocument)
         return userDocument.toUser()
     }
 
-    override fun authenticateUser(username: String, passcode: String): String? {
+    override fun authenticateUser(
+        username: String,
+        passcode: String,
+    ): String? {
         throw NotImplementedError("Not implemented")
     }
 }
-

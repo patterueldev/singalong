@@ -13,6 +13,7 @@ data class LoadSongsParameters(
         val nonNullCount = listOf(offset, cursor, page).count { it != null }
         require(nonNullCount <= 1) { "Only one of offset, cursor, or page should be non-null." }
     }
+
     fun nextPage(): Pagination? {
         return if (offset != null) {
             Pagination.OffsetPagination(offset)

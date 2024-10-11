@@ -6,7 +6,6 @@ import com.aallam.openai.client.OpenAI
 import com.aallam.openai.client.OpenAIConfig
 import com.aallam.openai.client.OpenAIHost
 import com.aallam.openai.client.RetryStrategy
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
 import io.patterueldev.session.auth.AuthRepository
@@ -15,45 +14,32 @@ import io.patterueldev.session.jwt.JwtAuthenticationEntryPoint
 import io.patterueldev.session.jwt.JwtAuthenticationProvider
 import io.patterueldev.session.jwt.JwtSecurityContextRepository
 import io.patterueldev.session.room.RoomRepository
-import io.patterueldev.shared.GenericResponse
-import jakarta.servlet.http.HttpServletRequest
-import jakarta.servlet.http.HttpServletResponse
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer
 import org.springframework.security.config.http.SessionCreationPolicy
-import org.springframework.security.core.AuthenticationException
-import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.security.crypto.password.PasswordEncoder
-import org.springframework.security.web.AuthenticationEntryPoint
 import org.springframework.security.web.SecurityFilterChain
-import org.springframework.security.web.access.AccessDeniedHandler
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
-import org.springframework.stereotype.Component
-import org.springframework.web.cors.CorsConfiguration
-import org.springframework.web.cors.CorsConfigurationSource
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.servlet.config.annotation.CorsRegistry
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
 
-
 @Configuration
 @EnableWebSecurity
 class AppConfiguration {
-
     @Value("\${cors.allowedOrigins}")
     private lateinit var allowedOrigins: String
 
     @Autowired
     private lateinit var jwtAuthenticationEntryPoint: JwtAuthenticationEntryPoint
+
     @Autowired
     private lateinit var jwtAuthenticationProvider: JwtAuthenticationProvider
+
     @Autowired
     private lateinit var jwtSecurityContextRepository: JwtSecurityContextRepository
 
@@ -88,9 +74,9 @@ class AppConfiguration {
 
     @Bean
     fun songDownloaderClient(
-        @Value("\${baseurl.songdownloader}") songDownloaderUrl: String
-    ): WebClient
-        = WebClient.builder()
+        @Value("\${baseurl.songdownloader}") songDownloaderUrl: String,
+    ): WebClient =
+        WebClient.builder()
             .baseUrl(songDownloaderUrl)
             .build()
 
@@ -102,7 +88,7 @@ class AppConfiguration {
     ): OpenAI {
         if (!local) {
             return OpenAI(
-                OpenAIConfig(token)
+                OpenAIConfig(token),
             )
         }
         return OpenAI(
@@ -110,27 +96,26 @@ class AppConfiguration {
                 token = token,
                 host = OpenAIHost(host),
                 retry = RetryStrategy(maxRetries = 1),
-                engine = HttpClient(CIO).engine
-            )
+                engine = HttpClient(CIO).engine,
+            ),
         )
     }
 
     @Bean
     fun openAIModel(
-        @Value("\${openai.model}") model: String
-    ): ModelId
-        = ModelId(model)
+        @Value("\${openai.model}") model: String,
+    ): ModelId = ModelId(model)
 
     @Bean
     fun sessionService(
         @Autowired authUserRepository: AuthUserRepository,
         @Autowired roomRepository: RoomRepository,
-        @Autowired authRepository: AuthRepository
+        @Autowired authRepository: AuthRepository,
     ): SessionService {
         return SessionService(
             authUserRepository = authUserRepository,
             roomRepository = roomRepository,
-            authRepository = authRepository
+            authRepository = authRepository,
         )
     }
 

@@ -4,13 +4,13 @@ import io.patterueldev.shared.PaginatedData
 
 typealias PaginatedSongs = PaginatedData<SongListItem> // let's try this first
 
-//data class PaginatedSongs (
+// data class PaginatedSongs (
 //    val songs: List<Song>,
 //    val totalPages: Int,
 //    val nextOffset: Int?,
 //    val nextCursor: String?,
 //    val nextPage: Int?,
-//) {
+// ) {
 //    companion object {
 //        fun empty(): PaginatedSongs {
 //            return PaginatedSongs(emptyList(), 0, null, null, null)
@@ -28,4 +28,4 @@ typealias PaginatedSongs = PaginatedData<SongListItem> // let's try this first
 //            return PaginatedSongs(songs, totalPages, null, null, nextPage)
 //        }
 //    }
-//}
+// }

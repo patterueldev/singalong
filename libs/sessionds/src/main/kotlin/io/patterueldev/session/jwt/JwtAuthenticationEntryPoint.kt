@@ -13,15 +13,16 @@ class JwtAuthenticationEntryPoint : AuthenticationEntryPoint {
     override fun commence(
         request: HttpServletRequest?,
         response: HttpServletResponse?,
-        authException: AuthenticationException?
+        authException: AuthenticationException?,
     ) {
         if (response != null && !response.isCommitted) {
             response.contentType = "application/json"
             response.status = HttpServletResponse.SC_UNAUTHORIZED
-            val json = GenericResponse.failure<Any>(
-                message = "Unauthorized",
-                status = HttpServletResponse.SC_UNAUTHORIZED
-            )
+            val json =
+                GenericResponse.failure<Any>(
+                    message = "Unauthorized",
+                    status = HttpServletResponse.SC_UNAUTHORIZED,
+                )
             jacksonObjectMapper().writer().writeValue(response.writer, json)
         }
     }

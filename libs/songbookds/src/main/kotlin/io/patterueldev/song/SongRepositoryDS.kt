@@ -15,10 +15,14 @@ import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
 
 @Service
-class SongRepositoryDS: SongRepository {
+class SongRepositoryDS : SongRepository {
     @Autowired private lateinit var songDocumentRepository: SongDocumentRepository
 
-    override suspend fun loadSongs(limit: Int, keyword: String?, page: Pagination?): PaginatedSongs {
+    override suspend fun loadSongs(
+        limit: Int,
+        keyword: String?,
+        page: Pagination?,
+    ): PaginatedSongs {
         // only support PagePagination
         return try {
             // always paginate; and received page is based on 1-index
@@ -39,23 +43,25 @@ class SongRepositoryDS: SongRepository {
             if (keyword == null) {
                 pagedSongsResult = songDocumentRepository.findAll(pageable)
             } else {
-                pagedSongsResult = withContext(Dispatchers.IO) {
-                    songDocumentRepository.findByTitleAndArtist(
-                        keyword, keyword, pageable
+                pagedSongsResult =
+                    withContext(Dispatchers.IO) {
+                        songDocumentRepository.findByTitleAndArtist(
+                            keyword, keyword, pageable,
+                        )
+                    }
+            }
+            val songs =
+                pagedSongsResult.content.map {
+                    SongListItem(
+                        id = it.id!!,
+                        imageUrl = it.imageUrl,
+                        title = it.title,
+                        artist = it.artist,
+                        language = it.language,
+                        isOffVocal = it.isOffVocal,
+                        lengthSeconds = it.lengthSeconds,
                     )
                 }
-            }
-            val songs = pagedSongsResult.content.map {
-                SongListItem(
-                    id = it.id!!,
-                    imageUrl = it.imageUrl,
-                    title = it.title,
-                    artist = it.artist,
-                    language = it.language,
-                    isOffVocal = it.isOffVocal,
-                    lengthSeconds = it.lengthSeconds,
-                )
-            }
             val totalPages = pagedSongsResult.totalPages // e.g. 1
             val currentPage = pagedSongsResult.pageable.pageNumber // e.g. 0
             val nextPage = currentPage + 1 // e.g. 1

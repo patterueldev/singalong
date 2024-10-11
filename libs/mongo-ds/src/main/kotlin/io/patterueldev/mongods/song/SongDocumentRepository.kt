@@ -14,6 +14,6 @@ interface SongDocumentRepository : MongoRepository<SongDocument, String> {
     fun findByTitleAndArtist(
         @Param("title") title: String,
         @Param("artist") artist: String,
-        pageable: Pageable
+        pageable: Pageable,
     ): Page<SongDocument>
 }

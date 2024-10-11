@@ -8,4 +8,3 @@ import org.springframework.data.mongodb.repository.config.EnableMongoRepositorie
 @ComponentScan("io.patterueldev")
 @EnableMongoRepositories(basePackages = ["io.patterueldev.mongods"])
 class SingalongServerApplication
-

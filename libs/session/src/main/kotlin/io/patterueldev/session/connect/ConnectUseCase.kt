@@ -1,11 +1,11 @@
 package io.patterueldev.session.connect
 
-import io.patterueldev.session.room.RoomRepository
 import io.patterueldev.session.auth.AuthRepository
+import io.patterueldev.session.auth.AuthUserRepository
 import io.patterueldev.session.common.ConnectResponse
+import io.patterueldev.session.room.RoomRepository
 import io.patterueldev.shared.GenericResponse
 import io.patterueldev.shared.ServiceUseCase
-import io.patterueldev.session.auth.AuthUserRepository
 
 internal class ConnectUseCase(
     private val roomRepository: RoomRepository,
@@ -39,24 +39,28 @@ internal class ConnectUseCase(
             // Check if any required passcode was not provided
             if (!isUserPasscodeRequiredAndProvided || !isRoomPasscodeRequiredAndProvided) {
                 // Compose appropriate error message based on which passcodes are missing
-                val message = when {
-                    !isUserPasscodeRequiredAndProvided && !isRoomPasscodeRequiredAndProvided ->
-                        "User and io.patterueldev.room.Room passcodes are required"
-                    !isUserPasscodeRequiredAndProvided ->
-                        "User passcode is required"
-                    else ->
-                        "io.patterueldev.room.Room passcode is required"
-                }
+                val message =
+                    when {
+                        !isUserPasscodeRequiredAndProvided && !isRoomPasscodeRequiredAndProvided ->
+                            "User and io.patterueldev.room.Room passcodes are required"
+                        !isUserPasscodeRequiredAndProvided ->
+                            "User passcode is required"
+                        else ->
+                            "io.patterueldev.room.Room passcode is required"
+                    }
 
                 // Return response with passcode requirement flags and message
                 return ConnectResponse(
                     success = false,
-                    data = ConnectResponseData(
-                        requiresUserPasscode = requiresUserPasscode, // Make sure this is true only if passcode is actually needed
-                        requiresRoomPasscode = requiresRoomPasscode  // Same here
-                    ),
+                    data =
+                        ConnectResponseData(
+                            // Make sure this is true only if passcode is actually needed
+                            requiresUserPasscode = requiresUserPasscode,
+                            // Same here
+                            requiresRoomPasscode = requiresRoomPasscode,
+                        ),
                     status = 400,
-                    message = message
+                    message = message,
                 )
             }
         }
@@ -93,7 +97,7 @@ internal class ConnectUseCase(
             ConnectResponseData(
                 accessToken = token,
 //                refreshToken = "refresh-token"
-            )
+            ),
         )
     }
 }

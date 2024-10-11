@@ -1,24 +1,17 @@
 package io.patterueldev.session.jwt
 
-import io.patterueldev.mongods.user.UserDocumentRepository
-import io.patterueldev.session.room.RoomUserDetails
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.security.authentication.BadCredentialsException
-import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.context.SecurityContext
 import org.springframework.security.core.context.SecurityContextHolder
-import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.security.web.context.HttpRequestResponseHolder
 import org.springframework.security.web.context.SecurityContextRepository
 import org.springframework.stereotype.Component
 
 @Component
 class JwtSecurityContextRepository(
-    private val jwtUtil: JwtUtil
+    private val jwtUtil: JwtUtil,
 ) : SecurityContextRepository {
-
     override fun loadContext(requestResponseHolder: HttpRequestResponseHolder): SecurityContext {
         val securityContext = SecurityContextHolder.createEmptyContext()
 
@@ -37,7 +30,7 @@ class JwtSecurityContextRepository(
     override fun saveContext(
         context: SecurityContext,
         request: HttpServletRequest,
-        response: HttpServletResponse
+        response: HttpServletResponse,
     ) {
         // Stateless, so no need to save anything here
     }
@@ -50,6 +43,8 @@ class JwtSecurityContextRepository(
         val bearerToken = request.getHeader("Authorization")
         return if (!bearerToken.isNullOrEmpty() && bearerToken.startsWith("Bearer ")) {
             bearerToken.substring(7)
-        } else null
+        } else {
+            null
+        }
     }
 }
