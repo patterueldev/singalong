@@ -22,6 +22,9 @@ internal class ConnectUseCase(
         if (user == null) {
             user = authUserRepository.createUser(parameters.username, parameters.userPasscode)
         }
+        // step2.2: check if the user is already in the room
+        // TODO: check if the user is already in the room
+
         // step3: check if the user requires a passcode
         val requiresUserPasscode = user.hashedPasscode != null
 

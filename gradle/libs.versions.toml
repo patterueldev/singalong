@@ -9,6 +9,7 @@ ktor = "2.3.12"
 openai = "3.8.2"
 jws = "0.12.6"
 nimbus = "9.15.1"
+netty-macos = "4.1.68.Final:osx-x86_64"
 
 [libraries]
 #org.jetbrains.kotlin.jvm
@@ -32,6 +33,7 @@ jsonWebTokenApi = { module = "io.jsonwebtoken:jjwt-api", version.ref = "jws" }
 jsonWebTokenImpl = { module = "io.jsonwebtoken:jjwt-impl", version.ref = "jws" }
 jsonWebTokenJackson = { module = "io.jsonwebtoken:jjwt-jackson", version.ref = "jws" }
 nimbus-jose-jwt = { module = "com.nimbusds:nimbus-jose-jwt", version.ref = "nimbus" }
+netty-resolver-dns-native-macos = { module = "io.netty:netty-resolver-dns-native-macos", version.ref = "netty-macos" }
 
 [plugins]
 kotlinJvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }

@@ -30,6 +30,7 @@ dependencies {
     implementation(libs.springBootWebflux)
     implementation(libs.openAIClient)
     implementation(libs.ktorClientCIO)
+    implementation(libs.netty.resolver.dns.native.macos)
     testImplementation(libs.springBootStarterTest)
     testImplementation(libs.kotlinTestJunit5)
     implementation(projects.shared)

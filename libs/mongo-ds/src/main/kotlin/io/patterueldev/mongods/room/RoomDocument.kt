@@ -11,7 +11,7 @@ data class RoomDocument(
     // for simplicity, we will use the session id as the document id; this will be generated strategically making sure that the session id is unique, and just a few characters long
     @Id val id: String, // 6 digit number
     val name: String,
-    val passcode: String?, // nullable because the session might not have a passcode
-    @CreatedDate val createdAt: LocalDateTime,
-    @LastModifiedDate val updatedAt: LocalDateTime
+    val passcode: String? = null, // nullable because the session might not have a passcode
+    @CreatedDate val createdAt: LocalDateTime? = null,
+    @LastModifiedDate val updatedAt: LocalDateTime? = null
 )

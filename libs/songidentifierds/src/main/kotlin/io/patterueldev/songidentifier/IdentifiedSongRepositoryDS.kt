@@ -46,6 +46,7 @@ internal class IdentifiedSongRepositoryDS: IdentifiedSongRepository {
     }
 
     override suspend fun enhanceSong(identifiedSong: IdentifiedSong): IdentifiedSong {
+        return identifiedSong;
         // my local AI can't handle this
         return try {
             // i wish there's a ping function; if there is, we can use it to check if the AI is up

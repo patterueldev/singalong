@@ -15,7 +15,7 @@ dependencies {
     implementation(libs.springBootWeb)
     implementation(libs.springBootSecurity)
     implementation(libs.jsonWebTokenApi)
-    implementation(libs.nimbus.jose.jwt)
+    implementation(libs.jacksonKotlin)
     runtimeOnly(libs.jsonWebTokenImpl)
     runtimeOnly(libs.jsonWebTokenJackson)
     implementation(projects.shared)

@@ -1,10 +1,13 @@
 package io.patterueldev.singalong
 
+import io.patterueldev.session.room.RoomUserDetails
 import io.patterueldev.songbook.SongBookService
 import io.patterueldev.songbook.loadsongs.LoadSongsParameters
 import io.patterueldev.songidentifier.identifysong.IdentifySongParameters
 import io.patterueldev.songidentifier.SongIdentifierService
+import io.patterueldev.songidentifier.common.IdentifySongResponse
 import io.patterueldev.songidentifier.savesong.SaveSongParameters
+import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.annotation.*
 
 @RestController
@@ -16,7 +19,22 @@ class SongsController(
     @PostMapping("/identify")
     suspend fun identifySong(
         @RequestBody identifySongParameters: IdentifySongParameters
-    ) = songIdentifierService.identifySong(identifySongParameters)
+    ): IdentifySongResponse {
+        val authentication = SecurityContextHolder.getContext().authentication
+        val userDetails = authentication.principal as RoomUserDetails
+
+        val username = userDetails.username
+        val roomId = userDetails.roomId
+        val authorities = userDetails.authorities.joinToString { it.authority }
+
+        println("Username: $username")
+        println("Room ID: $roomId")
+        println("Authorities: $authorities")
+
+        val result = songIdentifierService.identifySong(identifySongParameters);
+        println("Success Identified song: ${result.data?.songTitle}")
+        return result
+    }
 
     @PostMapping
     suspend fun saveSong(
