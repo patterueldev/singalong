@@ -1,4 +1,4 @@
-package io.patterueldev.singalong
+package io.patterueldev.singalong.controllers
 
 import SessionService
 import io.patterueldev.session.connect.ConnectParameters

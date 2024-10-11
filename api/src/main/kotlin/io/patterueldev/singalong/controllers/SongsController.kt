@@ -1,4 +1,4 @@
-package io.patterueldev.singalong
+package io.patterueldev.singalong.controllers
 
 import io.patterueldev.authuser.RoomUserDetails
 import io.patterueldev.songbook.SongBookService
