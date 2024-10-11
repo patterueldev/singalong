@@ -1,6 +1,6 @@
 package io.patterueldev.session.auth
 
-import io.patterueldev.session.authuser.AuthUser
+import io.patterueldev.authuser.AuthUser
 import io.patterueldev.session.room.Room
 
 interface AuthRepository {

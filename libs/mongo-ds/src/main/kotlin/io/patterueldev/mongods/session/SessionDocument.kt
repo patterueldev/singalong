@@ -9,6 +9,7 @@ import org.springframework.data.mongodb.core.mapping.Document
 import org.springframework.data.mongodb.repository.MongoRepository
 import org.springframework.stereotype.Repository
 import java.time.LocalDateTime
+import org.springframework.data.annotation.LastModifiedDate
 
 @Document(collection = "session")
 data class SessionDocument(
@@ -16,6 +17,10 @@ data class SessionDocument(
     @DBRef val userDocument: UserDocument,
     @DBRef val roomDocument: RoomDocument,
     @CreatedDate val createdAt: LocalDateTime = LocalDateTime.now(),
+    @LastModifiedDate val updatedAt: LocalDateTime = LocalDateTime.now(),
+    // for indexing
+    val isConnected: Boolean = true,
+    val lastCheckedDate: LocalDateTime = LocalDateTime.now(),
 )
 
 @Repository

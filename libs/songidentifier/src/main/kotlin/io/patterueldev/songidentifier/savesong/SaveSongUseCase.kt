@@ -1,5 +1,7 @@
 package io.patterueldev.songidentifier.savesong
 
+import io.patterueldev.authuser.AuthUserRepository
+import io.patterueldev.roomuser.RoomUserRepository
 import io.patterueldev.shared.GenericResponse
 import io.patterueldev.shared.ServiceUseCase
 import io.patterueldev.songidentifier.common.IdentifiedSongRepository
@@ -7,12 +9,16 @@ import io.patterueldev.songidentifier.common.SaveSongResponse
 
 internal open class SaveSongUseCase(
     private val identifiedSongRepository: IdentifiedSongRepository,
+    private val roomUserRepository: RoomUserRepository,
 ) : ServiceUseCase<SaveSongParameters, SaveSongResponse> {
+
     override suspend fun execute(parameters: SaveSongParameters): SaveSongResponse {
+        val user = roomUserRepository.currentUser()
+
         val identifiedSong = parameters.song
         val videoId = identifiedSong.id
         val videoTitle = identifiedSong.songTitle
-        val savedSongId = identifiedSongRepository.saveSong(parameters.song, parameters.userId, parameters.sessionId)
+        val savedSongId = identifiedSongRepository.saveSong(parameters.song, user.username, user.roomId)
 
         val fileTitle = videoTitle.replace(Regex("[/\\\\?%*:|\"<>]"), "-").replace(Regex("\\s+"), "-").lowercase()
         val filename = "$fileTitle[$videoId].mp4"
@@ -21,7 +27,7 @@ internal open class SaveSongUseCase(
         val didFinish = identifiedSongRepository.downloadSong(identifiedSong.source, filename)
         identifiedSongRepository.updateSong(savedSongId, filename) // marks the song as downloaded
         if (parameters.thenReserve) {
-            identifiedSongRepository.reserveSong(savedSongId, parameters.sessionId)
+            identifiedSongRepository.reserveSong(savedSongId, user.roomId)
         }
         // when didFinish is true, mark the song as downloaded
         // and then reserve the song, if true

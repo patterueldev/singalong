@@ -1,4 +1,4 @@
-package io.patterueldev.songbook
+package io.patterueldev.song
 
 interface Song {
     val id: String

@@ -1,7 +1,7 @@
 package io.patterueldev.session.connect
 
 import io.patterueldev.session.auth.AuthRepository
-import io.patterueldev.session.authuser.AuthUserRepository
+import io.patterueldev.authuser.AuthUserRepository
 import io.patterueldev.session.common.ConnectResponse
 import io.patterueldev.session.room.RoomRepository
 import io.patterueldev.shared.GenericResponse
@@ -26,8 +26,8 @@ internal class ConnectUseCase(
         if (user == null) {
             user = authUserRepository.createUser(parameters.username, parameters.userPasscode)
         }
-        // step2.2: check if the user is already in the room
-        // TODO: check if the user is already in the room
+        // step2.2: check if the user is still in the room
+        // TODO: check if the user is already in the room; not too required right now, but will be useful in the future
 
         // step3: check if the user requires a passcode
         val requiresUserPasscode = user.hashedPasscode != null

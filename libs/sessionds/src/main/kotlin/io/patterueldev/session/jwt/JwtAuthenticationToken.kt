@@ -1,6 +1,6 @@
 package io.patterueldev.session.jwt
 
-import io.patterueldev.session.room.RoomUserDetails
+import io.patterueldev.authuser.RoomUserDetails
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.GrantedAuthority
 

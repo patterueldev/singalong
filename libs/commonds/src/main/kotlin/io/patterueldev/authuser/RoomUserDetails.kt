@@ -1,4 +1,4 @@
-package io.patterueldev.session.room
+package io.patterueldev.authuser
 
 import io.patterueldev.mongods.user.UserDocument
 import org.springframework.security.core.GrantedAuthority

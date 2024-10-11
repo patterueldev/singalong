@@ -25,6 +25,7 @@ dependencies {
     implementation(libs.springBootSecurity)
     implementation(libs.jacksonKotlin)
     implementation(libs.kotlinReflect)
+    implementation(project(":commonds"))
     testRuntimeOnly(libs.junitPlatformLauncher)
     implementation(libs.kotlinxCoroutinesReactor)
     implementation(libs.springBootWebflux)

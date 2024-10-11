@@ -103,7 +103,7 @@ internal class IdentifiedSongRepositoryDS : IdentifiedSongRepository {
                 metadata = identifiedSong.metadata?.mapValues { it.value.toString() } ?: emptyMap(),
                 addedBy = userId,
                 addedAtSession = sessionId,
-                lastModifiedBy = sessionId,
+                lastModifiedBy = userId,
             )
         val saved =
             withContext(Dispatchers.IO) {

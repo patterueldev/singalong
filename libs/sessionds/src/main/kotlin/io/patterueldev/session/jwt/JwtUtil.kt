@@ -3,9 +3,9 @@ package io.patterueldev.session.jwt
 import io.jsonwebtoken.Claims
 import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.security.Keys
+import io.patterueldev.authuser.RoomUserDetails
 import io.patterueldev.mongods.room.RoomDocumentRepository
 import io.patterueldev.mongods.user.UserDocumentRepository
-import io.patterueldev.session.room.RoomUserDetails
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.stereotype.Component

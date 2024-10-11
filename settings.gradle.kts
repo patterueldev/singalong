@@ -25,11 +25,8 @@ project(":shared").projectDir = file("./libs/shared")
 include(":common")
 project(":common").projectDir = file("./libs/common")
 
-// //include(":sharedds")
-// //project(":sharedds").projectDir = file("./libs/sharedds")
-// //
-// //include(":shared-domain")
-// //project(":shared-domain").projectDir = file("./libs/shared-domain")
+include(":commonds")
+project(":commonds").projectDir = file("./libs/commonds")
 
 include(":mongo-ds")
 project(":mongo-ds").projectDir = file("./libs/mongo-ds")

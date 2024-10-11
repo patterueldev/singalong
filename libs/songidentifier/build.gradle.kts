@@ -14,6 +14,7 @@ dependencies {
     implementation(libs.kotlinxCoroutinesCore)
     implementation(libs.kotlinxCoroutinesReactor)
     implementation(projects.shared)
+    implementation(projects.common)
     testImplementation(kotlin("test"))
 }
 

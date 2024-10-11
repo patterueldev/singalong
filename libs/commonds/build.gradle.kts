@@ -12,13 +12,10 @@ repositories {
 
 dependencies {
     implementation(libs.kotlinxCoroutinesCore)
-    implementation(libs.openAIClient)
-    implementation(libs.springBootWebflux)
     implementation(libs.springBootDataMongo)
-    implementation(projects.shared)
+    implementation(libs.springBootSecurity)
+    implementation(projects.common)
     implementation(projects.mongoDs)
-    implementation(projects.songidentifier)
-    implementation(project(":common"))
     testImplementation(kotlin("test"))
 }
 tasks.test {

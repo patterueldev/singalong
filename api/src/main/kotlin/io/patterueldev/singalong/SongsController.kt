@@ -1,6 +1,6 @@
 package io.patterueldev.singalong
 
-import io.patterueldev.session.room.RoomUserDetails
+import io.patterueldev.authuser.RoomUserDetails
 import io.patterueldev.songbook.SongBookService
 import io.patterueldev.songbook.loadsongs.LoadSongsParameters
 import io.patterueldev.songidentifier.SongIdentifierService
