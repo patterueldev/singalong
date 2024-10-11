@@ -10,12 +10,13 @@ data class GenericResponse<T>(
         fun <T> success(
             data: T,
             status: Int = 200,
+            message: String? = null,
         ): GenericResponse<T> {
             return GenericResponse(
                 success = true,
                 status = status,
                 data = data,
-                message = null,
+                message = message,
             )
         }
 

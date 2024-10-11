@@ -9,29 +9,35 @@ import io.patterueldev.roomuser.RoomUser
 import kotlin.jvm.optionals.getOrNull
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Repository
 
 @Repository
-class ReservedSongRepositoryDS(
-    val songDocumentRepository: SongDocumentRepository,
-    val reservedSongDocumentRepository: ReservedSongDocumentRepository
-) : ReservedSongsRepository {
+open class ReservedSongRepositoryDS : ReservedSongsRepository {
+
+    @Autowired private lateinit var songDocumentRepository: SongDocumentRepository
+    @Autowired private lateinit var reservedSongDocumentRepository: ReservedSongDocumentRepository
+
     override suspend fun reserveSong(roomUser: RoomUser, songId: String) {
         // confirm existence of song
         val current = withContext(Dispatchers.IO) {
             songDocumentRepository.findById(songId)
         }.getOrNull() ?: throw IllegalArgumentException("Song not found")
 
-        // get order number
-        val lastOrderNumber = withContext(Dispatchers.IO) {
-            reservedSongDocumentRepository.loadReservedSongs(roomUser.roomId)
-        }.lastOrNull()?.order ?: 0
+        // get the last order number
+        val lastOrderNumber: Int = withContext(Dispatchers.IO) {
+            try {
+                reservedSongDocumentRepository.findMaxOrder(roomUser.roomId)
+            } catch (e: Exception) {
+                0
+            }
+        }
 
         val reservedSong = ReservedSongDocument(
             songId = songId,
             roomId = roomUser.roomId,
-            order = lastOrderNumber,
-            reservedBy = roomUser.username
+            order = lastOrderNumber + 1,
+            reservedBy = roomUser.username,
         )
         return withContext(Dispatchers.IO) {
             reservedSongDocumentRepository.save(reservedSong)
@@ -40,7 +46,7 @@ class ReservedSongRepositoryDS(
 
     override suspend fun loadReservedSongs(roomId: String): List<ReservedSong> {
         val reservedSongs = withContext(Dispatchers.IO) {
-            reservedSongDocumentRepository.loadReservedSongs(roomId)
+            reservedSongDocumentRepository.loadUnplayedReservedSongs(roomId)
         }
         val songIds = reservedSongs.map { it.songId }
         val songs = withContext(Dispatchers.IO) {
@@ -50,20 +56,14 @@ class ReservedSongRepositoryDS(
             val song = songs.find { song -> song.id == reservedSong.songId }
                 ?: throw IllegalArgumentException("Song with id ${reservedSong.songId} not found")
             object : ReservedSong {
-                override val id: String
-                    get() = reservedSong.id ?: throw IllegalArgumentException("Reserved song id not found")
-                override val songId: String
-                    get() = reservedSong.songId
-                override val title: String
-                    get() = song.title
-                override val artist: String
-                    get() = song.artist
-                override val imageURL: String
-                    get() = song.imageUrl
-                override val reservingUser: String
-                    get() = reservedSong.reservedBy
-                override val currentPlaying: Boolean
-                    get() = reservedSong.finishedPlayingAt == null
+                override val id: String = reservedSong.id ?: throw IllegalArgumentException("Reserved song id not found")
+                override val order: Int = reservedSong.order
+                override val songId: String = reservedSong.songId
+                override val title: String = song.title
+                override val artist: String = song.artist
+                override val imageURL: String = song.imageUrl
+                override val reservingUser: String = reservedSong.reservedBy
+                override val currentPlaying: Boolean = reservedSong.startedPlayingAt != null && reservedSong.finishedPlayingAt == null
             }
         }
     }

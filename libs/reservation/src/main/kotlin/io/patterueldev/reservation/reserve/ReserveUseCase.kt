@@ -13,15 +13,10 @@ internal class ReserveUseCase (
         return try {
             val user = roomUserRepository.currentUser()
             reservedSongsRepository.reserveSong(user, parameters.songId)
-            return GenericResponse.success(Unit)
+            return GenericResponse.success(Unit, message = "Song reserved successfully.")
         } catch (e: Exception) {
             GenericResponse.failure(e.message ?: "An error occurred while loading the reservation list.")
         }
     }
 }
 
-data class ReserveParameters(
-    val songId: String
-)
-
-typealias ReserveResponse = GenericResponse<Unit>

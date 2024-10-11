@@ -2,7 +2,6 @@ package io.patterueldev.reservation.list
 
 import io.patterueldev.common.GenericResponse
 import io.patterueldev.common.NoParametersUseCase
-import io.patterueldev.reservation.reservedsong.ReservedSong
 import io.patterueldev.reservation.reservedsong.ReservedSongsRepository
 import io.patterueldev.roomuser.RoomUserRepository
 
@@ -25,6 +24,3 @@ internal class LoadReservationListUseCase(
     }
 }
 
-class LoadReservationListParameters
-
-typealias LoadReservationListResponse = GenericResponse<List<ReservedSong>>
