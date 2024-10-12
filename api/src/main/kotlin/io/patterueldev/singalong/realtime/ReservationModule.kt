@@ -6,12 +6,15 @@ import com.corundumstudio.socketio.SocketIOServer
 import com.corundumstudio.socketio.listener.ConnectListener
 import com.corundumstudio.socketio.listener.DataListener
 import com.corundumstudio.socketio.listener.DisconnectListener
+import io.patterueldev.session.jwt.JwtAuthenticationProvider
+import io.patterueldev.session.jwt.JwtUtil
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 
 @Component
 class ReservationModule(
     @Autowired private val server: SocketIOServer,
+    @Autowired private val jwtUtil: JwtUtil
 ) {
     private var namespace: SocketIONamespace = server.addNamespace("/reservations")
 
@@ -31,8 +34,17 @@ class ReservationModule(
     private fun onConnected(): ConnectListener {
         return ConnectListener { client ->
             val handshakeData: HandshakeData = client.handshakeData
-            println("Client[${client.sessionId}] - Connected to chat module through '${handshakeData.url}'")
-
+            val token = handshakeData.httpHeaders["Authorization"]?.replace("Bearer ", "")
+            if (token != null && jwtUtil.isTokenValid(token)) {
+                val username = jwtUtil.extractSubject(token)
+                val roomId = jwtUtil.extractRoomId(token)
+                println("Client[${client.sessionId}] - Connected to chat module as '$username' in room '$roomId'")
+                client.sendEvent("connected", "You are now connected to the chat module.")
+            } else {
+                client.sendEvent("error", "Invalid token.")
+                client.disconnect()
+                println("Client[${client.sessionId}] - Connection rejected due to invalid token.")
+            }
             // TODO: Send list of reserved songs to the client
         }
     }
