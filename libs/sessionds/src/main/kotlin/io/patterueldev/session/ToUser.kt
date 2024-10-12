@@ -1,7 +1,7 @@
 package io.patterueldev.session
 
-import io.patterueldev.session.authuser.AuthUser
 import io.patterueldev.mongods.user.UserDocument
+import io.patterueldev.session.authuser.AuthUser
 
 fun UserDocument.toUser(): AuthUser {
     return object : AuthUser {

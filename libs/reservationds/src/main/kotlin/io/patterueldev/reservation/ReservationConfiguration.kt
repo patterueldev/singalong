@@ -11,6 +11,6 @@ open class ReservationConfiguration {
     @Bean
     open fun reservationService(
         @Autowired reservedSongsRepository: ReservedSongsRepository,
-        @Autowired roomUserRepository: RoomUserRepository
+        @Autowired roomUserRepository: RoomUserRepository,
     ) = ReservationService(reservedSongsRepository, roomUserRepository)
 }

@@ -1,11 +1,11 @@
 package io.patterueldev.session.connect
 
-import io.patterueldev.session.authuser.AuthUserRepository
-import io.patterueldev.session.auth.AuthRepository
-import io.patterueldev.session.common.ConnectResponse
-import io.patterueldev.session.room.RoomRepository
 import io.patterueldev.common.GenericResponse
 import io.patterueldev.common.ServiceUseCase
+import io.patterueldev.session.auth.AuthRepository
+import io.patterueldev.session.authuser.AuthUserRepository
+import io.patterueldev.session.common.ConnectResponse
+import io.patterueldev.session.room.RoomRepository
 
 internal class ConnectUseCase(
     private val roomRepository: RoomRepository,

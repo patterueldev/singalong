@@ -23,13 +23,16 @@ class DataSeeder : CommandLineRunner {
 
     @Value("\${singalong.seeders.room.id}")
     private lateinit var roomId: String
+
     @Value("\${singalong.seeders.room.name}")
     private lateinit var roomName: String
+
     @Value("\${singalong.seeders.room.passcode}")
     private lateinit var roomPasscode: String
 
     @Value("\${singalong.seeders.admin.username}")
     private lateinit var adminUsername: String
+
     @Value("\${singalong.seeders.admin.passcode}")
     private lateinit var adminPasscode: String
 

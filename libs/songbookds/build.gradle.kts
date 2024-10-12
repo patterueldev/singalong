@@ -1,5 +1,5 @@
 plugins {
-    alias(libs.plugins.kotlinJvm)
+    alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.ktlint)
 }
 
@@ -11,8 +11,8 @@ repositories {
 }
 
 dependencies {
-    implementation(libs.kotlinxCoroutinesCore)
-    implementation(libs.springBootDataMongo)
+    implementation(libs.kotlinx.coroutines.core)
+    implementation(libs.spring.boot.data.mongodb)
     implementation(projects.common)
     implementation(projects.mongoDs)
     api(projects.songbook)

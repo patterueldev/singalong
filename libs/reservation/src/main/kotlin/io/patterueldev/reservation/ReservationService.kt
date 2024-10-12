@@ -8,7 +8,7 @@ import io.patterueldev.roomuser.RoomUserRepository
 
 class ReservationService(
     val reservedSongsRepository: ReservedSongsRepository,
-    val roomUserRepository: RoomUserRepository
+    val roomUserRepository: RoomUserRepository,
 ) {
     private val reserveUseCase: ReserveUseCase by lazy {
         ReserveUseCase(reservedSongsRepository, roomUserRepository)

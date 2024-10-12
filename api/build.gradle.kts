@@ -1,7 +1,7 @@
 plugins {
-    alias(libs.plugins.kotlinJvm)
-    alias(libs.plugins.kotlinSpring)
-    alias(libs.plugins.springBoot)
+    alias(libs.plugins.kotlin.jvm)
+    alias(libs.plugins.kotlin.spring)
+    alias(libs.plugins.spring.boot)
     alias(libs.plugins.ktlint)
 }
 
@@ -19,13 +19,13 @@ java {
 }
 
 dependencies {
-    implementation(libs.springBootWeb)
-    implementation(libs.springBootDataMongo)
-    implementation(libs.springBootSecurity)
+    implementation(libs.spring.boot.web)
+    implementation(libs.spring.boot.data.mongodb)
+    implementation(libs.spring.boot.security)
 //    implementation(libs.springBootWebSocket) // TODO: will be used in the future
-    testRuntimeOnly(libs.junitPlatformLauncher)
-    testImplementation(libs.springBootStarterTest)
-    testImplementation(libs.kotlinTestJunit5)
+    testRuntimeOnly(libs.junit.platform.launcher)
+    testImplementation(libs.spring.boot.test)
+    testImplementation(libs.kotlin.test.junit)
     implementation(projects.mongoDs)
     implementation(projects.commonds)
     implementation(projects.sessionds)

@@ -5,9 +5,9 @@ import io.patterueldev.common.ServiceUseCase
 import io.patterueldev.reservation.reservedsong.ReservedSongsRepository
 import io.patterueldev.roomuser.RoomUserRepository
 
-internal class ReserveUseCase (
+internal class ReserveUseCase(
     val reservedSongsRepository: ReservedSongsRepository,
-    val roomUserRepository: RoomUserRepository
+    val roomUserRepository: RoomUserRepository,
 ) : ServiceUseCase<ReserveParameters, ReserveResponse> {
     override suspend fun execute(parameters: ReserveParameters): ReserveResponse {
         return try {
@@ -19,4 +19,3 @@ internal class ReserveUseCase (
         }
     }
 }
-

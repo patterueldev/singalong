@@ -1,5 +1,5 @@
 plugins {
-    alias(libs.plugins.kotlinJvm)
+    alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.ktlint)
 }
 
@@ -11,8 +11,8 @@ repositories {
 }
 
 dependencies {
-    implementation(libs.springBootDataMongo)
-    implementation(libs.springBootSecurity)
+    implementation(libs.spring.boot.data.mongodb)
+    implementation(libs.spring.boot.security)
     implementation(projects.mongoDs)
     api(projects.common)
     testImplementation(kotlin("test"))

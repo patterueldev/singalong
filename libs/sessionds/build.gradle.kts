@@ -1,5 +1,5 @@
 plugins {
-    alias(libs.plugins.kotlinJvm)
+    alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.ktlint)
 }
 
@@ -11,14 +11,14 @@ repositories {
 }
 
 dependencies {
-    implementation(libs.kotlinxCoroutinesCore)
-    implementation(libs.springBootDataMongo)
-    implementation(libs.springBootWeb)
-    implementation(libs.springBootSecurity)
-    implementation(libs.jsonWebTokenApi)
-    implementation(libs.jacksonKotlin)
-    runtimeOnly(libs.jsonWebTokenImpl)
-    runtimeOnly(libs.jsonWebTokenJackson)
+    implementation(libs.kotlinx.coroutines.core)
+    implementation(libs.spring.boot.data.mongodb)
+    implementation(libs.spring.boot.web)
+    implementation(libs.spring.boot.security)
+    implementation(libs.jsonwebtoken.api)
+    implementation(libs.jackson.kotlin)
+    runtimeOnly(libs.jsonwebtoken.impl)
+    runtimeOnly(libs.jsonwebtoken.jackson)
     implementation(projects.mongoDs)
     implementation(projects.commonds)
     api(projects.session)

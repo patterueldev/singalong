@@ -1,5 +1,5 @@
 plugins {
-    alias(libs.plugins.kotlinJvm)
+    alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.ktlint)
 }
 
@@ -11,7 +11,7 @@ repositories {
 }
 
 dependencies {
-    implementation(libs.kotlinxCoroutinesReactor)
+    implementation(libs.kotlinx.coroutines.reactor)
     implementation(projects.common)
     testImplementation(kotlin("test"))
 }

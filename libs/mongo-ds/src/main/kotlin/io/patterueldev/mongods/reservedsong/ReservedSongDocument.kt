@@ -4,11 +4,11 @@ import org.springframework.data.annotation.CreatedDate
 import org.springframework.data.annotation.Id
 import org.springframework.data.annotation.LastModifiedDate
 import org.springframework.data.mongodb.core.mapping.Document
-import java.time.LocalDateTime
 import org.springframework.data.mongodb.repository.Aggregation
 import org.springframework.data.mongodb.repository.MongoRepository
 import org.springframework.data.mongodb.repository.Query
 import org.springframework.stereotype.Repository
+import java.time.LocalDateTime
 
 @Document(collection = "reservedSong")
 data class ReservedSongDocument(
@@ -34,15 +34,15 @@ interface ReservedSongDocumentRepository : MongoRepository<ReservedSongDocument,
     fun loadUnplayedReservedSongs(roomId: String): List<ReservedSongDocument>
 
     @Query(
-        value = "{ 'roomId' : ?0, 'startedPlayingAt': { \$ne: null }, 'finishedPlayingAt' : null }"
+        value = "{ 'roomId' : ?0, 'startedPlayingAt': { \$ne: null }, 'finishedPlayingAt' : null }",
     )
     fun loadPlayingReservedSong(roomId: String): ReservedSongDocument?
 
     @Aggregation(
         pipeline = [
             "{ \$match: { 'roomId' : ?0 } }",
-            "{ \$group: { _id: '\$roomId', maxOrder: { \$max: '\$order' } } }"
-        ]
+            "{ \$group: { _id: '\$roomId', maxOrder: { \$max: '\$order' } } }",
+        ],
     )
     fun findMaxOrder(roomId: String): Int
 }

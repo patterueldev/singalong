@@ -1,6 +1,5 @@
 package io.patterueldev.singalong.controllers
 
-import io.patterueldev.authuser.RoomUserDetails
 import io.patterueldev.reservation.ReservationService
 import io.patterueldev.reservation.list.LoadReservationListResponse
 import io.patterueldev.reservation.reserve.ReserveParameters
@@ -13,7 +12,6 @@ import io.patterueldev.songidentifier.common.IdentifySongResponse
 import io.patterueldev.songidentifier.common.SaveSongResponse
 import io.patterueldev.songidentifier.identifysong.IdentifySongParameters
 import io.patterueldev.songidentifier.savesong.SaveSongParameters
-import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -46,15 +44,16 @@ class SongsController(
         @RequestParam nextOffset: Int?,
         @RequestParam nextCursor: String?,
         @RequestParam nextPage: Int?,
-    ): LoadSongsResponse = songBookService.loadSongs(
-        LoadSongsParameters(
-            keyword = keyword,
-            limit = limit,
-            offset = nextOffset,
-            cursor = nextCursor,
-            page = nextPage,
-        ),
-    )
+    ): LoadSongsResponse =
+        songBookService.loadSongs(
+            LoadSongsParameters(
+                keyword = keyword,
+                limit = limit,
+                offset = nextOffset,
+                cursor = nextCursor,
+                page = nextPage,
+            ),
+        )
 
     @PostMapping("/reserve")
     suspend fun reserveSong(
