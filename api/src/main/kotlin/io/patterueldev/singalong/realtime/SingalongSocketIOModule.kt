@@ -6,28 +6,29 @@ import com.corundumstudio.socketio.SocketIOServer
 import com.corundumstudio.socketio.listener.ConnectListener
 import com.corundumstudio.socketio.listener.DataListener
 import com.corundumstudio.socketio.listener.DisconnectListener
+import io.patterueldev.client.ClientType
 import io.patterueldev.reservation.ReservationService
-import io.patterueldev.session.jwt.JwtAuthenticationProvider
+import io.patterueldev.reservation.list.LoadReservationListParameters
 import io.patterueldev.session.jwt.JwtUtil
 import kotlinx.coroutines.runBlocking
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 
 @Component
-class ReservationModule(
+class SingalongSocketIOModule(
     @Autowired private val server: SocketIOServer,
     @Autowired private val jwtUtil: JwtUtil,
     @Autowired private val reservationService: ReservationService,
 ) {
-    private var namespace: SocketIONamespace = server.addNamespace("/reservations")
+    private var namespace: SocketIONamespace = server.addNamespace("/singalong")
 
     init {
         namespace.addConnectListener(onConnected())
         namespace.addDisconnectListener(onDisconnected())
-        namespace.addEventListener("chat", String::class.java, onChatReceived())
+        namespace.addEventListener("command", String::class.java, onCommandReceived())
     }
 
-    private fun onChatReceived(): DataListener<String> {
+    private fun onCommandReceived(): DataListener<String> {
         return DataListener { client, data, ackSender ->
             val username: String? = client.get("username")
             val roomId: String? = client.get("roomId")
@@ -39,9 +40,11 @@ class ReservationModule(
                 return@DataListener
             }
 
-            println("Client[${client.sessionId}] - Received chat message from '$username' in room '$roomId': $data")
-
-            namespace.broadcastOperations.sendEvent("chat", data)
+            println("Client[${client.sessionId}] - Received command from '$username' in room '$roomId': $data")
+            when (data) {
+                "reservations" -> {
+                }
+            }
         }
     }
 
@@ -63,8 +66,10 @@ class ReservationModule(
                 return@ConnectListener
             }
 
-            val username = jwtUtil.extractSubject(token)
-            val roomId = jwtUtil.extractRoomId(token)
+            val userDetails = jwtUtil.getUserDetails(token)
+            val username = userDetails.username
+            val roomId = userDetails.roomId
+            val clientType = userDetails.clientType
 
             println("Client[${client.sessionId}] - Connected to chat module as '$username' in room '$roomId'")
             client.sendEvent("connected", "You are now connected to the chat module.")
@@ -72,11 +77,18 @@ class ReservationModule(
             client.set("username", username)
             client.set("roomId", roomId)
 
-            // TODO: Send list of reserved songs to the client
-//            val reservedSongs = runBlocking {
-//                reservationService.loadReservationList()
-//            }
-//            client.sendEvent("reservedSongs", reservedSongs)
+            when (clientType) {
+                ClientType.CONTROLLER -> {
+                    val reservedSongs = runBlocking {
+                        reservationService.loadReservationList(
+                            parameters = LoadReservationListParameters(roomId)
+                        )
+                    }
+                    client.sendEvent("reservedSongs", reservedSongs)
+                }
+
+                ClientType.PLAYER -> TODO()
+            }
         }
     }
 

@@ -59,9 +59,6 @@ class SongsController(
     suspend fun reserveSong(
         @RequestBody reserveParameters: ReserveParameters,
     ): ReserveResponse = reservationService.reserveSong(reserveParameters)
-
-    @GetMapping("/reservations")
-    suspend fun loadReservations(): LoadReservationListResponse = reservationService.loadReservationList()
 }
 
 /*

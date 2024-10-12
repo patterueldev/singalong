@@ -1,5 +1,6 @@
 package io.patterueldev.session.auth
 
+import io.patterueldev.client.ClientType
 import io.patterueldev.mongods.room.RoomDocumentRepository
 import io.patterueldev.mongods.session.SessionDocument
 import io.patterueldev.mongods.session.SessionDocumentRepository
@@ -33,6 +34,7 @@ class AuthRepositoryDS : AuthRepository {
     override fun addUserToRoom(
         authUser: AuthUser,
         room: Room,
+        clientType: ClientType,
     ): String {
         val userDocument = userDocumentRepository.findByUsername(authUser.username) ?: throw IllegalArgumentException("User not found")
         val roomDocument = roomDocumentRepository.findRoomById(room.id) ?: throw IllegalArgumentException("Room not found")
@@ -45,6 +47,6 @@ class AuthRepositoryDS : AuthRepository {
         )
 
         // Generate JWT token
-        return jwtUtil.generateToken(authUser.username, room.id)
+        return jwtUtil.generateToken(authUser.username, room.id, clientType)
     }
 }

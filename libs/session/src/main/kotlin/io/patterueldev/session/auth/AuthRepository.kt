@@ -1,5 +1,6 @@
 package io.patterueldev.session.auth
 
+import io.patterueldev.client.ClientType
 import io.patterueldev.session.authuser.AuthUser
 import io.patterueldev.session.room.Room
 
@@ -9,5 +10,5 @@ interface AuthRepository {
         hashedPasscode: String,
     ): Boolean
 
-    fun addUserToRoom(authUser: AuthUser, room: Room): String // probably should return a token
+    fun addUserToRoom(authUser: AuthUser, room: Room, clientType: ClientType): String // probably should return a token
 }

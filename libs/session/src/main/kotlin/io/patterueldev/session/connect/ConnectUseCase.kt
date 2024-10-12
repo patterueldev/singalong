@@ -92,7 +92,7 @@ internal class ConnectUseCase(
         }
 
         // step6: add the user to the room
-        val token = authRepository.addUserToRoom(user, room)
+        val token = authRepository.addUserToRoom(user, room, parameters.clientType)
 
         // step6: return success
         return GenericResponse.success(

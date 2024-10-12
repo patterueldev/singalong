@@ -1,5 +1,6 @@
 package io.patterueldev.reservation
 
+import io.patterueldev.reservation.list.LoadReservationListParameters
 import io.patterueldev.reservation.list.LoadReservationListUseCase
 import io.patterueldev.reservation.reserve.ReserveParameters
 import io.patterueldev.reservation.reserve.ReserveUseCase
@@ -15,10 +16,10 @@ class ReservationService(
     }
 
     private val loadReservationListUseCase: LoadReservationListUseCase by lazy {
-        LoadReservationListUseCase(reservedSongsRepository, roomUserRepository)
+        LoadReservationListUseCase(reservedSongsRepository)
     }
 
     suspend fun reserveSong(parameters: ReserveParameters) = reserveUseCase.execute(parameters)
 
-    suspend fun loadReservationList() = loadReservationListUseCase.execute()
+    suspend fun loadReservationList(parameters: LoadReservationListParameters) = loadReservationListUseCase.execute(parameters)
 }

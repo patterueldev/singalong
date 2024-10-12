@@ -5,3 +5,4 @@ enum class Role {
     USER_HOST,
     USER_GUEST,
 }
+

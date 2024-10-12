@@ -4,6 +4,7 @@ import io.jsonwebtoken.Claims
 import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.security.Keys
 import io.patterueldev.authuser.RoomUserDetails
+import io.patterueldev.client.ClientType
 import io.patterueldev.mongods.room.RoomDocumentRepository
 import io.patterueldev.mongods.user.UserDocumentRepository
 import org.springframework.beans.factory.annotation.Value
@@ -24,10 +25,12 @@ class JwtUtil(
     fun generateToken(
         username: String,
         roomid: String,
+        clientType: ClientType,
     ): String {
         return Jwts.builder()
             .subject(username)
             .claim("roomId", roomid)
+            .claim("clientType", clientType)
             .issuedAt(Date())
             .expiration(Date.from(Instant.now().plusSeconds(JWT_EXPIRATION_TIME)))
             .signWith(key)
@@ -49,6 +52,17 @@ class JwtUtil(
         try {
             val claims = extractAllClaims(token)
             return claims["roomId"] as String
+        } catch (e: Exception) {
+            e.printStackTrace()
+            println("- - - - [MALFORMED TOKEN] - - - -")
+        }
+        return null
+    }
+
+    fun extractClientType(token: String): ClientType? {
+        try {
+            val claims = extractAllClaims(token)
+            return ClientType.valueOf(claims["clientType"] as String)
         } catch (e: Exception) {
             e.printStackTrace()
             println("- - - - [MALFORMED TOKEN] - - - -")
@@ -84,16 +98,19 @@ class JwtUtil(
     fun getUserDetails(token: String): RoomUserDetails {
         val jwtSubject = extractSubject(token) ?: throw Exception("Subject not found")
         val jwtRoomId = extractRoomId(token) ?: throw Exception("Room ID not found")
+        val clientType = extractClientType(token) ?: throw Exception("Client Type not found")
 
         val user = userDocumentRepository.findByUsername(jwtSubject) ?: throw Exception("User not found")
         val room = roomDocumentRepository.findRoomById(jwtRoomId) ?: throw Exception("Room not found")
         if (room.archivedAt != null) {
             throw Exception("Room is not active anymore")
         }
-        val role = user.role.name
+        val role = user.role
         return RoomUserDetails(
             user = user,
             roomId = jwtRoomId,
+            role = role,
+            clientType = clientType,
             rawAuthorities = listOf(SimpleGrantedAuthority("ROLE_$role")),
         )
     }
