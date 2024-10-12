@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component
 
 @Component
 class ReservationModule(
-    @Autowired private val server: SocketIOServer
+    @Autowired private val server: SocketIOServer,
 ) {
     private var namespace: SocketIONamespace = server.addNamespace("/reservations")
 
@@ -23,7 +23,7 @@ class ReservationModule(
 
     private fun onChatReceived(): DataListener<String> {
         return DataListener { client, data, ackSender ->
-            println("Client[${client.sessionId}] - Received chat message '${data}'")
+            println("Client[${client.sessionId}] - Received chat message '$data'")
             namespace.broadcastOperations.sendEvent("chat", data)
         }
     }

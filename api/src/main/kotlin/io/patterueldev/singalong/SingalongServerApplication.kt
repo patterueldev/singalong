@@ -15,7 +15,7 @@ class SingalongServerApplication {
     @Bean
     fun socketIOServer(
         @Value("\${socketio.hostname}") hostname: String,
-        @Value("\${socketio.port}") port: Int
+        @Value("\${socketio.port}") port: Int,
     ): SocketIOServer {
         val config = Configuration()
         config.hostname = hostname
