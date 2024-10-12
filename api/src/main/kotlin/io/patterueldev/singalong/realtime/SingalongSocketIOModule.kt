@@ -7,8 +7,10 @@ import com.corundumstudio.socketio.listener.ConnectListener
 import com.corundumstudio.socketio.listener.DataListener
 import com.corundumstudio.socketio.listener.DisconnectListener
 import io.patterueldev.client.ClientType
+import io.patterueldev.mongods.reservedsong.ReservedSongDocumentRepository
 import io.patterueldev.reservation.ReservationService
 import io.patterueldev.reservation.list.LoadReservationListParameters
+import io.patterueldev.reservation.reservedsong.ReservedSong
 import io.patterueldev.session.jwt.JwtUtil
 import kotlinx.coroutines.runBlocking
 import org.springframework.beans.factory.annotation.Autowired
@@ -22,10 +24,25 @@ class SingalongSocketIOModule(
 ) {
     private var namespace: SocketIONamespace = server.addNamespace("/singalong")
 
+    private val reservedSongs = mutableListOf<ReservedSong>()
+
     init {
         namespace.addConnectListener(onConnected())
         namespace.addDisconnectListener(onDisconnected())
         namespace.addEventListener("command", String::class.java, onCommandReceived())
+
+        // TODO: find a way to obtain the room ID at this point
+        // because there's supposed to be only one room in a session, and one socket server per session
+//        val reservedSongs = runBlocking {
+//            reservationService.loadReservationList(
+//                parameters = LoadReservationListParameters("admin") // TODO: Temporary
+//            )
+//        }.data!!
+//        this.reservedSongs.addAll(reservedSongs)
+//
+//        namespace.addEventListener("reservations", String::class.java) { client, data, ackSender ->
+//            ackSender.sendAckData(reservedSongs)
+//        }
     }
 
     private fun onCommandReceived(): DataListener<String> {
@@ -85,6 +102,9 @@ class SingalongSocketIOModule(
                         )
                     }
                     client.sendEvent("reservedSongs", reservedSongs)
+
+                    // TODO: listen to database changes instead of polling
+
                 }
 
                 ClientType.PLAYER -> TODO()

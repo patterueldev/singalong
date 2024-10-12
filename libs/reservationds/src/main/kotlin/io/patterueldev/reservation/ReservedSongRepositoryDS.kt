@@ -1,5 +1,6 @@
 package io.patterueldev.reservation
 
+import com.corundumstudio.socketio.SocketIOServer
 import io.patterueldev.mongods.reservedsong.ReservedSongDocument
 import io.patterueldev.mongods.reservedsong.ReservedSongDocumentRepository
 import io.patterueldev.mongods.song.SongDocumentRepository
@@ -17,6 +18,8 @@ open class ReservedSongRepositoryDS : ReservedSongsRepository {
     @Autowired private lateinit var songDocumentRepository: SongDocumentRepository
 
     @Autowired private lateinit var reservedSongDocumentRepository: ReservedSongDocumentRepository
+
+    @Autowired private lateinit var socketIOServer: SocketIOServer
 
     override suspend fun reserveSong(
         roomUser: RoomUser,
@@ -45,9 +48,13 @@ open class ReservedSongRepositoryDS : ReservedSongsRepository {
                 order = lastOrderNumber + 1,
                 reservedBy = roomUser.username,
             )
-        return withContext(Dispatchers.IO) {
+        withContext(Dispatchers.IO) {
             reservedSongDocumentRepository.save(reservedSong)
         }
+
+        // TODO: Tell the socket server to update the list of reserved songs
+        // Emit the update to the Socket.IO server
+        socketIOServer.getNamespace("/singalong").broadcastOperations.sendEvent("reservedSongsUpdated", roomUser.roomId)
     }
 
     override suspend fun loadReservedSongs(roomId: String): List<ReservedSong> {
