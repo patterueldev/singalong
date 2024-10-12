@@ -1,4 +1,4 @@
-package io.patterueldev.singalong
+package io.patterueldev.singalong.security
 
 import io.patterueldev.session.jwt.JwtAuthenticationEntryPoint
 import io.patterueldev.session.jwt.JwtAuthenticationProvider

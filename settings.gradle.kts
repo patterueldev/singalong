@@ -18,7 +18,6 @@ dependencyResolutionManagement {
 
 rootProject.name = "singalong"
 include(":api")
-include(":ws")
 
 include(":common")
 project(":common").projectDir = file("./libs/common")

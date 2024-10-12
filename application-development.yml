@@ -8,3 +8,6 @@ spring:
   data:
     mongodb:
       host: localhost
+socketio:
+  hostname: thursday.local
+  port: 9092

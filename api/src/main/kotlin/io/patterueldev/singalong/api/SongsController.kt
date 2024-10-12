@@ -1,4 +1,4 @@
-package io.patterueldev.singalong.controllers
+package io.patterueldev.singalong.api
 
 import io.patterueldev.reservation.ReservationService
 import io.patterueldev.reservation.list.LoadReservationListResponse

@@ -22,7 +22,7 @@ dependencies {
     implementation(libs.spring.boot.web)
     implementation(libs.spring.boot.data.mongodb)
     implementation(libs.spring.boot.security)
-//    implementation(libs.springBootWebSocket) // TODO: will be used in the future
+    implementation(libs.netty.socketio)
     testRuntimeOnly(libs.junit.platform.launcher)
     testImplementation(libs.spring.boot.test)
     testImplementation(libs.kotlin.test.junit)
