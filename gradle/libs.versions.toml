@@ -1,0 +1,45 @@
+[versions]
+spring = "6.1.13"
+spring-boot = "3.3.4"
+springdoc = "2.0.2"
+dependency-management = "1.1.6"
+kotlin = "2.0.20"
+jackson = "2.13.3"
+kotlinx-coroutines = "1.8.1"
+ktor = "2.3.12"
+openai = "3.8.2"
+jsonwebtoken = "0.12.6"
+netty-macos = "4.1.68.Final:osx-x86_64"
+netty-socketio = "2.0.11"
+ktlint = "12.1.1"
+openapi-generator = "7.9.0"
+
+[libraries]
+spring-boot-web = { module = "org.springframework.boot:spring-boot-starter-web", version.ref = "spring-boot" }
+spring-boot-data-mongodb = { module = "org.springframework.boot:spring-boot-starter-data-mongodb", version.ref = "spring-boot" }
+springdoc-openapi-ui = { module = "org.springdoc:springdoc-openapi-starter-webmvc-ui", version.ref = "springdoc" }
+spring-boot-webflux = { module = "org.springframework.boot:spring-boot-starter-webflux", version.ref = "spring-boot" }
+spring-boot-security = { module = "org.springframework.boot:spring-boot-starter-security", version.ref = "spring-boot" }
+spring-context = { module = "org.springframework:spring-context", version.ref = "spring" }
+jackson-kotlin = { module = "com.fasterxml.jackson.module:jackson-module-kotlin", version.ref = "jackson" }
+kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin" }
+spring-boot-test = { module = "org.springframework.boot:spring-boot-starter-test", version.ref = "spring-boot" }
+kotlin-test-junit = { module = "org.jetbrains.kotlin:kotlin-test-junit5", version.ref = "kotlin" }
+junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher", version = "1.8.2" }
+kotlinx-coroutines-reactor = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-reactor", version.ref = "kotlinx-coroutines" }
+kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
+openai-client = { module = "com.aallam.openai:openai-client", version.ref = "openai" }
+ktor-client-cio = { module = "io.ktor:ktor-client-cio", version.ref = "ktor" }
+jsonwebtoken-api = { module = "io.jsonwebtoken:jjwt-api", version.ref = "jsonwebtoken" }
+jsonwebtoken-impl = { module = "io.jsonwebtoken:jjwt-impl", version.ref = "jsonwebtoken" }
+jsonwebtoken-jackson = { module = "io.jsonwebtoken:jjwt-jackson", version.ref = "jsonwebtoken" }
+netty-resolver-dns-native-macos = { module = "io.netty:netty-resolver-dns-native-macos", version.ref = "netty-macos" }
+netty-socketio = { module = "com.corundumstudio.socketio:netty-socketio", version.ref = "netty-socketio" }
+openapi-generator = { module = "org.openapitools:openapi-generator-gradle-plugin", version.ref = "openapi-generator" }
+
+[plugins]
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+kotlin-spring = { id = "org.jetbrains.kotlin.plugin.spring", version.ref = "kotlin" }
+spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }
+spring-dependency-management = { id = "io.spring.dependency-management", version.ref = "dependency-management" }
+ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlint" }

@@ -1,0 +1,73 @@
+services:
+  client:
+    image: singalong-client:1.0.0
+    build:
+      context: client #TODO: Change to the correct path; this is just a temporary project
+      dockerfile: Dockerfile
+    container_name: singalong-client-container
+    ports:
+      - "80:80"
+    networks:
+      - singalong-server
+
+  api:
+    image: singalong-api:1.0.0
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: api-container
+    ports:
+      - "8080:8080" # App port
+      - "5005:5005" # Debug port
+      - "9092:9092" # Socket port
+    depends_on:
+      - songdownloader
+      - mongodb
+    environment:
+      - SERVER_PORT=8080
+      - SPRING_PROFILES_ACTIVE=docker,secrets
+      - SPRING_APPLICATION_NAME=singalong-server
+      - SPRING_DATA_MONGODB_AUTHENTICATION_DATABASE=$MONGO_DB
+      - SPRING_DATA_MONGODB_AUTO_INDEX_CREATION=$MONGO_AUTO_INDEX_CREATION
+      - JAVA_TOOL_OPTIONS=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
+    networks:
+      - singalong-server
+
+  songdownloader:
+    image: song-downloader-service:1.0.0
+    build:
+      context: microservices/songdownloader
+      dockerfile: Dockerfile
+    container_name: songdownloader-container
+    networks:
+      - singalong-server
+    ports:
+      - "3000:3000"
+    volumes:
+      - $SONG_DOWNLOAD_PATH:/app/songs
+
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb-container
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: $MONGO_INITDB_ROOT_USERNAME
+      MONGO_INITDB_ROOT_PASSWORD: $MONGO_INITDB_ROOT_PASSWORD
+      MONGO_INITDB_DATABASE: $MONGO_INITDB_DATABASE
+      MONGO_DB_USERNAME: $MONGO_DB_USERNAME
+      MONGO_DB_PASSWORD: $MONGO_DB_PASSWORD
+    volumes:
+      - mongodb_data_v6:/data/db
+      - ./init-mongo:/docker-entrypoint-initdb.d
+    networks:
+      - singalong-server
+    command: ["--bind_ip", "0.0.0.0"]
+
+networks:
+  singalong-server:
+    driver: bridge
+
+volumes:
+  mongodb_data:
+  mongodb_data_v6:

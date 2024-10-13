@@ -1,0 +1,34 @@
+baseurl:
+  songdownloader: http://localhost:3000
+openai:
+  local: true
+  host: http://localhost:1234/v1/
+  token: test
+  model: "TheBloke/Mistral-7B-Instruct-v0.2-GGUF/mistral-7b-instruct-v0.2.Q4_K_S.gguf"
+cors:
+  allowedOrigins: "http://example.io:8080"
+jwt:
+  secret: "abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890"
+spring:
+  config:
+    activate:
+      on-profile: test
+  data:
+    mongodb:
+      port: 27017
+      username: root
+      password: root
+      database: db
+    auto-index-creation: $MONGO_AUTO_INDEX_CREATION
+singalong:
+  seeders:
+    admin:
+      username: "user"
+      passcode: "pass"
+    room:
+      id: "room"
+      name: "The Room"
+      passcode: "pass"
+socketio:
+  hostname: localhost
+  port: 9000
