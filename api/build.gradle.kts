@@ -25,6 +25,7 @@ dependencies {
     implementation(libs.springdoc.openapi.ui)
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.netty.socketio)
+    implementation(libs.openapi.generator)
     testRuntimeOnly(libs.junit.platform.launcher)
     testImplementation(libs.spring.boot.test)
     testImplementation(libs.kotlin.test.junit)
