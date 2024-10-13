@@ -1,6 +1,7 @@
 [versions]
 spring = "6.1.13"
 spring-boot = "3.3.4"
+springdoc = "2.0.2"
 dependency-management = "1.1.6"
 kotlin = "2.0.20"
 jackson = "2.13.3"
@@ -15,7 +16,7 @@ ktlint = "12.1.1"
 [libraries]
 spring-boot-web = { module = "org.springframework.boot:spring-boot-starter-web", version.ref = "spring-boot" }
 spring-boot-data-mongodb = { module = "org.springframework.boot:spring-boot-starter-data-mongodb", version.ref = "spring-boot" }
-spring-boot-websocket = { module = "org.springframework.boot:spring-boot-starter-websocket", version.ref = "spring-boot" }
+springdoc-openapi-ui = { module = "org.springdoc:springdoc-openapi-starter-webmvc-ui", version.ref = "springdoc" }
 spring-boot-webflux = { module = "org.springframework.boot:spring-boot-starter-webflux", version.ref = "spring-boot" }
 spring-boot-security = { module = "org.springframework.boot:spring-boot-starter-security", version.ref = "spring-boot" }
 spring-context = { module = "org.springframework:spring-context", version.ref = "spring" }

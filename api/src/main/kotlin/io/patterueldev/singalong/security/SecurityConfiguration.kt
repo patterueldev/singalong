@@ -45,13 +45,20 @@ class SecurityConfiguration {
 
     @Bean
     fun securityFilterChain(http: HttpSecurity): SecurityFilterChain {
+        val whitelisted = arrayOf(
+            "/session/connect",
+            "/swagger-ui/**",
+            "/swagger-resources/**",
+            "/v3/api-docs/**",
+            "/swagger-resources",
+        )
         return http.csrf { it.disable() }
             .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
             .exceptionHandling { it.authenticationEntryPoint(jwtAuthenticationEntryPoint) }
             .authenticationProvider(jwtAuthenticationProvider)
             .securityContext { it.securityContextRepository(jwtSecurityContextRepository) }
             .authorizeHttpRequests {
-                it.requestMatchers("/session/connect").permitAll()
+                whitelisted.forEach { path -> it.requestMatchers(path).permitAll() }
                 it.anyRequest().authenticated()
             }
             .build()
