@@ -21,3 +21,7 @@ interface NoParametersUseCase<R> : ServiceUseCase<NoParameters, R> {
         return execute()
     }
 }
+
+interface GenericServiceUseCase<P, R> : ServiceUseCase<P, GenericResponse<R>>
+
+interface GenericNoParametersUseCase<R> : NoParametersUseCase<GenericResponse<R>>

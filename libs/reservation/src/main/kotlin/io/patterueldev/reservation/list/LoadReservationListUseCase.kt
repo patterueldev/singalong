@@ -1,10 +1,8 @@
 package io.patterueldev.reservation.list
 
 import io.patterueldev.common.GenericResponse
-import io.patterueldev.common.NoParametersUseCase
 import io.patterueldev.common.ServiceUseCase
 import io.patterueldev.reservation.reservedsong.ReservedSongsRepository
-import io.patterueldev.roomuser.RoomUserRepository
 
 internal class LoadReservationListUseCase(
     private val reservedSongsRepository: ReservedSongsRepository,
@@ -20,5 +18,5 @@ internal class LoadReservationListUseCase(
 }
 
 data class LoadReservationListParameters(
-    val roomId: String
+    val roomId: String,
 )

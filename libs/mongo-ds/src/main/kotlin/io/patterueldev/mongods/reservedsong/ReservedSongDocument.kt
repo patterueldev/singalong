@@ -9,8 +9,6 @@ import org.springframework.data.mongodb.repository.MongoRepository
 import org.springframework.data.mongodb.repository.Query
 import org.springframework.stereotype.Repository
 import java.time.LocalDateTime
-import org.springframework.context.annotation.Bean
-import org.springframework.context.annotation.Configuration
 
 @Document(collection = "reservedSong")
 data class ReservedSongDocument(

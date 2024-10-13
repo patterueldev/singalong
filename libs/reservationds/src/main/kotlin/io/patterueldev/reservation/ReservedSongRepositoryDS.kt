@@ -1,6 +1,5 @@
 package io.patterueldev.reservation
 
-import com.corundumstudio.socketio.SocketIOServer
 import io.patterueldev.mongods.reservedsong.ReservedSongDocument
 import io.patterueldev.mongods.reservedsong.ReservedSongDocumentRepository
 import io.patterueldev.mongods.song.SongDocumentRepository
@@ -8,6 +7,8 @@ import io.patterueldev.reservation.reservedsong.ReservedSong
 import io.patterueldev.reservation.reservedsong.ReservedSongsRepository
 import io.patterueldev.roomuser.RoomUser
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Repository
@@ -19,42 +20,40 @@ open class ReservedSongRepositoryDS : ReservedSongsRepository {
 
     @Autowired private lateinit var reservedSongDocumentRepository: ReservedSongDocumentRepository
 
-    @Autowired private lateinit var socketIOServer: SocketIOServer
+    private val mutex = Mutex()
 
     override suspend fun reserveSong(
         roomUser: RoomUser,
         songId: String,
     ) {
-        // confirm existence of song
-        val current =
-            withContext(Dispatchers.IO) {
-                songDocumentRepository.findById(songId)
-            }.getOrNull() ?: throw IllegalArgumentException("Song not found")
+        mutex.withLock {
+            // confirm existence of song
+            val current =
+                withContext(Dispatchers.IO) {
+                    songDocumentRepository.findById(songId)
+                }.getOrNull() ?: throw IllegalArgumentException("Song not found")
 
-        // get the last order number
-        val lastOrderNumber: Int =
-            withContext(Dispatchers.IO) {
-                try {
-                    reservedSongDocumentRepository.findMaxOrder(roomUser.roomId)
-                } catch (e: Exception) {
-                    0
+            // get the last order number
+            val lastOrderNumber: Int =
+                withContext(Dispatchers.IO) {
+                    try {
+                        reservedSongDocumentRepository.findMaxOrder(roomUser.roomId)
+                    } catch (e: Exception) {
+                        0
+                    }
                 }
+
+            val reservedSong =
+                ReservedSongDocument(
+                    songId = songId,
+                    roomId = roomUser.roomId,
+                    order = lastOrderNumber + 1,
+                    reservedBy = roomUser.username,
+                )
+            withContext(Dispatchers.IO) {
+                reservedSongDocumentRepository.save(reservedSong)
             }
-
-        val reservedSong =
-            ReservedSongDocument(
-                songId = songId,
-                roomId = roomUser.roomId,
-                order = lastOrderNumber + 1,
-                reservedBy = roomUser.username,
-            )
-        withContext(Dispatchers.IO) {
-            reservedSongDocumentRepository.save(reservedSong)
         }
-
-        // TODO: Tell the socket server to update the list of reserved songs
-        // Emit the update to the Socket.IO server
-        socketIOServer.getNamespace("/singalong").broadcastOperations.sendEvent("reservedSongsUpdated", roomUser.roomId)
     }
 
     override suspend fun loadReservedSongs(roomId: String): List<ReservedSong> {

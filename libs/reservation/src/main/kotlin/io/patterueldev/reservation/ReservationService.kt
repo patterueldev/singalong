@@ -10,9 +10,10 @@ import io.patterueldev.roomuser.RoomUserRepository
 class ReservationService(
     val reservedSongsRepository: ReservedSongsRepository,
     val roomUserRepository: RoomUserRepository,
+    val reservationCoordinator: ReservationCoordinator? = null,
 ) {
     private val reserveUseCase: ReserveUseCase by lazy {
-        ReserveUseCase(reservedSongsRepository, roomUserRepository)
+        ReserveUseCase(reservedSongsRepository, roomUserRepository, reservationCoordinator)
     }
 
     private val loadReservationListUseCase: LoadReservationListUseCase by lazy {

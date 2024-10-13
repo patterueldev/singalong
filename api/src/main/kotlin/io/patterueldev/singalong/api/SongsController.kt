@@ -1,7 +1,6 @@
 package io.patterueldev.singalong.api
 
 import io.patterueldev.reservation.ReservationService
-import io.patterueldev.reservation.list.LoadReservationListResponse
 import io.patterueldev.reservation.reserve.ReserveParameters
 import io.patterueldev.reservation.reserve.ReserveResponse
 import io.patterueldev.songbook.SongBookService

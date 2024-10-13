@@ -7,10 +7,11 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 
 @Configuration
-open class ReservationConfiguration {
+open class ReservationProvider {
     @Bean
     open fun reservationService(
         @Autowired reservedSongsRepository: ReservedSongsRepository,
         @Autowired roomUserRepository: RoomUserRepository,
-    ) = ReservationService(reservedSongsRepository, roomUserRepository)
+        @Autowired(required = false) reservationCoordinator: ReservationCoordinator? = null,
+    ) = ReservationService(reservedSongsRepository, roomUserRepository, reservationCoordinator)
 }

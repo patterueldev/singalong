@@ -11,4 +11,10 @@ interface RoomDocumentRepository : MongoRepository<RoomDocument, String> {
     fun findRoomById(
         @Param("id") roomId: String,
     ): RoomDocument?
+
+    @Query(
+        value = "{ 'archivedAt': null, 'id': { '\$ne': 'admin' } }",
+        sort = "{ 'createdAt': -1 }",
+    )
+    fun findActiveRoom(): RoomDocument?
 }
