@@ -12,8 +12,8 @@
   "namePlaceholderText": "Enter name",
   "namePlaceholderTextDescription": "Placeholder text for the name input field",
   
-  "sessionIdPlaceholderText": "Enter Session ID",
-  "sessionIdPlaceholderTextDescription": "Placeholder text for the session ID input field",
+  "sessionIdPlaceholderText": "Enter Room ID",
+  "sessionIdPlaceholderTextDescription": "Placeholder text for the room ID input field",
   
   "unknownError": "Unknown error occurred",
   "unknownErrorDescription": "Message for unknown error",
