@@ -14,7 +14,7 @@ class DefaultPreviewerViewModel extends PreviewerViewModel {
     this.autoIndex = -1,
   });
 
-  final ConnectFeatureProvider connectFeatureProvider;
+  final ConnectFeature connectFeatureProvider;
   final SessionFeatureProvider sessionFeatureProvider;
   final SongBookFeatureProvider songBookFeatureProvider;
   final DownloadFeatureProvider downloadFeatureProvider;
@@ -69,7 +69,7 @@ class DefaultPreviewerViewModel extends PreviewerViewModel {
         localizations: context.read(),
         assets: context.read(),
         name: "John Doe",
-        sessionId: "123456",
+        roomId: "123456",
       ),
     ),
   ];

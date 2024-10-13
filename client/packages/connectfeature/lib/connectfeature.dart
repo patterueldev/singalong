@@ -2,42 +2,50 @@ library connectfeature;
 
 import 'package:flutter/material.dart';
 import 'package:fpdart/fpdart.dart' show TaskEither, Unit, unit;
-import 'package:provider/provider.dart';
 import 'package:shared/shared.dart';
 
 part 'connectscene/connectview.dart';
 part 'connectscene/connectviewstate.dart';
 part 'connectscene/connectviewmodel.dart';
 part 'connectscene/establishconnectionusecase.dart';
+part 'connectscene/connectrepository.dart';
 part 'connectlocalizations.dart';
 part 'connectflowcontroller.dart';
 part 'connectscene/connectexception.dart';
 part 'connectassets.dart';
 
-class ConnectFeatureProvider {
-  ConnectFeatureProvider();
+class ConnectFeature {
+  final ConnectLocalizations localizations;
+  final ConnectAssets assets;
+  final ConnectFlowController coordinator;
+  final ConnectRepository connectRepository;
 
-  final providers = MultiProvider(
-    providers: [
-      Provider<EstablishConnectionUseCase>(
-        create: (context) => DefaultEstablishConnectionUseCase(),
-      ),
-    ],
-  );
+  ConnectFeature({
+    required this.localizations,
+    required this.assets,
+    required this.coordinator,
+    required this.connectRepository,
+  });
+
+  late final EstablishConnectionUseCase establishConnectionUseCase =
+      DefaultEstablishConnectionUseCase(connectRepository: connectRepository);
+  // final providers = MultiProvider(
+  //   providers: [
+  //     Provider<EstablishConnectionUseCase>(
+  //       create: (context) => DefaultEstablishConnectionUseCase(),
+  //     ),
+  //   ],
+  // );
 
   Widget buildConnectView({
-    required BuildContext context,
-    required ConnectFlowController coordinator,
-    required ConnectLocalizations localizations,
-    required ConnectAssets assets,
     String name = '',
-    String sessionId = '',
+    String roomId = '',
   }) =>
       ConnectView(
         viewModel: DefaultConnectViewModel(
-          connectUseCase: context.read(),
+          connectUseCase: establishConnectionUseCase,
           name: name,
-          sessionId: sessionId,
+          roomId: roomId,
         ),
         flow: coordinator,
         localizations: localizations,

@@ -48,7 +48,7 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final connectFeatureProvider = ConnectFeatureProvider();
+    final connectFeatureProvider = ConnectFeature();
     final sessionFeatureProvider = SessionFeatureProvider();
     final songBookFeatureProvider = SongBookFeatureProvider();
     final downloadFeatureProvider = DownloadFeatureProvider();

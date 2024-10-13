@@ -1,4 +1,4 @@
-name: downloadfeature_ds
+name: connectfeatureds
 description: "A new Flutter package project."
 version: 0.0.1
 publish_to: none
@@ -11,10 +11,9 @@ dependencies:
   flutter:
     sdk: flutter
 
-  downloadfeature:
-
+  connectfeature:
+  singalong_api_client:
   provider: ^6.1.2
-  http: ^1.2.2
 
 dev_dependencies:
   flutter_test:
@@ -25,7 +24,7 @@ dev_dependencies:
 # following page: https://dart.dev/tools/pub/pubspec
 
 # The following section is specific to Flutter packages.
-# flutter:
+flutter:
 
   # To add assets to your package, add an assets section, like this:
   # assets:

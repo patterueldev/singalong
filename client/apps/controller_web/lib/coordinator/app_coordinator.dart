@@ -2,11 +2,7 @@ import 'package:connectfeature/connectfeature.dart';
 import 'package:flutter/material.dart';
 
 class AppCoordinator implements ConnectFlowController {
-  const AppCoordinator({
-    required this.connectFeatureProvider,
-  });
-
-  final ConnectFeatureProvider connectFeatureProvider;
+  const AppCoordinator();
 
   @override
   void onConnected(BuildContext context) {

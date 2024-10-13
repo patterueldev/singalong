@@ -1,6 +1,10 @@
-# melos_managed_dependency_overrides: connectfeature,shared
+# melos_managed_dependency_overrides: connectfeature,shared,connectfeatureds,singalong_api_client
 dependency_overrides:
   connectfeature:
     path: ../../packages/connectfeature
+  connectfeatureds:
+    path: ../../packages/connectfeatureds
   shared:
     path: ../../packages/shared
+  singalong_api_client:
+    path: ../../packages/singalong_api_client

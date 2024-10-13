@@ -13,10 +13,10 @@ class DefaultConnectViewModel implements ConnectViewModel {
   DefaultConnectViewModel({
     required this.connectUseCase,
     String name = '',
-    String sessionId = '',
+    String roomId = '',
   }) {
     nameController.text = name;
-    sessionIdController.text = sessionId;
+    sessionIdController.text = roomId;
   }
   @override
   final TextEditingController nameController = TextEditingController();

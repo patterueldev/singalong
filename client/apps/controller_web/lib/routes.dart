@@ -23,13 +23,11 @@ Route<dynamic>? onGenerateRoute(RouteSettings settings, BuildContext context) {
   }
 
   if (uri.path == '/connect') {
-    final connectProvider = context.read<ConnectFeatureProvider>();
+    final connectProvider = context.read<ConnectFeature>();
     return MaterialPageRoute(
       builder: (context) => connectProvider.buildConnectView(
-        context: context,
-        coordinator: context.read(),
-        localizations: context.read(),
-        assets: context.read(),
+        name: 'natsumi',
+        roomId: '569841',
       ),
     );
   }

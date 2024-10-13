@@ -32,7 +32,9 @@ dependencies:
     sdk: flutter
 
   shared:
+  singalong_api_client:
   connectfeature:
+  connectfeatureds:
 
 
   # The following adds the Cupertino Icons font to your application.

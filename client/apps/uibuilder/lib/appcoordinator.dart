@@ -14,7 +14,7 @@ class AppCoordinator
     required this.downloadFeatureProvider,
   });
 
-  final ConnectFeatureProvider connectFeatureProvider;
+  final ConnectFeature connectFeatureProvider;
   final SessionFeatureProvider sessionFeatureProvider;
   final SongBookFeatureProvider songBookFeatureProvider;
   final DownloadFeatureProvider downloadFeatureProvider;
