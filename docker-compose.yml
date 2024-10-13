@@ -19,9 +19,9 @@ services:
     ports:
       - "8080:8080" # App port
       - "5005:5005" # Debug port
+      - "9092:9092" # Socket port
     depends_on:
       - songdownloader
-      - ws
       - mongodb
     environment:
       - SERVER_PORT=8080
@@ -30,19 +30,6 @@ services:
       - SPRING_DATA_MONGODB_AUTHENTICATION_DATABASE=$MONGO_DB
       - SPRING_DATA_MONGODB_AUTO_INDEX_CREATION=$MONGO_AUTO_INDEX_CREATION
       - JAVA_TOOL_OPTIONS=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
-    networks:
-      - singalong-server
-  ws:
-    image: singalong-websocket:1.0.0
-    build:
-      context: ws
-      dockerfile: Dockerfile
-    container_name: ws-container
-    ports:
-      - "8081:8081"
-    depends_on:
-        - api
-        - mongodb
     networks:
       - singalong-server
 

@@ -17,6 +17,7 @@ class SingalongServerApplication {
         @Value("\${socketio.hostname}") hostname: String,
         @Value("\${socketio.port}") port: Int,
     ): SocketIOServer {
+        println("Starting Socket.IO server at $hostname:$port")
         val config = Configuration()
         config.hostname = hostname
         config.port = port

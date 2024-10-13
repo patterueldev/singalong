@@ -11,7 +11,7 @@ class DefaultPreviewerViewModel extends PreviewerViewModel {
     required this.sessionFeatureProvider,
     required this.songBookFeatureProvider,
     required this.downloadFeatureProvider,
-    this.autoIndex = 1,
+    this.autoIndex = -1,
   });
 
   final ConnectFeatureProvider connectFeatureProvider;
