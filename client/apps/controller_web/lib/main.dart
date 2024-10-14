@@ -4,6 +4,8 @@ import 'package:controller_web/routes.dart';
 import 'package:controller_web/splash/splash_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:sessionfeature/sessionfeature.dart';
+import 'package:sessionfeatureds/sessionfeatureds.dart';
 import 'package:singalong_api_client/singalong_api_client.dart';
 import 'dart:html' as html;
 
@@ -27,6 +29,7 @@ class APIConfiguration implements SingalongAPIConfiguration {
 void main() {
   final singalongAPIClientProvider = SingalongAPIClientProvider();
   final connectFeatureDSProvider = ConnectFeatureDSProvider();
+  final sessionFeatureDSProvider = SessionFeatureDSProvider();
   final localizations = DefaultAppLocalizations();
   final assets = DefaultAppAssets();
   final appCoordinator = AppCoordinator();
@@ -34,11 +37,14 @@ void main() {
   runApp(MultiProvider(
     providers: [
       Provider<ConnectAssets>.value(value: assets),
-      Provider<ConnectFlowController>.value(value: appCoordinator),
+      Provider<ConnectFlowCoordinator>.value(value: appCoordinator),
       Provider<ConnectLocalizations>.value(value: localizations),
+      Provider<SessionFlowCoordinator>.value(value: appCoordinator),
+      Provider<SessionLocalizations>.value(value: localizations),
       Provider<SingalongAPIConfiguration>.value(value: APIConfiguration()),
       singalongAPIClientProvider.providers,
       connectFeatureDSProvider.providers,
+      sessionFeatureDSProvider.providers,
     ],
     child: const ControllerApp(),
   ));

@@ -12,7 +12,7 @@ class ConnectFeatureDSProvider {
       ),
     ),
     Provider(
-      create: (context) => ConnectFeature(
+      create: (context) => ConnectFeatureBuilder(
         localizations: context.read(),
         assets: context.read(),
         coordinator: context.read(),

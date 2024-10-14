@@ -42,7 +42,12 @@ class DefaultConnectViewModel implements ConnectViewModel {
     final name = nameController.text;
     final sessionId = sessionIdController.text;
 
-    final result = await connectUseCase.connect(name, sessionId).run();
+    final result = await connectUseCase(
+      EstablishConnectionParameters(
+        name: name,
+        sessionId: sessionId,
+      ),
+    );
     result.fold(
       (e) {
         stateNotifier.value = ConnectViewState.failure(e);

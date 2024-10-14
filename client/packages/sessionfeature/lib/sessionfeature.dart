@@ -5,7 +5,6 @@ import 'dart:async';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
-import 'package:provider/provider.dart';
 import 'package:shared/shared.dart';
 
 part 'sessionview/sessionview.dart';
@@ -20,26 +19,24 @@ part 'songview/songmodel.dart';
 part 'sessionnavigationcoordinator.dart';
 part 'sessionlocalizations.dart';
 
-class SessionFeatureProvider {
-  SessionFeatureProvider();
+class SessionFeatureBuilder {
+  final SessionFlowCoordinator coordinator;
+  final SessionLocalizations localizations;
+  final ReservedSongListRepository reservedSongListRepository;
 
-  final providers = MultiProvider(
-    providers: [
-      Provider<ListenToSongListUpdatesUseCase>(
-        create: (context) => DefaultListenToSongListUpdatesUseCase(),
-      ),
-    ],
-  );
+  SessionFeatureBuilder({
+    required this.coordinator,
+    required this.localizations,
+    required this.reservedSongListRepository,
+  });
 
-  Widget buildSessionView({
-    required BuildContext context,
-    required SessionFlowController coordinator,
-    required SessionLocalizations localizations,
-  }) =>
-      SessionView(
+  late final _listenToSongListUpdatesUseCase = ListenToSongListUpdatesUseCase(
+      reservedSongListRepository: reservedSongListRepository);
+
+  Widget buildSessionView() => SessionView(
         viewModel: DefaultSessionViewModel(
-          listenToSongListUpdatesUseCase: context.read(),
-          localizations: context.read(),
+          listenToSongListUpdatesUseCase: _listenToSongListUpdatesUseCase,
+          localizations: localizations,
         ),
         localizations: localizations,
         flow: coordinator,

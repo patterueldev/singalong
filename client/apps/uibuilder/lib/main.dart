@@ -48,7 +48,7 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final connectFeatureProvider = ConnectFeature();
+    final connectFeatureProvider = ConnectFeatureBuilder();
     final sessionFeatureProvider = SessionFeatureProvider();
     final songBookFeatureProvider = SongBookFeatureProvider();
     final downloadFeatureProvider = DownloadFeatureProvider();
@@ -69,9 +69,9 @@ class MyApp extends StatelessWidget {
       providers: [
         Provider<AppCoordinator>.value(value: appCoordinator),
         Provider<ConnectAssets>.value(value: assets),
-        Provider<ConnectFlowController>.value(value: appCoordinator),
+        Provider<ConnectFlowCoordinator>.value(value: appCoordinator),
         Provider<ConnectLocalizations>.value(value: localizations),
-        Provider<SessionFlowController>.value(value: appCoordinator),
+        Provider<SessionFlowCoordinator>.value(value: appCoordinator),
         Provider<SessionLocalizations>.value(value: localizations),
         Provider<SongBookNavigationCoordinator>.value(value: appCoordinator),
         Provider<SongBookAssets>.value(value: assets),

@@ -3,29 +3,34 @@ part of '../sessionfeature.dart';
 class SongView extends StatefulWidget {
   const SongView({
     super.key,
+    required this.viewModel,
     required this.localizations,
   });
 
   @override
   State<SongView> createState() => _SongViewState();
 
+  final SongViewModel viewModel;
   final SessionLocalizations localizations;
 }
 
 class _SongViewState extends State<SongView> {
   SessionLocalizations get localizations => widget.localizations;
+  SongViewModel get viewModel => widget.viewModel;
+
   @override
   void initState() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<SongViewModel>().loadDetails();
+      viewModel.loadDetails();
     });
     super.initState();
   }
 
   @override
   Widget build(BuildContext context) => Scaffold(
-        body: Consumer<SongViewModel>(
-          builder: (context, viewModel, child) {
+        body: ListenableBuilder(
+          listenable: widget.viewModel,
+          builder: (context, child) {
             switch (viewModel.state.type) {
               case SongViewStateType.initial:
               case SongViewStateType.loading:

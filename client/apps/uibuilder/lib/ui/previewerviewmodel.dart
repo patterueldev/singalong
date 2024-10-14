@@ -14,7 +14,7 @@ class DefaultPreviewerViewModel extends PreviewerViewModel {
     this.autoIndex = -1,
   });
 
-  final ConnectFeature connectFeatureProvider;
+  final ConnectFeatureBuilder connectFeatureProvider;
   final SessionFeatureProvider sessionFeatureProvider;
   final SongBookFeatureProvider songBookFeatureProvider;
   final DownloadFeatureProvider downloadFeatureProvider;

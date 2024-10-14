@@ -1,5 +1,5 @@
 part of 'connectfeature.dart';
 
-abstract class ConnectFlowController {
+abstract class ConnectFlowCoordinator {
   void onConnected(BuildContext context);
 }

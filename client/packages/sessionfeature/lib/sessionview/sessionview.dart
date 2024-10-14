@@ -9,7 +9,7 @@ class SessionView extends StatefulWidget {
   });
 
   final SessionViewModel viewModel;
-  final SessionFlowController flow;
+  final SessionFlowCoordinator flow;
   final SessionLocalizations localizations;
 
   @override
@@ -19,7 +19,7 @@ class SessionView extends StatefulWidget {
 class _SessionViewState extends State<SessionView> {
   SessionViewModel get viewModel => widget.viewModel;
   SessionLocalizations get localizations => widget.localizations;
-  SessionFlowController get flow => widget.flow;
+  SessionFlowCoordinator get flow => widget.flow;
 
   @override
   void initState() {
@@ -181,10 +181,9 @@ class _SessionViewState extends State<SessionView> {
                   isScrollControlled: true,
                   builder: (context) => SizedBox(
                     height: MediaQuery.of(context).size.height * 0.90,
-                    child: ChangeNotifierProvider<SongViewModel>(
-                      create: (context) =>
-                          DefaultSongViewModel(songId: song.id),
-                      child: SongView(localizations: localizations),
+                    child: SongView(
+                      viewModel: DefaultSongViewModel(songId: song.songId),
+                      localizations: localizations,
                     ),
                   ),
                 ),
