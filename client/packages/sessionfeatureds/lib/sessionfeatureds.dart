@@ -4,11 +4,14 @@ import 'dart:async';
 
 import 'package:provider/provider.dart';
 import 'package:sessionfeature/sessionfeature.dart';
+import 'package:singalong_api_client/singalong_api_client.dart';
 
 class SessionFeatureDSProvider {
   final providers = MultiProvider(providers: [
     Provider<ReservedSongListRepository>(
-      create: (context) => ReservedSongListRepositoryDS(),
+      create: (context) => ReservedSongListRepositoryDS(
+        apiClient: context.read(),
+      ),
     ),
     Provider(
       create: (context) => SessionFeatureBuilder(
@@ -21,11 +24,18 @@ class SessionFeatureDSProvider {
 }
 
 class ReservedSongListRepositoryDS implements ReservedSongListRepository {
+  final SingalongAPIClient apiClient;
+
+  ReservedSongListRepositoryDS({
+    required this.apiClient,
+  });
+
   Timer? _timer;
   List<ReservedSongItem> _mockSongList = [];
 
   @override
   Stream<List<ReservedSongItem>> listenToSongListUpdates() {
+    apiClient.listenReservedSongs();
     return Stream.periodic(const Duration(seconds: 1), (count) {
       if (_mockSongList.length >= 10) {
         _timer?.cancel();

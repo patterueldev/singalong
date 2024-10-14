@@ -40,7 +40,19 @@ class SingalongSocketIOModule(
     private fun onConnected(): ConnectListener {
         return ConnectListener { client ->
             val handshakeData: HandshakeData = client.handshakeData
-            val token = handshakeData.httpHeaders["Authorization"]?.replace("Bearer ", "")
+            var token: String? = null
+            val authorizationHeader = handshakeData.httpHeaders["Authorization"]
+            if (authorizationHeader != null) {
+                token = authorizationHeader.replace("Bearer ", "")
+            } else {
+                // try auth
+                val query = handshakeData.authToken
+                println("Client[${client.sessionId}] - Query: $query")
+                if (query is Map<*, *>) {
+                    token = query["token"] as String?
+                }
+            }
+
             if (token == null) {
                 client.sendEvent("error", "Missing token.")
                 client.disconnect()

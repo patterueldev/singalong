@@ -14,16 +14,25 @@ import 'controller_app.dart';
 import 'coordinator/app_coordinator.dart';
 import 'localizations/app_localizations.dart';
 
-String getBaseUrl() {
-  final location = html.window.location;
-  // host contains a port number; we need to remove it
-  final host = location.host.split(':')[0];
-  return '${location.protocol}//$host:8080';
-}
-
-class APIConfiguration implements SingalongAPIConfiguration {
+class APIConfiguration extends SingalongAPIConfiguration {
   @override
-  String baseUrl = getBaseUrl();
+  final String protocol = 'http';
+
+  @override
+  late final String host = _host;
+
+  String get _host {
+    final location = html.window.location;
+    // host contains a port number; we need to remove it
+    final host = location.host.split(':')[0];
+    return host;
+  }
+
+  @override
+  final int apiPort = 8080;
+
+  @override
+  final int socketPort = 9092;
 }
 
 void main() {

@@ -2,6 +2,7 @@ part of '../connectfeature.dart';
 
 abstract class ConnectRepository {
   Future<ConnectResponse> connect(ConnectParameters parameters);
+  void provideAccessToken(String accessToken);
 }
 
 class ConnectParameters {

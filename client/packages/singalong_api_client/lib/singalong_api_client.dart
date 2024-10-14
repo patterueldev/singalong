@@ -1,37 +1,48 @@
 library singalong_api_client;
 
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart';
 import 'package:json_annotation/json_annotation.dart';
 import 'package:provider/provider.dart';
+import 'package:socket_io_client/socket_io_client.dart' as IO;
 
 part 'singalong_api_client.g.dart';
 part 'api_path.dart';
+part 'api_session_manager.dart';
 part 'singalong_api_configuration.dart';
+part 'singalong_api_client_provider.dart';
 part 'models/generic_response.dart';
 part 'models/connect_parameters.dart';
 part 'models/connect_response.dart';
 part 'models/reserved_song.dart';
 
 class SingalongAPIClient {
-  final Client client;
-  final SingalongAPIConfiguration configuration;
+  final Client _client;
+  // final IO.Socket _socket;
+  final APISessionManager _sessionManager;
+  final SingalongAPIConfiguration _configuration;
 
   SingalongAPIClient({
-    required this.client,
-    required this.configuration,
-  });
+    required Client client,
+    // required IO.Socket socket,
+    required APISessionManager sessionManager,
+    required SingalongAPIConfiguration configuration,
+  })  : _configuration = configuration,
+        _sessionManager = sessionManager,
+        // _socket = socket,
+        _client = client;
 
   Future<APIConnectResponseData> connect(
       APIConnectParameters parameters) async {
     try {
-      final base = configuration.baseUrl;
+      final base = _configuration.apiBaseUrl;
       final raw = "$base${APIPath.sessionConnect.value}";
       final postUri = Uri.parse(raw);
       final bodyEncoded = jsonEncode(parameters.toJson());
-      final response = await client.post(postUri,
+      final response = await _client.post(postUri,
           headers: {'Content-Type': 'application/json'}, body: bodyEncoded);
       debugPrint("Connect response: ${response.body}");
       final result = GenericResponse.fromResponse(response);
@@ -48,36 +59,21 @@ class SingalongAPIClient {
       rethrow;
     }
   }
+
+  // listen to reserved songs list from server
+  void listenReservedSongs() {
+    final socket = _sessionManager.getSocket();
+
+    socket.onConnect((_) {
+      debugPrint('connect');
+      socket.emit('msg', 'test');
+    });
+    socket.onDisconnect((_) => debugPrint('disconnect'));
+
+    socket.on('reservedSongs', (data) {
+      debugPrint("Reserved song: $data");
+    });
+
+    socket.connect();
+  }
 }
-
-class SingalongAPIClientProvider {
-  final providers = MultiProvider(providers: [
-    Provider<Client>(
-      create: (context) => Client(),
-      dispose: (context, client) => client.close(),
-    ),
-    Provider<SingalongAPIClient>(
-      create: (context) => SingalongAPIClient(
-        client: context.read(),
-        configuration: context.read(),
-      ),
-    ),
-  ]);
-}
-
-// enum ClientType {
-//   ADMIN,
-//   CONTROLLER,
-//   PLAYER,
-// }
-
-/**
-    data class ConnectParameters(
-    val username: String,
-    val userPasscode: String?,
-    val roomId: String,
-    val roomPasscode: String?,
-    val clientType: ClientType,
-    )
-
- */

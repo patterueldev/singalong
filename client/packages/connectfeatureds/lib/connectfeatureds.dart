@@ -9,6 +9,7 @@ class ConnectFeatureDSProvider {
     Provider<ConnectRepository>(
       create: (context) => ConnectRepositoryDS(
         client: context.read(),
+        sessionManager: context.read(),
       ),
     ),
     Provider(
@@ -24,13 +25,22 @@ class ConnectFeatureDSProvider {
 
 class ConnectRepositoryDS implements ConnectRepository {
   final SingalongAPIClient client;
+  final APISessionManager sessionManager;
 
-  ConnectRepositoryDS({required this.client});
+  ConnectRepositoryDS({
+    required this.client,
+    required this.sessionManager,
+  });
 
   @override
   Future<ConnectResponse> connect(ConnectParameters parameters) async {
     final result = await client.connect(parameters.toAPI());
     return result.fromAPI();
+  }
+
+  @override
+  void provideAccessToken(String accessToken) {
+    sessionManager.setAccessToken(accessToken);
   }
 }
 

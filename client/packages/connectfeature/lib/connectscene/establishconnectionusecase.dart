@@ -60,6 +60,7 @@ class EstablishConnectionUseCase
             debugPrint("Access token: $accessToken");
             // throw GenericException.unhandled(accessToken); //TODO: remove this
             // TODO: IMPLEMENT ACCESS TOKEN STORAGE
+            connectRepository.provideAccessToken(accessToken);
             return ConnectViewState.connected();
           }
           throw GenericException.unknown();
