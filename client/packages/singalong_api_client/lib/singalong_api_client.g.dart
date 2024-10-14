@@ -6,6 +6,22 @@ part of 'singalong_api_client.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
+GenericResponse _$GenericResponseFromJson(Map<String, dynamic> json) =>
+    GenericResponse(
+      success: json['success'] as bool,
+      status: (json['status'] as num).toInt(),
+      data: json['data'],
+      message: json['message'] as String?,
+    );
+
+Map<String, dynamic> _$GenericResponseToJson(GenericResponse instance) =>
+    <String, dynamic>{
+      'success': instance.success,
+      'status': instance.status,
+      'data': instance.data,
+      'message': instance.message,
+    };
+
 APIConnectParameters _$APIConnectParametersFromJson(
         Map<String, dynamic> json) =>
     APIConnectParameters(
@@ -26,22 +42,6 @@ Map<String, dynamic> _$APIConnectParametersToJson(
       'clientType': instance.clientType,
     };
 
-GenericResponse _$GenericResponseFromJson(Map<String, dynamic> json) =>
-    GenericResponse(
-      success: json['success'] as bool,
-      status: (json['status'] as num).toInt(),
-      data: json['data'],
-      message: json['message'] as String?,
-    );
-
-Map<String, dynamic> _$GenericResponseToJson(GenericResponse instance) =>
-    <String, dynamic>{
-      'success': instance.success,
-      'status': instance.status,
-      'data': instance.data,
-      'message': instance.message,
-    };
-
 APIConnectResponseData _$APIConnectResponseDataFromJson(
         Map<String, dynamic> json) =>
     APIConnectResponseData(
@@ -56,4 +56,28 @@ Map<String, dynamic> _$APIConnectResponseDataToJson(
       'requiresUserPasscode': instance.requiresUserPasscode,
       'requiresRoomPasscode': instance.requiresRoomPasscode,
       'accessToken': instance.accessToken,
+    };
+
+APIReservedSong _$APIReservedSongFromJson(Map<String, dynamic> json) =>
+    APIReservedSong(
+      id: json['id'] as String,
+      order: (json['order'] as num).toInt(),
+      songId: json['songId'] as String,
+      title: json['title'] as String,
+      artist: json['artist'] as String,
+      imageURL: json['imageURL'] as String,
+      reservingUser: json['reservingUser'] as String,
+      currentPlaying: json['currentPlaying'] as bool,
+    );
+
+Map<String, dynamic> _$APIReservedSongToJson(APIReservedSong instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'order': instance.order,
+      'songId': instance.songId,
+      'title': instance.title,
+      'artist': instance.artist,
+      'imageURL': instance.imageURL,
+      'reservingUser': instance.reservingUser,
+      'currentPlaying': instance.currentPlaying,
     };

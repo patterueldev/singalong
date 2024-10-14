@@ -10,8 +10,10 @@ import 'package:provider/provider.dart';
 part 'singalong_api_client.g.dart';
 part 'api_path.dart';
 part 'singalong_api_configuration.dart';
+part 'models/generic_response.dart';
 part 'models/connect_parameters.dart';
 part 'models/connect_response.dart';
+part 'models/reserved_song.dart';
 
 class SingalongAPIClient {
   final Client client;
