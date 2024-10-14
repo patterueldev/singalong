@@ -8,13 +8,7 @@ class AppCoordinator implements ConnectFlowCoordinator, SessionFlowCoordinator {
 
   @override
   void onConnected(BuildContext context) {
-    final sessionBuilder = context.read<SessionFeatureBuilder>();
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(
-        settings: const RouteSettings(name: "Song Book"),
-        builder: (context) => sessionBuilder.buildSessionView(),
-      ),
-    );
+    Navigator.of(context).pushReplacementNamed('/session');
   }
 
   @override

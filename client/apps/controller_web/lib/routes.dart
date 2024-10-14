@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'dart:html' as html;
 
 import 'package:provider/provider.dart';
+import 'package:sessionfeature/sessionfeature.dart';
 
 Route<dynamic>? onGenerateRoute(RouteSettings settings, BuildContext context) {
   final uri = Uri.parse(settings.name ?? '');
@@ -32,8 +33,11 @@ Route<dynamic>? onGenerateRoute(RouteSettings settings, BuildContext context) {
     );
   }
 
-  if (uri.path == '/home') {
-    return MaterialPageRoute(builder: (context) => Container());
+  if (uri.path == '/session') {
+    return MaterialPageRoute(
+      builder: (context) =>
+          context.read<SessionFeatureBuilder>().buildSessionView(),
+    );
   }
   return null;
 }
