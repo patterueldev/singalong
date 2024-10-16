@@ -34,10 +34,6 @@ echo "Docker containers stopped successfully."
 docker image prune -f
 echo "Docker images cleaned up successfully."
 
-# Build Docker images
-docker compose build --no-cache
-echo "Docker images built successfully."
-
 # Bring up the containers in detached mode
-docker compose up -d --no-build
+docker compose up -d --build
 echo "Docker containers started successfully."

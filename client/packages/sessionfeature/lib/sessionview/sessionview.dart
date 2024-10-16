@@ -152,7 +152,7 @@ class _SessionViewState extends State<SessionView> {
                     borderRadius: BorderRadius.circular(
                         8.0), // Optional: Match border radius
                     child: CachedNetworkImage(
-                      imageUrl: song.imageURL.toString(),
+                      imageUrl: song.thumbnailURL.toString(),
                       placeholder: (context, url) => const Center(
                         child: CircularProgressIndicator(),
                       ),

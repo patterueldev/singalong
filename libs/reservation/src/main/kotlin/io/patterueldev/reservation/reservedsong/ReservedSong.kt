@@ -6,7 +6,7 @@ interface ReservedSong {
     val songId: String
     val title: String
     val artist: String
-    val imageURL: String
+    val thumbnailPath: String
     val reservingUser: String
     val currentPlaying: Boolean
 }

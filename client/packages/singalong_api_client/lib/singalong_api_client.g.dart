@@ -65,7 +65,7 @@ APIReservedSong _$APIReservedSongFromJson(Map<String, dynamic> json) =>
       songId: json['songId'] as String,
       title: json['title'] as String,
       artist: json['artist'] as String,
-      imageURL: json['imageURL'] as String,
+      thumbnailPath: json['thumbnailPath'] as String,
       reservingUser: json['reservingUser'] as String,
       currentPlaying: json['currentPlaying'] as bool,
     );
@@ -77,7 +77,7 @@ Map<String, dynamic> _$APIReservedSongToJson(APIReservedSong instance) =>
       'songId': instance.songId,
       'title': instance.title,
       'artist': instance.artist,
-      'imageURL': instance.imageURL,
+      'thumbnailPath': instance.thumbnailPath,
       'reservingUser': instance.reservingUser,
       'currentPlaying': instance.currentPlaying,
     };

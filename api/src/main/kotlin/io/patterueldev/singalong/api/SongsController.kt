@@ -33,7 +33,9 @@ class SongsController(
     @PostMapping
     suspend fun saveSong(
         @RequestBody saveSongParameters: SaveSongParameters,
-    ): SaveSongResponse = songIdentifierService.saveSong(saveSongParameters)
+    ): SaveSongResponse {
+        return songIdentifierService.saveSong(saveSongParameters)
+    }
 
     // Not to confuse, this is URL query parameters
     @GetMapping

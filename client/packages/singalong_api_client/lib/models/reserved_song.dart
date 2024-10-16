@@ -7,7 +7,7 @@ class APIReservedSong {
   final String songId;
   final String title;
   final String artist;
-  final String imageURL;
+  final String thumbnailPath;
   final String reservingUser;
   final bool currentPlaying;
 
@@ -17,13 +17,17 @@ class APIReservedSong {
     required this.songId,
     required this.title,
     required this.artist,
-    required this.imageURL,
+    required this.thumbnailPath,
     required this.reservingUser,
     required this.currentPlaying,
   });
 
   factory APIReservedSong.fromJson(Map<String, dynamic> json) =>
       _$APIReservedSongFromJson(json);
+  static List<APIReservedSong> fromList(List<dynamic> list) {
+    return list.map((e) => APIReservedSong.fromJson(e)).toList();
+  }
+
   Map<String, dynamic> toJson() => _$APIReservedSongToJson(this);
   factory APIReservedSong.fromResponse(Response response) {
     return APIReservedSong.fromJson(json.decode(response.body));
@@ -31,7 +35,7 @@ class APIReservedSong {
 
   @override
   String toString() {
-    return 'APIReservedSong(id: $id, order: $order, songId: $songId, title: $title, artist: $artist, imageURL: $imageURL, reservingUser: $reservingUser, currentPlaying: $currentPlaying)';
+    return 'APIReservedSong(id: $id, order: $order, songId: $songId, title: $title, artist: $artist, imageURL: $thumbnailPath, reservingUser: $reservingUser, currentPlaying: $currentPlaying)';
   }
 }
 /*

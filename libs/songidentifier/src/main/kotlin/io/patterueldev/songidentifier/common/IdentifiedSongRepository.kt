@@ -9,7 +9,7 @@ interface IdentifiedSongRepository {
         identifiedSong: IdentifiedSong,
         userId: String,
         sessionId: String,
-    ): String
+    ): SavedSong
 
     suspend fun downloadSong(
         url: String,
@@ -19,7 +19,7 @@ interface IdentifiedSongRepository {
     suspend fun updateSong(
         songId: String,
         filename: String,
-    )
+    ): SavedSong
 
     suspend fun reserveSong(
         songId: String,

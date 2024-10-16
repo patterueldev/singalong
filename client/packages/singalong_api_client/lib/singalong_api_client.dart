@@ -61,19 +61,22 @@ class SingalongAPIClient {
   }
 
   // listen to reserved songs list from server
-  void listenReservedSongs() {
+  Stream<List<APIReservedSong>> listenReservedSongs() {
     final socket = _sessionManager.getSocket();
+    if (socket.hasListeners('reservedSong')) {
+      throw Exception();
+    }
 
-    socket.onConnect((_) {
-      debugPrint('connect');
-      socket.emit('msg', 'test');
-    });
-    socket.onDisconnect((_) => debugPrint('disconnect'));
-
+    final controller = StreamController<List<APIReservedSong>>();
     socket.on('reservedSongs', (data) {
-      debugPrint("Reserved song: $data");
+      final reservedSongs = APIReservedSong.fromList(data);
+      controller.add(reservedSongs);
     });
+    return controller.stream;
+  }
 
-    socket.connect();
+  String thumbnailURL(String path) {
+    String host = _configuration.host;
+    return "http://$host:9000/$path";
   }
 }

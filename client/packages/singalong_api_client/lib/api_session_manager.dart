@@ -14,15 +14,12 @@ class APISessionManager {
 
     final base = _configuration.socketBaseUrl;
     final uri = "$base/singalong";
-    debugPrint("Building socket with: $uri");
-    debugPrint("Authenticating socket with token: $token");
     final option = IO.OptionBuilder()
         .setTransports(['websocket']) // for Flutter or Dart VM
         .disableAutoConnect() // disable auto-connection
         .setExtraHeaders({'Authorization': 'Bearer $token'})
         .setAuth({'token': token})
         .build();
-    debugPrint("Socket option: $option");
     _socket = IO.io(
       uri,
       option,
@@ -34,7 +31,16 @@ class APISessionManager {
   }
 
   IO.Socket getSocket() {
-    return _socket!; // throws exception if null
+    final socket = _socket!;
+    if (!socket.connected) {
+      socket.onConnect((_) {
+        debugPrint('connect');
+        socket.emit('msg', 'test');
+      });
+      socket.onDisconnect((_) => debugPrint('disconnect'));
+      socket.connect();
+    }
+    return socket; // throws exception if null
   }
 
   bool hasAccessToken() {

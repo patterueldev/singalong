@@ -1,10 +1,10 @@
-package io.patterueldev.song
+package io.patterueldev.songidentifier.common
 
-interface Song {
+interface SavedSong {
     val id: String
-    val filename: String
     val source: String
-    val imageUrl: String
+    val thumbnailPath: String
+    val videoPath: String?
     val songTitle: String
     val songArtist: String
     val songLanguage: String

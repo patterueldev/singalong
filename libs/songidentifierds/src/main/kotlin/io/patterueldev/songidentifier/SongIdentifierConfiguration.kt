@@ -7,6 +7,7 @@ import com.aallam.openai.client.OpenAIHost
 import com.aallam.openai.client.RetryStrategy
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
+import io.minio.MinioClient
 import io.patterueldev.roomuser.RoomUserRepository
 import io.patterueldev.songidentifier.common.IdentifiedSongRepository
 import org.springframework.beans.factory.annotation.Autowired
@@ -56,4 +57,16 @@ open class SongIdentifierConfiguration {
     open fun openAIModel(
         @Value("\${openai.model}") model: String,
     ): ModelId = ModelId(model)
+
+    @Bean
+    open fun minioClient(
+        @Value("\${minio.endpoint}") endpoint: String,
+        @Value("\${minio.accessKey}") accessKey: String,
+        @Value("\${minio.secretKey}") secretKey: String,
+    ): MinioClient {
+        return MinioClient.builder()
+            .endpoint(endpoint)
+            .credentials(accessKey, secretKey)
+            .build()
+    }
 }

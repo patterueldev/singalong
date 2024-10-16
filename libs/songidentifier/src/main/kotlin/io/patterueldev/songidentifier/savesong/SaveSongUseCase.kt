@@ -16,14 +16,16 @@ internal open class SaveSongUseCase(
         val identifiedSong = parameters.song
         val videoId = identifiedSong.id
         val videoTitle = identifiedSong.songTitle
-        val savedSongId = identifiedSongRepository.saveSong(parameters.song, user.username, user.roomId)
+        // TODO: Check if the song is already saved
+        var newSong = identifiedSongRepository.saveSong(parameters.song, user.username, user.roomId)
+        val savedSongId = newSong.id
 
         val fileTitle = videoTitle.replace(Regex("[/\\\\?%*:|\"<>]"), "-").replace(Regex("\\s+"), "-").lowercase()
         val filename = "$fileTitle[$videoId].mp4"
 
         // I want to encapsulate this area ---- to under some thread
         val didFinish = identifiedSongRepository.downloadSong(identifiedSong.source, filename)
-        identifiedSongRepository.updateSong(savedSongId, filename) // marks the song as downloaded
+        newSong = identifiedSongRepository.updateSong(savedSongId, filename) // marks the song as downloaded
         if (parameters.thenReserve) {
             identifiedSongRepository.reserveSong(savedSongId, user.roomId)
         }
@@ -34,6 +36,6 @@ internal open class SaveSongUseCase(
         // TODO: Do the above in the future; for now, let's do these asynchronously
         // I just need to see if the downloading works
 
-        return GenericResponse.success(identifiedSong)
+        return GenericResponse.success(newSong)
     }
 }

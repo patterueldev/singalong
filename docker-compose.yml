@@ -64,6 +64,21 @@ services:
       - singalong-server
     command: ["--bind_ip", "0.0.0.0"]
 
+  minio:
+    image: minio/minio
+    container_name: minio-container
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ACCESS_KEY: $MINIO_ACCESS_KEY
+      MINIO_SECRET_KEY: $MINIO_SECRET_KEY
+    volumes:
+      - $MINIO_DATA_PATH:/data
+    command: server /data --console-address ":9001"
+    networks:
+      - singalong-server
+
 networks:
   singalong-server:
     driver: bridge

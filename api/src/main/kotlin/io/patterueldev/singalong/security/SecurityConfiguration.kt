@@ -52,6 +52,7 @@ class SecurityConfiguration {
                 "/swagger-resources/**",
                 "/v3/api-docs/**",
                 "/swagger-resources",
+                "/songs/thumbnail/**",
             )
         return http.csrf { it.disable() }
             .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
