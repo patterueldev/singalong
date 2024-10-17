@@ -101,6 +101,7 @@ internal class IdentifiedSongRepositoryDS : IdentifiedSongRepository {
         try {
             val bucket = "thumbnails"
             val videoId = song.sourceId
+            val objectName = "$filename.jpg"
             val result =
                 withContext(Dispatchers.IO) {
                     val url = URI(imageUrl).toURL()
@@ -110,7 +111,7 @@ internal class IdentifiedSongRepositoryDS : IdentifiedSongRepository {
                     minioClient.putObject(
                         PutObjectArgs.builder()
                             .bucket(bucket)
-                            .`object`(filename)
+                            .`object`(objectName)
                             .stream(bytes.inputStream(), bytes.size.toLong(), -1)
                             .contentType("image/jpeg")
                             .build(),
@@ -156,13 +157,14 @@ internal class IdentifiedSongRepositoryDS : IdentifiedSongRepository {
                         .block()
                 } ?: throw Exception("No response from server")
 
+            val objectName = "$filename.mp4"
             withContext(Dispatchers.IO) {
                 println("Image bytes: ${bytes.size}")
                 // TODO: find a way to "extract" the file extension from the URL
                 minioClient.putObject(
                     PutObjectArgs.builder()
                         .bucket(bucket)
-                        .`object`(filename)
+                        .`object`(objectName)
                         .stream(bytes.inputStream(), bytes.size.toLong(), -1)
                         .contentType("video/mp4")
                         .build(),

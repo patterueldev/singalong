@@ -32,32 +32,3 @@ class ConnectResponse {
     this.accessToken,
   });
 }
-
-/*
-
-@JsonSerializable()
-class APIConnectResponseData {
-  final bool? requiresUserPasscode;
-  final bool? requiresRoomPasscode;
-  final String? accessToken;
-
-  APIConnectResponseData({
-    this.requiresUserPasscode,
-    this.requiresRoomPasscode,
-    this.accessToken,
-  });
-
-  factory APIConnectResponseData.fromJson(Map<String, dynamic> json) =>
-      _$ConnectResponseDataFromJson(json);
-  Map<String, dynamic> toJson() => _$ConnectResponseDataToJson(this);
-  factory APIConnectResponseData.fromResponse(Response response) {
-    return APIConnectResponseData.fromJson(json.decode(response.body));
-  }
-
-  @override
-  String toString() {
-    return 'ConnectResponseData(requiresUserPasscode: $requiresUserPasscode, requiresRoomPasscode: $requiresRoomPasscode, accessToken: $accessToken)';
-  }
-}
-
- */

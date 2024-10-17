@@ -14,7 +14,7 @@ interface IdentifiedSongRepository {
     suspend fun downloadThumbnail(
         song: SavedSong,
         imageUrl: String,
-        fileTitle: String,
+        filename: String,
     ): SavedSong
 
     suspend fun updateSong(
@@ -25,7 +25,7 @@ interface IdentifiedSongRepository {
     suspend fun downloadSong(
         song: SavedSong,
         sourceUrl: String,
-        fileTitle: String,
+        filename: String,
     ): SavedSong
 
     suspend fun reserveSong(

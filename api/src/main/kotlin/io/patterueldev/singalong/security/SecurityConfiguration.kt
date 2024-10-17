@@ -28,14 +28,22 @@ class SecurityConfiguration {
 
     @Bean
     fun corsConfigurer(
-        @Value("\${cors.allowedOrigins}") allowedOrigins: String,
+        @Value("\${cors.allowedHosts}") allowedHosts: String,
+        @Value("\${cors.allowedPorts}") allowedPorts: String
     ): WebMvcConfigurer {
+        val allowedOrigins: MutableList<String> = mutableListOf()
+        allowedHosts.split(",").forEach { host ->
+            // add the plain 80
+            allowedOrigins.add("http://$host")
+            allowedPorts.split(",").forEach { port ->
+                allowedOrigins.add("http://$host:$port")
+            }
+        }
         return object : WebMvcConfigurer {
             override fun addCorsMappings(registry: CorsRegistry) {
-                val origins = allowedOrigins.split(",").toTypedArray()
-                println("Allowed origins: ${origins.joinToString(" | ")}")
+                println("Allowed origins: ${allowedOrigins.joinToString(" | ")}")
                 registry.addMapping("/**")
-                    .allowedOrigins(*origins)
+                    .allowedOrigins(*allowedOrigins.toTypedArray())
                     .allowedMethods("GET", "POST", "PUT", "DELETE", "PATCH")
                     .allowedHeaders("*")
                     .allowCredentials(true)

@@ -1,8 +1,39 @@
 import 'package:flutter/material.dart';
 import 'package:playerfeature/playerfeature.dart';
+import 'package:playerfeatureds/playerfeatureds.dart';
+import 'package:provider/provider.dart';
+import 'package:singalong_api_client/singalong_api_client.dart';
+
+class APIConfiguration extends SingalongAPIConfiguration {
+  @override
+  final String protocol = 'http';
+
+  @override
+  late final String host = _host;
+
+  String get _host {
+    final host = "thursday.local";
+    return host;
+  }
+
+  @override
+  final int apiPort = 8080;
+
+  @override
+  final int socketPort = 9092;
+}
 
 void main() {
-  runApp(const PlayerApp());
+  final singalongAPIClientProvider = SingalongAPIClientProvider();
+  final playerFeatureDSProvider = PlayerFeatureDSProvider();
+  runApp(MultiProvider(
+    providers: [
+      Provider<SingalongAPIConfiguration>.value(value: APIConfiguration()),
+      singalongAPIClientProvider.providers,
+      playerFeatureDSProvider.providers,
+    ],
+    child: const PlayerApp(),
+  ));
 }
 
 class PlayerApp extends StatelessWidget {
@@ -17,9 +48,7 @@ class PlayerApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: PlayerView(
-        viewModel: DefaultPlayerViewModel(),
-      ),
+      home: context.read<PlayerFeatureBuilder>().buildPlayerView(),
     );
   }
 }

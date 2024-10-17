@@ -81,3 +81,23 @@ Map<String, dynamic> _$APIReservedSongToJson(APIReservedSong instance) =>
       'reservingUser': instance.reservingUser,
       'currentPlaying': instance.currentPlaying,
     };
+
+APICurrentSong _$APICurrentSongFromJson(Map<String, dynamic> json) =>
+    APICurrentSong(
+      id: json['id'] as String,
+      title: json['title'] as String,
+      artist: json['artist'] as String,
+      thumbnailPath: json['thumbnailPath'] as String,
+      videoPath: json['videoPath'] as String,
+      reservingUser: json['reservingUser'] as String,
+    );
+
+Map<String, dynamic> _$APICurrentSongToJson(APICurrentSong instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'title': instance.title,
+      'artist': instance.artist,
+      'thumbnailPath': instance.thumbnailPath,
+      'videoPath': instance.videoPath,
+      'reservingUser': instance.reservingUser,
+    };

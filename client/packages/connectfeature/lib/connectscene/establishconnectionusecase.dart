@@ -1,13 +1,5 @@
 part of '../connectfeature.dart';
 
-abstract class ServiceUseCase<P, R> {
-  TaskEither<GenericException, R> task(P parameters);
-
-  Future<Either<GenericException, R>> call(P parameters) {
-    return task(parameters).run();
-  }
-}
-
 class EstablishConnectionParameters {
   final String name;
   final String sessionId;
@@ -58,8 +50,6 @@ class EstablishConnectionUseCase
           } else if (accessToken != null) {
             // store the access token somewhere
             debugPrint("Access token: $accessToken");
-            // throw GenericException.unhandled(accessToken); //TODO: remove this
-            // TODO: IMPLEMENT ACCESS TOKEN STORAGE
             connectRepository.provideAccessToken(accessToken);
             return ConnectViewState.connected();
           }

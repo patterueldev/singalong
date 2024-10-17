@@ -38,17 +38,3 @@ class APIReservedSong {
     return 'APIReservedSong(id: $id, order: $order, songId: $songId, title: $title, artist: $artist, imageURL: $thumbnailPath, reservingUser: $reservingUser, currentPlaying: $currentPlaying)';
   }
 }
-/*
-
-interface ReservedSong {
-    val id: String
-    val order: Int
-    val songId: String
-    val title: String
-    val artist: String
-    val imageURL: String
-    val reservingUser: String
-    val currentPlaying: Boolean
-}
-
- */

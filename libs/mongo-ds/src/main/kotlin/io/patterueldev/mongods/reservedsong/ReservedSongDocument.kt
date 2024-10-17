@@ -36,7 +36,7 @@ interface ReservedSongDocumentRepository : MongoRepository<ReservedSongDocument,
     @Query(
         value = "{ 'roomId' : ?0, 'startedPlayingAt': { \$ne: null }, 'finishedPlayingAt' : null }",
     )
-    fun loadPlayingReservedSong(roomId: String): ReservedSongDocument?
+    fun loadCurrentReservedSong(roomId: String): ReservedSongDocument?
 
     @Aggregation(
         pipeline = [

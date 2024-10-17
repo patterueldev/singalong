@@ -31,7 +31,9 @@ dependencies:
   flutter:
     sdk: flutter
 
+  singalong_api_client:
   playerfeature:
+  playerfeatureds:
 
 
   # The following adds the Cupertino Icons font to your application.

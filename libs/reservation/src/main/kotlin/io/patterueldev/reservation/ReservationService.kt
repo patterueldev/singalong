@@ -1,5 +1,8 @@
 package io.patterueldev.reservation
 
+import io.patterueldev.reservation.currentsong.CurrentSongRepository
+import io.patterueldev.reservation.currentsong.LoadCurrentSongParameters
+import io.patterueldev.reservation.currentsong.LoadCurrentSongUseCase
 import io.patterueldev.reservation.list.LoadReservationListParameters
 import io.patterueldev.reservation.list.LoadReservationListUseCase
 import io.patterueldev.reservation.reserve.ReserveParameters
@@ -9,6 +12,7 @@ import io.patterueldev.roomuser.RoomUserRepository
 
 class ReservationService(
     val reservedSongsRepository: ReservedSongsRepository,
+    val currentSongRepository: CurrentSongRepository,
     val roomUserRepository: RoomUserRepository,
     val reservationCoordinator: ReservationCoordinator? = null,
 ) {
@@ -20,7 +24,14 @@ class ReservationService(
         LoadReservationListUseCase(reservedSongsRepository)
     }
 
-    suspend fun reserveSong(parameters: ReserveParameters) = reserveUseCase.execute(parameters)
+    private val loadCurrentSongUseCase: LoadCurrentSongUseCase by lazy {
+        LoadCurrentSongUseCase(currentSongRepository)
+    }
 
-    suspend fun loadReservationList(parameters: LoadReservationListParameters) = loadReservationListUseCase.execute(parameters)
+    suspend fun reserveSong(parameters: ReserveParameters) = reserveUseCase(parameters)
+
+    suspend fun loadReservationList(parameters: LoadReservationListParameters) = loadReservationListUseCase(parameters)
+
+    suspend fun loadCurrentSong(parameters: LoadCurrentSongParameters) = loadCurrentSongUseCase(parameters)
 }
+

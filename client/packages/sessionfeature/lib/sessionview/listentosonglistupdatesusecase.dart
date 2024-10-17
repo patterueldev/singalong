@@ -7,7 +7,7 @@ class ListenToSongListUpdatesUseCase {
     required this.reservedSongListRepository,
   });
 
-  Stream<List<ReservedSongItem>> execute() {
+  Stream<List<ReservedSongItem>> call() {
     return reservedSongListRepository.listenToSongListUpdates();
   }
 }

@@ -18,6 +18,7 @@ part 'models/generic_response.dart';
 part 'models/connect_parameters.dart';
 part 'models/connect_response.dart';
 part 'models/reserved_song.dart';
+part 'models/current_song.dart';
 
 class SingalongAPIClient {
   final Client _client;
@@ -75,8 +76,24 @@ class SingalongAPIClient {
     return controller.stream;
   }
 
-  String thumbnailURL(String path) {
+  // listen to current song from server
+  Stream<APICurrentSong?> listenCurrentSong() {
+    final socket = _sessionManager.getSocket();
+    if (socket.hasListeners('currentSong')) {
+      throw Exception();
+    }
+
+    final controller = StreamController<APICurrentSong?>();
+    socket.on('currentSong', (data) {
+      final currentSong = APICurrentSong.fromJson(data);
+      controller.add(currentSong);
+    });
+    return controller.stream;
+  }
+
+  String resourceURL(String path) {
     String host = _configuration.host;
+    // TODO: port will be configurable
     return "http://$host:9000/$path";
   }
 }

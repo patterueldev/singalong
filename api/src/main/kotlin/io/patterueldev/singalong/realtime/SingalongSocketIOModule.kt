@@ -34,7 +34,7 @@ class SingalongSocketIOModule(
         // Handle the event, e.g., update the reserved songs list
         val reservedSongs = singalongService.getReservedSongs()
         // Broadcast the event to all active clients
-        namespace.broadcastOperations.sendEvent("reservedSongs", reservedSongs)
+        namespace.broadcastOperations.sendEvent(SocketEvent.RESERVED_SONGS.value, reservedSongs)
     }
 
     private fun onConnected(): ConnectListener {
@@ -89,10 +89,17 @@ class SingalongSocketIOModule(
             when (clientType) {
                 ClientType.CONTROLLER -> {
                     val reservedSongs = singalongService.getReservedSongs()
-                    client.sendEvent("reservedSongs", reservedSongs)
+                    client.sendEvent(SocketEvent.RESERVED_SONGS.value, reservedSongs)
                 }
-                ClientType.ADMIN -> TODO()
-                ClientType.PLAYER -> TODO()
+                ClientType.ADMIN -> {}
+                ClientType.PLAYER -> {
+                    val currentSong = singalongService.getCurrentSong()
+                    println("Is null? ${currentSong == null}")
+                    client.sendEvent(SocketEvent.CURRENT_SONG.value, currentSong)
+
+                    val reservedSongs = singalongService.getReservedSongs()
+                    client.sendEvent(SocketEvent.RESERVED_SONGS.value, reservedSongs)
+                }
             }
         }
     }

@@ -6,6 +6,7 @@ import io.patterueldev.mongods.song.SongDocumentRepository
 import io.patterueldev.reservation.reservedsong.ReservedSong
 import io.patterueldev.reservation.reservedsong.ReservedSongsRepository
 import io.patterueldev.roomuser.RoomUser
+import java.time.LocalDateTime
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -28,7 +29,6 @@ open class ReservedSongRepositoryDS : ReservedSongsRepository {
     ) {
         mutex.withLock {
             // confirm existence of song
-            val current =
                 withContext(Dispatchers.IO) {
                     songDocumentRepository.findById(songId)
                 }.getOrNull() ?: throw IllegalArgumentException("Song not found")
@@ -43,12 +43,20 @@ open class ReservedSongRepositoryDS : ReservedSongsRepository {
                     }
                 }
 
+            // check if there's a current song played
+            val currentReservedSong =
+                withContext(Dispatchers.IO) {
+                    reservedSongDocumentRepository.loadCurrentReservedSong(roomUser.roomId)
+                }
+            val nothingIsPlaying = currentReservedSong == null
+
             val reservedSong =
                 ReservedSongDocument(
                     songId = songId,
                     roomId = roomUser.roomId,
                     order = lastOrderNumber + 1,
                     reservedBy = roomUser.username,
+                    startedPlayingAt = if (nothingIsPlaying) LocalDateTime.now() else null,
                 )
             withContext(Dispatchers.IO) {
                 reservedSongDocumentRepository.save(reservedSong)

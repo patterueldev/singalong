@@ -42,7 +42,7 @@ class _PlayerViewState extends State<PlayerView> {
 
   Widget _buildIdle() => Center(
         child: ElevatedButton(
-          onPressed: () => viewModel.load(),
+          onPressed: () => viewModel.setupSession(),
           child: Text('Load'),
         ),
       );

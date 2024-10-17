@@ -1,4 +1,4 @@
-name: playerfeature
+name: playerfeatureds
 description: "A new Flutter package project."
 version: 0.0.1
 homepage:
@@ -11,10 +11,10 @@ dependencies:
   flutter:
     sdk: flutter
 
-  fpdart: ^1.1.0
-  shared:
+  playerfeature:
+  singalong_api_client:
 
-  video_player: ^2.9.2
+  provider: ^6.1.2
 
 dev_dependencies:
   flutter_test:

@@ -2,6 +2,7 @@ package io.patterueldev.singalong
 
 import com.corundumstudio.socketio.SocketIOServer
 import io.patterueldev.reservation.ReservationService
+import io.patterueldev.reservation.currentsong.LoadCurrentSongParameters
 import io.patterueldev.reservation.list.LoadReservationListParameters
 import io.patterueldev.session.SessionService
 import io.patterueldev.session.room.Room
@@ -47,5 +48,12 @@ class SingalongService {
             reservationService.loadReservationList(
                 parameters = LoadReservationListParameters(activeRoom.id),
             ).data ?: listOf()
+        }
+
+    fun getCurrentSong() =
+        runBlocking {
+            reservationService.loadCurrentSong(
+                parameters = LoadCurrentSongParameters(activeRoom.id),
+            ).data
         }
 }
