@@ -25,7 +25,6 @@ internal open class SaveSongUseCase(
 
         val savedSongId = newSong.id
 
-
         // I want to encapsulate this area ---- to under some thread
         newSong = identifiedSongRepository.downloadSong(newSong, identifiedSong.source, filename)
         if (parameters.thenReserve) {

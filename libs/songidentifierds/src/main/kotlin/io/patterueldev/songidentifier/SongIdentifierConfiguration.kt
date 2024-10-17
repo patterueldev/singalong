@@ -18,7 +18,6 @@ import org.springframework.http.codec.ClientCodecConfigurer
 import org.springframework.web.reactive.function.client.ExchangeStrategies
 import org.springframework.web.reactive.function.client.WebClient
 
-
 @Configuration
 open class SongIdentifierConfiguration {
     @Bean
@@ -27,9 +26,10 @@ open class SongIdentifierConfiguration {
     ): WebClient {
         val sizeInMB = 200
         val sizeInBytes = sizeInMB * 1024 * 1024
-        val strategies = ExchangeStrategies.builder()
-            .codecs { codecs: ClientCodecConfigurer -> codecs.defaultCodecs().maxInMemorySize(sizeInBytes) }
-            .build()
+        val strategies =
+            ExchangeStrategies.builder()
+                .codecs { codecs: ClientCodecConfigurer -> codecs.defaultCodecs().maxInMemorySize(sizeInBytes) }
+                .build()
 
         return WebClient.builder()
             .baseUrl(songDownloaderUrl)

@@ -156,27 +156,28 @@ internal class IdentifiedSongRepositoryDS : IdentifiedSongRepository {
                         .block()
                 } ?: throw Exception("No response from server")
 
-                withContext(Dispatchers.IO) {
-                    println("Image bytes: ${bytes.size}")
-                    // TODO: find a way to "extract" the file extension from the URL
-                    minioClient.putObject(
-                        PutObjectArgs.builder()
-                            .bucket(bucket)
-                            .`object`(filename)
-                            .stream(bytes.inputStream(), bytes.size.toLong(), -1)
-                            .contentType("video/mp4")
-                            .build(),
-                    )
-                }
+            withContext(Dispatchers.IO) {
+                println("Image bytes: ${bytes.size}")
+                // TODO: find a way to "extract" the file extension from the URL
+                minioClient.putObject(
+                    PutObjectArgs.builder()
+                        .bucket(bucket)
+                        .`object`(filename)
+                        .stream(bytes.inputStream(), bytes.size.toLong(), -1)
+                        .contentType("video/mp4")
+                        .build(),
+                )
+            }
 
             val videoFile =
                 BucketFile(
                     bucket = bucket,
                     objectName = filename,
                 )
-            val current = withContext(Dispatchers.IO) {
-                songDocumentRepository.findById(song.id)
-            }.orElseThrow { Exception("Song not found") }
+            val current =
+                withContext(Dispatchers.IO) {
+                    songDocumentRepository.findById(song.id)
+                }.orElseThrow { Exception("Song not found") }
             val updated = current.copy(videoFile = videoFile)
             withContext(Dispatchers.IO) {
                 songDocumentRepository.save(updated)
