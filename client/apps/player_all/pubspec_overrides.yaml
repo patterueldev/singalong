@@ -1,0 +1,4 @@
+# melos_managed_dependency_overrides: playerfeature
+dependency_overrides:
+  playerfeature:
+    path: ../../packages/playerfeature
