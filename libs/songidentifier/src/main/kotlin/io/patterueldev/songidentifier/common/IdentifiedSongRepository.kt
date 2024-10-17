@@ -11,14 +11,22 @@ interface IdentifiedSongRepository {
         sessionId: String,
     ): SavedSong
 
-    suspend fun downloadSong(
-        url: String,
-        filename: String,
-    )
+    suspend fun downloadThumbnail(
+        song: SavedSong,
+        imageUrl: String,
+        fileTitle: String,
+    ): SavedSong
 
     suspend fun updateSong(
         songId: String,
         filename: String,
+    ): SavedSong
+
+
+    suspend fun downloadSong(
+        song: SavedSong,
+        sourceUrl: String,
+        fileTitle: String,
     ): SavedSong
 
     suspend fun reserveSong(

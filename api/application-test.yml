@@ -32,3 +32,7 @@ singalong:
 socketio:
   hostname: localhost
   port: 9000
+minio:
+  endpoint: "http://localhost:5059"
+  accessKey: "accessKey"
+  secretKey: "secretKey"

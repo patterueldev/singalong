@@ -61,46 +61,13 @@ internal class IdentifiedSongRepositoryDS : IdentifiedSongRepository {
         sessionId: String,
     ): SavedSong {
         println("Saving song to database")
-        var thumbnailFile: BucketFile? = null
-        if (identifiedSong.imageUrl.trim().isNotEmpty()) {
-            // download image and save to minio
-            try {
-                val bucket = "thumbnails"
-                val result =
-                    withContext(Dispatchers.IO) {
-                        val url = URI(identifiedSong.imageUrl).toURL()
-                        val bytes = url.readBytes()
-                        println("Image bytes: ${bytes.size}")
-                        // TODO: find a way to "extract" the file extension from the URL
-                        val filename = "${identifiedSong.id}.jpg"
-                        minioClient.putObject(
-                            PutObjectArgs.builder()
-                                .bucket(bucket)
-                                .`object`(filename)
-                                .stream(bytes.inputStream(), bytes.size.toLong(), -1)
-                                .contentType("image/jpeg")
-                                .build(),
-                        )
-                    }
-                // extract url
-                val filename = "${identifiedSong.id}.jpg"
-                thumbnailFile =
-                    BucketFile(
-                        bucket = bucket,
-                        objectName = filename,
-                    )
-            } catch (e: Exception) {
-                println("Error while saving: ${e.message}")
-                throw e
-            }
-        }
+        val bucket = "thumbnails"
 
-        thumbnailFile = thumbnailFile ?: BucketFile.default("thumbnails")
         val song =
             SongDocument.new(
                 source = identifiedSong.source,
                 sourceId = identifiedSong.id,
-                thumbnailFile = thumbnailFile,
+                thumbnailFile = BucketFile.default(bucket),
                 title = identifiedSong.songTitle,
                 artist = identifiedSong.songArtist,
                 language = identifiedSong.songLanguage,
@@ -120,28 +87,101 @@ internal class IdentifiedSongRepositoryDS : IdentifiedSongRepository {
         return saved.toSavedSong()
     }
 
-    override suspend fun downloadSong(
-        url: String,
+    override suspend fun downloadThumbnail(
+        song: SavedSong,
+        imageUrl: String,
         filename: String,
-    ) {
+    ): SavedSong {
+        var thumbnailFile: BucketFile? = null
+        if (imageUrl.trim().isEmpty()) {
+            return song
+        }
+
+        // download image and save to minio
         try {
-            val parameters = DownloadSongParameters(url = url, filename = filename)
+            val bucket = "thumbnails"
+            val videoId = song.sourceId
             val result =
+                withContext(Dispatchers.IO) {
+                    val url = URI(imageUrl).toURL()
+                    val bytes = url.readBytes()
+                    println("Image bytes: ${bytes.size}")
+                    // TODO: find a way to "extract" the file extension from the URL
+                    minioClient.putObject(
+                        PutObjectArgs.builder()
+                            .bucket(bucket)
+                            .`object`(filename)
+                            .stream(bytes.inputStream(), bytes.size.toLong(), -1)
+                            .contentType("image/jpeg")
+                            .build(),
+                    )
+                }
+            // extract url
+            thumbnailFile =
+                BucketFile(
+                    bucket = bucket,
+                    objectName = filename,
+                )
+            val current =
+                withContext(Dispatchers.IO) {
+                    songDocumentRepository.findById(song.id)
+                }.orElseThrow { Exception("Song not found") }
+            val updated = current.copy(thumbnailFile = thumbnailFile)
+            withContext(Dispatchers.IO) {
+                songDocumentRepository.save(updated)
+            }
+            return updated.toSavedSong()
+        } catch (e: Exception) {
+            println("Error while saving: ${e.message}")
+            throw e
+        }
+    }
+
+    override suspend fun downloadSong(
+        song: SavedSong,
+        sourceUrl: String,
+        filename: String,
+    ): SavedSong {
+        try {
+            val bucket = "videos"
+
+            val parameters = DownloadSongParameters(url = sourceUrl)
+            val bytes: ByteArray =
                 withContext(Dispatchers.IO) {
                     songDownloaderClient.post()
                         .uri("/download")
                         .bodyValue(parameters)
                         .retrieve()
-                        .bodyToMono(DownloadSongResponse::class.java)
+                        .bodyToMono(ByteArray::class.java)
                         .block()
                 } ?: throw Exception("No response from server")
-            println("Download result: ${result.message}")
-            if (result.success) {
-                println("Download successful")
-            } else {
-                println("Download failed")
-                throw Exception("Download failed")
+
+                withContext(Dispatchers.IO) {
+                    println("Image bytes: ${bytes.size}")
+                    // TODO: find a way to "extract" the file extension from the URL
+                    minioClient.putObject(
+                        PutObjectArgs.builder()
+                            .bucket(bucket)
+                            .`object`(filename)
+                            .stream(bytes.inputStream(), bytes.size.toLong(), -1)
+                            .contentType("video/mp4")
+                            .build(),
+                    )
+                }
+
+            val videoFile =
+                BucketFile(
+                    bucket = bucket,
+                    objectName = filename,
+                )
+            val current = withContext(Dispatchers.IO) {
+                songDocumentRepository.findById(song.id)
+            }.orElseThrow { Exception("Song not found") }
+            val updated = current.copy(videoFile = videoFile)
+            withContext(Dispatchers.IO) {
+                songDocumentRepository.save(updated)
             }
+            return updated.toSavedSong()
         } catch (e: Exception) {
             println("Error while saving: ${e.message}")
             throw e
@@ -210,6 +250,7 @@ fun SongDocument.toSavedSong(): SavedSong {
     return object : SavedSong {
         override val id: String = this@toSavedSong.id ?: throw Exception("Failed to save song")
         override val source: String = this@toSavedSong.source
+        override val sourceId: String = this@toSavedSong.sourceId
         override val thumbnailPath: String = this@toSavedSong.thumbnailFile.path()
         override val videoPath: String? = this@toSavedSong.videoFile?.path()
         override val songTitle: String = this@toSavedSong.title

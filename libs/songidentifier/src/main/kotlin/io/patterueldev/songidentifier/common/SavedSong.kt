@@ -3,6 +3,7 @@ package io.patterueldev.songidentifier.common
 interface SavedSong {
     val id: String
     val source: String
+    val sourceId: String
     val thumbnailPath: String
     val videoPath: String?
     val songTitle: String

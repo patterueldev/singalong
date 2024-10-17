@@ -76,7 +76,7 @@ open class ReservedSongRepositoryDS : ReservedSongsRepository {
                 override val songId: String = reservedSong.songId
                 override val title: String = song.title
                 override val artist: String = song.artist
-                override val thumbnailPath: String = song.thumbnailFile.path() // TODO: Process the path, get the user's host:port and prepend it
+                override val thumbnailPath: String = song.thumbnailFile.path()
                 override val reservingUser: String = reservedSong.reservedBy
                 override val currentPlaying: Boolean = reservedSong.startedPlayingAt != null && reservedSong.finishedPlayingAt == null
             }

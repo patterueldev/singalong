@@ -14,17 +14,28 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.http.codec.ClientCodecConfigurer
+import org.springframework.web.reactive.function.client.ExchangeStrategies
 import org.springframework.web.reactive.function.client.WebClient
+
 
 @Configuration
 open class SongIdentifierConfiguration {
     @Bean
     open fun songDownloaderClient(
         @Value("\${baseurl.songdownloader}") songDownloaderUrl: String,
-    ): WebClient =
-        WebClient.builder()
-            .baseUrl(songDownloaderUrl)
+    ): WebClient {
+        val sizeInMB = 200
+        val sizeInBytes = sizeInMB * 1024 * 1024
+        val strategies = ExchangeStrategies.builder()
+            .codecs { codecs: ClientCodecConfigurer -> codecs.defaultCodecs().maxInMemorySize(sizeInBytes) }
             .build()
+
+        return WebClient.builder()
+            .baseUrl(songDownloaderUrl)
+            .exchangeStrategies(strategies)
+            .build()
+    }
 
     @Bean
     open fun songIdentifierService(
