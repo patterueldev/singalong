@@ -31,6 +31,10 @@ class APISessionManager {
   }
 
   IO.Socket getSocket() {
+    return _socket!;
+  }
+
+  void connectSocket() {
     final socket = _socket!;
     if (!socket.connected) {
       socket.onConnect((_) {
@@ -39,8 +43,9 @@ class APISessionManager {
       });
       socket.onDisconnect((_) => debugPrint('disconnect'));
       socket.connect();
+    } else {
+      debugPrint('Socket already connected');
     }
-    return socket; // throws exception if null
   }
 
   bool hasAccessToken() {

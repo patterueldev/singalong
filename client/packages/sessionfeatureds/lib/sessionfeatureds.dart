@@ -46,8 +46,6 @@ class ReservedSongListRepositoryDS implements ReservedSongListRepository {
                 currentPlaying: apiSong.currentPlaying,
               ))
           .toList();
-      final imageURLs = reservedSongs.map((e) => e.thumbnailURL).join("\n");
-      debugPrint("Image URLs:\n$imageURLs");
       yield reservedSongs;
     }
   }

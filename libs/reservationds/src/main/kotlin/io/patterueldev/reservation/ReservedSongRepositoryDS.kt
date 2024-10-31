@@ -69,6 +69,7 @@ open class ReservedSongRepositoryDS : ReservedSongsRepository {
             withContext(Dispatchers.IO) {
                 reservedSongDocumentRepository.loadUnplayedReservedSongs(roomId)
             }
+        println("Reserved songs: $reservedSongs")
         val songIds = reservedSongs.map { it.songId }
         val songs =
             withContext(Dispatchers.IO) {

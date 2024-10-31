@@ -1,41 +1,40 @@
 part of '../playerfeature.dart';
 
-abstract class PlayerViewModel {
+abstract class PlayerViewModel extends ChangeNotifier {
   ValueNotifier<PlayerViewState> get playerViewStateNotifier;
-  ValueNotifier<bool> get isLoadingNotifier;
-  ValueNotifier<String?> get errorMessageNotifier;
-
-  void setupSession();
+  void setupListeners();
+  void authorizeConnection();
+  void connectSocket(); // connects to the socket
 }
 
-class DefaultPlayerViewModel implements PlayerViewModel {
-  final ConnectUseCase connectUseCase;
+class DefaultPlayerViewModel extends PlayerViewModel {
+  final AuthorizeConnectionUseCase connectUseCase;
   final ListenToCurrentSongUpdatesUseCase listenToCurrentSongUpdatesUseCase;
+  final ConnectRepository connectRepository;
+  final ReservedViewModel reservedViewModel;
 
   DefaultPlayerViewModel({
     required this.connectUseCase,
     required this.listenToCurrentSongUpdatesUseCase,
+    required this.connectRepository,
+    required this.reservedViewModel,
   });
+
+  StreamSubscription? _currentSongListener;
 
   @override
   final ValueNotifier<PlayerViewState> playerViewStateNotifier =
-      ValueNotifier(PlayerViewState.idle());
+      ValueNotifier(PlayerViewState.loading());
 
   @override
-  final ValueNotifier<bool> isLoadingNotifier = ValueNotifier(false);
-
-  @override
-  final ValueNotifier<String?> errorMessageNotifier = ValueNotifier(null);
-
-  @override
-  void setupSession() async {
-    debugPrint('Loading video');
-    isLoadingNotifier.value = true;
+  void authorizeConnection() async {
+    playerViewStateNotifier.value = PlayerViewState.loading();
 
     // the process will be as follows:
     // 1. Connect to the server with username and roomId
     var canProceed = false;
-    // TODO: THESE will probably be managed by another device in the future; for now, we'll just hardcode it
+    // TODO: THESE will probably be managed by an admin device in the future; for now, we'll just hardcode it
+    debugPrint("Player connecting to the server");
     final connectResult = await connectUseCase(
       ConnectParameters(
         username: "player",
@@ -46,7 +45,7 @@ class DefaultPlayerViewModel implements PlayerViewModel {
     connectResult.fold(
       (l) {
         debugPrint("Error: $l");
-        errorMessageNotifier.value = l.toString();
+        playerViewStateNotifier.value = PlayerViewState.failure(l.toString());
       },
       (r) {
         canProceed = true;
@@ -54,17 +53,34 @@ class DefaultPlayerViewModel implements PlayerViewModel {
     );
 
     if (!canProceed) {
-      isLoadingNotifier.value = false;
+      playerViewStateNotifier.value =
+          PlayerViewState.failure("Unable to connect to the server");
       return;
     }
 
+    playerViewStateNotifier.value = PlayerViewState.idle();
+    setupListeners();
+    reservedViewModel.setupListeners();
+
+    connectSocket();
+  }
+
+  @override
+  void setupListeners() {
     // 2. Listen to the current song updates
     debugPrint("Listening to current song updates");
-    listenToCurrentSongUpdatesUseCase().listen((currentSong) async {
-      if (currentSong == null) {
-        debugPrint("No current song");
-        playerViewStateNotifier.value = PlayerViewState.idle();
-      } else {
+    _currentSongListener =
+        listenToCurrentSongUpdatesUseCase().listen((currentSong) async {
+      debugPrint("Current song: $currentSong");
+      try {
+        final currentState = playerViewStateNotifier.value;
+        if (currentState is PlayerViewPlaying) {
+          await currentState.videoPlayerController.pause();
+        }
+        if (currentSong == null) {
+          // playerViewStateNotifier.value = PlayerViewState.idle();
+          return;
+        }
         final videoUrl = currentSong.videoURL;
         debugPrint("Playing video: $videoUrl");
         final controller = VideoPlayerController.networkUrl(
@@ -74,86 +90,28 @@ class DefaultPlayerViewModel implements PlayerViewModel {
         playerViewStateNotifier.value = PlayerViewState.playing(controller);
 
         await controller.play();
+      } catch (e, s) {
+        debugPrint("Error: $e");
+        playerViewStateNotifier.value = PlayerViewState.failure(e.toString());
       }
     });
-
-    // 3. Listen to the reserved songs list
-    isLoadingNotifier.value = false;
   }
-}
-
-// TODO: This will be moved to a lower level package `common`
-class ConnectUseCase extends ServiceUseCase<ConnectParameters, Unit> {
-  final ConnectRepository connectRepository;
-  ConnectUseCase({
-    required this.connectRepository,
-  });
 
   @override
-  TaskEither<GenericException, Unit> task(ConnectParameters parameters) =>
-      TaskEither.tryCatch(
-        () async {
-          debugPrint("Attempting to connect");
-          if (parameters.username.isEmpty) {
-            throw Exception("Name cannot be empty");
-          }
-          if (parameters.roomId.isEmpty) {
-            throw Exception("Room ID cannot be empty");
-          }
+  void connectSocket() async {
+    connectRepository.connectSocket();
+  }
 
-          final result = await connectRepository.connect(parameters);
+  @override
+  void dispose() {
+    _currentSongListener?.cancel();
+    final currentState = playerViewStateNotifier.value;
+    if (currentState is PlayerViewPlaying) {
+      currentState.videoPlayerController.pause();
+      currentState.videoPlayerController.dispose();
+    }
+    playerViewStateNotifier.value = PlayerViewState.idle();
 
-          final requiresUserPasscode = result.requiresUserPasscode;
-          final requiresRoomPasscode = result.requiresRoomPasscode;
-          final accessToken = result.accessToken;
-          if (requiresUserPasscode != null && requiresRoomPasscode != null) {
-            throw GenericException.unhandled("Both passcodes required");
-          } else if (accessToken != null) {
-            // store the access token somewhere
-            debugPrint("Access token: $accessToken");
-            connectRepository.provideAccessToken(accessToken);
-            return unit;
-          }
-          throw GenericException.unknown();
-        },
-        (e, s) {
-          if (e is GenericException) {
-            return e;
-          }
-          return GenericException.unhandled(e);
-        },
-      );
-}
-
-abstract class ConnectRepository {
-  Future<ConnectResponse> connect(ConnectParameters parameters);
-  void provideAccessToken(String accessToken);
-}
-
-class ConnectParameters {
-  final String username;
-  final String? userPasscode;
-  final String roomId;
-  final String? roomPasscode;
-  final String clientType;
-
-  ConnectParameters({
-    required this.username,
-    this.userPasscode,
-    required this.roomId,
-    this.roomPasscode,
-    required this.clientType,
-  });
-}
-
-class ConnectResponse {
-  final bool? requiresUserPasscode;
-  final bool? requiresRoomPasscode;
-  final String? accessToken;
-
-  ConnectResponse({
-    this.requiresUserPasscode,
-    this.requiresRoomPasscode,
-    this.accessToken,
-  });
+    super.dispose();
+  }
 }

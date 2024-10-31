@@ -5,6 +5,9 @@ import 'package:playerfeature/playerfeature.dart';
 import 'package:provider/provider.dart';
 import 'package:singalong_api_client/singalong_api_client.dart';
 
+part 'connectrepositoryds.dart';
+part 'currentsongrepositoryds.dart';
+
 class PlayerFeatureDSProvider {
   final providers = MultiProvider(
     providers: [
@@ -20,84 +23,48 @@ class PlayerFeatureDSProvider {
           sessionManager: context.read(),
         ),
       ),
+      Provider<ReservedSongListRepository>(
+        create: (context) => ReservedSongListRepositoryDS(
+          apiClient: context.read(),
+          sessionManager: context.read(),
+        ),
+      ),
       Provider(
         create: (context) => PlayerFeatureBuilder(
           connectRepository: context.read(),
           currentSongRepository: context.read(),
+          reservedSongListRepository: context.read(),
         ),
       ),
     ],
   );
 }
 
-class ConnectRepositoryDS implements ConnectRepository {
-  final SingalongAPIClient client;
+class ReservedSongListRepositoryDS implements ReservedSongListRepository {
+  final SingalongAPIClient apiClient;
   final APISessionManager sessionManager;
 
-  ConnectRepositoryDS({
-    required this.client,
+  ReservedSongListRepositoryDS({
+    required this.apiClient,
     required this.sessionManager,
   });
 
   @override
-  Future<ConnectResponse> connect(ConnectParameters parameters) async {
-    final result = await client.connect(parameters.toAPI());
-    return result.fromAPI();
-  }
-
-  @override
-  void provideAccessToken(String accessToken) {
-    sessionManager.setAccessToken(accessToken);
-  }
-}
-
-extension ConnectParametersMapper on ConnectParameters {
-  APIConnectParameters toAPI() {
-    return APIConnectParameters(
-      username: username,
-      roomId: roomId,
-      clientType: clientType,
-    );
-  }
-}
-
-extension APIConnectResponseMapper on APIConnectResponseData {
-  ConnectResponse fromAPI() {
-    return ConnectResponse(
-      requiresUserPasscode: requiresUserPasscode,
-      requiresRoomPasscode: requiresRoomPasscode,
-      accessToken: accessToken,
-    );
-  }
-}
-
-class CurrentSongRepositoryDS implements CurrentSongRepository {
-  final SingalongAPIClient client;
-  final APISessionManager sessionManager;
-
-  CurrentSongRepositoryDS({
-    required this.client,
-    required this.sessionManager,
-  });
-
-  @override
-  Stream<CurrentSong?> listenToCurrentSongUpdates() async* {
-    await for (final apiCurrentSong in client.listenCurrentSong()) {
-      debugPrint("API Current Song: $apiCurrentSong");
-      if (apiCurrentSong == null) {
-        yield null;
-        continue;
-      }
-      final currentSong = CurrentSong(
-        id: apiCurrentSong.id,
-        title: apiCurrentSong.title,
-        artist: apiCurrentSong.artist,
-        thumbnailURL: client.resourceURL(apiCurrentSong.thumbnailPath),
-        reservingUser: apiCurrentSong.reservingUser,
-        videoURL: client.resourceURL(apiCurrentSong.videoPath),
-      );
-      debugPrint("Current Song: $currentSong");
-      yield currentSong;
+  Stream<List<ReservedSongItem>> listenToSongListUpdates() async* {
+    await for (final apiReservedSongs in apiClient.listenReservedSongs()) {
+      final reservedSongList = apiReservedSongs
+          .map(
+            (apiReservedSong) => ReservedSongItem(
+              title: apiReservedSong.title,
+              artist: apiReservedSong.artist,
+              reservedBy: apiReservedSong.reservingUser,
+              thumbnailURL:
+                  apiClient.resourceURL(apiReservedSong.thumbnailPath),
+            ),
+          )
+          .toList();
+      debugPrint("Reserved Song List: $reservedSongList");
+      yield reservedSongList;
     }
   }
 }

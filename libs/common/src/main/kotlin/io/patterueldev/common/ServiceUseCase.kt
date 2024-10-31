@@ -8,20 +8,3 @@ interface ServiceUseCase<P, R> {
     }
 }
 
-class NoParameters
-
-interface NoParametersUseCase<R> : ServiceUseCase<NoParameters, R> {
-    suspend fun execute(): R
-
-    override suspend fun execute(parameters: NoParameters): R {
-        return execute()
-    }
-
-    suspend operator fun invoke(): R {
-        return execute()
-    }
-}
-
-interface GenericServiceUseCase<P, R> : ServiceUseCase<P, GenericResponse<R>>
-
-interface GenericNoParametersUseCase<R> : NoParametersUseCase<GenericResponse<R>>

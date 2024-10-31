@@ -85,6 +85,10 @@ class SingalongAPIClient {
 
     final controller = StreamController<APICurrentSong?>();
     socket.on('currentSong', (data) {
+      if (data == null) {
+        controller.add(null);
+        return;
+      }
       final currentSong = APICurrentSong.fromJson(data);
       controller.add(currentSong);
     });

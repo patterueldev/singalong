@@ -1,9 +1,13 @@
-# melos_managed_dependency_overrides: playerfeature,shared,playerfeatureds,singalong_api_client
+# melos_managed_dependency_overrides: playerfeature,shared,playerfeatureds,singalong_api_client,sessionfeature,sessionfeatureds
 dependency_overrides:
   playerfeature:
     path: ../../packages/playerfeature
   playerfeatureds:
     path: ../../packages/playerfeatureds
+  sessionfeature:
+    path: ../../packages/sessionfeature
+  sessionfeatureds:
+    path: ../../packages/sessionfeatureds
   shared:
     path: ../../packages/shared
   singalong_api_client:
