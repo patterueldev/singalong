@@ -3,6 +3,7 @@ package io.patterueldev.singalong.api
 import io.patterueldev.reservation.ReservationService
 import io.patterueldev.reservation.reserve.ReserveParameters
 import io.patterueldev.reservation.reserve.ReserveResponse
+import io.patterueldev.singalong.ServerCoordinator
 import io.patterueldev.songbook.SongBookService
 import io.patterueldev.songbook.loadsongs.LoadSongsParameters
 import io.patterueldev.songbook.loadsongs.LoadSongsResponse
@@ -12,6 +13,7 @@ import io.patterueldev.songidentifier.common.SaveSongResponse
 import io.patterueldev.songidentifier.identifysong.IdentifySongParameters
 import io.patterueldev.songidentifier.savesong.SaveSongParameters
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
@@ -24,6 +26,7 @@ class SongsController(
     private val songIdentifierService: SongIdentifierService,
     private val songBookService: SongBookService,
     private val reservationService: ReservationService,
+    private val serverCoordinator: ServerCoordinator,
 ) {
     @PostMapping("/identify")
     suspend fun identifySong(
@@ -34,7 +37,13 @@ class SongsController(
     suspend fun saveSong(
         @RequestBody saveSongParameters: SaveSongParameters,
     ): SaveSongResponse {
-        return songIdentifierService.saveSong(saveSongParameters)
+        val response = songIdentifierService.saveSong(saveSongParameters)
+        val song = response.data
+        if (saveSongParameters.thenReserve && song != null) {
+            reservationService.reserveSong(ReserveParameters(song.id))
+            serverCoordinator.onReserveUpdate()
+        }
+        return response
     }
 
     // Not to confuse, this is URL query parameters
@@ -60,6 +69,11 @@ class SongsController(
     suspend fun reserveSong(
         @RequestBody reserveParameters: ReserveParameters,
     ): ReserveResponse = reservationService.reserveSong(reserveParameters)
+
+    @PatchMapping("/next")
+    suspend fun nextSong(): ReserveResponse = reservationService.nextSong()
+
+    // TODO: Will have separate endpoints for finishing and starting playing
 }
 
 /*

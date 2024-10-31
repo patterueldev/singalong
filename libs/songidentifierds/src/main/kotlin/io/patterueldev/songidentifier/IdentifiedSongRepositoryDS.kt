@@ -174,7 +174,7 @@ internal class IdentifiedSongRepositoryDS : IdentifiedSongRepository {
             val videoFile =
                 BucketFile(
                     bucket = bucket,
-                    objectName = filename,
+                    objectName = objectName,
                 )
             val current =
                 withContext(Dispatchers.IO) {

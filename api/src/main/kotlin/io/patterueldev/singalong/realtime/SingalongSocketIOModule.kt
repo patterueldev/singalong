@@ -12,7 +12,7 @@ import io.patterueldev.singalong.SingalongService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 
-typealias OnReserveSuccessListener = () -> Unit
+typealias OnEventListener = () -> Unit
 
 @Component
 class SingalongSocketIOModule(
@@ -26,7 +26,8 @@ class SingalongSocketIOModule(
     init {
         namespace.addConnectListener(onConnected())
         namespace.addDisconnectListener(onDisconnected())
-        serverCoordinator.setOnReserveSuccessListener(::onReserveSuccess)
+        serverCoordinator.setOnReserveUpdateListener(::onReserveSuccess)
+        serverCoordinator.setOnCurrentSongUpdateListener(::onCurrentSongUpdate)
     }
 
     private fun onReserveSuccess() {
@@ -35,6 +36,14 @@ class SingalongSocketIOModule(
         val reservedSongs = singalongService.getReservedSongs()
         // Broadcast the event to all active clients
         namespace.broadcastOperations.sendEvent(SocketEvent.RESERVED_SONGS.value, reservedSongs)
+    }
+
+    private fun onCurrentSongUpdate() {
+        println("Current song update event received.")
+        // Handle the event, e.g., update the current song
+        val currentSong = singalongService.getCurrentSong()
+        // Broadcast the event to all active clients
+        namespace.broadcastOperations.sendEvent(SocketEvent.CURRENT_SONG.value, currentSong)
     }
 
     private fun onConnected(): ConnectListener {

@@ -1,18 +1,27 @@
 package io.patterueldev.singalong
 
 import io.patterueldev.reservation.ReservationCoordinator
-import io.patterueldev.singalong.realtime.OnReserveSuccessListener
+import io.patterueldev.singalong.realtime.OnEventListener
 import org.springframework.stereotype.Component
 
 @Component
 class ServerCoordinator : ReservationCoordinator {
-    private var onReserveSuccessListener: OnReserveSuccessListener? = null
+    private var onReserveUpdateListener: OnEventListener? = null
+    private var onCurrentSongUpdateListener: OnEventListener? = null
 
-    override fun onReserveSuccess() {
-        onReserveSuccessListener?.invoke()
+    override fun onReserveUpdate() {
+        onReserveUpdateListener?.invoke()
     }
 
-    fun setOnReserveSuccessListener(listener: OnReserveSuccessListener) {
-        onReserveSuccessListener = listener
+    override fun onCurrentSongUpdate() {
+        onCurrentSongUpdateListener?.invoke()
+    }
+
+    fun setOnReserveUpdateListener(listener: OnEventListener) {
+        onReserveUpdateListener = listener
+    }
+
+    fun setOnCurrentSongUpdateListener(listener: OnEventListener) {
+        onCurrentSongUpdateListener = listener
     }
 }

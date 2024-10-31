@@ -76,6 +76,7 @@ class DefaultPlayerViewModel extends PlayerViewModel {
         final currentState = playerViewStateNotifier.value;
         if (currentState is PlayerViewPlaying) {
           await currentState.videoPlayerController.pause();
+          await currentState.videoPlayerController.dispose();
         }
         if (currentSong == null) {
           // playerViewStateNotifier.value = PlayerViewState.idle();

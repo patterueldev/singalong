@@ -91,4 +91,22 @@ open class ReservedSongRepositoryDS : ReservedSongsRepository {
             }
         }
     }
+
+    override suspend fun markFinishedPlaying(reservedSongId: String, at: LocalDateTime) {
+        // check if exists
+        val reservedSong =
+            withContext(Dispatchers.IO) {
+                reservedSongDocumentRepository.findById(reservedSongId)
+            }.getOrNull() ?: throw IllegalArgumentException("Reserved song not found")
+        reservedSongDocumentRepository.markFinishedPlaying(reservedSong.id!!, at)
+    }
+
+    override suspend fun markStartedPlaying(reservedSongId: String, at: LocalDateTime) {
+        // check if exists
+        val reservedSong =
+            withContext(Dispatchers.IO) {
+                reservedSongDocumentRepository.findById(reservedSongId)
+            }.getOrNull() ?: throw IllegalArgumentException("Reserved song not found")
+        reservedSongDocumentRepository.markStartedPlaying(reservedSong.id!!, at)
+    }
 }
