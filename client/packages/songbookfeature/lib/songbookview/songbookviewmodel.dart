@@ -1,4 +1,4 @@
-part of 'songbookfeature.dart';
+part of '../songbookfeature.dart';
 
 abstract class SongBookViewModel {
   ValueNotifier<SongBookViewState> get stateNotifier;

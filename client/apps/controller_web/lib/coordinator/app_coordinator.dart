@@ -1,14 +1,20 @@
 import 'package:connectfeature/connectfeature.dart';
+import 'package:controller_web/routes.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sessionfeature/sessionfeature.dart';
+import 'package:songbookfeature/songbookfeature.dart';
 
-class AppCoordinator implements ConnectFlowCoordinator, SessionFlowCoordinator {
+class AppCoordinator
+    implements
+        ConnectFlowCoordinator,
+        SessionFlowCoordinator,
+        SongBookFlowCoordinator {
   const AppCoordinator();
 
   @override
   void onConnected(BuildContext context) {
-    Navigator.of(context).pushReplacementNamed('/session');
+    AppRoute.session.pushReplacement(context);
   }
 
   @override
@@ -18,6 +24,11 @@ class AppCoordinator implements ConnectFlowCoordinator, SessionFlowCoordinator {
 
   @override
   void onSongBook(BuildContext context) {
-    // TODO: implement onSongBook
+    AppRoute.songBook.push(context);
+  }
+
+  @override
+  void openDownloadScreen(BuildContext context) {
+    // TODO: implement openDownloadScreen
   }
 }

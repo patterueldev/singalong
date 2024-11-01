@@ -5,7 +5,7 @@ class AppCoordinator
     implements
         ConnectFlowCoordinator,
         SessionFlowCoordinator,
-        SongBookNavigationCoordinator,
+        SongBookFlowCoordinator,
         DownloadFlowController {
   const AppCoordinator({
     required this.connectFeatureProvider,

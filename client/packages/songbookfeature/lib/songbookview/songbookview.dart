@@ -1,4 +1,4 @@
-part of 'songbookfeature.dart';
+part of '../songbookfeature.dart';
 
 class SongBookView extends StatefulWidget {
   const SongBookView({
@@ -10,7 +10,7 @@ class SongBookView extends StatefulWidget {
   });
 
   final SongBookViewModel viewModel;
-  final SongBookNavigationCoordinator navigationCoordinator;
+  final SongBookFlowCoordinator navigationCoordinator;
   final SongBookLocalizations localizations;
   final SongBookAssets assets;
   @override
@@ -19,7 +19,7 @@ class SongBookView extends StatefulWidget {
 
 class _SongBookViewState extends State<SongBookView> {
   SongBookViewModel get viewModel => widget.viewModel;
-  SongBookNavigationCoordinator get navigationCoordinator =>
+  SongBookFlowCoordinator get navigationCoordinator =>
       widget.navigationCoordinator;
   SongBookLocalizations get localizations => widget.localizations;
   SongBookAssets get assets => widget.assets;

@@ -8,8 +8,8 @@ import 'package:provider/provider.dart';
 import 'package:shared/shared.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
-part 'songbookview.dart';
-part 'songbookviewmodel.dart';
+part 'songbookview/songbookview.dart';
+part 'songbookview/songbookviewmodel.dart';
 part 'songitem.dart';
 part 'songbookviewstate.dart';
 part 'songbooklocalizations.dart';
@@ -18,25 +18,21 @@ part 'songbookassets.dart';
 part 'fetchsongsusecase.dart';
 
 class SongBookFeatureProvider {
-  SongBookFeatureProvider();
+  final SongBookFlowCoordinator coordinator;
+  final SongBookLocalizations localizations;
+  final SongBookAssets assets;
 
-  final providers = MultiProvider(
-    providers: [
-      Provider<FetchSongsUseCase>(
-        create: (context) => DefaultFetchSongsUseCase(),
-      ),
-    ],
-  );
+  SongBookFeatureProvider({
+    required this.coordinator,
+    required this.localizations,
+    required this.assets,
+  });
 
-  Widget buildSongBookView({
-    required BuildContext context,
-    required SongBookNavigationCoordinator coordinator,
-    required SongBookLocalizations localizations,
-    required SongBookAssets assets,
-  }) =>
-      SongBookView(
+  late final _fetchSongsUseCase = DefaultFetchSongsUseCase();
+
+  Widget buildSongBookView({required BuildContext context}) => SongBookView(
         viewModel: DefaultSongBookViewModel(
-          fetchSongsUseCase: context.read(),
+          fetchSongsUseCase: _fetchSongsUseCase,
         ),
         navigationCoordinator: coordinator,
         localizations: localizations,

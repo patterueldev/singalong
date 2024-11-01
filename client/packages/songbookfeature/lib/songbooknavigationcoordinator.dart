@@ -1,5 +1,5 @@
 part of 'songbookfeature.dart';
 
-abstract class SongBookNavigationCoordinator {
+abstract class SongBookFlowCoordinator {
   void openDownloadScreen(BuildContext context);
 }

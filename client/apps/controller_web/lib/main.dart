@@ -7,6 +7,8 @@ import 'package:provider/provider.dart';
 import 'package:sessionfeature/sessionfeature.dart';
 import 'package:sessionfeatureds/sessionfeatureds.dart';
 import 'package:singalong_api_client/singalong_api_client.dart';
+import 'package:songbookfeature/songbookfeature.dart';
+import 'package:songbookfeatureds/songbookfeatureds.dart';
 import 'dart:html' as html;
 
 import 'assets/app_assets.dart';
@@ -39,6 +41,7 @@ void main() {
   final singalongAPIClientProvider = SingalongAPIClientProvider();
   final connectFeatureDSProvider = ConnectFeatureDSProvider();
   final sessionFeatureDSProvider = SessionFeatureDSProvider();
+  final songBookFeatureProvider = SongBookFeatureDSProvider();
   final localizations = DefaultAppLocalizations();
   final assets = DefaultAppAssets();
   final appCoordinator = AppCoordinator();
@@ -50,10 +53,14 @@ void main() {
       Provider<ConnectLocalizations>.value(value: localizations),
       Provider<SessionFlowCoordinator>.value(value: appCoordinator),
       Provider<SessionLocalizations>.value(value: localizations),
+      Provider<SongBookFlowCoordinator>.value(value: appCoordinator),
+      Provider<SongBookAssets>.value(value: assets),
+      Provider<SongBookLocalizations>.value(value: localizations),
       Provider<SingalongAPIConfiguration>.value(value: APIConfiguration()),
       singalongAPIClientProvider.providers,
       connectFeatureDSProvider.providers,
       sessionFeatureDSProvider.providers,
+      songBookFeatureProvider.providers,
     ],
     child: const ControllerApp(),
   ));

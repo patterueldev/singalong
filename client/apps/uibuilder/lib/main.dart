@@ -73,7 +73,7 @@ class MyApp extends StatelessWidget {
         Provider<ConnectLocalizations>.value(value: localizations),
         Provider<SessionFlowCoordinator>.value(value: appCoordinator),
         Provider<SessionLocalizations>.value(value: localizations),
-        Provider<SongBookNavigationCoordinator>.value(value: appCoordinator),
+        Provider<SongBookFlowCoordinator>.value(value: appCoordinator),
         Provider<SongBookAssets>.value(value: assets),
         Provider<SongBookLocalizations>.value(value: localizations),
         Provider<DownloadAssets>.value(value: assets),
