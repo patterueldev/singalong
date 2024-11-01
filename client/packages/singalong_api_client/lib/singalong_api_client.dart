@@ -78,6 +78,7 @@ class SingalongAPIClient {
 
   // listen to current song from server
   Stream<APICurrentSong?> listenCurrentSong() {
+    debugPrint("listenCurrentSong");
     final socket = _sessionManager.getSocket();
     if (socket.hasListeners('currentSong')) {
       throw Exception();

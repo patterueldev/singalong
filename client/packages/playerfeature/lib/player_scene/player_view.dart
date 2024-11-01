@@ -12,7 +12,7 @@ class _PlayerViewState extends State<PlayerView> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<PlayerViewModel>().authorizeConnection();
+      context.read<PlayerViewModel>().establishConnection();
     });
   }
 
@@ -27,24 +27,36 @@ class _PlayerViewState extends State<PlayerView> {
                 flex: 9,
                 child: Column(
                   children: [
-                    Expanded(
-                      flex: 1,
-                      child: Container(
-                        alignment: Alignment.topLeft,
-                        color: Colors.black.withOpacity(0.5),
-                        padding: const EdgeInsets.only(top: 16, bottom: 16),
-                        child: const ReservedWidget(),
-                      ),
+                    ValueListenableBuilder(
+                      valueListenable: viewModel.isConnected,
+                      builder: (_, isConnected, __) => isConnected
+                          ? Expanded(
+                              flex: 1,
+                              child: Container(
+                                alignment: Alignment.topLeft,
+                                color: Colors.black.withOpacity(0.5),
+                                padding:
+                                    const EdgeInsets.only(top: 16, bottom: 16),
+                                child: const ReservedWidget(),
+                              ),
+                            )
+                          : const SizedBox.shrink(),
                     ),
                     Expanded(flex: 9, child: _buildBody(viewModel)),
                   ],
                 ),
               ),
-              // This will contain some panel for the participants
-              Expanded(
-                flex: 3,
-                child: Container(),
+
+              ValueListenableBuilder(
+                valueListenable: viewModel.isConnected,
+                builder: (_, isConnected, __) => isConnected
+                    ? Expanded(
+                        flex: 3,
+                        child: Container(),
+                      )
+                    : const SizedBox.shrink(),
               ),
+              // This will contain some panel for the participants
             ],
           ),
         ),
@@ -60,6 +72,9 @@ class _PlayerViewState extends State<PlayerView> {
                 if (state.status == PlayerViewStatus.loading) {
                   return _buildLoading();
                 }
+                if (state.status == PlayerViewStatus.idleConnected) {
+                  return _buildIdleConnected();
+                }
                 if (state is PlayerViewPlaying) {
                   return _buildPlaying(state.videoPlayerController);
                 }
@@ -69,22 +84,33 @@ class _PlayerViewState extends State<PlayerView> {
                 if (state is PlayerViewFailure) {
                   return _buildErrorWithRetry(state.errorMessage, viewModel);
                 }
-                return _buildIdle(viewModel);
+                return _buildIdleDisconnected(viewModel);
               },
             ),
           ),
         ],
       );
 
-  Widget _buildIdle(PlayerViewModel viewModel) => Center(
+  Widget _buildIdleDisconnected(PlayerViewModel viewModel) => Center(
         child: ElevatedButton(
-          onPressed: () => viewModel.setupListeners(),
+          onPressed: () => viewModel.establishConnection(),
           child: Text('Start Session!'),
         ),
       );
 
   Widget _buildLoading() => Center(
         child: CircularProgressIndicator(),
+      );
+
+  // could be a video player with "idle" video
+  Widget _buildIdleConnected() => Container(
+        color: Colors.green,
+        child: Center(
+          child: Text(
+            'Select a song to play',
+            style: TextStyle(color: Colors.white),
+          ),
+        ),
       );
 
   Widget _buildPlaying(VideoPlayerController controller) => Center(
@@ -105,7 +131,7 @@ class _PlayerViewState extends State<PlayerView> {
             Text('Error: $error', style: TextStyle(color: Colors.white)),
             const SizedBox(height: 16),
             ElevatedButton(
-              onPressed: () => viewModel.authorizeConnection(),
+              onPressed: () => viewModel.establishConnection(),
               child: Text('Retry'),
             ),
           ],

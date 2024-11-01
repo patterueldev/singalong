@@ -1,10 +1,9 @@
 part of '../playerfeature.dart';
 
 abstract class PlayerViewModel extends ChangeNotifier {
+  ValueNotifier<bool> get isConnected;
   ValueNotifier<PlayerViewState> get playerViewStateNotifier;
-  void setupListeners();
-  void authorizeConnection();
-  void connectSocket(); // connects to the socket
+  void establishConnection();
 }
 
 class DefaultPlayerViewModel extends PlayerViewModel {
@@ -23,11 +22,15 @@ class DefaultPlayerViewModel extends PlayerViewModel {
   StreamSubscription? _currentSongListener;
 
   @override
+  final ValueNotifier<bool> isConnected = ValueNotifier(false);
+
+  @override
   final ValueNotifier<PlayerViewState> playerViewStateNotifier =
       ValueNotifier(PlayerViewState.loading());
 
   @override
-  void authorizeConnection() async {
+  void establishConnection() async {
+    isConnected.value = false;
     playerViewStateNotifier.value = PlayerViewState.loading();
 
     // the process will be as follows:
@@ -57,15 +60,15 @@ class DefaultPlayerViewModel extends PlayerViewModel {
           PlayerViewState.failure("Unable to connect to the server");
       return;
     }
+    isConnected.value = true;
 
-    playerViewStateNotifier.value = PlayerViewState.idle();
+    playerViewStateNotifier.value = PlayerViewState.disconnected();
     setupListeners();
     reservedViewModel.setupListeners();
 
-    connectSocket();
+    connectRepository.connectSocket();
   }
 
-  @override
   void setupListeners() {
     // 2. Listen to the current song updates
     debugPrint("Listening to current song updates");
@@ -79,7 +82,7 @@ class DefaultPlayerViewModel extends PlayerViewModel {
           await currentState.videoPlayerController.dispose();
         }
         if (currentSong == null) {
-          // playerViewStateNotifier.value = PlayerViewState.idle();
+          playerViewStateNotifier.value = PlayerViewState.connected();
           return;
         }
         final videoUrl = currentSong.videoURL;
@@ -99,11 +102,6 @@ class DefaultPlayerViewModel extends PlayerViewModel {
   }
 
   @override
-  void connectSocket() async {
-    connectRepository.connectSocket();
-  }
-
-  @override
   void dispose() {
     _currentSongListener?.cancel();
     final currentState = playerViewStateNotifier.value;
@@ -111,7 +109,7 @@ class DefaultPlayerViewModel extends PlayerViewModel {
       currentState.videoPlayerController.pause();
       currentState.videoPlayerController.dispose();
     }
-    playerViewStateNotifier.value = PlayerViewState.idle();
+    playerViewStateNotifier.value = PlayerViewState.disconnected();
 
     super.dispose();
   }

@@ -5,12 +5,12 @@ class PlayerViewState {
 
   final PlayerViewStatus status;
 
-  factory PlayerViewState.idle() =>
-      const PlayerViewState(PlayerViewStatus.idle);
+  factory PlayerViewState.disconnected() =>
+      const PlayerViewState(PlayerViewStatus.idleDisconnected);
   factory PlayerViewState.connecting() =>
       const PlayerViewState(PlayerViewStatus.connecting);
   factory PlayerViewState.connected() =>
-      const PlayerViewState(PlayerViewStatus.connected);
+      const PlayerViewState(PlayerViewStatus.idleConnected);
   factory PlayerViewState.loading() =>
       const PlayerViewState(PlayerViewStatus.loading);
   factory PlayerViewState.playing(
@@ -43,9 +43,9 @@ class PlayerViewFailure extends PlayerViewState {
 }
 
 enum PlayerViewStatus {
-  idle,
+  idleDisconnected,
   connecting,
-  connected,
+  idleConnected, // connected
   loading,
   playing,
   score,
@@ -54,14 +54,14 @@ enum PlayerViewStatus {
   @override
   String toString() {
     switch (this) {
-      case PlayerViewStatus.idle:
-        return 'idle';
+      case PlayerViewStatus.idleDisconnected:
+        return 'idle - disconnected';
       case PlayerViewStatus.loading:
         return 'loading';
       case PlayerViewStatus.connecting:
         return 'connecting';
-      case PlayerViewStatus.connected:
-        return 'connected';
+      case PlayerViewStatus.idleConnected:
+        return 'idle - connected';
       case PlayerViewStatus.playing:
         return 'playing';
       case PlayerViewStatus.score:
