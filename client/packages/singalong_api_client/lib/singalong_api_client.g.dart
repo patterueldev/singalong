@@ -101,3 +101,62 @@ Map<String, dynamic> _$APICurrentSongToJson(APICurrentSong instance) =>
       'videoPath': instance.videoPath,
       'reservingUser': instance.reservingUser,
     };
+
+APIPaginatedSongs _$APIPaginatedSongsFromJson(Map<String, dynamic> json) =>
+    APIPaginatedSongs(
+      items: (json['items'] as List<dynamic>)
+          .map((e) => APISongItem.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      nextOffset: json['nextOffset'],
+      nextCursor: json['nextCursor'],
+      nextPage: json['nextPage'],
+    );
+
+Map<String, dynamic> _$APIPaginatedSongsToJson(APIPaginatedSongs instance) =>
+    <String, dynamic>{
+      'items': instance.items,
+      'nextOffset': instance.nextOffset,
+      'nextCursor': instance.nextCursor,
+      'nextPage': instance.nextPage,
+    };
+
+APISongItem _$APISongItemFromJson(Map<String, dynamic> json) => APISongItem(
+      id: json['id'] as String,
+      thumbnailPath: json['thumbnailPath'] as String,
+      title: json['title'] as String,
+      artist: json['artist'] as String,
+      language: json['language'] as String,
+      isOffVocal: json['isOffVocal'] as bool,
+      lengthSeconds: (json['lengthSeconds'] as num).toInt(),
+    );
+
+Map<String, dynamic> _$APISongItemToJson(APISongItem instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'thumbnailPath': instance.thumbnailPath,
+      'title': instance.title,
+      'artist': instance.artist,
+      'language': instance.language,
+      'isOffVocal': instance.isOffVocal,
+      'lengthSeconds': instance.lengthSeconds,
+    };
+
+APILoadSongsParameters _$APILoadSongsParametersFromJson(
+        Map<String, dynamic> json) =>
+    APILoadSongsParameters(
+      keyword: json['keyword'] as String?,
+      limit: (json['limit'] as num?)?.toInt(),
+      nextOffset: json['nextOffset'],
+      nextCursor: json['nextCursor'],
+      nextPage: json['nextPage'],
+    );
+
+Map<String, dynamic> _$APILoadSongsParametersToJson(
+        APILoadSongsParameters instance) =>
+    <String, dynamic>{
+      'keyword': instance.keyword,
+      'limit': instance.limit,
+      'nextOffset': instance.nextOffset,
+      'nextCursor': instance.nextCursor,
+      'nextPage': instance.nextPage,
+    };

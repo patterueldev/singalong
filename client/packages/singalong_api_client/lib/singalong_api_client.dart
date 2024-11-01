@@ -19,6 +19,7 @@ part 'models/connect_parameters.dart';
 part 'models/connect_response.dart';
 part 'models/reserved_song.dart';
 part 'models/current_song.dart';
+part 'models/song.dart';
 
 class SingalongAPIClient {
   final Client _client;
@@ -36,12 +37,18 @@ class SingalongAPIClient {
         // _socket = socket,
         _client = client;
 
+  Map<String, String> getHeaders() {
+    return {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ${_sessionManager.getAccessToken()}',
+    };
+  }
+
   Future<APIConnectResponseData> connect(
       APIConnectParameters parameters) async {
     try {
-      final base = _configuration.apiBaseUrl;
-      final raw = "$base${APIPath.sessionConnect.value}";
-      final postUri = Uri.parse(raw);
+      final postUri =
+          _configuration.buildEndpoint(APIPath.sessionConnect.value);
       final bodyEncoded = jsonEncode(parameters.toJson());
       final response = await _client.post(postUri,
           headers: {'Content-Type': 'application/json'}, body: bodyEncoded);
@@ -57,6 +64,29 @@ class SingalongAPIClient {
       return data;
     } catch (e) {
       debugPrint("Connect error: $e");
+      rethrow;
+    }
+  }
+
+  Future<APIPaginatedSongs> loadSongs(APILoadSongsParameters parameters) async {
+    try {
+      final query = parameters.toJson();
+      final getUri = _configuration.buildEndpoint(APIPath.songs.value,
+          queryParameters: query);
+      debugPrint("loadSongs: $getUri");
+      final response = await _client.get(getUri, headers: getHeaders());
+      final result = GenericResponse.fromResponse(response);
+      if (result.status < 200 || result.status >= 300) {
+        throw Exception(result.message ?? "Unknown error");
+      }
+
+      final data = APIPaginatedSongs.fromJson(result.objectData());
+      return data;
+    } catch (e) {
+      if (e is ClientException) {
+        debugPrint("loadSongs error: ${e.message}");
+      }
+      debugPrint("loadSongs error: $e");
       rethrow;
     }
   }

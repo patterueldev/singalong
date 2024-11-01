@@ -1,18 +1,16 @@
-part of 'songbookfeature.dart';
+part of '../songbookfeature.dart';
 
 class SongBookViewState {
-  const SongBookViewState({required this.type});
+  const SongBookViewState(this.type);
 
   final SongBookViewStateType type;
 
   factory SongBookViewState.initial() =>
-      const SongBookViewState(type: SongBookViewStateType.initial);
+      const SongBookViewState(SongBookViewStateType.initial);
   factory SongBookViewState.loading() => Loading();
-  factory SongBookViewState.loaded(List<SongItem> songList,
-          {required String searchQuery}) =>
-      Loaded(songList, searchQuery: searchQuery);
-  factory SongBookViewState.empty({required String searchQuery}) =>
-      Empty(searchQuery: searchQuery);
+  factory SongBookViewState.loaded(List<SongItem> songList) => Loaded(songList);
+  factory SongBookViewState.empty({required String searchText}) =>
+      Empty(searchText);
   factory SongBookViewState.failure(String error) => Failure(error);
 
   @override
@@ -22,38 +20,34 @@ class SongBookViewState {
 }
 
 class Loading extends SongBookViewState {
-  Loading() : super(type: SongBookViewStateType.loading);
+  Loading() : super(SongBookViewStateType.loading);
 
   // fake song list for skeleton loading
   final List<SongItem> songList = List.generate(
     10,
     (index) => SongItem(
+      id: index.toString(),
       title: 'Song $index',
       artist: 'Artist $index',
-      imageURL: 'https://via.placeholder.com/150',
+      thumbnailURL: 'https://via.placeholder.com/150',
       alreadyPlayed: false,
     ),
   );
 }
 
 class Loaded extends SongBookViewState {
-  Loaded(
-    this.songList, {
-    required this.searchQuery,
-    super.type = SongBookViewStateType.loaded,
-  }) : super();
-
-  final String searchQuery;
+  Loaded(this.songList) : super(SongBookViewStateType.loaded);
   final List<SongItem> songList;
 }
 
-class Empty extends Loaded {
-  Empty({required super.searchQuery})
-      : super([], type: SongBookViewStateType.empty);
+class Empty extends SongBookViewState {
+  Empty(this.searchText) : super(SongBookViewStateType.empty);
+
+  final String searchText;
 
   LocalizedString localizedFrom(GenericLocalizations localizations) {
     final songBookLocalizations = localizations as SongBookLocalizations;
-    final searchQuery = this.searchQuery;
+    final searchQuery = searchText;
     if (searchQuery.trim().isNotEmpty) {
       return songBookLocalizations.songNotFound(searchQuery);
     } else {
@@ -64,7 +58,7 @@ class Empty extends Loaded {
 
 class Failure extends SongBookViewState {
   final String error;
-  Failure(this.error) : super(type: SongBookViewStateType.failure);
+  Failure(this.error) : super(SongBookViewStateType.failure);
 }
 
 enum SongBookViewStateType {

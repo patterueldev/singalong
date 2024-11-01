@@ -11,12 +11,18 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.web.SecurityFilterChain
+import org.springframework.web.cors.CorsConfiguration
+import org.springframework.web.cors.CorsConfigurationSource
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource
 import org.springframework.web.servlet.config.annotation.CorsRegistry
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
 
 @Configuration
 @EnableWebSecurity
-class SecurityConfiguration {
+class SecurityConfiguration(
+    @Value("\${cors.allowedHosts}") val allowedHosts: String,
+    @Value("\${cors.allowedPorts}") val allowedPorts: String,
+) {
     @Autowired
     private lateinit var jwtAuthenticationEntryPoint: JwtAuthenticationEntryPoint
 
@@ -25,31 +31,6 @@ class SecurityConfiguration {
 
     @Autowired
     private lateinit var jwtSecurityContextRepository: JwtSecurityContextRepository
-
-    @Bean
-    fun corsConfigurer(
-        @Value("\${cors.allowedHosts}") allowedHosts: String,
-        @Value("\${cors.allowedPorts}") allowedPorts: String
-    ): WebMvcConfigurer {
-        val allowedOrigins: MutableList<String> = mutableListOf()
-        allowedHosts.split(",").forEach { host ->
-            // add the plain 80
-            allowedOrigins.add("http://$host")
-            allowedPorts.split(",").forEach { port ->
-                allowedOrigins.add("http://$host:$port")
-            }
-        }
-        return object : WebMvcConfigurer {
-            override fun addCorsMappings(registry: CorsRegistry) {
-                println("Allowed origins: ${allowedOrigins.joinToString(" | ")}")
-                registry.addMapping("/**")
-                    .allowedOrigins(*allowedOrigins.toTypedArray())
-                    .allowedMethods("GET", "POST", "PUT", "DELETE", "PATCH")
-                    .allowedHeaders("*")
-                    .allowCredentials(true)
-            }
-        }
-    }
 
     @Bean
     fun securityFilterChain(http: HttpSecurity): SecurityFilterChain {
@@ -63,6 +44,7 @@ class SecurityConfiguration {
                 "/songs/thumbnail/**",
             )
         return http.csrf { it.disable() }
+            .cors { it.configurationSource(corsConfigurationSource()) }
             .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
             .exceptionHandling { it.authenticationEntryPoint(jwtAuthenticationEntryPoint) }
             .authenticationProvider(jwtAuthenticationProvider)
@@ -72,5 +54,26 @@ class SecurityConfiguration {
                 it.anyRequest().authenticated()
             }
             .build()
+    }
+
+    @Bean
+    fun corsConfigurationSource(): CorsConfigurationSource {
+        val allowedOrigins: MutableList<String> = mutableListOf()
+        allowedHosts.split(",").forEach { host ->
+            // add the plain 80
+            allowedOrigins.add("http://$host")
+            allowedPorts.split(",").forEach { port ->
+                allowedOrigins.add("http://$host:$port")
+            }
+        }
+        println("Allowed origins: \n${allowedOrigins.joinToString("\n    ")}")
+        val configuration = CorsConfiguration()
+        configuration.allowedOrigins = listOf("http://localhost:8085") // Add your allowed origins here
+        configuration.allowedMethods = listOf("GET", "POST", "PUT", "DELETE", "PATCH")
+        configuration.allowedHeaders = listOf("*")
+        configuration.allowCredentials = true
+        val source = UrlBasedCorsConfigurationSource()
+        source.registerCorsConfiguration("/**", configuration)
+        return source
     }
 }

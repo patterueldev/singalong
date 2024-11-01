@@ -4,7 +4,7 @@ abstract class SongBookViewModel {
   ValueNotifier<SongBookViewState> get stateNotifier;
   ValueNotifier<bool> get isSearchActive;
 
-  void fetchSongs();
+  void fetchSongs(bool loadsNext);
   void toggleSearch();
   void updateSearchQuery(String query);
 }
@@ -33,26 +33,37 @@ class DefaultSongBookViewModel extends SongBookViewModel {
   @override
   final ValueNotifier<bool> isSearchActive = ValueNotifier<bool>(false);
 
-  String _searchQuery = '';
+  String? _searchQuery;
   Timer? _searchDebounce;
 
-  @override
-  void fetchSongs() async {
-    stateNotifier.value = SongBookViewState.loading();
+  Pagination? nextPage;
 
-    final result = await fetchSongsUseCase(searchQuery: _searchQuery).run();
+  @override
+  void fetchSongs(bool loadsNext) async {
+    stateNotifier.value = SongBookViewState.loading();
+    final parameters = LoadSongsParameters.next(
+      keyword: _searchQuery,
+      limit: 10,
+      nextPage: loadsNext ? nextPage : null,
+    );
+    final result = await fetchSongsUseCase(parameters).run();
     result.fold(
       (exception) {
         stateNotifier.value = SongBookViewState.failure(exception.message);
       },
       (fetchSongResult) {
         final songList = fetchSongResult.songs;
+        nextPage = fetchSongResult.next();
         if (songList.isEmpty) {
           stateNotifier.value =
-              SongBookViewState.empty(searchQuery: _searchQuery);
+              SongBookViewState.empty(searchText: _searchQuery ?? '');
         } else {
-          stateNotifier.value =
-              SongBookViewState.loaded(songList, searchQuery: _searchQuery);
+          final state = stateNotifier.value;
+          if (state is Loaded) {
+            final currentSongs = state.songList;
+            songList.insertAll(0, currentSongs);
+          }
+          stateNotifier.value = SongBookViewState.loaded(songList);
         }
       },
     );
@@ -62,15 +73,23 @@ class DefaultSongBookViewModel extends SongBookViewModel {
   void toggleSearch() {
     isSearchActive.value = !isSearchActive.value;
     if (!isSearchActive.value) {
-      _searchQuery = '';
-      fetchSongs();
+      _searchQuery = null;
+      fetchSongs(false);
     }
   }
 
   @override
   void updateSearchQuery(String query) {
-    _searchQuery = query;
+    if (_searchQuery == query) return;
+    Duration debounceTime;
+    if (query.isEmpty) {
+      _searchQuery = null;
+      debounceTime = const Duration(milliseconds: 0);
+    } else {
+      _searchQuery = query;
+      debounceTime = const Duration(milliseconds: 500);
+    }
     _searchDebounce?.cancel();
-    _searchDebounce = Timer(const Duration(milliseconds: 500), fetchSongs);
+    _searchDebounce = Timer(debounceTime, () => fetchSongs(false));
   }
 }

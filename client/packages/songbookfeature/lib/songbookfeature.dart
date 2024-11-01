@@ -10,25 +10,29 @@ import 'package:skeletonizer/skeletonizer.dart';
 
 part 'songbookview/songbookview.dart';
 part 'songbookview/songbookviewmodel.dart';
-part 'songitem.dart';
-part 'songbookviewstate.dart';
+part 'song/songitem.dart';
+part 'song/songrepository.dart';
+part 'songbookview/songbookviewstate.dart';
 part 'songbooklocalizations.dart';
 part 'songbooknavigationcoordinator.dart';
 part 'songbookassets.dart';
-part 'fetchsongsusecase.dart';
+part 'songbookview/fetchsongsusecase.dart';
 
 class SongBookFeatureProvider {
   final SongBookFlowCoordinator coordinator;
   final SongBookLocalizations localizations;
   final SongBookAssets assets;
+  final SongRepository songRepository;
 
   SongBookFeatureProvider({
     required this.coordinator,
     required this.localizations,
     required this.assets,
+    required this.songRepository,
   });
 
-  late final _fetchSongsUseCase = DefaultFetchSongsUseCase();
+  late final _fetchSongsUseCase =
+      DefaultFetchSongsUseCase(songRepository: songRepository);
 
   Widget buildSongBookView({required BuildContext context}) => SongBookView(
         viewModel: DefaultSongBookViewModel(

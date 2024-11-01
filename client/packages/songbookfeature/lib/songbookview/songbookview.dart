@@ -31,7 +31,7 @@ class _SongBookViewState extends State<SongBookView> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      viewModel.fetchSongs();
+      viewModel.fetchSongs(false);
     });
   }
 
@@ -162,7 +162,7 @@ class _SongBookViewState extends State<SongBookView> {
               child: ListTile(
                 title: Text(song.title),
                 subtitle: Text(song.artist),
-                leading: Image.network(song.imageURL),
+                leading: Image.network(song.thumbnailURL),
                 trailing: song.alreadyPlayed
                     ? const Icon(Icons.music_note_sharp)
                     : null,
@@ -186,7 +186,7 @@ class _SongBookViewState extends State<SongBookView> {
             ),
           ),
           TextButton(
-            onPressed: viewModel.fetchSongs,
+            onPressed: () => viewModel.fetchSongs(true),
             child: const Row(
               mainAxisSize: MainAxisSize.min,
               children: [
