@@ -20,4 +20,3 @@ data class SessionDocument(
     val isConnected: Boolean = true,
     val lastCheckedDate: LocalDateTime = LocalDateTime.now(),
 )
-

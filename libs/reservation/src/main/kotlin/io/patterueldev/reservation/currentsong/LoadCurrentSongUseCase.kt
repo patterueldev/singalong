@@ -5,7 +5,7 @@ import io.patterueldev.common.ServiceUseCase
 
 internal class LoadCurrentSongUseCase(
     private val currentSongRepository: CurrentSongRepository,
-): ServiceUseCase<LoadCurrentSongParameters, LoadCurrentSongResponse> {
+) : ServiceUseCase<LoadCurrentSongParameters, LoadCurrentSongResponse> {
     override suspend fun execute(parameters: LoadCurrentSongParameters): LoadCurrentSongResponse {
         try {
             println("Loading current song for room ${parameters.roomId}")

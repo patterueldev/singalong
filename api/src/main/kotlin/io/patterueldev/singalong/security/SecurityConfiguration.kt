@@ -14,8 +14,6 @@ import org.springframework.security.web.SecurityFilterChain
 import org.springframework.web.cors.CorsConfiguration
 import org.springframework.web.cors.CorsConfigurationSource
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource
-import org.springframework.web.servlet.config.annotation.CorsRegistry
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
 
 @Configuration
 @EnableWebSecurity
@@ -68,7 +66,7 @@ class SecurityConfiguration(
         }
         println("Allowed origins: \n${allowedOrigins.joinToString("\n    ")}")
         val configuration = CorsConfiguration()
-        configuration.allowedOrigins = listOf("http://localhost:8085") // Add your allowed origins here
+        configuration.allowedOrigins = allowedOrigins
         configuration.allowedMethods = listOf("GET", "POST", "PUT", "DELETE", "PATCH")
         configuration.allowedHeaders = listOf("*")
         configuration.allowCredentials = true

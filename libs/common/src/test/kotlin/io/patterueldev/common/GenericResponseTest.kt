@@ -3,7 +3,6 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
 class GenericResponseTest {
-
     @Test
     fun `test success response`() {
         val data = "Test Data"

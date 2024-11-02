@@ -1,10 +1,11 @@
 package io.patterueldev.common
 
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 class PaginatedDataTest {
-
     @Test
     fun empty_returnsEmptyPaginatedData() {
         val result = PaginatedData.empty<String>()

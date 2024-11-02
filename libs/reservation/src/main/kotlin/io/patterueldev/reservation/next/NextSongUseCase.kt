@@ -18,8 +18,9 @@ internal class NextSongUseCase(
         return try {
             val currentUser = roomUserRepository.currentUser()
             // TODO: Only either the room owner, the admin, or the reserving user can do this.
-            val currentSong = currentSongRepository.loadCurrentSong(roomId = currentUser.roomId)
-                ?: return GenericResponse.failure("No song is currently playing.")
+            val currentSong =
+                currentSongRepository.loadCurrentSong(roomId = currentUser.roomId)
+                    ?: return GenericResponse.failure("No song is currently playing.")
             reservedSongsRepository.markFinishedPlaying(reservedSongId = currentSong.id, at = LocalDateTime.now())
             val reservedSongs = reservedSongsRepository.loadReservedSongs(roomId = currentUser.roomId)
             val nextSong = reservedSongs.firstOrNull()

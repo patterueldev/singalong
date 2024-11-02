@@ -4,13 +4,13 @@ import io.patterueldev.mongods.reservedsong.ReservedSongDocumentRepository
 import io.patterueldev.mongods.song.SongDocumentRepository
 import io.patterueldev.reservation.currentsong.CurrentSong
 import io.patterueldev.reservation.currentsong.CurrentSongRepository
-import kotlin.jvm.optionals.getOrNull
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Repository
+import kotlin.jvm.optionals.getOrNull
 
 @Repository
 open class CurrentSongRepositoryDS : CurrentSongRepository {
@@ -21,6 +21,7 @@ open class CurrentSongRepositoryDS : CurrentSongRepository {
     private lateinit var reservedSongDocumentRepository: ReservedSongDocumentRepository
 
     private val mutex = Mutex()
+
     override suspend fun loadCurrentSong(roomId: String): CurrentSong? {
         mutex.withLock {
             println("Loading current song for room $roomId")

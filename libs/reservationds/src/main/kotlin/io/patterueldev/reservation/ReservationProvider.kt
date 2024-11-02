@@ -19,7 +19,6 @@ open class ReservationProvider {
         reservedSongsRepository = reservedSongsRepository,
         currentSongRepository = currentSongRepository,
         roomUserRepository = roomUserRepository,
-        reservationCoordinator = reservationCoordinator
+        reservationCoordinator = reservationCoordinator,
     )
 }
-

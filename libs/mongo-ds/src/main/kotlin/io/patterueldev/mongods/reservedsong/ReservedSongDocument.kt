@@ -20,4 +20,3 @@ data class ReservedSongDocument(
     // indicates that the song was played
     val finishedPlayingAt: LocalDateTime? = null,
 )
-

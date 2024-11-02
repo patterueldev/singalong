@@ -6,13 +6,13 @@ import io.patterueldev.mongods.song.SongDocumentRepository
 import io.patterueldev.reservation.reservedsong.ReservedSong
 import io.patterueldev.reservation.reservedsong.ReservedSongsRepository
 import io.patterueldev.roomuser.RoomUser
-import java.time.LocalDateTime
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Repository
+import java.time.LocalDateTime
 import kotlin.jvm.optionals.getOrNull
 
 @Repository
@@ -29,9 +29,9 @@ open class ReservedSongRepositoryDS : ReservedSongsRepository {
     ) {
         mutex.withLock {
             // confirm existence of song
-                withContext(Dispatchers.IO) {
-                    songDocumentRepository.findById(songId)
-                }.getOrNull() ?: throw IllegalArgumentException("Song not found")
+            withContext(Dispatchers.IO) {
+                songDocumentRepository.findById(songId)
+            }.getOrNull() ?: throw IllegalArgumentException("Song not found")
 
             // get the last order number
             val lastOrderNumber: Int =
@@ -92,7 +92,10 @@ open class ReservedSongRepositoryDS : ReservedSongsRepository {
         }
     }
 
-    override suspend fun markFinishedPlaying(reservedSongId: String, at: LocalDateTime) {
+    override suspend fun markFinishedPlaying(
+        reservedSongId: String,
+        at: LocalDateTime,
+    ) {
         // check if exists
         val reservedSong =
             withContext(Dispatchers.IO) {
@@ -101,7 +104,10 @@ open class ReservedSongRepositoryDS : ReservedSongsRepository {
         reservedSongDocumentRepository.markFinishedPlaying(reservedSong.id!!, at)
     }
 
-    override suspend fun markStartedPlaying(reservedSongId: String, at: LocalDateTime) {
+    override suspend fun markStartedPlaying(
+        reservedSongId: String,
+        at: LocalDateTime,
+    ) {
         // check if exists
         val reservedSong =
             withContext(Dispatchers.IO) {

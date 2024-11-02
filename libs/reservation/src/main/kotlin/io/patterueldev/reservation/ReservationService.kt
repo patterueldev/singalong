@@ -41,4 +41,3 @@ class ReservationService(
 
     suspend fun loadCurrentSong(parameters: LoadCurrentSongParameters) = loadCurrentSongUseCase(parameters)
 }
-

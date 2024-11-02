@@ -4,7 +4,6 @@ import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 
 class ClientTypeTest {
-
     @Test
     fun `test ClientType values`() {
         val expectedValues = arrayOf(ClientType.ADMIN, ClientType.CONTROLLER, ClientType.PLAYER)

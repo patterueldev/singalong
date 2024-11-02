@@ -7,4 +7,3 @@ interface ServiceUseCase<P, R> {
         return execute(parameters)
     }
 }
-

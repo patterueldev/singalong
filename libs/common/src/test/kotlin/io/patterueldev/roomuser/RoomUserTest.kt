@@ -1,10 +1,9 @@
 package io.patterueldev.roomuser
 
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
 class RoomUserTest {
-
     class TestRoomUser(override val username: String, override val roomId: String) : RoomUser
 
     @Test
@@ -35,4 +34,3 @@ class RoomUserTest {
         assertEquals("", roomUser.roomId)
     }
 }
-
