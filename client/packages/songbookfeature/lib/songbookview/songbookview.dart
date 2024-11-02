@@ -35,6 +35,7 @@ class _SongBookViewState extends State<SongBookView> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         appBar: AppBar(
           title: ValueListenableBuilder<bool>(
             valueListenable: viewModel.isSearchActive,
@@ -80,7 +81,6 @@ class _SongBookViewState extends State<SongBookView> {
         ),
         body: Container(
           padding: const EdgeInsets.all(20),
-          color: Colors.grey[200],
           child: ValueListenableBuilder<SongBookViewState>(
             valueListenable: viewModel.stateNotifier,
             builder: (context, state, child) {

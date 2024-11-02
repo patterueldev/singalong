@@ -13,9 +13,10 @@ class ControllerMobileApp extends StatelessWidget {
     return MaterialApp(
       title: 'Singalong',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.greenAccent),
         useMaterial3: true,
       ),
+      darkTheme: ThemeData.dark().copyWith(),
       localizationsDelegates: const [AppLocalizations.delegate],
       supportedLocales: AppLocalizations.supportedLocales,
       home: ChangeNotifierProvider<SplashScreenViewModel>(

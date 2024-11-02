@@ -36,7 +36,6 @@ class _SessionViewState extends State<SessionView> {
         children: [
           Scaffold(
             appBar: AppBar(
-              backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
               leading: PopupMenuButton<String>(
                 onSelected: (value) {
                   if (value == 'disconnect') {
