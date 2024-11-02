@@ -1,55 +1,65 @@
 part of '../connectfeature.dart';
 
-abstract class EstablishConnectionUseCase {
-  TaskEither<GenericException, ConnectViewState> connect(
-      String name, String sessionId);
+class EstablishConnectionParameters {
+  final String name;
+  final String sessionId;
+  EstablishConnectionParameters({
+    required this.name,
+    required this.sessionId,
+  });
 }
 
-class DefaultEstablishConnectionUseCase implements EstablishConnectionUseCase {
+class EstablishConnectionUseCase
+    extends ServiceUseCase<EstablishConnectionParameters, ConnectViewState> {
   final ConnectRepository connectRepository;
-  DefaultEstablishConnectionUseCase({
+  EstablishConnectionUseCase({
     required this.connectRepository,
   });
+
   @override
-  TaskEither<GenericException, ConnectViewState> connect(
-          String name, String sessionId) =>
-      TaskEither.tryCatch(() async {
-        debugPrint("Attempting to connect");
-        if (name.isEmpty) {
-          throw ConnectException.emptyName();
-        }
-        if (sessionId.isEmpty) {
-          throw ConnectException.emptySessionId();
-        }
+  TaskEither<GenericException, ConnectViewState> task(
+          EstablishConnectionParameters parameters) =>
+      TaskEither.tryCatch(
+        () async {
+          debugPrint("Attempting to connect");
+          if (parameters.name.isEmpty) {
+            throw ConnectException.emptyName();
+          }
+          if (parameters.sessionId.isEmpty) {
+            throw ConnectException.emptySessionId();
+          }
 
-        final result = await connectRepository.connect(
-          ConnectParameters(
-            username: name,
-            userPasscode: null,
-            roomId: sessionId,
-            roomPasscode: null,
-            clientType: "CONTROLLER",
-          ),
-        );
-
-        final requiresUserPasscode = result.requiresUserPasscode;
-        final requiresRoomPasscode = result.requiresRoomPasscode;
-        final accessToken = result.accessToken;
-        if (requiresUserPasscode != null && requiresRoomPasscode != null) {
-          return ConnectViewState.requiresPasscode(
-            requiresUserPasscode: requiresUserPasscode,
-            requiresRoomPasscode: requiresRoomPasscode,
+          final result = await connectRepository.connect(
+            ConnectParameters(
+              username: parameters.name,
+              userPasscode: null,
+              roomId: parameters.sessionId,
+              roomPasscode: null,
+              clientType: "CONTROLLER",
+            ),
           );
-        } else if (accessToken != null) {
-          // store the access token somewhere
-          debugPrint("Access token: $accessToken");
-          throw GenericException.unhandled(accessToken); //TODO: remove this
-        }
-        throw GenericException.unknown();
-      }, (e, s) {
-        if (e is GenericException) {
-          return e;
-        }
-        return GenericException.unhandled(e);
-      });
+
+          final requiresUserPasscode = result.requiresUserPasscode;
+          final requiresRoomPasscode = result.requiresRoomPasscode;
+          final accessToken = result.accessToken;
+          if (requiresUserPasscode != null && requiresRoomPasscode != null) {
+            return ConnectViewState.requiresPasscode(
+              requiresUserPasscode: requiresUserPasscode,
+              requiresRoomPasscode: requiresRoomPasscode,
+            );
+          } else if (accessToken != null) {
+            // store the access token somewhere
+            debugPrint("Access token: $accessToken");
+            connectRepository.provideAccessToken(accessToken);
+            return ConnectViewState.connected();
+          }
+          throw GenericException.unknown();
+        },
+        (e, s) {
+          if (e is GenericException) {
+            return e;
+          }
+          return GenericException.unhandled(e);
+        },
+      );
 }

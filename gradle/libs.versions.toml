@@ -13,6 +13,7 @@ netty-macos = "4.1.68.Final:osx-x86_64"
 netty-socketio = "2.0.11"
 ktlint = "12.1.1"
 openapi-generator = "7.9.0"
+minio = "8.5.12"
 
 [libraries]
 spring-boot-web = { module = "org.springframework.boot:spring-boot-starter-web", version.ref = "spring-boot" }
@@ -36,6 +37,7 @@ jsonwebtoken-jackson = { module = "io.jsonwebtoken:jjwt-jackson", version.ref = 
 netty-resolver-dns-native-macos = { module = "io.netty:netty-resolver-dns-native-macos", version.ref = "netty-macos" }
 netty-socketio = { module = "com.corundumstudio.socketio:netty-socketio", version.ref = "netty-socketio" }
 openapi-generator = { module = "org.openapitools:openapi-generator-gradle-plugin", version.ref = "openapi-generator" }
+minio = { module = "io.minio:minio", version.ref = "minio" }
 
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }

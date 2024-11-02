@@ -12,7 +12,7 @@ import io.patterueldev.singalong.SingalongService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 
-typealias OnReserveSuccessListener = () -> Unit
+typealias OnEventListener = () -> Unit
 
 @Component
 class SingalongSocketIOModule(
@@ -26,7 +26,8 @@ class SingalongSocketIOModule(
     init {
         namespace.addConnectListener(onConnected())
         namespace.addDisconnectListener(onDisconnected())
-        serverCoordinator.setOnReserveSuccessListener(::onReserveSuccess)
+        serverCoordinator.setOnReserveUpdateListener(::onReserveSuccess)
+        serverCoordinator.setOnCurrentSongUpdateListener(::onCurrentSongUpdate)
     }
 
     private fun onReserveSuccess() {
@@ -34,13 +35,33 @@ class SingalongSocketIOModule(
         // Handle the event, e.g., update the reserved songs list
         val reservedSongs = singalongService.getReservedSongs()
         // Broadcast the event to all active clients
-        namespace.broadcastOperations.sendEvent("reservedSongs", reservedSongs)
+        namespace.broadcastOperations.sendEvent(SocketEvent.RESERVED_SONGS.value, reservedSongs)
+    }
+
+    private fun onCurrentSongUpdate() {
+        println("Current song update event received.")
+        // Handle the event, e.g., update the current song
+        val currentSong = singalongService.getCurrentSong()
+        // Broadcast the event to all active clients
+        namespace.broadcastOperations.sendEvent(SocketEvent.CURRENT_SONG.value, currentSong)
     }
 
     private fun onConnected(): ConnectListener {
         return ConnectListener { client ->
             val handshakeData: HandshakeData = client.handshakeData
-            val token = handshakeData.httpHeaders["Authorization"]?.replace("Bearer ", "")
+            var token: String? = null
+            val authorizationHeader = handshakeData.httpHeaders["Authorization"]
+            if (authorizationHeader != null) {
+                token = authorizationHeader.replace("Bearer ", "")
+            } else {
+                // try auth
+                val query = handshakeData.authToken
+                println("Client[${client.sessionId}] - Query: $query")
+                if (query is Map<*, *>) {
+                    token = query["token"] as String?
+                }
+            }
+
             if (token == null) {
                 client.sendEvent("error", "Missing token.")
                 client.disconnect()
@@ -77,10 +98,17 @@ class SingalongSocketIOModule(
             when (clientType) {
                 ClientType.CONTROLLER -> {
                     val reservedSongs = singalongService.getReservedSongs()
-                    client.sendEvent("reservedSongs", reservedSongs)
+                    client.sendEvent(SocketEvent.RESERVED_SONGS.value, reservedSongs)
                 }
-                ClientType.ADMIN -> TODO()
-                ClientType.PLAYER -> TODO()
+                ClientType.ADMIN -> {}
+                ClientType.PLAYER -> {
+                    val currentSong = singalongService.getCurrentSong()
+                    println("Is null? ${currentSong == null}")
+                    client.sendEvent(SocketEvent.CURRENT_SONG.value, currentSong)
+
+                    val reservedSongs = singalongService.getReservedSongs()
+                    client.sendEvent(SocketEvent.RESERVED_SONGS.value, reservedSongs)
+                }
             }
         }
     }

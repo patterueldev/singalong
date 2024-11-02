@@ -1,4 +1,4 @@
-name: singalong
+name: singalong_client
 
 packages:
   - apps/**

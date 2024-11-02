@@ -3,9 +3,9 @@ part of 'main.dart';
 // TODO: Move these to mixins
 class AppCoordinator
     implements
-        ConnectFlowController,
-        SessionFlowController,
-        SongBookNavigationCoordinator,
+        ConnectFlowCoordinator,
+        SessionFlowCoordinator,
+        SongBookFlowCoordinator,
         DownloadFlowController {
   const AppCoordinator({
     required this.connectFeatureProvider,
@@ -14,7 +14,7 @@ class AppCoordinator
     required this.downloadFeatureProvider,
   });
 
-  final ConnectFeature connectFeatureProvider;
+  final ConnectFeatureBuilder connectFeatureProvider;
   final SessionFeatureProvider sessionFeatureProvider;
   final SongBookFeatureProvider songBookFeatureProvider;
   final DownloadFeatureProvider downloadFeatureProvider;

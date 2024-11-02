@@ -9,17 +9,24 @@ interface IdentifiedSongRepository {
         identifiedSong: IdentifiedSong,
         userId: String,
         sessionId: String,
-    ): String
+    ): SavedSong
 
-    suspend fun downloadSong(
-        url: String,
+    suspend fun downloadThumbnail(
+        song: SavedSong,
+        imageUrl: String,
         filename: String,
-    )
+    ): SavedSong
 
     suspend fun updateSong(
         songId: String,
         filename: String,
-    )
+    ): SavedSong
+
+    suspend fun downloadSong(
+        song: SavedSong,
+        sourceUrl: String,
+        filename: String,
+    ): SavedSong
 
     suspend fun reserveSong(
         songId: String,

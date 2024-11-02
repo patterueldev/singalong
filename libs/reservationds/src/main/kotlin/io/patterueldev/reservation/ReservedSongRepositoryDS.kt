@@ -12,6 +12,7 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Repository
+import java.time.LocalDateTime
 import kotlin.jvm.optionals.getOrNull
 
 @Repository
@@ -25,10 +26,10 @@ open class ReservedSongRepositoryDS : ReservedSongsRepository {
     override suspend fun reserveSong(
         roomUser: RoomUser,
         songId: String,
-    ) {
+    ): ReservedSong {
         mutex.withLock {
             // confirm existence of song
-            val current =
+            val song =
                 withContext(Dispatchers.IO) {
                     songDocumentRepository.findById(songId)
                 }.getOrNull() ?: throw IllegalArgumentException("Song not found")
@@ -43,32 +44,49 @@ open class ReservedSongRepositoryDS : ReservedSongsRepository {
                     }
                 }
 
+            // check if there's a current song played
+            val currentReservedSong =
+                withContext(Dispatchers.IO) {
+                    reservedSongDocumentRepository.loadCurrentReservedSong(roomUser.roomId)
+                }
+            val nothingIsPlaying = currentReservedSong == null
+
             val reservedSong =
                 ReservedSongDocument(
                     songId = songId,
                     roomId = roomUser.roomId,
                     order = lastOrderNumber + 1,
                     reservedBy = roomUser.username,
+                    startedPlayingAt = if (nothingIsPlaying) LocalDateTime.now() else null,
                 )
-            withContext(Dispatchers.IO) {
-                reservedSongDocumentRepository.save(reservedSong)
+            val newReservedSong =
+                withContext(Dispatchers.IO) {
+                    reservedSongDocumentRepository.save(reservedSong)
+                }
+            return object : ReservedSong {
+                override val id: String = newReservedSong.id ?: throw IllegalArgumentException("Reserved song id not found")
+                override val order: Int = newReservedSong.order
+                override val songId: String = newReservedSong.songId
+                override val title: String = song.title
+                override val artist: String = song.artist
+                override val thumbnailPath: String = song.thumbnailFile.path()
+                override val reservingUser: String = newReservedSong.reservedBy
+                override val currentPlaying: Boolean = newReservedSong.startedPlayingAt != null && newReservedSong.finishedPlayingAt == null
             }
         }
     }
 
-    override suspend fun loadReservedSongs(roomId: String): List<ReservedSong> {
-        val reservedSongs =
-            withContext(Dispatchers.IO) {
-                reservedSongDocumentRepository.loadUnplayedReservedSongs(roomId)
-            }
+    private suspend fun loadReservedSongs(
+        roomId: String,
+        loadSongs: suspend (String) -> List<ReservedSongDocument>,
+    ): List<ReservedSong> {
+        val reservedSongs = withContext(Dispatchers.IO) { loadSongs(roomId) }
+        println("Reserved songs: $reservedSongs")
         val songIds = reservedSongs.map { it.songId }
-        val songs =
-            withContext(Dispatchers.IO) {
-                songDocumentRepository.findAllById(songIds)
-            }
+        val songs = withContext(Dispatchers.IO) { songDocumentRepository.findAllById(songIds) }
         return reservedSongs.map { reservedSong ->
             val song =
-                songs.find { song -> song.id == reservedSong.songId }
+                songs.find { it.id == reservedSong.songId }
                     ?: throw IllegalArgumentException("Song with id ${reservedSong.songId} not found")
             object : ReservedSong {
                 override val id: String = reservedSong.id ?: throw IllegalArgumentException("Reserved song id not found")
@@ -76,10 +94,42 @@ open class ReservedSongRepositoryDS : ReservedSongsRepository {
                 override val songId: String = reservedSong.songId
                 override val title: String = song.title
                 override val artist: String = song.artist
-                override val imageURL: String = song.imageUrl
+                override val thumbnailPath: String = song.thumbnailFile.path()
                 override val reservingUser: String = reservedSong.reservedBy
                 override val currentPlaying: Boolean = reservedSong.startedPlayingAt != null && reservedSong.finishedPlayingAt == null
             }
         }
+    }
+
+    override suspend fun loadUnplayedReservedSongs(roomId: String): List<ReservedSong> {
+        return loadReservedSongs(roomId) { reservedSongDocumentRepository.loadUnplayedReservedSongs(it) }
+    }
+
+    override suspend fun loadUnfinishedReservedSongs(roomId: String): List<ReservedSong> {
+        return loadReservedSongs(roomId) { reservedSongDocumentRepository.loadUnfinishedReservedSongs(it) }
+    }
+
+    override suspend fun markFinishedPlaying(
+        reservedSongId: String,
+        at: LocalDateTime,
+    ) {
+        // check if exists
+        val reservedSong =
+            withContext(Dispatchers.IO) {
+                reservedSongDocumentRepository.findById(reservedSongId)
+            }.getOrNull() ?: throw IllegalArgumentException("Reserved song not found")
+        reservedSongDocumentRepository.markFinishedPlaying(reservedSong.id!!, at)
+    }
+
+    override suspend fun markStartedPlaying(
+        reservedSongId: String,
+        at: LocalDateTime,
+    ) {
+        // check if exists
+        val reservedSong =
+            withContext(Dispatchers.IO) {
+                reservedSongDocumentRepository.findById(reservedSongId)
+            }.getOrNull() ?: throw IllegalArgumentException("Reserved song not found")
+        reservedSongDocumentRepository.markStartedPlaying(reservedSong.id!!, at)
     }
 }

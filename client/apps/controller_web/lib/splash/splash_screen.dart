@@ -1,15 +1,20 @@
+import 'package:controller_web/splash/splash_coordinator.dart';
 import 'package:controller_web/splash/splash_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 class SplashScreen extends StatefulWidget {
-  const SplashScreen({Key? key}) : super(key: key);
+  const SplashScreen({super.key, required this.flow});
+
+  final SplashFlowCoordinator flow;
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
 class _SplashScreenState extends State<SplashScreen> {
+  SplashFlowCoordinator get flow => widget.flow;
+
   @override
   void initState() {
     super.initState();
@@ -20,10 +25,10 @@ class _SplashScreenState extends State<SplashScreen> {
       viewModel.didFinishStateNotifier.addListener(() {
         switch (viewModel.didFinishStateNotifier.value) {
           case FinishState.unauthenticated:
-            Navigator.of(context).pushReplacementNamed('/connect');
+            flow.onUnauthenticated(context);
             break;
           case FinishState.authenticated:
-            Navigator.of(context).pushReplacementNamed('/home');
+            flow.onAuthenticated(context);
             break;
           case FinishState.none:
             break;

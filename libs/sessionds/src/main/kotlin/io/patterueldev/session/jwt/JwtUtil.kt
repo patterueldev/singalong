@@ -117,6 +117,7 @@ class JwtUtil(
 
     companion object {
         private const val ONE_HOUR: Long = (60 * 60)
-        const val JWT_EXPIRATION_TIME = ONE_HOUR
+        private const val ONE_DAY: Long = (24 * ONE_HOUR)
+        const val JWT_EXPIRATION_TIME = ONE_DAY
     }
 }

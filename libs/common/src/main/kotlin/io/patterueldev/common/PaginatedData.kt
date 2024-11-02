@@ -1,7 +1,7 @@
 package io.patterueldev.common
 
 open class PaginatedData<T>(
-    val data: List<T>,
+    val items: List<T>,
     val nextOffset: Int?,
     val nextCursor: String?,
     val nextPage: Int?,

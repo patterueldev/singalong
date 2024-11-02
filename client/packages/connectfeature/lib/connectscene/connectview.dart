@@ -10,7 +10,7 @@ class ConnectView extends StatefulWidget {
   });
 
   final ConnectViewModel viewModel;
-  final ConnectFlowController flow;
+  final ConnectFlowCoordinator flow;
   final ConnectLocalizations localizations;
   final ConnectAssets assets;
 
@@ -20,7 +20,7 @@ class ConnectView extends StatefulWidget {
 
 class _ConnectViewState extends State<ConnectView> {
   ConnectViewModel get viewModel => widget.viewModel;
-  ConnectFlowController get flow => widget.flow;
+  ConnectFlowCoordinator get flow => widget.flow;
   ConnectLocalizations get localizations => widget.localizations;
   ConnectAssets get assets => widget.assets;
 

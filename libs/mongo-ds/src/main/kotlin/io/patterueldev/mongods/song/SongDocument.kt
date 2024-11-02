@@ -1,5 +1,6 @@
 package io.patterueldev.mongods.song
 
+import io.patterueldev.mongods.common.BucketFile
 import org.springframework.data.annotation.CreatedDate
 import org.springframework.data.annotation.Id
 import org.springframework.data.annotation.LastModifiedDate
@@ -10,10 +11,13 @@ import java.time.LocalDateTime
 data class SongDocument(
     @Id val id: String? = null,
     // if this is null, then the song is not yet downloaded
+    // TODO: this will be removed
     val filename: String? = null,
     val source: String,
     val sourceId: String,
-    val imageUrl: String,
+    val thumbnailFile: BucketFile,
+    // TODO: this will now be used instead of `filename`
+    val videoFile: BucketFile? = null,
     val title: String,
     val artist: String,
     val language: String,
@@ -35,7 +39,8 @@ data class SongDocument(
             filename: String? = null,
             source: String,
             sourceId: String,
-            imageUrl: String,
+            thumbnailFile: BucketFile,
+            videoFile: BucketFile? = null,
             title: String,
             artist: String,
             language: String,
@@ -51,7 +56,8 @@ data class SongDocument(
             filename = filename,
             source = source,
             sourceId = sourceId,
-            imageUrl = imageUrl,
+            thumbnailFile = thumbnailFile,
+            videoFile = videoFile,
             title = title,
             artist = artist,
             language = language,

@@ -1,5 +1,7 @@
 package io.patterueldev.reservation
 
 interface ReservationCoordinator {
-    fun onReserveSuccess()
+    fun onReserveUpdate()
+
+    fun onCurrentSongUpdate()
 }

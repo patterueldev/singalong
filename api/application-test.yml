@@ -6,7 +6,8 @@ openai:
   token: test
   model: "TheBloke/Mistral-7B-Instruct-v0.2-GGUF/mistral-7b-instruct-v0.2.Q4_K_S.gguf"
 cors:
-  allowedOrigins: "http://example.io:8080"
+  allowedHosts: "example.io"
+  allowedPorts: "8000"
 jwt:
   secret: "abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890"
 spring:
@@ -32,3 +33,7 @@ singalong:
 socketio:
   hostname: localhost
   port: 9000
+minio:
+  endpoint: "http://localhost:5059"
+  accessKey: "accessKey"
+  secretKey: "secretKey"

@@ -50,11 +50,13 @@ app.post('/download', async (req, res) => {
     let readable = ytdl(url, { filter: 'videoandaudio' })
     console.log(`Downloading song from ${url} to ${path}`)
     try {
-        readable.pipe(fs.createWriteStream(path))
-        res.status(200).send({
-            success: true,
-            message: "Song downloaded successfully",
-        })
+        res.setHeader('Content-Disposition', `attachment; filename=${filename}`)
+        readable.pipe(res)
+        // readable.pipe(fs.createWriteStream(path))
+        // res.status(200).send({
+        //     success: true,
+        //     message: "Song downloaded successfully",
+        // })
     } catch (error) {
         console.error(error)
         res.status(500).send({

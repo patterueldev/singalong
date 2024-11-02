@@ -52,7 +52,7 @@ class DefaultSessionViewModel extends SessionViewModel {
     stateNotifier.value = SessionViewState.loaded();
     // then start listening to changes
 
-    listenToSongListUpdatesUseCase.execute().listen((songList) {
+    listenToSongListUpdatesUseCase().listen((songList) {
       songListNotifier.value = songList;
     });
   }

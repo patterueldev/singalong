@@ -4,8 +4,10 @@
 FROM nginx:alpine
 
 # Copy the built Flutter web files to the Nginx HTML directory
-# TODO: TEMPORARY DEPLOYMENT; we need to configure the actual project's Dockerfile
 COPY apps/controller_web/build/web /usr/share/nginx/html
+
+# Copy the Nginx configuration file
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 # Expose port 80 to the outside world
 EXPOSE 80

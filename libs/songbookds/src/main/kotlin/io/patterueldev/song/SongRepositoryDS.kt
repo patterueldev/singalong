@@ -45,8 +45,8 @@ class SongRepositoryDS : SongRepository {
             } else {
                 pagedSongsResult =
                     withContext(Dispatchers.IO) {
-                        songDocumentRepository.findByTitleAndArtist(
-                            keyword, keyword, pageable,
+                        songDocumentRepository.findByKeyword(
+                            keyword, pageable,
                         )
                     }
             }
@@ -54,7 +54,7 @@ class SongRepositoryDS : SongRepository {
                 pagedSongsResult.content.map {
                     SongListItem(
                         id = it.id!!,
-                        imageUrl = it.imageUrl,
+                        thumbnailPath = it.thumbnailFile.path(),
                         title = it.title,
                         artist = it.artist,
                         language = it.language,

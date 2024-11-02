@@ -1,10 +1,16 @@
 import 'package:connectfeature/connectfeature.dart';
 import 'package:flutter/material.dart';
+import 'package:sessionfeature/sessionfeature.dart';
 import 'package:shared/shared.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:songbookfeature/songbookfeature.dart';
 
 class DefaultAppLocalizations
-    with GenericLocalizationsMixin, ConnectLocalizationsMixin {}
+    with
+        GenericLocalizationsMixin,
+        ConnectLocalizationsMixin,
+        SessionLocalizationsMixin,
+        SongBookLocalizationsMixin {}
 
 LocalizedString _getLocalizedString(
         String Function(AppLocalizations) getString) =>
@@ -71,5 +77,86 @@ mixin ConnectLocalizationsMixin implements ConnectLocalizations {
   LocalizedString invalidSessionId(String sessionId) {
     return _getLocalizedString(
         (localizations) => localizations.invalidSessionId(sessionId));
+  }
+}
+
+mixin SessionLocalizationsMixin implements SessionLocalizations {
+  @override
+  final LocalizedString disconnectButtonText = _getLocalizedString(
+      (localizations) => localizations.disconnectButtonText);
+
+  @override
+  final LocalizedString cancelButtonText =
+      _getLocalizedString((localizations) => localizations.cancelButtonText);
+
+  @override
+  final LocalizedString skipButtonText =
+      _getLocalizedString((localizations) => localizations.skipButtonText);
+
+  @override
+  final LocalizedString pauseButtonText =
+      _getLocalizedString((localizations) => localizations.pauseButtonText);
+
+  @override
+  final LocalizedString playNextButtonText =
+      _getLocalizedString((localizations) => localizations.playNextButtonText);
+
+  @override
+  LocalizedString reservedByText(String name) {
+    return _getLocalizedString(
+        (localizations) => localizations.reservedByText(name));
+  }
+
+  @override
+  final LocalizedString skipSongTitle =
+      _getLocalizedString((localizations) => localizations.skipSongTitle);
+
+  @override
+  final LocalizedString skipSongMessage =
+      _getLocalizedString((localizations) => localizations.skipSongMessage);
+
+  @override
+  final LocalizedString skipSongActionText =
+      _getLocalizedString((localizations) => localizations.skipSongActionText);
+
+  @override
+  final LocalizedString cancelSongTitle =
+      _getLocalizedString((localizations) => localizations.cancelSongTitle);
+
+  @override
+  final LocalizedString cancelSongMessage =
+      _getLocalizedString((localizations) => localizations.cancelSongMessage);
+
+  @override
+  final LocalizedString cancelSongActionText = _getLocalizedString(
+      (localizations) => localizations.cancelSongActionText);
+
+  @override
+  LocalizedString get lyricsLabelText =>
+      _getLocalizedString((localizations) => localizations.lyricsLabelText);
+
+  @override
+  LocalizedString get noLyricsText =>
+      _getLocalizedString((localizations) => localizations.lyricsNotAvailable);
+}
+
+mixin SongBookLocalizationsMixin implements SongBookLocalizations {
+  @override
+  final LocalizedString songBookScreenTitle =
+      _getLocalizedString((localizations) => localizations.songBookScreenTitle);
+  @override
+  final LocalizedString searchHint = _getLocalizedString(
+      (localizations) => localizations.searchPlaceholderText);
+  @override
+  final LocalizedString download =
+      _getLocalizedString((localizations) => localizations.downloadButtonText);
+  @override
+  final LocalizedString emptySongBook =
+      _getLocalizedString((localizations) => localizations.emptySongBook);
+
+  @override
+  LocalizedString songNotFound(String query) {
+    return _getLocalizedString(
+        (localizations) => localizations.songNotFound(query));
   }
 }

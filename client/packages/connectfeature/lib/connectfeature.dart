@@ -1,7 +1,7 @@
 library connectfeature;
 
 import 'package:flutter/material.dart';
-import 'package:fpdart/fpdart.dart' show TaskEither, Unit, unit;
+import 'package:fpdart/fpdart.dart' show Either, TaskEither, Unit, unit;
 import 'package:shared/shared.dart';
 
 part 'connectscene/connectview.dart';
@@ -14,28 +14,21 @@ part 'connectflowcontroller.dart';
 part 'connectscene/connectexception.dart';
 part 'connectassets.dart';
 
-class ConnectFeature {
+class ConnectFeatureBuilder {
   final ConnectLocalizations localizations;
   final ConnectAssets assets;
-  final ConnectFlowController coordinator;
+  final ConnectFlowCoordinator coordinator;
   final ConnectRepository connectRepository;
 
-  ConnectFeature({
+  ConnectFeatureBuilder({
     required this.localizations,
     required this.assets,
     required this.coordinator,
     required this.connectRepository,
   });
 
-  late final EstablishConnectionUseCase establishConnectionUseCase =
-      DefaultEstablishConnectionUseCase(connectRepository: connectRepository);
-  // final providers = MultiProvider(
-  //   providers: [
-  //     Provider<EstablishConnectionUseCase>(
-  //       create: (context) => DefaultEstablishConnectionUseCase(),
-  //     ),
-  //   ],
-  // );
+  late final establishConnectionUseCase =
+      EstablishConnectionUseCase(connectRepository: connectRepository);
 
   Widget buildConnectView({
     String name = '',
