@@ -3,6 +3,9 @@ import 'package:playerfeature/playerfeature.dart';
 import 'package:playerfeatureds/playerfeatureds.dart';
 import 'package:provider/provider.dart';
 import 'package:singalong_api_client/singalong_api_client.dart';
+import 'package:video_player/video_player.dart';
+
+import 'gen/assets.gen.dart';
 
 class APIConfiguration extends SingalongAPIConfiguration {
   @override
@@ -48,7 +51,62 @@ class PlayerApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: context.read<PlayerFeatureBuilder>().buildPlayerView(),
+      home: const PlayerWrapper(),
     );
+  }
+}
+
+class PlayerWrapper extends StatefulWidget {
+  const PlayerWrapper({super.key});
+
+  @override
+  State<PlayerWrapper> createState() => _PlayerWrapperState();
+}
+
+// TODO: Consider using video from the server. Do not commit the video because it's too large.
+class _PlayerWrapperState extends State<PlayerWrapper> {
+  VideoPlayerController _controller = VideoPlayerController.asset(
+      Assets.videos.cielingFlames4KMotionBackgroundLoop);
+
+  @override
+  void initState() {
+    super.initState();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      processVideo();
+    });
+  }
+
+  void processVideo() async {
+    await _controller.initialize();
+    _controller.setLooping(true);
+    _controller.play();
+    setState(() {});
+  }
+
+  // @override
+  // Widget build(BuildContext context) {
+  //   return Scaffold(
+  //     backgroundColor: Colors.greenAccent,
+  //     body: VideoPlayer(_controller),
+  //   );
+  // }
+
+  @override
+  Widget build(BuildContext context) => Container(
+        color: Colors.black,
+        child: Stack(
+          children: [
+            VideoPlayer(_controller),
+            context.read<PlayerFeatureBuilder>().buildPlayerView()
+          ],
+        ),
+      );
+
+  @override
+  void dispose() {
+    _controller.pause();
+    _controller.dispose();
+    super.dispose();
   }
 }

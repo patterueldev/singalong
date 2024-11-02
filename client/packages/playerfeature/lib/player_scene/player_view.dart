@@ -19,42 +19,49 @@ class _PlayerViewState extends State<PlayerView> {
   @override
   Widget build(BuildContext context) => Consumer<PlayerViewModel>(
         builder: (_, viewModel, __) => Scaffold(
-          backgroundColor: Colors.black,
+          backgroundColor: Colors.transparent,
           body: Row(
+            // horizontal layout arrangement
             children: [
               // contains the video player and reserved widget
+              // Left panel
+              Expanded(
+                flex: 1,
+                child: Container(),
+              ),
+
               Expanded(
                 flex: 9,
                 child: Column(
+                  // vertical layout arrangement
                   children: [
-                    ValueListenableBuilder(
-                      valueListenable: viewModel.isConnected,
-                      builder: (_, isConnected, __) => isConnected
-                          ? Expanded(
-                              flex: 1,
-                              child: Container(
-                                alignment: Alignment.topLeft,
-                                color: Colors.black.withOpacity(0.5),
-                                padding:
-                                    const EdgeInsets.only(top: 16, bottom: 16),
-                                child: const ReservedWidget(),
-                              ),
-                            )
-                          : const SizedBox.shrink(),
+                    Expanded(
+                      flex: 1,
+                      child: Container(
+                        alignment: Alignment.topLeft,
+                        padding: const EdgeInsets.only(top: 16, bottom: 16),
+                        child: ValueListenableBuilder(
+                          valueListenable: viewModel.isConnected,
+                          builder: (_, isConnected, __) => isConnected
+                              ? ReservedWidget()
+                              : SizedBox.shrink(),
+                        ),
+                      ),
                     ),
                     Expanded(flex: 9, child: _buildBody(viewModel)),
+                    // maybe some customizable message rolling at the bottom
+                    // Expanded(
+                    //   flex: 1,
+                    //   child: Container(),
+                    // ),
                   ],
                 ),
               ),
 
-              ValueListenableBuilder(
-                valueListenable: viewModel.isConnected,
-                builder: (_, isConnected, __) => isConnected
-                    ? Expanded(
-                        flex: 3,
-                        child: Container(),
-                      )
-                    : const SizedBox.shrink(),
+              // Right panel
+              Expanded(
+                flex: 1,
+                child: Container(),
               ),
               // This will contain some panel for the participants
             ],
