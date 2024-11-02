@@ -63,10 +63,8 @@ class PlayerWrapper extends StatefulWidget {
   State<PlayerWrapper> createState() => _PlayerWrapperState();
 }
 
-// TODO: Consider using video from the server. Do not commit the video because it's too large.
 class _PlayerWrapperState extends State<PlayerWrapper> {
-  VideoPlayerController _controller = VideoPlayerController.asset(
-      Assets.videos.cielingFlames4KMotionBackgroundLoop);
+  VideoPlayerController? _controller;
 
   @override
   void initState() {
@@ -78,35 +76,44 @@ class _PlayerWrapperState extends State<PlayerWrapper> {
   }
 
   void processVideo() async {
-    await _controller.initialize();
-    _controller.setLooping(true);
-    _controller.play();
-    setState(() {});
-  }
+    _controller?.pause();
+    _controller?.dispose();
 
-  // @override
-  // Widget build(BuildContext context) {
-  //   return Scaffold(
-  //     backgroundColor: Colors.greenAccent,
-  //     body: VideoPlayer(_controller),
-  //   );
-  // }
+    final configuration = context.read<SingalongAPIConfiguration>();
+    final host = configuration.host;
+    // TODO: this will be customizable in the future
+    final url = "http://$host:9000/assets/flames-loop.mp4";
+    final uri = Uri.parse(url);
+    final controller = VideoPlayerController.networkUrl(uri);
+    _controller = controller;
+    await _controller?.initialize();
+    _controller?.setLooping(true);
+    setState(() {});
+    _controller?.play();
+  }
 
   @override
   Widget build(BuildContext context) => Container(
         color: Colors.black,
         child: Stack(
           children: [
-            VideoPlayer(_controller),
+            _buildBackground(_controller),
             context.read<PlayerFeatureBuilder>().buildPlayerView()
           ],
         ),
       );
 
+  Widget _buildBackground(VideoPlayerController? controller) {
+    if (controller == null) {
+      return Assets.images.videoplayerBg.image(fit: BoxFit.cover);
+    }
+    return VideoPlayer(controller);
+  }
+
   @override
   void dispose() {
-    _controller.pause();
-    _controller.dispose();
+    _controller?.pause();
+    _controller?.dispose();
     super.dispose();
   }
 }

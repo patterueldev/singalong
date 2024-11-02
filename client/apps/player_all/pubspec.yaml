@@ -60,7 +60,7 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets:
-    - assets/videos/
+    - assets/images/
   generate: true
 
 flutter_gen:

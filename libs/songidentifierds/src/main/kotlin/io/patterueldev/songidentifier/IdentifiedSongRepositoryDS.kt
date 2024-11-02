@@ -121,7 +121,7 @@ internal class IdentifiedSongRepositoryDS : IdentifiedSongRepository {
             thumbnailFile =
                 BucketFile(
                     bucket = bucket,
-                    objectName = filename,
+                    objectName = objectName,
                 )
             val current =
                 withContext(Dispatchers.IO) {
