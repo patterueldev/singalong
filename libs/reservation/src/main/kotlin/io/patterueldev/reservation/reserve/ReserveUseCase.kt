@@ -14,8 +14,11 @@ internal class ReserveUseCase(
     override suspend fun execute(parameters: ReserveParameters): ReserveResponse {
         return try {
             val user = roomUserRepository.currentUser()
-            reservedSongsRepository.reserveSong(user, parameters.songId)
+            val reservedSong = reservedSongsRepository.reserveSong(user, parameters.songId)
             reservationCoordinator?.onReserveUpdate()
+            if (reservedSong.currentPlaying) {
+                reservationCoordinator?.onCurrentSongUpdate()
+            }
             return GenericResponse.success(Unit, message = "Song reserved successfully.")
         } catch (e: Exception) {
             GenericResponse.failure(e.message ?: "An error occurred while loading the reservation list.")

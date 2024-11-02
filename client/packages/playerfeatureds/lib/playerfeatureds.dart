@@ -60,6 +60,7 @@ class ReservedSongListRepositoryDS implements ReservedSongListRepository {
               reservedBy: apiReservedSong.reservingUser,
               thumbnailURL:
                   apiClient.resourceURL(apiReservedSong.thumbnailPath),
+              isPlaying: apiReservedSong.currentPlaying,
             ),
           )
           .toList();

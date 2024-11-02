@@ -111,11 +111,10 @@ class _PlayerViewState extends State<PlayerView> {
 
   // could be a video player with "idle" video
   Widget _buildIdleConnected() => Container(
-        color: Colors.green,
         child: Center(
           child: Text(
             'Select a song to play',
-            style: TextStyle(color: Colors.white),
+            style: Theme.of(context).textTheme.titleLarge,
           ),
         ),
       );

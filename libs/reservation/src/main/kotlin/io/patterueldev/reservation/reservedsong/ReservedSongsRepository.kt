@@ -7,9 +7,11 @@ interface ReservedSongsRepository {
     suspend fun reserveSong(
         roomUser: RoomUser,
         songId: String,
-    )
+    ): ReservedSong
 
-    suspend fun loadReservedSongs(roomId: String): List<ReservedSong>
+    suspend fun loadUnplayedReservedSongs(roomId: String): List<ReservedSong>
+
+    suspend fun loadUnfinishedReservedSongs(roomId: String): List<ReservedSong>
 
     suspend fun markFinishedPlaying(
         reservedSongId: String,

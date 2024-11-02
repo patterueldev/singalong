@@ -9,7 +9,7 @@ internal class LoadReservationListUseCase(
 ) : ServiceUseCase<LoadReservationListParameters, LoadReservationListResponse> {
     override suspend fun execute(parameters: LoadReservationListParameters): LoadReservationListResponse {
         return try {
-            val reservedSongs = reservedSongsRepository.loadReservedSongs(parameters.roomId)
+            val reservedSongs = reservedSongsRepository.loadUnfinishedReservedSongs(parameters.roomId)
             return GenericResponse.success(reservedSongs)
         } catch (e: Exception) {
             GenericResponse.failure(e.message ?: "An error occurred while loading the reservation list.")

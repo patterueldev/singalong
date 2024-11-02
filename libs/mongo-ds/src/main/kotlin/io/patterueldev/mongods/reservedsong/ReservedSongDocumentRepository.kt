@@ -16,6 +16,12 @@ interface ReservedSongDocumentRepository : MongoRepository<ReservedSongDocument,
     fun loadUnplayedReservedSongs(roomId: String): List<ReservedSongDocument>
 
     @Query(
+        value = "{ 'roomId' : ?0, 'finishedPlayingAt' : null }",
+        sort = "{ 'order' : 1 }",
+    )
+    fun loadUnfinishedReservedSongs(roomId: String): List<ReservedSongDocument>
+
+    @Query(
         value = "{ 'roomId' : ?0, 'startedPlayingAt': { \$ne: null }, 'finishedPlayingAt' : null }",
     )
     fun loadCurrentReservedSong(roomId: String): ReservedSongDocument?

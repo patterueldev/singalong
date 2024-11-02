@@ -1,6 +1,7 @@
 package io.patterueldev.singalong.api
 
 import io.patterueldev.reservation.ReservationService
+import io.patterueldev.reservation.next.NextSongResponse
 import io.patterueldev.reservation.reserve.ReserveParameters
 import io.patterueldev.reservation.reserve.ReserveResponse
 import io.patterueldev.singalong.ServerCoordinator
@@ -71,7 +72,7 @@ class SongsController(
     ): ReserveResponse = reservationService.reserveSong(reserveParameters)
 
     @PatchMapping("/next")
-    suspend fun nextSong(): ReserveResponse = reservationService.nextSong()
+    suspend fun nextSong(): NextSongResponse = reservationService.nextSong()
 
     // TODO: Will have separate endpoints for finishing and starting playing
 }
