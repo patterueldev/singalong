@@ -150,21 +150,17 @@ class _SongBookViewState extends State<SongBookView> {
         enabled: isLoading,
         child: ListView.builder(
           itemCount: songList.length,
-          itemBuilder: (context, index) {
-            final song = songList[index];
-            return Card(
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: buildItem(song, height),
-              ),
-            );
-          },
+          itemBuilder: (context, index) => Card(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: _buildItem(songList[index], height),
+            ),
+          ),
         ),
       );
 
-  Widget buildItem(SongItem song, double height) => Container(
-        child: Row(
+  Widget _buildItem(SongItem song, double height) => _popupButton(
+        Row(
           mainAxisAlignment: MainAxisAlignment.start,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
@@ -193,12 +189,38 @@ class _SongBookViewState extends State<SongBookView> {
                 children: [
                   Text(song.title),
                   const SizedBox(width: 16),
-                  Text('${song.artist}'),
+                  Text(song.artist),
                 ],
               ),
             ),
           ],
         ),
+      );
+
+  Widget _popupButton(Widget child) => PopupMenuButton<String>(
+        onSelected: (value) {
+          switch (value) {
+            case 'reserve':
+              // viewModel.reserveSong();
+              break;
+            case 'details':
+              // viewModel.viewDetails();
+              break;
+          }
+        },
+        itemBuilder: (BuildContext context) {
+          return [
+            PopupMenuItem<String>(
+              value: 'reserve',
+              child: Text("Reserve Song"),
+            ),
+            PopupMenuItem<String>(
+              value: 'details',
+              child: Text("View Details"),
+            ),
+          ];
+        },
+        child: child,
       );
 
   Widget _buildError(Failure state) => Column(
