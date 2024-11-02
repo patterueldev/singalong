@@ -91,6 +91,23 @@ class SingalongAPIClient {
     }
   }
 
+  Future<void> reserveSong(APIReserveSongParameters parameters) async {
+    try {
+      final postUri = _configuration.buildEndpoint(APIPath.reserveSong.value);
+      debugPrint("reserveSong: $postUri");
+      final bodyEncoded = jsonEncode(parameters.toJson());
+      final response =
+          await _client.post(postUri, headers: getHeaders(), body: bodyEncoded);
+      final result = GenericResponse.fromResponse(response);
+      if (result.status < 200 || result.status >= 300) {
+        throw Exception(result.message ?? "Unknown error");
+      }
+    } catch (e) {
+      debugPrint("reserveSong error: $e");
+      rethrow;
+    }
+  }
+
   // listen to reserved songs list from server
   Stream<List<APIReservedSong>> listenReservedSongs() {
     final socket = _sessionManager.getSocket();

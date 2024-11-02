@@ -45,8 +45,8 @@ class SongRepositoryDS : SongRepository {
             } else {
                 pagedSongsResult =
                     withContext(Dispatchers.IO) {
-                        songDocumentRepository.findByTitleAndArtist(
-                            keyword, keyword, pageable,
+                        songDocumentRepository.findByKeyword(
+                            keyword, pageable,
                         )
                     }
             }

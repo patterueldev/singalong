@@ -64,3 +64,22 @@ class APILoadSongsParameters {
       _$APILoadSongsParametersFromJson(json);
   Map<String, dynamic> toJson() => _$APILoadSongsParametersToJson(this);
 }
+
+@JsonSerializable()
+class APIReserveSongParameters {
+  final String songId;
+
+  APIReserveSongParameters({
+    required this.songId,
+  });
+
+  factory APIReserveSongParameters.fromJson(Map<String, dynamic> json) =>
+      _$APIReserveSongParametersFromJson(json);
+  Map<String, dynamic> toJson() => _$APIReserveSongParametersToJson(this);
+}
+
+/*
+{
+    "songId": "67092f560e02e456cb54813c"
+}
+ */

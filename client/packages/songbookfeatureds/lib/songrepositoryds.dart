@@ -41,4 +41,15 @@ class SongRepositoryDS implements SongRepository {
       throw e;
     }
   }
+
+  @override
+  Future<void> reserveSong(SongItem song) async {
+    try {
+      debugPrint('SongRepositoryDS: Reserving song: $song');
+      final parameters = APIReserveSongParameters(songId: song.id);
+      return await apiClient.reserveSong(parameters);
+    } catch (e) {
+      throw e;
+    }
+  }
 }

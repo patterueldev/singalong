@@ -28,13 +28,54 @@ class _SongBookViewState extends State<SongBookView> {
   final FocusNode _searchFocusNode = FocusNode();
 
   @override
+  void initState() {
+    super.initState();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      viewModel.toastMessageNotifier.addListener(_toastListener);
+    });
+  }
+
+  void _toastListener() {
+    final message = viewModel.toastMessageNotifier.value;
+    if (message != null) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(message),
+      ));
+      viewModel.toastMessageNotifier.value = null;
+    }
+  }
+
+  @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
+  Widget build(BuildContext context) => Stack(
+        children: [
+          _buildScaffold(context),
+          ValueListenableBuilder(
+            valueListenable: viewModel.isLoadingNotifier,
+            builder: (context, isLoading, child) {
+              if (isLoading) {
+                return Positioned.fill(
+                  child: Container(
+                    color: Colors.black54,
+                    child: const Center(
+                      child: CircularProgressIndicator(),
+                    ),
+                  ),
+                );
+              }
+              return const SizedBox.shrink();
+            },
+          ),
+        ],
+      );
+
+  Widget _buildScaffold(BuildContext context) => Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         appBar: AppBar(
           title: ValueListenableBuilder<bool>(
@@ -57,7 +98,6 @@ class _SongBookViewState extends State<SongBookView> {
                         border: InputBorder.none,
                         fillColor: Colors.grey,
                       ),
-                      style: const TextStyle(color: Colors.black),
                     )
                   : Text(
                       localizations.songBookScreenTitle.localizedOf(context));
@@ -160,6 +200,7 @@ class _SongBookViewState extends State<SongBookView> {
       );
 
   Widget _buildItem(SongItem song, double height) => _popupButton(
+        song,
         Row(
           mainAxisAlignment: MainAxisAlignment.start,
           crossAxisAlignment: CrossAxisAlignment.center,
@@ -197,14 +238,14 @@ class _SongBookViewState extends State<SongBookView> {
         ),
       );
 
-  Widget _popupButton(Widget child) => PopupMenuButton<String>(
+  Widget _popupButton(SongItem song, Widget child) => PopupMenuButton<String>(
         onSelected: (value) {
           switch (value) {
             case 'reserve':
-              // viewModel.reserveSong();
+              viewModel.reserveSong(song);
               break;
             case 'details':
-              // viewModel.viewDetails();
+              navigationCoordinator.openSongDetailScreen(context, song);
               break;
           }
         },

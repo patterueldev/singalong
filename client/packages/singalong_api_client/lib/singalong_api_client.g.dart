@@ -107,9 +107,9 @@ APIPaginatedSongs _$APIPaginatedSongsFromJson(Map<String, dynamic> json) =>
       items: (json['items'] as List<dynamic>)
           .map((e) => APISongItem.fromJson(e as Map<String, dynamic>))
           .toList(),
-      nextOffset: json['nextOffset'],
-      nextCursor: json['nextCursor'],
-      nextPage: json['nextPage'],
+      nextOffset: (json['nextOffset'] as num?)?.toInt(),
+      nextCursor: json['nextCursor'] as String?,
+      nextPage: (json['nextPage'] as num?)?.toInt(),
     );
 
 Map<String, dynamic> _$APIPaginatedSongsToJson(APIPaginatedSongs instance) =>
@@ -146,9 +146,9 @@ APILoadSongsParameters _$APILoadSongsParametersFromJson(
     APILoadSongsParameters(
       keyword: json['keyword'] as String?,
       limit: (json['limit'] as num?)?.toInt(),
-      nextOffset: json['nextOffset'],
-      nextCursor: json['nextCursor'],
-      nextPage: json['nextPage'],
+      nextOffset: (json['nextOffset'] as num?)?.toInt(),
+      nextCursor: json['nextCursor'] as String?,
+      nextPage: (json['nextPage'] as num?)?.toInt(),
     );
 
 Map<String, dynamic> _$APILoadSongsParametersToJson(
@@ -159,4 +159,16 @@ Map<String, dynamic> _$APILoadSongsParametersToJson(
       'nextOffset': instance.nextOffset,
       'nextCursor': instance.nextCursor,
       'nextPage': instance.nextPage,
+    };
+
+APIReserveSongParameters _$APIReserveSongParametersFromJson(
+        Map<String, dynamic> json) =>
+    APIReserveSongParameters(
+      songId: json['songId'] as String,
+    );
+
+Map<String, dynamic> _$APIReserveSongParametersToJson(
+        APIReserveSongParameters instance) =>
+    <String, dynamic>{
+      'songId': instance.songId,
     };

@@ -54,4 +54,9 @@ class WebAppCoordinator
   void openDownloadScreen(BuildContext context) {
     // TODO: implement openDownloadScreen
   }
+
+  @override
+  void openSongDetailScreen(BuildContext context, SongItem song) {
+    // TODO: implement openSongDetailScreen
+  }
 }

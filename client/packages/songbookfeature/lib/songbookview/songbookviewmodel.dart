@@ -3,10 +3,13 @@ part of '../songbookfeature.dart';
 abstract class SongBookViewModel {
   ValueNotifier<SongBookViewState> get stateNotifier;
   ValueNotifier<bool> get isSearchActive;
+  ValueNotifier<bool> get isLoadingNotifier; // for the HUD overlay
+  ValueNotifier<String?> get toastMessageNotifier;
 
   void fetchSongs(bool loadsNext);
   void toggleSearch();
   void updateSearchQuery(String query);
+  void reserveSong(SongItem song);
 }
 
 class SongBookException extends GenericException {
@@ -21,9 +24,11 @@ class SongBookException extends GenericException {
 
 class DefaultSongBookViewModel extends SongBookViewModel {
   final FetchSongsUseCase fetchSongsUseCase;
+  final ReserveSongUseCase reserveSongUseCase;
 
   DefaultSongBookViewModel({
     required this.fetchSongsUseCase,
+    required this.reserveSongUseCase,
   }) {
     fetchSongs(false);
   }
@@ -34,6 +39,13 @@ class DefaultSongBookViewModel extends SongBookViewModel {
 
   @override
   final ValueNotifier<bool> isSearchActive = ValueNotifier<bool>(false);
+
+  @override
+  final ValueNotifier<bool> isLoadingNotifier = ValueNotifier<bool>(false);
+
+  @override
+  final ValueNotifier<String?> toastMessageNotifier =
+      ValueNotifier<String?>(null);
 
   String? _searchQuery;
   Timer? _searchDebounce;
@@ -67,6 +79,23 @@ class DefaultSongBookViewModel extends SongBookViewModel {
           }
           stateNotifier.value = SongBookViewState.loaded(songList);
         }
+      },
+    );
+  }
+
+  @override
+  void reserveSong(SongItem song) async {
+    isLoadingNotifier.value = true;
+    final result = await reserveSongUseCase(song).run();
+    result.fold(
+      (exception) {
+        isLoadingNotifier.value = false;
+        stateNotifier.value = SongBookViewState.failure(exception.message);
+      },
+      (_) {
+        isLoadingNotifier.value = false;
+        // maybe show a toast
+        toastMessageNotifier.value = 'Song reserved';
       },
     );
   }

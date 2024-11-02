@@ -3,7 +3,6 @@ import 'package:controller_web/splash/splash_coordinator.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sessionfeature/sessionfeature.dart';
-import 'package:sessionfeatureds/sessionfeatureds.dart';
 import 'package:songbookfeature/songbookfeature.dart';
 
 class MobileAppCoordinator
@@ -56,5 +55,10 @@ class MobileAppCoordinator
   @override
   void openDownloadScreen(BuildContext context) {
     // TODO: implement openDownloadScreen
+  }
+
+  @override
+  void openSongDetailScreen(BuildContext context, SongItem song) {
+    // TODO: implement openSongDetailScreen
   }
 }
