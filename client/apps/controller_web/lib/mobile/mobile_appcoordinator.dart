@@ -1,20 +1,24 @@
 import 'package:connectfeature/connectfeature.dart';
-import 'package:controller_web/routes.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sessionfeature/sessionfeature.dart';
+import 'package:sessionfeatureds/sessionfeatureds.dart';
 import 'package:songbookfeature/songbookfeature.dart';
 
-class AppCoordinator
+class MobileAppCoordinator
     implements
         ConnectFlowCoordinator,
         SessionFlowCoordinator,
         SongBookFlowCoordinator {
-  const AppCoordinator();
+  const MobileAppCoordinator();
 
   @override
   void onConnected(BuildContext context) {
-    AppRoute.session.pushReplacement(context);
+    SessionFeatureBuilder sessionFeatureBuilder = context.read();
+    Navigator.of(context).push(
+      MaterialPageRoute(
+          builder: (context) => sessionFeatureBuilder.buildSessionView()),
+    );
   }
 
   @override
@@ -24,7 +28,12 @@ class AppCoordinator
 
   @override
   void onSongBook(BuildContext context) {
-    AppRoute.songBook.push(context);
+    SongBookFeatureProvider songBookFeatureProvider = context.read();
+    Navigator.of(context).push(
+      MaterialPageRoute(
+          builder: (context) =>
+              songBookFeatureProvider.buildSongBookView(context: context)),
+    );
   }
 
   @override

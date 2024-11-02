@@ -22,7 +22,7 @@ echo "Gradle build completed successfully."
 
 # Build the Flutter web project
 cd $flutterapp
-flutter build web
+flutter build web --target=lib/main_web.dart
 echo "Flutter web build completed successfully."
 cd $root
 

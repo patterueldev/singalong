@@ -1,5 +1,5 @@
 import 'package:connectfeature/connectfeature.dart';
-import 'package:controller_web/coordinator/app_coordinator.dart';
+import 'package:controller_web/web/webapp_coordinator.dart';
 import 'package:controller_web/splash/splash_screen.dart';
 import 'package:controller_web/splash/splash_viewmodel.dart';
 import 'package:flutter/material.dart';
