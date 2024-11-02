@@ -20,7 +20,7 @@ class ControllerMobileApp extends StatelessWidget {
       supportedLocales: AppLocalizations.supportedLocales,
       home: ChangeNotifierProvider<SplashScreenViewModel>(
         create: (_) => DefaultSplashScreenViewModel(),
-        child: const SplashScreen(),
+        child: SplashScreen(flow: context.read()),
       ),
     );
   }

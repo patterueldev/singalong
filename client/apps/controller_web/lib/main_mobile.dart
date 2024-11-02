@@ -1,5 +1,6 @@
 import 'package:connectfeature/connectfeature.dart';
 import 'package:controller_web/mobile/controller_mobileapp.dart';
+import 'package:controller_web/splash/splash_coordinator.dart';
 import 'package:controller_web/splash/splash_screen.dart';
 import 'package:controller_web/splash/splash_viewmodel.dart';
 import 'package:flutter/material.dart';
@@ -31,6 +32,7 @@ void main() {
 
   runApp(MultiProvider(
     providers: [
+      Provider<SplashFlowCoordinator>.value(value: appCoordinator),
       Provider<ConnectFlowCoordinator>.value(value: appCoordinator),
       Provider<SessionFlowCoordinator>.value(value: appCoordinator),
       Provider<SongBookFlowCoordinator>.value(value: appCoordinator),
@@ -57,7 +59,7 @@ class ControllerApp extends StatelessWidget {
       supportedLocales: AppLocalizations.supportedLocales,
       home: ChangeNotifierProvider<SplashScreenViewModel>(
         create: (_) => DefaultSplashScreenViewModel(),
-        child: const SplashScreen(),
+        child: SplashScreen(flow: context.read()),
       ),
     );
   }

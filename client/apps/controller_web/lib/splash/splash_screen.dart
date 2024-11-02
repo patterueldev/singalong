@@ -1,15 +1,20 @@
+import 'package:controller_web/splash/splash_coordinator.dart';
 import 'package:controller_web/splash/splash_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 class SplashScreen extends StatefulWidget {
-  const SplashScreen({Key? key}) : super(key: key);
+  const SplashScreen({super.key, required this.flow});
+
+  final SplashFlowCoordinator flow;
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
 class _SplashScreenState extends State<SplashScreen> {
+  SplashFlowCoordinator get flow => widget.flow;
+
   @override
   void initState() {
     super.initState();
@@ -20,22 +25,10 @@ class _SplashScreenState extends State<SplashScreen> {
       viewModel.didFinishStateNotifier.addListener(() {
         switch (viewModel.didFinishStateNotifier.value) {
           case FinishState.unauthenticated:
-            Navigator.of(context).pushReplacementNamed('/connect');
+            flow.onUnauthenticated(context);
             break;
           case FinishState.authenticated:
-            // if current address is '/' or '/connect', pushReplacementNamed('/session')
-            if (ModalRoute.of(context)!.settings.name == '/' ||
-                ModalRoute.of(context)!.settings.name == '/connect') {
-              Navigator.of(context).pushReplacementNamed('/session');
-            } else {
-              // retain the current address
-              // get the current address
-              final uri =
-                  Uri.parse(ModalRoute.of(context)!.settings.name ?? '');
-              // push the current address
-              Navigator.of(context).pushReplacementNamed(uri.path);
-              // dunno if this will work, yet
-            }
+            flow.onAuthenticated(context);
             break;
           case FinishState.none:
             break;

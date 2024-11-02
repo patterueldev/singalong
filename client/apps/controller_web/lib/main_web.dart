@@ -1,4 +1,5 @@
 import 'package:connectfeature/connectfeature.dart';
+import 'package:controller_web/splash/splash_coordinator.dart';
 import 'package:controller_web/web/webapp_coordinator.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -36,6 +37,7 @@ void main() {
 
   runApp(MultiProvider(
     providers: [
+      Provider<SplashFlowCoordinator>.value(value: appCoordinator),
       Provider<ConnectFlowCoordinator>.value(value: appCoordinator),
       Provider<SessionFlowCoordinator>.value(value: appCoordinator),
       Provider<SongBookFlowCoordinator>.value(value: appCoordinator),

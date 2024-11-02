@@ -21,7 +21,7 @@ Route<dynamic>? onGenerateRoute(RouteSettings settings, BuildContext context) {
       return MaterialPageRoute(
         builder: (context) => ChangeNotifierProvider<SplashScreenViewModel>(
           create: (_) => DefaultSplashScreenViewModel(),
-          child: const SplashScreen(),
+          child: SplashScreen(flow: context.read()),
         ),
       );
     case AppRoute.connect:
