@@ -2,6 +2,7 @@ library songbookfeature;
 
 import 'dart:async';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:fpdart/fpdart.dart' show TaskEither;
 import 'package:provider/provider.dart';

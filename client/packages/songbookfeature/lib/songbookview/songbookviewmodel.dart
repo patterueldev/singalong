@@ -24,7 +24,9 @@ class DefaultSongBookViewModel extends SongBookViewModel {
 
   DefaultSongBookViewModel({
     required this.fetchSongsUseCase,
-  });
+  }) {
+    fetchSongs(false);
+  }
 
   @override
   final ValueNotifier<SongBookViewState> stateNotifier =

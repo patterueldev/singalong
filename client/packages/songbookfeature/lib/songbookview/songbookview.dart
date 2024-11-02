@@ -28,14 +28,6 @@ class _SongBookViewState extends State<SongBookView> {
   final FocusNode _searchFocusNode = FocusNode();
 
   @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      viewModel.fetchSongs(false);
-    });
-  }
-
-  @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
@@ -92,6 +84,7 @@ class _SongBookViewState extends State<SongBookView> {
           child: ValueListenableBuilder<SongBookViewState>(
             valueListenable: viewModel.stateNotifier,
             builder: (context, state, child) {
+              debugPrint('SongBookViewState: $state');
               switch (state.type) {
                 case SongBookViewStateType.initial:
                 case SongBookViewStateType.loading:
@@ -151,7 +144,8 @@ class _SongBookViewState extends State<SongBookView> {
         ],
       );
 
-  Widget _buildSongList(List<SongItem> songList, bool isLoading) =>
+  Widget _buildSongList(List<SongItem> songList, bool isLoading,
+          {double height = 50}) =>
       Skeletonizer(
         enabled: isLoading,
         child: ListView.builder(
@@ -159,16 +153,51 @@ class _SongBookViewState extends State<SongBookView> {
           itemBuilder: (context, index) {
             final song = songList[index];
             return Card(
-              child: ListTile(
-                title: Text(song.title),
-                subtitle: Text(song.artist),
-                leading: Image.network(song.thumbnailURL),
-                trailing: song.alreadyPlayed
-                    ? const Icon(Icons.music_note_sharp)
-                    : null,
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: buildItem(song, height),
               ),
             );
           },
+        ),
+      );
+
+  Widget buildItem(SongItem song, double height) => Container(
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(height / 2),
+              child: Container(
+                color: Colors.grey,
+                height: height,
+                width: height,
+                child: CachedNetworkImage(
+                  imageUrl: song.thumbnailURL.toString(),
+                  placeholder: (context, url) => const Center(
+                    child: CircularProgressIndicator(),
+                  ),
+                  errorWidget: (context, url, error) =>
+                      const Icon(Icons.music_note),
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(song.title),
+                  const SizedBox(width: 16),
+                  Text('${song.artist}'),
+                ],
+              ),
+            ),
+          ],
         ),
       );
 
