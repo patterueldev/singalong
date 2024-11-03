@@ -23,6 +23,7 @@ class DefaultSongIdentifierRepository implements SongIdentifierRepository {
         isOffVocal: result.isOffVocal,
         videoHasLyrics: result.videoHasLyrics,
         songLyrics: result.songLyrics,
+        alreadyExists: result.alreadyExists,
       );
     } catch (e, st) {
       debugPrint("Error: $e");
