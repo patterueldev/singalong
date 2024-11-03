@@ -32,7 +32,7 @@ Route<dynamic>? onGenerateRoute(RouteSettings settings, BuildContext context) {
       return MaterialPageRoute(
         builder: (context) => connectProvider.buildConnectView(
           name: arguments?['name'] ?? '',
-          roomId: arguments?['roomId'] ?? '569841',
+          roomId: arguments?['roomId'] ?? '',
         ),
       );
     case AppRoute.session:

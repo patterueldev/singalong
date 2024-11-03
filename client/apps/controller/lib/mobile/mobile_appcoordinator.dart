@@ -22,7 +22,7 @@ class MobileAppCoordinator
     final route = MaterialPageRoute(
       builder: (context) => connectProvider.buildConnectView(
         name: username ?? '',
-        roomId: roomId ?? '569841',
+        roomId: roomId ?? '',
       ),
     );
     Navigator.of(context).pushReplacement(route);
