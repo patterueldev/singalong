@@ -1,10 +1,8 @@
-# TODO: TEMPORARY DEPLOYMENT; we need to configure the actual project's Dockerfile
-# THIS IS just a temporary deployment for the UI Builder project for quick testing
 # Use the official Nginx image as the base image
 FROM nginx:alpine
 
 # Copy the built Flutter web files to the Nginx HTML directory
-COPY apps/controller_web/build/web /usr/share/nginx/html
+COPY apps/controller/build/web /usr/share/nginx/html
 
 # Copy the Nginx configuration file
 COPY nginx.conf /etc/nginx/conf.d/default.conf
