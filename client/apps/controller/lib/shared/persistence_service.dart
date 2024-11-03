@@ -1,4 +1,5 @@
 import 'package:encrypt_shared_preferences/provider.dart';
+import 'package:flutter/foundation.dart';
 import 'package:shared/shared.dart';
 
 class PersistenceServiceImpl implements PersistenceService {
@@ -18,24 +19,30 @@ class PersistenceServiceImpl implements PersistenceService {
   @override
   Future<String?> getRoomId() async {
     await configureSharedPref();
-    return sharedPref!.getString(roomKey);
+    final roomId = sharedPref!.getString(roomKey);
+    debugPrint('Retrieved room id: $roomId');
+    return roomId;
   }
 
   @override
   Future<String?> getUsername() async {
     await configureSharedPref();
-    return sharedPref!.getString(usernameKey);
+    final username = sharedPref!.getString(usernameKey);
+    debugPrint('Retrieved username: $username');
+    return username;
   }
 
   @override
   Future<void> saveRoomId(String roomId) async {
     await configureSharedPref();
+    debugPrint('Saving room id: $roomId');
     sharedPref!.setString(roomKey, roomId);
   }
 
   @override
   Future<void> saveUsername(String username) async {
     await configureSharedPref();
+    debugPrint('Saving username: $username');
     sharedPref!.setString(usernameKey, username);
   }
 }

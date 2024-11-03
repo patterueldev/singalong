@@ -3,7 +3,8 @@ part of 'singalong_api_client.dart';
 enum APIPath {
   sessionConnect,
   songs,
-  reserveSong;
+  reserveSong,
+  identifySong;
 
   String get value {
     switch (this) {
@@ -13,6 +14,8 @@ enum APIPath {
         return '/songs';
       case reserveSong:
         return '/songs/reserve';
+      case identifySong:
+        return '/songs/identify';
     }
   }
 }

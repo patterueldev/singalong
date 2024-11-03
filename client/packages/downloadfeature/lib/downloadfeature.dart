@@ -24,33 +24,34 @@ part 'details/songdetailsdownloadstate.dart';
 part 'details/downloadusecase.dart';
 
 class DownloadFeatureProvider {
-  DownloadFeatureProvider();
+  final DownloadFlowController coordinator;
+  final DownloadLocalizations localizations;
+  final DownloadAssets assets;
+  final SongIdentifierRepository songIdentifierRepository;
 
-  final providers = MultiProvider(providers: [
-    Provider<IdentifySongUrlUseCase>(
-      create: (context) => DefaultIdentifySongUrlUseCase(
-        songIdentifierRepository: context.read(),
-      ),
-    ),
-    Provider<DownloadUseCase>(
-      create: (context) => DefaultDownloadUseCase(
-        identifiedSongRepository: context.read(),
-      ),
-    ),
-  ]);
+  DownloadFeatureProvider({
+    required this.coordinator,
+    required this.localizations,
+    required this.assets,
+    required this.songIdentifierRepository,
+  });
 
-  Widget buildIdentifyUrlView({
-    required BuildContext context,
-    required DownloadAssets assets,
-  }) =>
+  late final _identifySongUseCase = DefaultIdentifySongUrlUseCase(
+    songIdentifierRepository: songIdentifierRepository,
+  );
+
+  late final _downloadUseCase = DefaultDownloadUseCase(
+    identifiedSongRepository: songIdentifierRepository,
+  );
+
+  Widget buildIdentifyUrlView({required BuildContext context}) =>
       ChangeNotifierProvider<IdentifySongViewModel>(
         create: (context) => DefaultIdentifySongViewModel(
-          identifySongUrlUseCase: context.read(),
-        ),
+            identifySongUrlUseCase: _identifySongUseCase),
         child: IdentifySongView(
           assets: assets,
-          flow: context.read(),
-          localizations: context.read(),
+          flow: coordinator,
+          localizations: localizations,
         ),
       );
 
@@ -66,12 +67,12 @@ class DownloadFeatureProvider {
   }) =>
       ChangeNotifierProvider<SongDetailsViewModel>(
         create: (context) => DefaultSongDetailsViewModel(
-          downloadUseCase: context.read(),
+          downloadUseCase: _downloadUseCase,
           identifiedSongDetails: identifiedSongDetails,
         ),
         child: SongDetailsView(
-          flow: context.read(),
-          localizations: context.read(),
+          flow: coordinator,
+          localizations: localizations,
         ),
       );
 }

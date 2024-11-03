@@ -1,23 +1,25 @@
 part of '../connectfeature.dart';
 
-abstract class ConnectViewModel {
+abstract class ConnectViewModel extends ChangeNotifier {
   ValueNotifier<ConnectViewState> get stateNotifier;
   TextEditingController get nameController;
   TextEditingController get sessionIdController;
+  void load();
   void connect();
   void clear();
 }
 
-class DefaultConnectViewModel implements ConnectViewModel {
+class DefaultConnectViewModel extends ConnectViewModel {
   final EstablishConnectionUseCase connectUseCase;
+  final PersistenceService persistenceService;
+
   DefaultConnectViewModel({
     required this.connectUseCase,
-    String name = '',
-    String roomId = '',
-  }) {
-    nameController.text = name;
-    sessionIdController.text = roomId;
-  }
+    required this.persistenceService,
+    this.name,
+    this.roomId,
+  });
+
   @override
   final TextEditingController nameController = TextEditingController();
   @override
@@ -27,7 +29,22 @@ class DefaultConnectViewModel implements ConnectViewModel {
   final ValueNotifier<ConnectViewState> stateNotifier =
       ValueNotifier(ConnectViewState.initial());
 
+  String? name;
+  String? roomId;
+
   bool didShowError = false;
+
+  @override
+  void load() async {
+    stateNotifier.value = ConnectViewState.connecting();
+    name = name ?? await persistenceService.getUsername();
+    roomId = roomId ?? await persistenceService.getRoomId();
+    nameController.text = name ?? nameController.text;
+    sessionIdController.text = roomId ?? sessionIdController.text;
+    debugPrint('name: $name, roomId: $roomId');
+    stateNotifier.value = ConnectViewState.initial();
+  }
+
   @override
   void connect() async {
     const stoppers = [

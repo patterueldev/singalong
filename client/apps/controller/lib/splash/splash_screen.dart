@@ -4,16 +4,16 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 class SplashScreen extends StatefulWidget {
-  const SplashScreen({super.key, required this.flow});
+  const SplashScreen({super.key, this.flow});
 
-  final SplashFlowCoordinator flow;
+  final SplashFlowCoordinator? flow;
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
 class _SplashScreenState extends State<SplashScreen> {
-  SplashFlowCoordinator get flow => widget.flow;
+  SplashFlowCoordinator? get flow => widget.flow;
 
   @override
   void initState() {
@@ -23,16 +23,15 @@ class _SplashScreenState extends State<SplashScreen> {
       final viewModel =
           Provider.of<SplashScreenViewModel>(context, listen: false);
       viewModel.didFinishStateNotifier.addListener(() {
-        switch (viewModel.didFinishStateNotifier.value) {
-          case FinishState.unauthenticated:
-            flow.onUnauthenticated(context,
-                username: viewModel.username, roomId: viewModel.roomId);
-            break;
-          case FinishState.authenticated:
-            flow.onAuthenticated(context);
-            break;
-          case FinishState.none:
-            break;
+        final state = viewModel.didFinishStateNotifier.value;
+        if (state.status == SplashStatus.idle) return;
+        if (state.status == SplashStatus.checking) return;
+        if (state.status == SplashStatus.unauthenticated) {
+          flow?.onUnauthenticated(context);
+        }
+        if (state is AuthenticatedState) {
+          flow?.onAuthenticated(context,
+              redirectPath: state.redirectRoute?.path);
         }
       });
 

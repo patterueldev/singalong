@@ -1,4 +1,5 @@
 import 'package:connectfeature/connectfeature.dart';
+import 'package:downloadfeature/downloadfeature.dart';
 import 'package:flutter/material.dart';
 import 'package:sessionfeature/sessionfeature.dart';
 import 'package:shared/shared.dart';
@@ -10,7 +11,8 @@ class DefaultAppLocalizations
         GenericLocalizationsMixin,
         ConnectLocalizationsMixin,
         SessionLocalizationsMixin,
-        SongBookLocalizationsMixin {}
+        SongBookLocalizationsMixin,
+        DownloadLocalizationsMixin {}
 
 LocalizedString _getLocalizedString(
         String Function(AppLocalizations) getString) =>
@@ -159,4 +161,69 @@ mixin SongBookLocalizationsMixin implements SongBookLocalizations {
     return _getLocalizedString(
         (localizations) => localizations.songNotFound(query));
   }
+}
+
+mixin DownloadLocalizationsMixin implements DownloadLocalizations {
+  @override
+  LocalizedString unhandled(String message) =>
+      LocalizedString((context) => "An unhandled error occurred: $message");
+
+  @override
+  LocalizedString get songDetailsScreenTitleText =>
+      LocalizedString((context) => "Song Details");
+
+  @override
+  LocalizedString get songTitlePlaceholderText =>
+      LocalizedString((context) => "Song Title");
+
+  @override
+  LocalizedString get songArtistPlaceholderText =>
+      LocalizedString((context) => "Song Artist");
+  @override
+  LocalizedString get songLanguagePlaceholderText =>
+      LocalizedString((context) => "Song Language");
+
+  @override
+  LocalizedString get isOffVocalText =>
+      LocalizedString((context) => "Is Off Vocal");
+
+  @override
+  LocalizedString get hasLyricsText =>
+      LocalizedString((context) => "Has Lyrics");
+
+  @override
+  LocalizedString get lyricsPlaceholderText =>
+      LocalizedString((context) => "Lyrics");
+
+  @override
+  LocalizedString get downloadOnlyText =>
+      LocalizedString((context) => "Download Only");
+
+  @override
+  LocalizedString get downloadAndReserveText =>
+      LocalizedString((context) => "Download & Reserve");
+
+  @override
+  LocalizedString get identifySongScreenTitleText =>
+      LocalizedString((context) => "Identify Song");
+
+  @override
+  LocalizedString get identifySongUrlPlaceholderText =>
+      LocalizedString((context) => "Identify Song URL");
+
+  @override
+  LocalizedString get identifySongSubmitButtonText =>
+      LocalizedString((context) => "Identify");
+
+  @override
+  LocalizedString get emptyUrl =>
+      LocalizedString((context) => "The URL cannot be empty");
+
+  @override
+  LocalizedString get invalidUrl =>
+      LocalizedString((context) => "The URL is invalid");
+
+  @override
+  LocalizedString get unableToIdentifySong =>
+      LocalizedString((context) => "Unable to identify the song");
 }

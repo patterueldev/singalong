@@ -2,6 +2,7 @@ import 'package:connectfeature/connectfeature.dart';
 import 'package:controller/splash/splash_coordinator.dart';
 import 'package:controller/splash/splash_screen.dart';
 import 'package:controller/splash/splash_viewmodel.dart';
+import 'package:downloadfeature/downloadfeature.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sessionfeature/sessionfeature.dart';
@@ -35,6 +36,7 @@ void main() {
       Provider<ConnectFlowCoordinator>.value(value: appCoordinator),
       Provider<SessionFlowCoordinator>.value(value: appCoordinator),
       Provider<SongBookFlowCoordinator>.value(value: appCoordinator),
+      Provider<DownloadFlowController>.value(value: appCoordinator),
       Provider<SingalongAPIConfiguration>.value(value: APIConfiguration()),
       buildProviders(),
     ],

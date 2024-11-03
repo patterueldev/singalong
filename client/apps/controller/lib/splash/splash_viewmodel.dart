@@ -1,45 +1,33 @@
+import 'package:controller/web/approute.dart';
 import 'package:flutter/material.dart';
 import 'package:shared/shared.dart';
 
-enum FinishState {
-  none,
-  authenticated,
-  unauthenticated,
-}
-
 abstract class SplashScreenViewModel extends ChangeNotifier {
-  ValueNotifier<FinishState> get didFinishStateNotifier;
-
-  String? get username;
-  String? get roomId;
-
+  ValueNotifier<SplashState> get didFinishStateNotifier;
   void load();
 }
 
-class DefaultSplashScreenViewModel extends SplashScreenViewModel {
-  final PersistenceService persistenceService;
+class SplashState {
+  final SplashStatus status;
 
-  DefaultSplashScreenViewModel({
-    required this.persistenceService,
-  });
+  SplashState(this.status);
 
-  @override
-  final ValueNotifier<FinishState> didFinishStateNotifier =
-      ValueNotifier(FinishState.none);
+  factory SplashState.idle() => SplashState(SplashStatus.idle);
+  factory SplashState.checking() => SplashState(SplashStatus.checking);
+  factory SplashState.unauthenticated() =>
+      SplashState(SplashStatus.unauthenticated);
+  factory SplashState.authenticated(AppRoute? redirectRoute) =>
+      AuthenticatedState(redirectRoute);
+}
 
-  String? username;
-  String? roomId;
+class AuthenticatedState extends SplashState {
+  final AppRoute? redirectRoute;
+  AuthenticatedState(this.redirectRoute) : super(SplashStatus.authenticated);
+}
 
-  @override
-  void load() async {
-    try {
-      debugPrint("Attempting to load username and room id");
-      username = await persistenceService.getUsername();
-      roomId = await persistenceService.getRoomId();
-    } catch (e) {
-      debugPrint("Error while loading: $e");
-    }
-    await Future.delayed(const Duration(seconds: 2));
-    didFinishStateNotifier.value = FinishState.unauthenticated;
-  }
+enum SplashStatus {
+  idle,
+  checking,
+  authenticated,
+  unauthenticated,
 }

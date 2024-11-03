@@ -39,6 +39,8 @@ dependencies:
   sessionfeatureds:
   songbookfeature:
   songbookfeatureds:
+  downloadfeature:
+  downloadfeature_ds:
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
@@ -48,6 +50,7 @@ dependencies:
   flutter_localizations:
     sdk: flutter
   intl: ^0.18.1
+  url_strategy: ^0.3.0
 
 dev_dependencies:
   flutter_test:

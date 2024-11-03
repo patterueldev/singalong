@@ -268,7 +268,7 @@ class _SongBookViewState extends State<SongBookView> {
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          assets.errorBannerImage.image(),
+          assets.errorBannerImage.image(height: 100),
           Text(
             state.error,
             textAlign: TextAlign.center,

@@ -2,6 +2,7 @@ library connectfeature;
 
 import 'package:flutter/material.dart';
 import 'package:fpdart/fpdart.dart' show Either, TaskEither, Unit, unit;
+import 'package:provider/provider.dart';
 import 'package:shared/shared.dart';
 
 part 'connectscene/connectview.dart';
@@ -30,18 +31,22 @@ class ConnectFeatureBuilder {
   late final establishConnectionUseCase =
       EstablishConnectionUseCase(connectRepository: connectRepository);
 
-  Widget buildConnectView({
-    String name = '',
-    String roomId = '',
+  Widget buildConnectView(
+    BuildContext context, {
+    String? name,
+    String? roomId,
   }) =>
-      ConnectView(
-        viewModel: DefaultConnectViewModel(
+      ChangeNotifierProvider<ConnectViewModel>(
+        create: (context) => DefaultConnectViewModel(
           connectUseCase: establishConnectionUseCase,
+          persistenceService: context.read(),
           name: name,
           roomId: roomId,
         ),
-        flow: coordinator,
-        localizations: localizations,
-        assets: assets,
+        child: ConnectView(
+          flow: coordinator,
+          localizations: localizations,
+          assets: assets,
+        ),
       );
 }

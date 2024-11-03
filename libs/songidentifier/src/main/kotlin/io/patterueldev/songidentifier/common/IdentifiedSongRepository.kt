@@ -3,6 +3,8 @@ package io.patterueldev.songidentifier.common
 interface IdentifiedSongRepository {
     suspend fun identifySong(url: String): IdentifiedSong?
 
+    suspend fun getExistingSong(identifiedSong: IdentifiedSong): IdentifiedSong?
+
     suspend fun enhanceSong(identifiedSong: IdentifiedSong): IdentifiedSong
 
     suspend fun saveSong(

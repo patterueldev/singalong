@@ -12,6 +12,7 @@ dependencies:
     sdk: flutter
   fpdart: ^1.1.0
   
+  provider: ^6.1.2
   shared:
 
 dev_dependencies:

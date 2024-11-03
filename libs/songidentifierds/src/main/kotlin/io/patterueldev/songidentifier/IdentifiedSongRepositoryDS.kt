@@ -49,9 +49,27 @@ internal class IdentifiedSongRepositoryDS : IdentifiedSongRepository {
             }
         } catch (e: Exception) {
             println("Error occurred while attempting to identify: ${e.message}")
-            println("Error occurred while attempting to identify:")
-            println(e.message)
             null
+        }
+    }
+
+    override suspend fun getExistingSong(identifiedSong: IdentifiedSong): IdentifiedSong? {
+        try {
+            val existing = songDocumentRepository.findBySourceId(identifiedSong.id) ?: return null
+            return identifiedSong.copy(
+                songTitle = existing.title,
+                songArtist = existing.artist,
+                songLanguage = existing.language,
+                isOffVocal = existing.isOffVocal,
+                videoHasLyrics = existing.videoHasLyrics,
+                songLyrics = existing.songLyrics,
+                lengthSeconds = existing.lengthSeconds,
+                metadata = existing.metadata,
+                alreadyExists = true,
+            )
+        } catch (e: Exception) {
+            println("Error occurred while attempting to check for existence: ${e.message}")
+            return null
         }
     }
 

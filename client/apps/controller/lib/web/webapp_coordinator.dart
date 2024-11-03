@@ -1,6 +1,9 @@
 import 'package:connectfeature/connectfeature.dart';
-import 'package:controller/web/routes.dart';
+import 'package:controller/web/approute.dart';
+import 'package:controller/web/on_generate_routes.dart';
+import 'package:downloadfeature/downloadfeature.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:sessionfeature/sessionfeature.dart';
 import 'package:songbookfeature/songbookfeature.dart';
 
@@ -11,37 +14,16 @@ class WebAppCoordinator
         SplashFlowCoordinator,
         ConnectFlowCoordinator,
         SessionFlowCoordinator,
-        SongBookFlowCoordinator {
+        SongBookFlowCoordinator,
+        DownloadFlowController {
   const WebAppCoordinator();
 
   @override
-  void onUnauthenticated(
-    BuildContext context, {
-    String? username,
-    String? roomId,
-  }) {
-    AppRoute.connect.pushReplacement(context, arguments: {
-      'name': username,
-      'roomId': roomId,
-    });
-  }
+  void onUnauthenticated(BuildContext context) =>
+      AppRoute.sessionConnect.pushReplacement(context);
 
   @override
-  void onAuthenticated(BuildContext context) {
-    // TODO: Polish this
-    // if current address is '/' or '/connect', pushReplacementNamed('/session')
-    if (ModalRoute.of(context)!.settings.name == '/' ||
-        ModalRoute.of(context)!.settings.name == '/connect') {
-      Navigator.of(context).pushReplacementNamed('/session');
-    } else {
-      // retain the current address
-      // get the current address
-      final uri = Uri.parse(ModalRoute.of(context)!.settings.name ?? '');
-      // push the current address
-      Navigator.of(context).pushReplacementNamed(uri.path);
-      // dunno if this will work, yet
-    }
-  }
+  void onAuthenticated(BuildContext context, {String? redirectPath}) {}
 
   @override
   void onConnected(BuildContext context) {
@@ -55,16 +37,23 @@ class WebAppCoordinator
 
   @override
   void onSongBook(BuildContext context) {
-    AppRoute.songBook.push(context);
+    AppRoute.songBook.pushReplacement(context);
   }
 
   @override
-  void openDownloadScreen(BuildContext context) {
-    // TODO: implement openDownloadScreen
-  }
+  void openDownloadScreen(BuildContext context) {}
 
   @override
   void openSongDetailScreen(BuildContext context, SongItem song) {
     // TODO: implement openSongDetailScreen
+  }
+
+  @override
+  void navigateToIdentifiedSongDetailsView(BuildContext context,
+      {required IdentifiedSongDetails details}) {}
+
+  @override
+  void onDownloadSuccess(BuildContext context) {
+    // TODO: implement onDownloadSuccess
   }
 }

@@ -12,6 +12,7 @@ data class IdentifiedSong(
     val songLyrics: String,
     val lengthSeconds: Int,
     val metadata: Map<String, Any>?,
+    val alreadyExists: Boolean = false,
 ) {
     fun copy(
         id: String? = this.id,
@@ -25,6 +26,7 @@ data class IdentifiedSong(
         songLyrics: String? = this.songLyrics,
         lengthSeconds: Int? = this.lengthSeconds,
         metadata: Map<String, Any>? = this.metadata,
+        alreadyExists: Boolean? = this.alreadyExists,
     ) = IdentifiedSong(
         id = id ?: this.id,
         source = source ?: this.source,
@@ -37,5 +39,6 @@ data class IdentifiedSong(
         songLyrics = songLyrics ?: this.songLyrics,
         lengthSeconds = lengthSeconds ?: this.lengthSeconds,
         metadata = metadata ?: this.metadata,
+        alreadyExists = alreadyExists ?: this.alreadyExists,
     )
 }

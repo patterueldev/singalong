@@ -172,3 +172,49 @@ Map<String, dynamic> _$APIReserveSongParametersToJson(
     <String, dynamic>{
       'songId': instance.songId,
     };
+
+APIIdentifiedSongDetails _$APIIdentifiedSongDetailsFromJson(
+        Map<String, dynamic> json) =>
+    APIIdentifiedSongDetails(
+      id: json['id'] as String,
+      source: json['source'] as String,
+      imageUrl: json['imageUrl'] as String,
+      songTitle: json['songTitle'] as String,
+      songArtist: json['songArtist'] as String,
+      songLanguage: json['songLanguage'] as String,
+      isOffVocal: json['isOffVocal'] as bool,
+      videoHasLyrics: json['videoHasLyrics'] as bool,
+      songLyrics: json['songLyrics'] as String,
+      lengthSeconds: (json['lengthSeconds'] as num).toInt(),
+      metadata: json['metadata'] as Map<String, dynamic>?,
+      alreadyExists: json['alreadyExists'] as bool,
+    );
+
+Map<String, dynamic> _$APIIdentifiedSongDetailsToJson(
+        APIIdentifiedSongDetails instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'source': instance.source,
+      'imageUrl': instance.imageUrl,
+      'songTitle': instance.songTitle,
+      'songArtist': instance.songArtist,
+      'songLanguage': instance.songLanguage,
+      'isOffVocal': instance.isOffVocal,
+      'videoHasLyrics': instance.videoHasLyrics,
+      'songLyrics': instance.songLyrics,
+      'lengthSeconds': instance.lengthSeconds,
+      'metadata': instance.metadata,
+      'alreadyExists': instance.alreadyExists,
+    };
+
+APIIdentifySongParameters _$APIIdentifySongParametersFromJson(
+        Map<String, dynamic> json) =>
+    APIIdentifySongParameters(
+      url: json['url'] as String,
+    );
+
+Map<String, dynamic> _$APIIdentifySongParametersToJson(
+        APIIdentifySongParameters instance) =>
+    <String, dynamic>{
+      'url': instance.url,
+    };

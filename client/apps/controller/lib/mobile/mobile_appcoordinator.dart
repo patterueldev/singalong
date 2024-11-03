@@ -1,4 +1,5 @@
 import 'package:connectfeature/connectfeature.dart';
+import 'package:downloadfeature/downloadfeature.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sessionfeature/sessionfeature.dart';
@@ -11,25 +12,22 @@ class MobileAppCoordinator
         SplashFlowCoordinator,
         ConnectFlowCoordinator,
         SessionFlowCoordinator,
-        SongBookFlowCoordinator {
+        SongBookFlowCoordinator,
+        DownloadFlowController {
   @override
-  void onUnauthenticated(
-    BuildContext context, {
-    String? username,
-    String? roomId,
-  }) {
+  void onUnauthenticated(BuildContext context) {
     final connectProvider = context.read<ConnectFeatureBuilder>();
     final route = MaterialPageRoute(
-      builder: (context) => connectProvider.buildConnectView(
-        name: username ?? '',
-        roomId: roomId ?? '',
-      ),
+      builder: (context) => connectProvider.buildConnectView(context),
     );
     Navigator.of(context).pushReplacement(route);
   }
 
   @override
-  void onAuthenticated(BuildContext context) {
+  void onAuthenticated(
+    BuildContext context, {
+    String? redirectPath,
+  }) {
     // TODO: implement onAuthenticated
   }
 
@@ -59,11 +57,36 @@ class MobileAppCoordinator
 
   @override
   void openDownloadScreen(BuildContext context) {
-    // TODO: implement openDownloadScreen
+    DownloadFeatureProvider downloadFeatureProvider = context.read();
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(
+        builder: (context) =>
+            downloadFeatureProvider.buildIdentifyUrlView(context: context),
+      ),
+    );
   }
 
   @override
   void openSongDetailScreen(BuildContext context, SongItem song) {
     // TODO: implement openSongDetailScreen
+  }
+
+  @override
+  void navigateToIdentifiedSongDetailsView(BuildContext context,
+      {required IdentifiedSongDetails details}) {
+    DownloadFeatureProvider downloadFeatureProvider = context.read();
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => downloadFeatureProvider.buildSongDetailsView(
+          context: context,
+          identifiedSongDetails: details,
+        ),
+      ),
+    );
+  }
+
+  @override
+  void onDownloadSuccess(BuildContext context) {
+    // TODO: implement onDownloadSuccess
   }
 }

@@ -1,95 +1,29 @@
 import 'package:connectfeature/connectfeature.dart';
+import 'package:controller/splash/splash_provider.dart';
+import 'package:controller/splash/splash_screen.dart';
+import 'package:controller/web/approute.dart';
 import 'package:flutter/material.dart';
-import 'dart:html' as html;
-
 import 'package:provider/provider.dart';
 import 'package:sessionfeature/sessionfeature.dart';
 import 'package:songbookfeature/songbookfeature.dart';
 
-import '../splash/splash_screen.dart';
 import '../splash/splash_viewmodel.dart';
+import '../splash/web_splash_viewmodel.dart';
 
-Route<dynamic>? onGenerateRoute(RouteSettings settings, BuildContext context) {
-  final uri = Uri.parse(settings.name ?? '');
-  debugPrint('onGenerateRoute: ${uri.path}');
-  debugPrint('onGenerateRoute queryParameters: ${uri.queryParameters}');
-  html.window.history.pushState(null, '', uri.path);
-
-  final route = AppRoute.fromPath(uri.path);
-  switch (route) {
-    case AppRoute.initial:
-      return MaterialPageRoute(
-        builder: (context) => ChangeNotifierProvider<SplashScreenViewModel>(
-          create: (_) => DefaultSplashScreenViewModel(
-            persistenceService: context.read(),
-          ),
-          child: SplashScreen(flow: context.read()),
-        ),
-      );
-    case AppRoute.connect:
-      final arguments = settings.arguments as Map<String, dynamic>?;
-      final connectProvider = context.read<ConnectFeatureBuilder>();
-      return MaterialPageRoute(
-        builder: (context) => connectProvider.buildConnectView(
-          name: arguments?['name'] ?? '',
-          roomId: arguments?['roomId'] ?? '',
-        ),
-      );
-    case AppRoute.session:
-      return MaterialPageRoute(
-        builder: (context) =>
-            context.read<SessionFeatureBuilder>().buildSessionView(),
-      );
-    case AppRoute.songBook:
-      return MaterialPageRoute(
-        builder: (context) => context
-            .read<SongBookFeatureProvider>()
-            .buildSongBookView(context: context),
-      );
-    case AppRoute.notFound:
-      return MaterialPageRoute(
-        builder: (context) => Scaffold(
-          body: Center(
-            child: Text('404 Not Found'),
-          ),
-        ),
-      );
-  }
-}
-
-enum AppRoute {
-  initial,
-  connect,
-  session,
-  songBook,
-  notFound,
-  ;
-
-  String get path {
-    switch (this) {
-      case AppRoute.initial:
-        return '/';
-      case AppRoute.connect:
-        return '/connect';
-      case AppRoute.session:
-        return '/session';
-      case AppRoute.songBook:
-        return '/songbook';
-      case AppRoute.notFound:
-        return '/404';
-    }
-  }
-
-  void pushReplacement(BuildContext context, {Object? arguments}) {
-    Navigator.of(context).pushReplacementNamed(path, arguments: arguments);
-  }
-
-  void push(BuildContext context) {
-    Navigator.of(context).pushNamed(path);
-  }
-
-  static AppRoute fromPath(String path) => AppRoute.values.firstWhere(
-        (element) => element.path == path,
-        orElse: () => AppRoute.notFound,
-      );
-}
+Map<String, Widget Function(BuildContext)> routes = {
+  // AppRoute.initial.path: (context) =>
+  //     context.read<SplashProvider>().buildSplashScreen(context),
+  AppRoute.initial.path: (context) =>
+      ChangeNotifierProvider<SplashScreenViewModel>(
+        create: (context) =>
+            WebSplashScreenViewModel(persistenceService: context.read()),
+        child: SplashScreen(flow: context.read()),
+      ),
+  AppRoute.sessionConnect.path: (context) =>
+      context.read<ConnectFeatureBuilder>().buildConnectView(context),
+  AppRoute.session.path: (context) =>
+      context.read<SessionFeatureBuilder>().buildSessionView(),
+  AppRoute.songBook.path: (context) => context
+      .read<SongBookFeatureProvider>()
+      .buildSongBookView(context: context),
+};
