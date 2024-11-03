@@ -6,8 +6,9 @@ class ConnectivityPanelWidget extends StatefulWidget {
       _ConnectivityPanelWidgetState();
 }
 
+// TODO: Not a priority now, but the room ID should be dynamic
 class _ConnectivityPanelWidgetState extends State<ConnectivityPanelWidget> {
-  final roomId = '123456';
+  final roomId = '569841';
   final qrData = 'https://youtu.be/dQw4w9WgXcQ'; // Rick Roll
 
   @override
@@ -30,7 +31,9 @@ class _ConnectivityPanelWidgetState extends State<ConnectivityPanelWidget> {
             ),
             Text(
               roomId,
-              style: TextStyle(fontSize: constraints.maxHeight * 0.03),
+              style: TextStyle(
+                  fontSize: constraints.maxHeight * 0.03,
+                  fontWeight: FontWeight.bold),
             ),
           ],
         ),
