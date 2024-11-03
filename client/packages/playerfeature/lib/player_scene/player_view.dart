@@ -27,7 +27,7 @@ class _PlayerViewState extends State<PlayerView> {
               // Left panel
               Expanded(
                 flex: 1,
-                child: Container(),
+                child: ConnectivityPanelWidget(),
               ),
 
               Expanded(

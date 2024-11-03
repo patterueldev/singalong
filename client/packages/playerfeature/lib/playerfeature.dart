@@ -6,6 +6,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:fpdart/fpdart.dart' show TaskEither, Unit, unit;
 import 'package:provider/provider.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 import 'package:shared/shared.dart';
 import 'package:video_player/video_player.dart';
 
@@ -20,6 +21,7 @@ part 'current_song/currentsongrepository.dart';
 part 'reserved_widget/reserved_widget.dart';
 part 'reserved_widget/reserved_viewmodel.dart';
 part 'reserved_widget/listentosonglistupdatesusecase.dart';
+part 'connectivity_panel_widget/connectivity_panel_widget.dart';
 
 class PlayerFeatureBuilder {
   final ConnectRepository connectRepository;
