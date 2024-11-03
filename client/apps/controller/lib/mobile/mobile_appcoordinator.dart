@@ -17,7 +17,7 @@ class MobileAppCoordinator
     final connectProvider = context.read<ConnectFeatureBuilder>();
     final route = MaterialPageRoute(
       builder: (context) => connectProvider.buildConnectView(
-        name: 'natsumi',
+        name: '',
         roomId: '569841',
       ),
     );

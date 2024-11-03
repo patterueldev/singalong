@@ -3,6 +3,7 @@ part of '../connectfeature.dart';
 abstract class ConnectRepository {
   Future<ConnectResponse> connect(ConnectParameters parameters);
   void provideAccessToken(String accessToken);
+  void saveSession(String username, String roomId);
 }
 
 class ConnectParameters {

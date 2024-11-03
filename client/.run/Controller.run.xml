@@ -1,6 +1,6 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="Controller" type="FlutterRunConfigurationType" factoryName="Flutter">
-    <option name="filePath" value="$PROJECT_DIR$/apps/controller/lib/main_mobile.dart" />
+    <option name="filePath" value="$PROJECT_DIR$/apps/controller/lib/main.dart" />
     <method v="2" />
   </configuration>
 </component>

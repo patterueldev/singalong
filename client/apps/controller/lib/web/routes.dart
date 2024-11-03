@@ -28,7 +28,7 @@ Route<dynamic>? onGenerateRoute(RouteSettings settings, BuildContext context) {
       final connectProvider = context.read<ConnectFeatureBuilder>();
       return MaterialPageRoute(
         builder: (context) => connectProvider.buildConnectView(
-          name: 'natsumi',
+          name: '',
           roomId: '569841',
         ),
       );
