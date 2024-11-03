@@ -13,12 +13,16 @@ class MobileAppCoordinator
         SessionFlowCoordinator,
         SongBookFlowCoordinator {
   @override
-  void onUnauthenticated(BuildContext context) {
+  void onUnauthenticated(
+    BuildContext context, {
+    String? username,
+    String? roomId,
+  }) {
     final connectProvider = context.read<ConnectFeatureBuilder>();
     final route = MaterialPageRoute(
       builder: (context) => connectProvider.buildConnectView(
-        name: '',
-        roomId: '569841',
+        name: username ?? '',
+        roomId: roomId ?? '569841',
       ),
     );
     Navigator.of(context).pushReplacement(route);

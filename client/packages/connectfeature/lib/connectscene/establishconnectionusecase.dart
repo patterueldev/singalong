@@ -1,11 +1,11 @@
 part of '../connectfeature.dart';
 
 class EstablishConnectionParameters {
-  final String name;
-  final String sessionId;
+  final String username;
+  final String roomId;
   EstablishConnectionParameters({
-    required this.name,
-    required this.sessionId,
+    required this.username,
+    required this.roomId,
   });
 }
 
@@ -22,18 +22,18 @@ class EstablishConnectionUseCase
       TaskEither.tryCatch(
         () async {
           debugPrint("Attempting to connect");
-          if (parameters.name.isEmpty) {
+          if (parameters.username.isEmpty) {
             throw ConnectException.emptyName();
           }
-          if (parameters.sessionId.isEmpty) {
+          if (parameters.roomId.isEmpty) {
             throw ConnectException.emptySessionId();
           }
 
           final result = await connectRepository.connect(
             ConnectParameters(
-              username: parameters.name,
+              username: parameters.username,
               userPasscode: null,
-              roomId: parameters.sessionId,
+              roomId: parameters.roomId,
               roomPasscode: null,
               clientType: "CONTROLLER",
             ),
@@ -51,6 +51,10 @@ class EstablishConnectionUseCase
             // store the access token somewhere
             debugPrint("Access token: $accessToken");
             connectRepository.provideAccessToken(accessToken);
+            connectRepository.saveSession(
+              parameters.username,
+              parameters.roomId,
+            );
             return ConnectViewState.connected();
           }
           throw GenericException.unknown();

@@ -15,8 +15,15 @@ class WebAppCoordinator
   const WebAppCoordinator();
 
   @override
-  void onUnauthenticated(BuildContext context) {
-    AppRoute.connect.pushReplacement(context);
+  void onUnauthenticated(
+    BuildContext context, {
+    String? username,
+    String? roomId,
+  }) {
+    AppRoute.connect.pushReplacement(context, arguments: {
+      'name': username,
+      'roomId': roomId,
+    });
   }
 
   @override

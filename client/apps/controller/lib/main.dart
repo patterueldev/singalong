@@ -8,7 +8,6 @@ import 'package:sessionfeature/sessionfeature.dart';
 import 'package:singalong_api_client/singalong_api_client.dart';
 import 'package:songbookfeature/songbookfeature.dart';
 import '_main.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import 'mobile/controller_mobileapp.dart';
 import 'mobile/mobile_appcoordinator.dart';

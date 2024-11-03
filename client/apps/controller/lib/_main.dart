@@ -1,5 +1,7 @@
 import 'package:connectfeature/connectfeature.dart';
 import 'package:connectfeatureds/connectfeatureds.dart';
+import 'package:controller/shared/persistence_service.dart';
+import 'package:encrypt_shared_preferences/provider.dart';
 import 'package:provider/provider.dart';
 import 'package:sessionfeature/sessionfeature.dart';
 import 'package:sessionfeatureds/sessionfeatureds.dart';
@@ -21,7 +23,9 @@ MultiProvider buildProviders() {
 
   return MultiProvider(
     providers: [
-      Provider<PersistenceService>.value(value: MemoryPersistenceService()),
+      Provider<PersistenceService>(
+        create: (context) => PersistenceServiceImpl(),
+      ),
       Provider<ConnectAssets>.value(value: assets),
       Provider<ConnectLocalizations>.value(value: localizations),
       Provider<SessionLocalizations>.value(value: localizations),

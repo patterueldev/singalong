@@ -25,7 +25,8 @@ class _SplashScreenState extends State<SplashScreen> {
       viewModel.didFinishStateNotifier.addListener(() {
         switch (viewModel.didFinishStateNotifier.value) {
           case FinishState.unauthenticated:
-            flow.onUnauthenticated(context);
+            flow.onUnauthenticated(context,
+                username: viewModel.username, roomId: viewModel.roomId);
             break;
           case FinishState.authenticated:
             flow.onAuthenticated(context);

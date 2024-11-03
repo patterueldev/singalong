@@ -44,8 +44,8 @@ class DefaultConnectViewModel implements ConnectViewModel {
 
     final result = await connectUseCase(
       EstablishConnectionParameters(
-        name: name,
-        sessionId: sessionId,
+        username: name,
+        roomId: sessionId,
       ),
     );
     result.fold(

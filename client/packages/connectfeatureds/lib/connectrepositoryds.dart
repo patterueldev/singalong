@@ -23,9 +23,13 @@ class ConnectRepositoryDS implements ConnectRepository {
   }
 
   @override
-  void saveSession(String username, String roomId) {
-    persistenceService.saveUsername(username);
-    persistenceService.saveRoomId(roomId);
+  void saveSession(String username, String roomId) async {
+    try {
+      await persistenceService.saveUsername(username);
+      await persistenceService.saveRoomId(roomId);
+    } catch (e) {
+      debugPrint("Error while saving session: $e");
+    }
   }
 }
 

@@ -20,16 +20,19 @@ Route<dynamic>? onGenerateRoute(RouteSettings settings, BuildContext context) {
     case AppRoute.initial:
       return MaterialPageRoute(
         builder: (context) => ChangeNotifierProvider<SplashScreenViewModel>(
-          create: (_) => DefaultSplashScreenViewModel(),
+          create: (_) => DefaultSplashScreenViewModel(
+            persistenceService: context.read(),
+          ),
           child: SplashScreen(flow: context.read()),
         ),
       );
     case AppRoute.connect:
+      final arguments = settings.arguments as Map<String, dynamic>?;
       final connectProvider = context.read<ConnectFeatureBuilder>();
       return MaterialPageRoute(
         builder: (context) => connectProvider.buildConnectView(
-          name: '',
-          roomId: '569841',
+          name: arguments?['name'] ?? '',
+          roomId: arguments?['roomId'] ?? '569841',
         ),
       );
     case AppRoute.session:
@@ -77,8 +80,8 @@ enum AppRoute {
     }
   }
 
-  void pushReplacement(BuildContext context) {
-    Navigator.of(context).pushReplacementNamed(path);
+  void pushReplacement(BuildContext context, {Object? arguments}) {
+    Navigator.of(context).pushReplacementNamed(path, arguments: arguments);
   }
 
   void push(BuildContext context) {
