@@ -42,25 +42,3 @@ void main() {
     child: const ControllerMobileApp(),
   ));
 }
-
-class ControllerApp extends StatelessWidget {
-  const ControllerApp({super.key});
-
-  // This widget is the root of your application.
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Singalong',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
-      ),
-      localizationsDelegates: const [AppLocalizations.delegate],
-      supportedLocales: AppLocalizations.supportedLocales,
-      home: ChangeNotifierProvider<SplashScreenViewModel>(
-        create: (_) => DefaultSplashScreenViewModel(),
-        child: SplashScreen(flow: context.read()),
-      ),
-    );
-  }
-}

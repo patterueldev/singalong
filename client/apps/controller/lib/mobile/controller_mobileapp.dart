@@ -16,7 +16,8 @@ class ControllerMobileApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.greenAccent),
         useMaterial3: true,
       ),
-      darkTheme: ThemeData.dark().copyWith(),
+      darkTheme: ThemeData.dark(),
+      themeMode: ThemeMode.dark,
       localizationsDelegates: const [AppLocalizations.delegate],
       supportedLocales: AppLocalizations.supportedLocales,
       home: ChangeNotifierProvider<SplashScreenViewModel>(
