@@ -66,7 +66,9 @@ class _ConnectViewState extends State<ConnectView> {
             appBar: AppBar(
               backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
             ),
-            body: _buildBody(context, viewModel),
+            body: SingleChildScrollView(
+              child: _buildBody(context, viewModel),
+            ),
           ),
           ValueListenableBuilder(
             valueListenable: viewModel.stateNotifier,
@@ -124,11 +126,6 @@ class _ConnectViewState extends State<ConnectView> {
                       height: 50,
                       child: ElevatedButton(
                         onPressed: () => viewModel.connect(),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor:
-                              Theme.of(context).colorScheme.primary,
-                          foregroundColor: Colors.white,
-                        ),
                         child: localizations.connectButtonText
                             .localizedTextOf(context),
                       ),
