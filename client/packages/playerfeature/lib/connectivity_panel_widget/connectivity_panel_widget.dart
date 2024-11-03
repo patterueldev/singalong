@@ -8,8 +8,8 @@ class ConnectivityPanelWidget extends StatefulWidget {
 
 // TODO: Not a priority now, but the room ID should be dynamic
 class _ConnectivityPanelWidgetState extends State<ConnectivityPanelWidget> {
-  final roomId = '569841';
-  final qrData = 'https://youtu.be/dQw4w9WgXcQ'; // Rick Roll
+  String get roomId => '569841';
+  String get qrData => "http://thursday.local/connect?room=$roomId";
 
   @override
   Widget build(BuildContext context) => LayoutBuilder(
