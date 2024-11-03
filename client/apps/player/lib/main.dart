@@ -105,14 +105,17 @@ class _PlayerWrapperState extends State<PlayerWrapper> {
         ),
       );
 
-  Widget _buildBackground(VideoPlayerController? controller) {
-    if (controller == null) {
-      // placeholder
-      return Assets.images.videoplayerBg
-          .image(fit: BoxFit.contain, color: Colors.greenAccent);
-    }
-    return VideoPlayer(controller);
-  }
+  Widget _buildBackground(VideoPlayerController? controller) => Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(
+            child: controller != null
+                ? VideoPlayer(controller)
+                : Assets.images.videoplayerBg.image(fit: BoxFit.cover),
+          )
+        ],
+      );
 
   @override
   void dispose() {
