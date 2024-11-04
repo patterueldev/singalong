@@ -58,6 +58,6 @@ class WebAppCoordinator
 
   @override
   void onDownloadSuccess(BuildContext context) {
-    // TODO: implement onDownloadSuccess
+    Navigator.popUntil(context, (route) => route.isFirst);
   }
 }
