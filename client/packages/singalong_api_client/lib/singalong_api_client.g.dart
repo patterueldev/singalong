@@ -218,3 +218,52 @@ Map<String, dynamic> _$APIIdentifySongParametersToJson(
     <String, dynamic>{
       'url': instance.url,
     };
+
+APISaveSongParameters _$APISaveSongParametersFromJson(
+        Map<String, dynamic> json) =>
+    APISaveSongParameters(
+      thenReserve: json['thenReserve'] as bool,
+      song: APIIdentifiedSongDetails.fromJson(
+          json['song'] as Map<String, dynamic>),
+    );
+
+Map<String, dynamic> _$APISaveSongParametersToJson(
+        APISaveSongParameters instance) =>
+    <String, dynamic>{
+      'thenReserve': instance.thenReserve,
+      'song': instance.song,
+    };
+
+APISaveSongResponseData _$APISaveSongResponseDataFromJson(
+        Map<String, dynamic> json) =>
+    APISaveSongResponseData(
+      id: json['id'] as String,
+      source: json['source'] as String,
+      sourceId: json['sourceId'] as String,
+      thumbnailPath: json['thumbnailPath'] as String,
+      videoPath: json['videoPath'] as String,
+      songTitle: json['songTitle'] as String,
+      songArtist: json['songArtist'] as String,
+      songLanguage: json['songLanguage'] as String,
+      isOffVocal: json['isOffVocal'] as bool,
+      videoHasLyrics: json['videoHasLyrics'] as bool,
+      songLyrics: json['songLyrics'] as String,
+      lengthSeconds: (json['lengthSeconds'] as num).toInt(),
+    );
+
+Map<String, dynamic> _$APISaveSongResponseDataToJson(
+        APISaveSongResponseData instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'source': instance.source,
+      'sourceId': instance.sourceId,
+      'thumbnailPath': instance.thumbnailPath,
+      'videoPath': instance.videoPath,
+      'songTitle': instance.songTitle,
+      'songArtist': instance.songArtist,
+      'songLanguage': instance.songLanguage,
+      'isOffVocal': instance.isOffVocal,
+      'videoHasLyrics': instance.videoHasLyrics,
+      'songLyrics': instance.songLyrics,
+      'lengthSeconds': instance.lengthSeconds,
+    };

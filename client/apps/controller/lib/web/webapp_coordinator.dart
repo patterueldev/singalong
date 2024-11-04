@@ -37,11 +37,13 @@ class WebAppCoordinator
 
   @override
   void onSongBook(BuildContext context) {
-    AppRoute.songBook.pushReplacement(context);
+    AppRoute.songBook.push(context);
   }
 
   @override
-  void openDownloadScreen(BuildContext context) {}
+  void openDownloadScreen(BuildContext context) {
+    AppRoute.identify.push(context);
+  }
 
   @override
   void openSongDetailScreen(BuildContext context, SongItem song) {
@@ -50,7 +52,9 @@ class WebAppCoordinator
 
   @override
   void navigateToIdentifiedSongDetailsView(BuildContext context,
-      {required IdentifiedSongDetails details}) {}
+      {required IdentifiedSongDetails details}) {
+    AppRoute.identifiedSongDetails.push(context, arguments: details);
+  }
 
   @override
   void onDownloadSuccess(BuildContext context) {

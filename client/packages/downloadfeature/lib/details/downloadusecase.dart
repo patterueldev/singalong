@@ -22,7 +22,8 @@ class DefaultDownloadUseCase implements DownloadUseCase {
         () async {
           debugPrint('Downloading song: ${details.songTitle}');
           debugPrint('Reserve: $reserve');
-          await Future.delayed(const Duration(seconds: 2));
+          validate(details);
+          await identifiedSongRepository.saveSong(details, reserve: reserve);
           return unit;
         },
         (e, s) {
@@ -30,4 +31,18 @@ class DefaultDownloadUseCase implements DownloadUseCase {
           return GenericException.unhandled(e);
         },
       );
+
+  void validate(IdentifiedSongDetails details) {
+    if (details.songTitle.trim().isEmpty) {
+      throw DownloadException.emptySongTitle();
+    }
+
+    if (details.songArtist.trim().isEmpty) {
+      throw DownloadException.emptySongArtist();
+    }
+
+    if (details.songLanguage.trim().isEmpty) {
+      throw DownloadException.emptySongLanguage();
+    }
+  }
 }

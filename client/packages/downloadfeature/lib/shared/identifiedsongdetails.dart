@@ -10,6 +10,8 @@ class IdentifiedSongDetails {
   final bool isOffVocal;
   final bool videoHasLyrics;
   final String songLyrics;
+  final int lengthSeconds;
+  final Map<String, dynamic>? metadata;
   final bool alreadyExists;
 
   IdentifiedSongDetails({
@@ -22,6 +24,8 @@ class IdentifiedSongDetails {
     required this.isOffVocal,
     required this.videoHasLyrics,
     required this.songLyrics,
+    required this.lengthSeconds,
+    required this.metadata,
     required this.alreadyExists,
   });
 
@@ -35,6 +39,8 @@ class IdentifiedSongDetails {
     bool? isOffVocal,
     bool? videoHasLyrics,
     String? songLyrics,
+    int? lengthSeconds,
+    Map<String, dynamic>? metadata,
     bool? alreadyExists,
   }) =>
       IdentifiedSongDetails(
@@ -47,6 +53,8 @@ class IdentifiedSongDetails {
         isOffVocal: isOffVocal ?? this.isOffVocal,
         videoHasLyrics: videoHasLyrics ?? this.videoHasLyrics,
         songLyrics: songLyrics ?? this.songLyrics,
+        lengthSeconds: lengthSeconds ?? this.lengthSeconds,
+        metadata: metadata ?? this.metadata,
         alreadyExists: alreadyExists ?? this.alreadyExists,
       );
 }

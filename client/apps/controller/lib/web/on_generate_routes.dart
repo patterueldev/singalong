@@ -48,6 +48,20 @@ Route<dynamic>? onGenerateRoute(RouteSettings settings, BuildContext context) {
             .read<SongBookFeatureProvider>()
             .buildSongBookView(context: context),
       );
+    case AppRoute.identify:
+      return MaterialPageRoute(
+        builder: (context) => context
+            .read<DownloadFeatureProvider>()
+            .buildIdentifyUrlView(context: context),
+      );
+    case AppRoute.identifiedSongDetails:
+      final details = settings.arguments as IdentifiedSongDetails;
+      return MaterialPageRoute(
+        builder: (context) => context
+            .read<DownloadFeatureProvider>()
+            .buildSongDetailsView(
+                context: context, identifiedSongDetails: details),
+      );
     default:
       return MaterialPageRoute(
         builder: (context) => Scaffold(

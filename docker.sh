@@ -2,6 +2,7 @@
 set -e
 
 root=$(pwd)
+api="$root/api"
 fluttercontrollerapp="$root/client/apps/controller"
 
 # Function to handle errors
@@ -14,11 +15,13 @@ handle_error() {
 trap 'handle_error $LINENO' ERR
 
 # Format
-./gradlew ktlintFormat
+#./gradlew ktlintFormat
 
-# Build the project
+# Build the api
+cd $api
 ./gradlew build
 echo "Gradle build completed successfully."
+cd $root
 
 # Build the Flutter web project
 cd $fluttercontrollerapp

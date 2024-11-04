@@ -50,11 +50,55 @@ class _IdentifySongViewState extends State<IdentifySongView> {
 
     if (result is IdentifySubmissionFailure) {
       final exception = result.exception;
+      if (exception is DownloadException) {
+        debugPrint("exception type: ${exception.type}");
+        if (exception.type == ExceptionType.alreadyExists) {
+          _showErrorDialog(context, exception, localizations);
+          return;
+        }
+      }
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content:
             exception.localizedFrom(localizations).localizedTextOf(context),
       ));
     }
+  }
+
+  void _showErrorDialog(BuildContext context, DownloadException exception,
+      DownloadLocalizations localizations) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Error'),
+          content:
+              Text(exception.localizedFrom(localizations).localizedOf(context)),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                // Handle Reserve action
+                Navigator.of(context).pop();
+              },
+              child: Text('Reserve'),
+            ),
+            TextButton(
+              onPressed: () {
+                // Handle View action
+                Navigator.of(context).pop();
+              },
+              child: Text('View'),
+            ),
+            TextButton(
+              onPressed: () {
+                // Handle Cancel action
+                Navigator.of(context).pop();
+              },
+              child: Text('Cancel'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override

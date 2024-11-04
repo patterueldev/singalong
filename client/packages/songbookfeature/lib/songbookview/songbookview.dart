@@ -152,36 +152,37 @@ class _SongBookViewState extends State<SongBookView> {
         ),
       );
 
-  Widget _buildEmpty(Empty state) => Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const SizedBox(height: 150),
-          assets.errorBannerImage.image(
-            height: 200,
-          ),
-          state.localizedFrom(localizations).localizedTextOf(
-                context,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey,
+  Widget _buildEmpty(Empty state) => SingleChildScrollView(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const SizedBox(height: 150),
+            assets.errorBannerImage.image(height: 200),
+            state.localizedFrom(localizations).localizedTextOf(
+                  context,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    color: Colors.grey,
+                  ),
                 ),
+            TextButton(
+              onPressed: () =>
+                  widget.navigationCoordinator.openDownloadScreen(context),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.download),
+                  const SizedBox(width: 8),
+                  Text(
+                    localizations.download.localizedOf(context),
+                  ),
+                ],
               ),
-          TextButton(
-            onPressed: () =>
-                widget.navigationCoordinator.openDownloadScreen(context),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.download),
-                const SizedBox(width: 8),
-                Text(
-                  localizations.download.localizedOf(context),
-                ),
-              ],
             ),
-          ),
-        ],
+          ],
+        ),
       );
 
   Widget _buildSongList(List<SongItem> songList, bool isLoading,

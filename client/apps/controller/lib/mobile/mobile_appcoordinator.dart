@@ -17,10 +17,11 @@ class MobileAppCoordinator
   @override
   void onUnauthenticated(BuildContext context) {
     final connectProvider = context.read<ConnectFeatureBuilder>();
-    final route = MaterialPageRoute(
-      builder: (context) => connectProvider.buildConnectView(context),
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(
+        builder: (context) => connectProvider.buildConnectView(context),
+      ),
     );
-    Navigator.of(context).pushReplacement(route);
   }
 
   @override
@@ -34,7 +35,7 @@ class MobileAppCoordinator
   @override
   void onConnected(BuildContext context) {
     SessionFeatureBuilder sessionFeatureBuilder = context.read();
-    Navigator.of(context).push(
+    Navigator.of(context).pushReplacement(
       MaterialPageRoute(
           builder: (context) => sessionFeatureBuilder.buildSessionView()),
     );
@@ -58,7 +59,7 @@ class MobileAppCoordinator
   @override
   void openDownloadScreen(BuildContext context) {
     DownloadFeatureProvider downloadFeatureProvider = context.read();
-    Navigator.of(context).pushReplacement(
+    Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) =>
             downloadFeatureProvider.buildIdentifyUrlView(context: context),
@@ -87,6 +88,6 @@ class MobileAppCoordinator
 
   @override
   void onDownloadSuccess(BuildContext context) {
-    // TODO: implement onDownloadSuccess
+    Navigator.popUntil(context, (route) => route.isFirst);
   }
 }

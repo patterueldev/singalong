@@ -25,7 +25,8 @@ class GenericResponse {
   factory GenericResponse.fromJson(Map<String, dynamic> json) =>
       _$GenericResponseFromJson(json);
   factory GenericResponse.fromResponse(Response response) {
-    return GenericResponse.fromJson(json.decode(response.body));
+    final decodedBody = utf8.decode(response.bodyBytes);
+    return GenericResponse.fromJson(json.decode(decodedBody));
   }
   Map<String, dynamic> toJson() => _$GenericResponseToJson(this);
 

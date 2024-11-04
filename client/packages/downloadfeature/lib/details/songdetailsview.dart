@@ -159,14 +159,14 @@ class _SongDetailsViewState extends State<SongDetailsView> {
                 placeholder: localizations.lyricsPlaceholderText,
                 onChange: viewModel.updateSongLyrics),
             const SizedBox(height: 16),
-            TextButton(
-              onPressed: () => viewModel.download(false),
-              child: localizations.downloadOnlyText.localizedTextOf(context),
-            ),
             ElevatedButton(
-              onPressed: () => viewModel.download(true),
+              onPressed: () => viewModel.download(andReserve: true),
               child:
                   localizations.downloadAndReserveText.localizedTextOf(context),
+            ),
+            TextButton(
+              onPressed: () => viewModel.download(andReserve: false),
+              child: localizations.downloadOnlyText.localizedTextOf(context),
             ),
           ],
         ),

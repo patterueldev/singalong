@@ -38,13 +38,7 @@ class SongsController(
     suspend fun saveSong(
         @RequestBody saveSongParameters: SaveSongParameters,
     ): SaveSongResponse {
-        val response = songIdentifierService.saveSong(saveSongParameters)
-        val song = response.data
-        if (saveSongParameters.thenReserve && song != null) {
-            reservationService.reserveSong(ReserveParameters(song.id))
-            serverCoordinator.onReserveUpdate()
-        }
-        return response
+        return songIdentifierService.saveSong(saveSongParameters)
     }
 
     // Not to confuse, this is URL query parameters

@@ -16,6 +16,17 @@ class _PlayerViewState extends State<PlayerView> {
     });
   }
 
+  // to be safe
+  List<VideoPlayerController> _controllers = [];
+
+  void _clearControllers() {
+    for (final controller in _controllers) {
+      controller.pause();
+      controller.dispose();
+    }
+    _controllers.clear();
+  }
+
   @override
   Widget build(BuildContext context) => Consumer<PlayerViewModel>(
         builder: (_, viewModel, __) => Scaffold(
@@ -86,6 +97,8 @@ class _PlayerViewState extends State<PlayerView> {
                   return _buildIdleConnected();
                 }
                 if (state is PlayerViewPlaying) {
+                  _clearControllers();
+                  _controllers.add(state.videoPlayerController);
                   return _buildPlaying(state.videoPlayerController);
                 }
                 if (state is PlayerViewScore) {
@@ -149,6 +162,7 @@ class _PlayerViewState extends State<PlayerView> {
 
   @override
   void dispose() {
+    _clearControllers();
     super.dispose();
   }
 }

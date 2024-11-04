@@ -40,7 +40,7 @@ class ScreenRouteBuilder {
         builder: (context) => context
             .read<DownloadFeatureProvider>()
             .buildIdentifyUrlView(context: context),
-        settings: RouteSettings(name: AppRoute.download.path),
+        settings: RouteSettings(name: AppRoute.identify.path),
       );
 
   PageRoute buildIdentifiedSongDetailsRoute(

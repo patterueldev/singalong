@@ -91,6 +91,63 @@
   "emptySongBookDescription": "Message for empty song book",
 
   "songNotFound": "\"{query}\" was not found from the song book.",
-  "songNotFoundDescription": "Message for song not found"
+  "songNotFoundDescription": "Message for song not found",
+
+  "songDetailsScreenTitle": "Song Details",
+  "songDetailsScreenTitleDescription": "Title for the song details screen",
+
+  "songTitlePlaceholder": "Song Title",
+  "songTitlePlaceholderDescription": "Placeholder text for the song title input field",
+
+  "songArtistPlaceholder": "Song Artist",
+  "songArtistPlaceholderDescription": "Placeholder text for the song artist input field",
+
+  "songLanguagePlaceholder": "Song Language",
+  "songLanguagePlaceholderDescription": "Placeholder text for the song language input field",
+
+  "isOffVocal": "Is Off Vocal",
+  "isOffVocalDescription": "Text for the is off vocal checkbox",
+
+  "hasLyrics": "Has Lyrics",
+  "hasLyricsDescription": "Text for the has lyrics checkbox",
+
+  "lyricsPlaceholder": "Lyrics",
+  "lyricsPlaceholderDescription": "Placeholder text for the lyrics input field",
+
+  "downloadOnlyButtonText": "Download Only",
+  "downloadOnlyButtonTextDescription": "Text for the download only button",
+
+  "downloadAndReserveButtonText": "Download & Reserve",
+  "downloadAndReserveButtonTextDescription": "Text for the download and reserve button",
+
+  "identifySongScreenTitle": "Identify Song",
+  "identifySongScreenTitleDescription": "Title for the identify song screen",
+
+  "identifySongUrlPlaceholder": "Identify Song URL",
+  "identifySongUrlPlaceholderDescription": "Placeholder text for the identify song URL input field",
+
+  "identifySongSubmitButtonText": "Identify",
+  "identifySongSubmitButtonTextDescription": "Text for the identify song submit button",
+
+  "emptyUrl": "The URL cannot be empty",
+  "emptyUrlDescription": "Error message for empty URL",
+
+  "invalidUrl": "The URL is invalid",
+  "invalidUrlDescription": "Error message for invalid URL",
+
+  "unableToIdentifySong": "Unable to identify the song",
+  "unableToIdentifySongDescription": "Message for unable to identify the song",
+
+  "alreadyExists": "The song was identified but already exists. Would you like to reserve the song?",
+  "alreadyExistsDescription": "Message if the song from the specified url already exists.",
+
+  "emptySongTitle": "Song title cannot be empty",
+  "emptySongTitleDescription": "Error message for empty song title",
+
+  "emptySongArtist": "Song artist cannot be empty",
+  "emptySongArtistDescription": "Error message for empty song artist",
+
+  "emptySongLanguage": "Song language cannot be empty",
+  "emptySongLanguageDescription": "Error message for empty song language"
 
 }

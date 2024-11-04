@@ -165,65 +165,78 @@ mixin SongBookLocalizationsMixin implements SongBookLocalizations {
 
 mixin DownloadLocalizationsMixin implements DownloadLocalizations {
   @override
-  LocalizedString unhandled(String message) =>
-      LocalizedString((context) => "An unhandled error occurred: $message");
+  final songDetailsScreenTitleText = _getLocalizedString(
+      (localizations) => localizations.songDetailsScreenTitle);
 
   @override
-  LocalizedString get songDetailsScreenTitleText =>
-      LocalizedString((context) => "Song Details");
+  final songTitlePlaceholderText = _getLocalizedString(
+      (localizations) => localizations.songTitlePlaceholder);
 
   @override
-  LocalizedString get songTitlePlaceholderText =>
-      LocalizedString((context) => "Song Title");
+  final songArtistPlaceholderText = _getLocalizedString(
+      (localizations) => localizations.songArtistPlaceholder);
 
   @override
-  LocalizedString get songArtistPlaceholderText =>
-      LocalizedString((context) => "Song Artist");
-  @override
-  LocalizedString get songLanguagePlaceholderText =>
-      LocalizedString((context) => "Song Language");
+  final songLanguagePlaceholderText = _getLocalizedString(
+      (localizations) => localizations.songLanguagePlaceholder);
 
   @override
-  LocalizedString get isOffVocalText =>
-      LocalizedString((context) => "Is Off Vocal");
+  final isOffVocalText =
+      _getLocalizedString((localizations) => localizations.isOffVocal);
 
   @override
-  LocalizedString get hasLyricsText =>
-      LocalizedString((context) => "Has Lyrics");
+  final hasLyricsText =
+      _getLocalizedString((localizations) => localizations.hasLyrics);
 
   @override
-  LocalizedString get lyricsPlaceholderText =>
-      LocalizedString((context) => "Lyrics");
+  final lyricsPlaceholderText =
+      _getLocalizedString((localizations) => localizations.lyricsPlaceholder);
 
   @override
-  LocalizedString get downloadOnlyText =>
-      LocalizedString((context) => "Download Only");
+  final downloadOnlyText = _getLocalizedString(
+      (localizations) => localizations.downloadOnlyButtonText);
 
   @override
-  LocalizedString get downloadAndReserveText =>
-      LocalizedString((context) => "Download & Reserve");
+  final downloadAndReserveText = _getLocalizedString(
+      (localizations) => localizations.downloadAndReserveButtonText);
 
   @override
-  LocalizedString get identifySongScreenTitleText =>
-      LocalizedString((context) => "Identify Song");
+  final identifySongScreenTitleText = _getLocalizedString(
+      (localizations) => localizations.identifySongScreenTitle);
 
   @override
-  LocalizedString get identifySongUrlPlaceholderText =>
-      LocalizedString((context) => "Identify Song URL");
+  final identifySongUrlPlaceholderText = _getLocalizedString(
+      (localizations) => localizations.identifySongUrlPlaceholder);
 
   @override
-  LocalizedString get identifySongSubmitButtonText =>
-      LocalizedString((context) => "Identify");
+  final identifySongSubmitButtonText = _getLocalizedString(
+      (localizations) => localizations.identifySongSubmitButtonText);
 
   @override
-  LocalizedString get emptyUrl =>
-      LocalizedString((context) => "The URL cannot be empty");
+  final emptyUrl =
+      _getLocalizedString((localizations) => localizations.emptyUrl);
 
   @override
-  LocalizedString get invalidUrl =>
-      LocalizedString((context) => "The URL is invalid");
+  final invalidUrl =
+      _getLocalizedString((localizations) => localizations.invalidUrl);
 
   @override
-  LocalizedString get unableToIdentifySong =>
-      LocalizedString((context) => "Unable to identify the song");
+  final unableToIdentifySong = _getLocalizedString(
+      (localizations) => localizations.unableToIdentifySong);
+
+  @override
+  final alreadyExists =
+      _getLocalizedString((localizations) => localizations.alreadyExists);
+
+  @override
+  final emptySongTitle =
+      _getLocalizedString((localizations) => localizations.emptySongTitle);
+
+  @override
+  final emptySongArtist =
+      _getLocalizedString((localizations) => localizations.emptySongArtist);
+
+  @override
+  final emptySongLanguage =
+      _getLocalizedString((localizations) => localizations.emptySongLanguage);
 }

@@ -21,6 +21,8 @@ part 'models/reserved_song.dart';
 part 'models/current_song.dart';
 part 'models/song.dart';
 part 'models/identified_song_details.dart';
+part 'models/save_song_parameters.dart';
+part 'models/save_song_response.dart';
 
 enum HttpMethod { GET, POST, PATCH, PUT, DELETE }
 
@@ -87,7 +89,8 @@ class SingalongAPIClient {
         default:
           throw Exception("Unsupported method: $method");
       }
-      debugPrint("request response body: ${response.body}");
+      final decodedBody = utf8.decode(response.bodyBytes);
+      debugPrint("request response body: $decodedBody");
       try {
         final result = GenericResponse.fromResponse(response);
         debugPrint("request result: $result");
@@ -150,6 +153,17 @@ class SingalongAPIClient {
       payload: parameters.toJson(),
     );
     return APIIdentifiedSongDetails.fromJson(result.objectData());
+  }
+
+  Future<APISaveSongResponseData> saveSong(
+      APISaveSongParameters parameters) async {
+    final postUri = _configuration.buildEndpoint(APIPath.songs.value);
+    final result = await request(
+      uri: postUri,
+      method: HttpMethod.POST,
+      payload: parameters.toJson(),
+    );
+    return APISaveSongResponseData.fromJson(result.objectData());
   }
 
   // TODO: Move this to a separate client, maybe SingalongAPISocketClient; might as well rename this to SingalongAPIRestClient

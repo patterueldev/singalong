@@ -5,7 +5,7 @@ enum AppRoute {
   sessionConnect,
   session,
   songBook,
-  download,
+  identify,
   identifiedSongDetails,
   notFound,
   ;
@@ -20,8 +20,8 @@ enum AppRoute {
         return '/session/active';
       case AppRoute.songBook:
         return '/session/active/songbook';
-      case AppRoute.download:
-        return '/session/active/songbook/download';
+      case AppRoute.identify:
+        return '/session/active/songbook/identify';
       case AppRoute.identifiedSongDetails:
         return '/session/active/songbook/identified-song-details';
       case AppRoute.notFound:
@@ -33,8 +33,8 @@ enum AppRoute {
     Navigator.of(context).pushReplacementNamed(path, arguments: arguments);
   }
 
-  void push(BuildContext context) {
-    Navigator.of(context).pushNamed(path);
+  void push(BuildContext context, {Object? arguments}) {
+    Navigator.of(context).pushNamed(path, arguments: arguments);
   }
 
   static AppRoute fromPath(String path) => AppRoute.values.firstWhere(
