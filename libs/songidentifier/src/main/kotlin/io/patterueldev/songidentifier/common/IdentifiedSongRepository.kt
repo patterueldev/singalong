@@ -1,5 +1,7 @@
 package io.patterueldev.songidentifier.common
 
+import io.patterueldev.songidentifier.searchsong.SearchResultItem
+
 interface IdentifiedSongRepository {
     suspend fun identifySong(url: String): IdentifiedSong?
 
@@ -34,4 +36,6 @@ interface IdentifiedSongRepository {
         songId: String,
         sessionId: String,
     )
+
+    suspend fun searchSongs(keyword: String): List<SearchResultItem>
 }

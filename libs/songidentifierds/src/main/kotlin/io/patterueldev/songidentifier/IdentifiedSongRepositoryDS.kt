@@ -15,6 +15,7 @@ import io.patterueldev.songidentifier.common.IdentifiedSong
 import io.patterueldev.songidentifier.common.IdentifiedSongRepository
 import io.patterueldev.songidentifier.common.SavedSong
 import io.patterueldev.songidentifier.identifysong.IdentifySongParameters
+import io.patterueldev.songidentifier.searchsong.SearchResultItem
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
@@ -22,6 +23,8 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.client.WebClient
 import java.net.URI
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 
 @Service
 internal class IdentifiedSongRepositoryDS : IdentifiedSongRepository {
@@ -230,6 +233,23 @@ internal class IdentifiedSongRepositoryDS : IdentifiedSongRepository {
     ) {
         println("Reserving song in database with ID: $songId to session: $sessionId")
         delay(1000)
+    }
+
+    override suspend fun searchSongs(keyword: String): List<SearchResultItem> {
+        return try {
+            println("Searching for songs with keyword: $keyword")
+            withContext(Dispatchers.IO) {
+                val urlEncodedKeyword = URLEncoder.encode(keyword, StandardCharsets.UTF_8.toString())
+                songDownloaderClient.get()
+                    .uri("/search?keyword=$urlEncodedKeyword")
+                    .retrieve()
+                    .bodyToMono(Array<SearchResultItem>::class.java)
+                    .block()
+            }?.toList() ?: emptyList()
+        } catch (e: Exception) {
+            println("Error occurred while attempting to identify: ${e.message}")
+            emptyList()
+        }
     }
 
     override suspend fun enhanceSong(identifiedSong: IdentifiedSong): IdentifiedSong {
