@@ -13,6 +13,7 @@ class DefaultIdentifySongViewModel extends IdentifySongViewModel {
 
   DefaultIdentifySongViewModel({
     required this.identifySongUrlUseCase,
+    this.songUrl = '',
   });
 
   @override
@@ -20,7 +21,7 @@ class DefaultIdentifySongViewModel extends IdentifySongViewModel {
       ValueNotifier(IdentifySubmissionState.idle());
 
   @override
-  String songUrl = '';
+  String songUrl;
 
   @override
   void identifySong() async {

@@ -157,9 +157,31 @@ mixin SongBookLocalizationsMixin implements SongBookLocalizations {
       _getLocalizedString((localizations) => localizations.emptySongBook);
 
   @override
+  final isUrlPromptTitle =
+      _getLocalizedString((localizations) => localizations.isUrlPromptTitle);
+
+  @override
+  final isUrlPromptMessage =
+      _getLocalizedString((localizations) => localizations.isUrlPromptMessage);
+
+  @override
+  final continueSearchButtonText = _getLocalizedString(
+      (localizations) => localizations.continueSearchButtonText);
+
+  @override
+  final continueIdentifyButtonText = _getLocalizedString(
+      (localizations) => localizations.continueIdentifyButtonText);
+
+  @override
   LocalizedString songNotFound(String query) {
     return _getLocalizedString(
         (localizations) => localizations.songNotFound(query));
+  }
+
+  @override
+  LocalizedString urlDetected(String url) {
+    return _getLocalizedString(
+        (localizations) => localizations.urlDetected(url));
   }
 }
 

@@ -43,6 +43,7 @@ class SongBookFeatureProvider {
         viewModel: DefaultSongBookViewModel(
           fetchSongsUseCase: _fetchSongsUseCase,
           reserveSongUseCase: _reserveSongUseCase,
+          localizations: localizations,
         ),
         navigationCoordinator: coordinator,
         localizations: localizations,

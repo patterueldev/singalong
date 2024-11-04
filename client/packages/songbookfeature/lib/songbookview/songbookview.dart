@@ -93,6 +93,9 @@ class _SongBookViewState extends State<SongBookView> {
                       controller: _searchController,
                       focusNode: _searchFocusNode,
                       onChanged: viewModel.updateSearchQuery,
+                      onSubmitted: (_) {
+                        viewModel.fetchSongs(false);
+                      },
                       decoration: InputDecoration(
                         hintText: localizations.searchHint.localizedOf(context),
                         border: InputBorder.none,
@@ -139,9 +142,13 @@ class _SongBookViewState extends State<SongBookView> {
                   }
                   return _buildSongList(songList, isLoading);
 
-                case SongBookViewStateType.empty:
-                  final emptyState = state as Empty;
+                case SongBookViewStateType.notFound:
+                  final emptyState = state as NotFound;
                   return _buildEmpty(emptyState);
+
+                case SongBookViewStateType.urlDetected:
+                  final urlDetectedState = state as URLDetected;
+                  return _buildURLDetected(urlDetectedState);
 
                 case SongBookViewStateType.failure:
                   final failureState = state as Failure;
@@ -152,7 +159,7 @@ class _SongBookViewState extends State<SongBookView> {
         ),
       );
 
-  Widget _buildEmpty(Empty state) => SingleChildScrollView(
+  Widget _buildEmpty(NotFound state) => SingleChildScrollView(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -177,6 +184,40 @@ class _SongBookViewState extends State<SongBookView> {
                   const SizedBox(width: 8),
                   Text(
                     localizations.download.localizedOf(context),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+
+  Widget _buildURLDetected(URLDetected state) => SingleChildScrollView(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const SizedBox(height: 150),
+            assets.identifySongBannerImage.image(height: 200),
+            state.localizedFrom(localizations).localizedTextOf(
+                  context,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    color: Colors.grey,
+                  ),
+                ),
+            TextButton(
+              onPressed: () => widget.navigationCoordinator
+                  .openDownloadScreen(context, url: state.url),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.search),
+                  const SizedBox(width: 8),
+                  Text(
+                    localizations.continueIdentifyButtonText
+                        .localizedOf(context),
                   ),
                 ],
               ),

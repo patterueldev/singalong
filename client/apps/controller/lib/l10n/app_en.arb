@@ -148,6 +148,20 @@
   "emptySongArtistDescription": "Error message for empty song artist",
 
   "emptySongLanguage": "Song language cannot be empty",
-  "emptySongLanguageDescription": "Error message for empty song language"
+  "emptySongLanguageDescription": "Error message for empty song language",
 
+  "isUrlPromptTitle": "Identify URL?",
+  "isUrlPromptTitleDescription": "Title for the identify URL prompt",
+
+  "isUrlPromptMessage": "This seems to be a URL. Do you want to identify the song?",
+  "isUrlPromptMessageDescription": "Message for the identify URL prompt",
+
+  "continueSearchButtonText": "Search",
+  "continueSearchButtonTextDescription": "Text for the continue search button",
+
+  "continueIdentifyButtonText": "Identify",
+  "continueIdentifyButtonTextDescription": "Text for the continue identify button",
+
+  "urlDetected": "\"{url}\" seems to be a URL. Do you want to identify the song?",
+  "urlDetectedDescription": "Message for URL detected"
 }

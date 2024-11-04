@@ -44,10 +44,10 @@ class DownloadFeatureProvider {
     identifiedSongRepository: songIdentifierRepository,
   );
 
-  Widget buildIdentifyUrlView({required BuildContext context}) =>
+  Widget buildIdentifyUrlView({required BuildContext context, String? url}) =>
       ChangeNotifierProvider<IdentifySongViewModel>(
         create: (context) => DefaultIdentifySongViewModel(
-            identifySongUrlUseCase: _identifySongUseCase),
+            identifySongUrlUseCase: _identifySongUseCase, songUrl: url ?? ''),
         child: IdentifySongView(
           assets: assets,
           flow: coordinator,

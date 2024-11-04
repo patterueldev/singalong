@@ -49,10 +49,11 @@ Route<dynamic>? onGenerateRoute(RouteSettings settings, BuildContext context) {
             .buildSongBookView(context: context),
       );
     case AppRoute.identify:
+      final String? url = settings.arguments as String?;
       return MaterialPageRoute(
         builder: (context) => context
             .read<DownloadFeatureProvider>()
-            .buildIdentifyUrlView(context: context),
+            .buildIdentifyUrlView(context: context, url: url),
       );
     case AppRoute.identifiedSongDetails:
       final details = settings.arguments as IdentifiedSongDetails;

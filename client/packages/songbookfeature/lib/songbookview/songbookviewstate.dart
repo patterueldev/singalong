@@ -9,8 +9,9 @@ class SongBookViewState {
       const SongBookViewState(SongBookViewStateType.initial);
   factory SongBookViewState.loading() => Loading();
   factory SongBookViewState.loaded(List<SongItem> songList) => Loaded(songList);
-  factory SongBookViewState.empty({required String searchText}) =>
-      Empty(searchText);
+  factory SongBookViewState.notFound({required String searchText}) =>
+      NotFound(searchText);
+  factory SongBookViewState.urlDetected(String url) => URLDetected(url);
   factory SongBookViewState.failure(String error) => Failure(error);
 
   @override
@@ -40,8 +41,8 @@ class Loaded extends SongBookViewState {
   final List<SongItem> songList;
 }
 
-class Empty extends SongBookViewState {
-  Empty(this.searchText) : super(SongBookViewStateType.empty);
+class NotFound extends SongBookViewState {
+  NotFound(this.searchText) : super(SongBookViewStateType.notFound);
 
   final String searchText;
 
@@ -56,6 +57,16 @@ class Empty extends SongBookViewState {
   }
 }
 
+class URLDetected extends SongBookViewState {
+  URLDetected(this.url) : super(SongBookViewStateType.urlDetected);
+  final String url;
+
+  LocalizedString localizedFrom(GenericLocalizations localizations) {
+    final songBookLocalizations = localizations as SongBookLocalizations;
+    return songBookLocalizations.urlDetected(url);
+  }
+}
+
 class Failure extends SongBookViewState {
   final String error;
   Failure(this.error) : super(SongBookViewStateType.failure);
@@ -65,6 +76,7 @@ enum SongBookViewStateType {
   initial,
   loading,
   loaded,
-  empty,
+  notFound,
+  urlDetected,
   failure,
 }

@@ -25,10 +25,12 @@ class SongBookException extends GenericException {
 class DefaultSongBookViewModel extends SongBookViewModel {
   final FetchSongsUseCase fetchSongsUseCase;
   final ReserveSongUseCase reserveSongUseCase;
+  final SongBookLocalizations localizations;
 
   DefaultSongBookViewModel({
     required this.fetchSongsUseCase,
     required this.reserveSongUseCase,
+    required this.localizations,
   }) {
     fetchSongs(false);
   }
@@ -53,7 +55,13 @@ class DefaultSongBookViewModel extends SongBookViewModel {
   Pagination? nextPage;
 
   @override
-  void fetchSongs(bool loadsNext) async {
+  void fetchSongs(
+    bool loadsNext, {
+    bool isFromTimer = false,
+  }) async {
+    final keyword = _searchQuery;
+    debugPrint('Fetching songs with keyword: $keyword');
+
     stateNotifier.value = SongBookViewState.loading();
     final parameters = LoadSongsParameters.next(
       keyword: _searchQuery,
@@ -69,8 +77,19 @@ class DefaultSongBookViewModel extends SongBookViewModel {
         final songList = fetchSongResult.songs;
         nextPage = fetchSongResult.next();
         if (songList.isEmpty) {
-          stateNotifier.value =
-              SongBookViewState.empty(searchText: _searchQuery ?? '');
+          try {
+            debugPrint('Checking if keyword is a URL');
+            if (keyword == null) {
+              throw Exception('Keyword is null');
+            }
+            final url = Uri.parse(keyword);
+            debugPrint('Is URL: $url');
+            stateNotifier.value = SongBookViewState.urlDetected(url.toString());
+            return;
+          } catch (e) {
+            stateNotifier.value =
+                SongBookViewState.notFound(searchText: _searchQuery ?? '');
+          }
         } else {
           final state = stateNotifier.value;
           if (state is Loaded) {
@@ -105,7 +124,7 @@ class DefaultSongBookViewModel extends SongBookViewModel {
     isSearchActive.value = !isSearchActive.value;
     if (!isSearchActive.value) {
       _searchQuery = null;
-      fetchSongs(false);
+      fetchSongs(false, isFromTimer: false);
     }
   }
 
@@ -121,6 +140,7 @@ class DefaultSongBookViewModel extends SongBookViewModel {
       debounceTime = const Duration(milliseconds: 500);
     }
     _searchDebounce?.cancel();
-    _searchDebounce = Timer(debounceTime, () => fetchSongs(false));
+    _searchDebounce =
+        Timer(debounceTime, () => fetchSongs(false, isFromTimer: true));
   }
 }

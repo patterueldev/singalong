@@ -57,12 +57,12 @@ class MobileAppCoordinator
   }
 
   @override
-  void openDownloadScreen(BuildContext context) {
+  void openDownloadScreen(BuildContext context, {String? url}) {
     DownloadFeatureProvider downloadFeatureProvider = context.read();
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (context) =>
-            downloadFeatureProvider.buildIdentifyUrlView(context: context),
+        builder: (context) => downloadFeatureProvider.buildIdentifyUrlView(
+            context: context, url: url),
       ),
     );
   }

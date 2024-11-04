@@ -41,8 +41,8 @@ class WebAppCoordinator
   }
 
   @override
-  void openDownloadScreen(BuildContext context) {
-    AppRoute.identify.push(context);
+  void openDownloadScreen(BuildContext context, {String? url}) {
+    AppRoute.identify.push(context, arguments: url);
   }
 
   @override
