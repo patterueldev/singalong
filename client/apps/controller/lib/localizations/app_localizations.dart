@@ -150,6 +150,9 @@ mixin SongBookLocalizationsMixin implements SongBookLocalizations {
   final LocalizedString searchHint = _getLocalizedString(
       (localizations) => localizations.searchPlaceholderText);
   @override
+  final LocalizedString search =
+      _getLocalizedString((localizations) => localizations.searchButtonText);
+  @override
   final LocalizedString download =
       _getLocalizedString((localizations) => localizations.downloadButtonText);
   @override

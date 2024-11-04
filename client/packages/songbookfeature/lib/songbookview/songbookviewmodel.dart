@@ -83,10 +83,14 @@ class DefaultSongBookViewModel extends SongBookViewModel {
               throw Exception('Keyword is null');
             }
             final url = Uri.parse(keyword);
+            if (!url.isAbsolute) {
+              throw Exception('Keyword is not a URL');
+            }
             debugPrint('Is URL: $url');
             stateNotifier.value = SongBookViewState.urlDetected(url.toString());
             return;
           } catch (e) {
+            debugPrint(e.toString());
             stateNotifier.value =
                 SongBookViewState.notFound(searchText: _searchQuery ?? '');
           }

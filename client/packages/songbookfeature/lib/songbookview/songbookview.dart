@@ -93,7 +93,8 @@ class _SongBookViewState extends State<SongBookView> {
                       controller: _searchController,
                       focusNode: _searchFocusNode,
                       onChanged: viewModel.updateSearchQuery,
-                      onSubmitted: (_) {
+                      onSubmitted: (query) {
+                        viewModel.updateSearchQuery(query);
                         viewModel.fetchSongs(false);
                       },
                       decoration: InputDecoration(
@@ -175,6 +176,19 @@ class _SongBookViewState extends State<SongBookView> {
                   ),
                 ),
             TextButton(
+              onPressed: () => widget.navigationCoordinator
+                  .openSearchDownloadablesScreen(context,
+                      query: state.searchText),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.search),
+                  const SizedBox(width: 8),
+                  localizations.search.localizedTextOf(context),
+                ],
+              ),
+            ),
+            TextButton(
               onPressed: () =>
                   widget.navigationCoordinator.openDownloadScreen(context),
               child: Row(
@@ -182,9 +196,7 @@ class _SongBookViewState extends State<SongBookView> {
                 children: [
                   const Icon(Icons.download),
                   const SizedBox(width: 8),
-                  Text(
-                    localizations.download.localizedOf(context),
-                  ),
+                  localizations.download.localizedTextOf(context),
                 ],
               ),
             ),
@@ -215,10 +227,8 @@ class _SongBookViewState extends State<SongBookView> {
                 children: [
                   const Icon(Icons.search),
                   const SizedBox(width: 8),
-                  Text(
-                    localizations.continueIdentifyButtonText
-                        .localizedOf(context),
-                  ),
+                  localizations.continueIdentifyButtonText
+                      .localizedTextOf(context),
                 ],
               ),
             ),

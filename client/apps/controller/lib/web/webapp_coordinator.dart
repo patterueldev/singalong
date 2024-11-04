@@ -41,6 +41,11 @@ class WebAppCoordinator
   }
 
   @override
+  void openSearchDownloadablesScreen(BuildContext context, {String? query}) {
+    // TODO: implement openSearchDownloadablesScreen
+  }
+
+  @override
   void openDownloadScreen(BuildContext context, {String? url}) {
     AppRoute.identify.push(context, arguments: url);
   }

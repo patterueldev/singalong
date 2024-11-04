@@ -84,7 +84,10 @@
   "searchPlaceholderText": "Search songs...",
   "searchPlaceholderTextDescription": "Placeholder text for the search input field",
 
-  "downloadButtonText": "Download",
+  "searchButtonText": "Search Downloadables",
+  "searchButtonTextDescription": "Text for the search button",
+
+  "downloadButtonText": "Identify & Download",
   "downloadButtonTextDescription": "Text for the download button",
 
   "emptySongBook": "Song book is empty",

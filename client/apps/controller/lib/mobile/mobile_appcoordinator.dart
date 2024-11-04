@@ -57,6 +57,11 @@ class MobileAppCoordinator
   }
 
   @override
+  void openSearchDownloadablesScreen(BuildContext context, {String? query}) {
+    // TODO: implement openSearchDownloadablesScreen
+  }
+
+  @override
   void openDownloadScreen(BuildContext context, {String? url}) {
     DownloadFeatureProvider downloadFeatureProvider = context.read();
     Navigator.of(context).push(
