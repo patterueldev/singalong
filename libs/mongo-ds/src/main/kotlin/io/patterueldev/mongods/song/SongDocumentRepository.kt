@@ -14,4 +14,8 @@ interface SongDocumentRepository : MongoRepository<SongDocument, String> {
         keyword: String,
         pageable: Pageable,
     ): Page<SongDocument>
+
+    // Query for matching sourceId
+    @Query("{ 'sourceId': ?0 }")
+    fun findBySourceId(sourceId: String): SongDocument?
 }

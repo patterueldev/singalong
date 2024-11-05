@@ -2,7 +2,8 @@
 set -e
 
 root=$(pwd)
-flutterapp="$root/client/apps/controller_web"
+api="$root/api"
+fluttercontrollerapp="$root/client/apps/controller"
 
 # Function to handle errors
 handle_error() {
@@ -14,14 +15,16 @@ handle_error() {
 trap 'handle_error $LINENO' ERR
 
 # Format
-./gradlew ktlintFormat
 
-# Build the project
+# Build the api
+cd $api
+./gradlew ktlintFormat
 ./gradlew build
 echo "Gradle build completed successfully."
+cd $root
 
 # Build the Flutter web project
-cd $flutterapp
+cd $fluttercontrollerapp
 flutter build web --target=lib/main_web.dart
 echo "Flutter web build completed successfully."
 cd $root

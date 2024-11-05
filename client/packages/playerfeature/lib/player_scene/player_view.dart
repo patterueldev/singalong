@@ -20,51 +20,54 @@ class _PlayerViewState extends State<PlayerView> {
   Widget build(BuildContext context) => Consumer<PlayerViewModel>(
         builder: (_, viewModel, __) => Scaffold(
           backgroundColor: Colors.transparent,
-          body: Row(
-            // horizontal layout arrangement
-            children: [
-              // contains the video player and reserved widget
-              // Left panel
-              Expanded(
-                flex: 1,
-                child: Container(),
-              ),
+          body: SafeArea(
+            child: Column(
+              children: [
+                // vertical layout arrangement
+                Expanded(
+                  flex: 1,
+                  child: Container(
+                    alignment: Alignment.topLeft,
+                    padding: const EdgeInsets.only(top: 16, bottom: 16),
+                    child: ValueListenableBuilder(
+                      valueListenable: viewModel.isConnected,
+                      builder: (_, isConnected, __) =>
+                          isConnected ? ReservedWidget() : SizedBox.shrink(),
+                    ),
+                  ),
+                ),
 
-              Expanded(
-                flex: 9,
-                child: Column(
-                  // vertical layout arrangement
-                  children: [
-                    Expanded(
-                      flex: 1,
-                      child: Container(
-                        alignment: Alignment.topLeft,
-                        padding: const EdgeInsets.only(top: 16, bottom: 16),
-                        child: ValueListenableBuilder(
-                          valueListenable: viewModel.isConnected,
-                          builder: (_, isConnected, __) => isConnected
-                              ? ReservedWidget()
-                              : SizedBox.shrink(),
+                // horizontal layout arrangement
+                Expanded(
+                  flex: 9,
+                  child: Row(
+                    children: [
+                      // connectivity panel and video player
+                      // left panel
+                      Expanded(
+                        flex: 1,
+                        child: ConnectivityPanelWidget(),
+                      ),
+                      Expanded(
+                        flex: 9,
+                        child: Column(
+                          children: [
+                            Expanded(
+                              child: _buildBody(viewModel),
+                            ),
+                          ],
                         ),
                       ),
-                    ),
-                    Expanded(flex: 9, child: _buildBody(viewModel)),
-                    // maybe some customizable message rolling at the bottom
-                    // Expanded(
-                    //   flex: 1,
-                    //   child: Container(),
-                    // ),
-                  ],
+                      // right panel
+                      Expanded(
+                        flex: 1,
+                        child: Container(),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-
-              // Right panel
-              Expanded(
-                flex: 1,
-                child: Container(),
-              ),
-              // This will contain some panel for the participants
-            ],
+              ],
+            ),
           ),
         ),
       );
@@ -86,7 +89,7 @@ class _PlayerViewState extends State<PlayerView> {
                   return _buildPlaying(state.videoPlayerController);
                 }
                 if (state is PlayerViewScore) {
-                  return _buildScore(state.score);
+                  return _buildScore(state);
                 }
                 if (state is PlayerViewFailure) {
                   return _buildErrorWithRetry(state.errorMessage, viewModel);
@@ -125,8 +128,35 @@ class _PlayerViewState extends State<PlayerView> {
             : CircularProgressIndicator(),
       );
 
-  Widget _buildScore(int score) => Center(
-        child: Text('Score: $score'),
+  Widget _buildScore(PlayerViewScore state) => Center(
+        child: Stack(
+          children: [
+            state.videoPlayerController != null
+                ? VideoPlayer(state.videoPlayerController!)
+                : SizedBox.shrink(),
+            Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    state.score.toString(),
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize:
+                          60, // TODO: Will be a percentage of the screen size
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    state.message,
+                    style: TextStyle(color: Colors.white, fontSize: 24),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       );
 
   Widget _buildErrorWithRetry(String error, PlayerViewModel viewModel) =>

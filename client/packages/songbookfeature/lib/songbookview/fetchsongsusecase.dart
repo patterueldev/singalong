@@ -1,7 +1,7 @@
 part of '../songbookfeature.dart';
 
 abstract class FetchSongsUseCase {
-  TaskEither<SongBookException, LoadSongsResult> call(
+  TaskEither<GenericException, LoadSongsResult> call(
       LoadSongsParameters parameters);
 }
 
@@ -13,14 +13,14 @@ class DefaultFetchSongsUseCase implements FetchSongsUseCase {
   });
 
   @override
-  TaskEither<SongBookException, LoadSongsResult> call(
+  TaskEither<GenericException, LoadSongsResult> call(
           LoadSongsParameters parameters) =>
       TaskEither.tryCatch(() async {
         return await songRepository.loadSongs(parameters);
       }, (e, s) {
-        if (e is SongBookException) {
+        if (e is GenericException) {
           return e;
         }
-        return SongBookException('Failed to fetch songs');
+        return GenericException.unhandled(e);
       });
 }

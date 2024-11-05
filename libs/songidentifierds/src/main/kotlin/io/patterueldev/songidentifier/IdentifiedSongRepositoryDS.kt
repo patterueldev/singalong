@@ -9,19 +9,28 @@ import com.aallam.openai.client.OpenAI
 import io.minio.MinioClient
 import io.minio.PutObjectArgs
 import io.patterueldev.mongods.common.BucketFile
+import io.patterueldev.mongods.reservedsong.ReservedSongDocument
+import io.patterueldev.mongods.reservedsong.ReservedSongDocumentRepository
 import io.patterueldev.mongods.song.SongDocument
 import io.patterueldev.mongods.song.SongDocumentRepository
+import io.patterueldev.roomuser.RoomUser
 import io.patterueldev.songidentifier.common.IdentifiedSong
 import io.patterueldev.songidentifier.common.IdentifiedSongRepository
 import io.patterueldev.songidentifier.common.SavedSong
 import io.patterueldev.songidentifier.identifysong.IdentifySongParameters
+import io.patterueldev.songidentifier.searchsong.SearchResultItem
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.client.WebClient
 import java.net.URI
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
+import java.time.LocalDateTime
+import kotlin.jvm.optionals.getOrNull
 
 @Service
 internal class IdentifiedSongRepositoryDS : IdentifiedSongRepository {
@@ -33,7 +42,11 @@ internal class IdentifiedSongRepositoryDS : IdentifiedSongRepository {
 
     @Autowired private lateinit var songDocumentRepository: SongDocumentRepository
 
+    @Autowired private lateinit var reservedSongDocumentRepository: ReservedSongDocumentRepository
+
     @Autowired private lateinit var minioClient: MinioClient
+
+    private val mutex = Mutex()
 
     override suspend fun identifySong(url: String): IdentifiedSong? {
         return try {
@@ -49,9 +62,27 @@ internal class IdentifiedSongRepositoryDS : IdentifiedSongRepository {
             }
         } catch (e: Exception) {
             println("Error occurred while attempting to identify: ${e.message}")
-            println("Error occurred while attempting to identify:")
-            println(e.message)
             null
+        }
+    }
+
+    override suspend fun getExistingSong(identifiedSong: IdentifiedSong): IdentifiedSong? {
+        try {
+            val existing = songDocumentRepository.findBySourceId(identifiedSong.id) ?: return null
+            return identifiedSong.copy(
+                songTitle = existing.title,
+                songArtist = existing.artist,
+                songLanguage = existing.language,
+                isOffVocal = existing.isOffVocal,
+                videoHasLyrics = existing.videoHasLyrics,
+                songLyrics = existing.songLyrics,
+                lengthSeconds = existing.lengthSeconds,
+                metadata = existing.metadata,
+                alreadyExists = true,
+            )
+        } catch (e: Exception) {
+            println("Error occurred while attempting to check for existence: ${e.message}")
+            return null
         }
     }
 
@@ -207,11 +238,68 @@ internal class IdentifiedSongRepositoryDS : IdentifiedSongRepository {
     }
 
     override suspend fun reserveSong(
+        roomUser: RoomUser,
         songId: String,
-        sessionId: String,
     ) {
-        println("Reserving song in database with ID: $songId to session: $sessionId")
-        delay(1000)
+        mutex.withLock {
+            // confirm existence of song
+            val song =
+                withContext(Dispatchers.IO) {
+                    songDocumentRepository.findById(songId)
+                }.getOrNull() ?: throw IllegalArgumentException("Song not found")
+
+            // get the last order number
+            val lastOrderNumber: Int =
+                withContext(Dispatchers.IO) {
+                    try {
+                        reservedSongDocumentRepository.findMaxOrder(roomUser.roomId)
+                    } catch (e: Exception) {
+                        0
+                    }
+                }
+
+            // check if there's a current song played
+            val currentReservedSong =
+                withContext(Dispatchers.IO) {
+                    reservedSongDocumentRepository.loadCurrentReservedSong(roomUser.roomId)
+                }
+            val nothingIsPlaying = currentReservedSong == null
+
+            val reservedSong =
+                ReservedSongDocument(
+                    songId = songId,
+                    roomId = roomUser.roomId,
+                    order = lastOrderNumber + 1,
+                    reservedBy = roomUser.username,
+                    startedPlayingAt = if (nothingIsPlaying) LocalDateTime.now() else null,
+                )
+            withContext(Dispatchers.IO) {
+                reservedSongDocumentRepository.save(reservedSong)
+            }
+        }
+    }
+
+    override suspend fun searchSongs(
+        keyword: String,
+        limit: Int,
+    ): List<SearchResultItem> {
+        return try {
+            println("Searching for songs with keyword: $keyword")
+            withContext(Dispatchers.IO) {
+                val urlEncodedKeyword = URLEncoder.encode(keyword, StandardCharsets.UTF_8.toString())
+                val urlQueries = mapOf("keyword" to urlEncodedKeyword, "limit" to limit.toString())
+                val query = urlQueries.map { "${it.key}=${it.value}" }.joinToString("&")
+                val urlPath = "/search?$query"
+                songDownloaderClient.get()
+                    .uri(urlPath)
+                    .retrieve()
+                    .bodyToMono(Array<SearchResultItem>::class.java)
+                    .block()
+            }?.toList() ?: emptyList()
+        } catch (e: Exception) {
+            println("Error occurred while attempting to identify: ${e.message}")
+            emptyList()
+        }
     }
 
     override suspend fun enhanceSong(identifiedSong: IdentifiedSong): IdentifiedSong {

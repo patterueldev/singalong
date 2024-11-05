@@ -8,3 +8,5 @@ spring:
   data:
     mongodb:
       host: localhost
+minio:
+  endpoint: "http://localhost:9000"

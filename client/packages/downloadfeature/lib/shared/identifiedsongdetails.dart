@@ -10,6 +10,9 @@ class IdentifiedSongDetails {
   final bool isOffVocal;
   final bool videoHasLyrics;
   final String songLyrics;
+  final int lengthSeconds;
+  final Map<String, dynamic>? metadata;
+  final bool alreadyExists;
 
   IdentifiedSongDetails({
     required this.id,
@@ -21,19 +24,10 @@ class IdentifiedSongDetails {
     required this.isOffVocal,
     required this.videoHasLyrics,
     required this.songLyrics,
+    required this.lengthSeconds,
+    required this.metadata,
+    required this.alreadyExists,
   });
-
-  factory IdentifiedSongDetails.fake() => IdentifiedSongDetails(
-        id: '123',
-        source: 'ourtube',
-        imageUrl: 'https://via.placeholder.com/150',
-        songTitle: 'Fake Title',
-        songArtist: 'Fake Artist',
-        songLanguage: 'Fake Language',
-        isOffVocal: false,
-        videoHasLyrics: false,
-        songLyrics: 'Fake Lyrics',
-      );
 
   IdentifiedSongDetails copyWith({
     String? id,
@@ -45,6 +39,9 @@ class IdentifiedSongDetails {
     bool? isOffVocal,
     bool? videoHasLyrics,
     String? songLyrics,
+    int? lengthSeconds,
+    Map<String, dynamic>? metadata,
+    bool? alreadyExists,
   }) =>
       IdentifiedSongDetails(
         id: id ?? this.id,
@@ -56,5 +53,8 @@ class IdentifiedSongDetails {
         isOffVocal: isOffVocal ?? this.isOffVocal,
         videoHasLyrics: videoHasLyrics ?? this.videoHasLyrics,
         songLyrics: songLyrics ?? this.songLyrics,
+        lengthSeconds: lengthSeconds ?? this.lengthSeconds,
+        metadata: metadata ?? this.metadata,
+        alreadyExists: alreadyExists ?? this.alreadyExists,
       );
 }

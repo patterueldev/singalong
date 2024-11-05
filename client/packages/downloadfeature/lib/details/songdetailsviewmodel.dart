@@ -16,7 +16,7 @@ abstract class SongDetailsViewModel extends ChangeNotifier {
   void toggleOffVocal(bool value);
   void toggleVideoHasLyrics(bool value);
   void updateSongLyrics(String text);
-  void download(bool andReserve);
+  void download({required bool andReserve});
 }
 
 class DefaultSongDetailsViewModel extends SongDetailsViewModel {
@@ -94,7 +94,7 @@ class DefaultSongDetailsViewModel extends SongDetailsViewModel {
   }
 
   @override
-  void download(bool andReserve) async {
+  void download({required bool andReserve}) async {
     songDownloadStateNotifier.value = SongDownloadState.loading();
 
     final details = identifiedSongDetails.copyWith(

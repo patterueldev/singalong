@@ -29,4 +29,9 @@ class CurrentSongRepositoryDS implements CurrentSongRepository {
       yield currentSong;
     }
   }
+
+  @override
+  Future<void> nextSong() async {
+    await client.nextSong();
+  }
 }

@@ -9,7 +9,7 @@ class IdentifySongView extends StatefulWidget {
   }) : super();
 
   final DownloadAssets assets;
-  final DownloadFlowController flow;
+  final DownloadFlowCoordinator flow;
   final DownloadLocalizations localizations;
 
   @override
@@ -18,7 +18,7 @@ class IdentifySongView extends StatefulWidget {
 
 class _IdentifySongViewState extends State<IdentifySongView> {
   DownloadAssets get assets => widget.assets;
-  DownloadFlowController get coordinator => widget.flow;
+  DownloadFlowCoordinator get coordinator => widget.flow;
   DownloadLocalizations get localizations => widget.localizations;
 
   @override
@@ -50,11 +50,49 @@ class _IdentifySongViewState extends State<IdentifySongView> {
 
     if (result is IdentifySubmissionFailure) {
       final exception = result.exception;
+      if (exception is DownloadException) {
+        debugPrint("exception type: ${exception.type}");
+        if (exception.type == ExceptionType.alreadyExists) {
+          _showErrorDialog(context, exception, localizations);
+          return;
+        }
+      }
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content:
             exception.localizedFrom(localizations).localizedTextOf(context),
       ));
     }
+  }
+
+  void _showErrorDialog(BuildContext context, DownloadException exception,
+      DownloadLocalizations localizations) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Error'),
+          content:
+              Text(exception.localizedFrom(localizations).localizedOf(context)),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                // Handle Cancel action
+                Navigator.of(context).pop();
+                Navigator.of(context).pop();
+              },
+              child: Text('Back'),
+            ),
+            TextButton(
+              onPressed: () {
+                // Handle View action
+                Navigator.of(context).pop();
+              },
+              child: Text('Change'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override

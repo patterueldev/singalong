@@ -3,13 +3,11 @@ part of '../connectfeature.dart';
 class ConnectView extends StatefulWidget {
   const ConnectView({
     super.key,
-    required this.viewModel,
     required this.flow,
     required this.localizations,
     required this.assets,
   });
 
-  final ConnectViewModel viewModel;
   final ConnectFlowCoordinator flow;
   final ConnectLocalizations localizations;
   final ConnectAssets assets;
@@ -19,7 +17,7 @@ class ConnectView extends StatefulWidget {
 }
 
 class _ConnectViewState extends State<ConnectView> {
-  ConnectViewModel get viewModel => widget.viewModel;
+  ConnectViewModel get viewModel => context.read<ConnectViewModel>();
   ConnectFlowCoordinator get flow => widget.flow;
   ConnectLocalizations get localizations => widget.localizations;
   ConnectAssets get assets => widget.assets;
@@ -30,6 +28,7 @@ class _ConnectViewState extends State<ConnectView> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       viewModel.stateNotifier.addListener(_stateListener);
+      viewModel.load();
     });
   }
 
@@ -60,31 +59,35 @@ class _ConnectViewState extends State<ConnectView> {
   }
 
   @override
-  Widget build(BuildContext context) => Stack(
-        children: [
-          Scaffold(
-            appBar: AppBar(
-              backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
+  Widget build(BuildContext context) => Consumer<ConnectViewModel>(
+        builder: (context, viewModel, _) => Stack(
+          children: [
+            Scaffold(
+              appBar: AppBar(
+                backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
+              ),
+              body: SingleChildScrollView(
+                child: _buildBody(context, viewModel),
+              ),
             ),
-            body: _buildBody(context, viewModel),
-          ),
-          ValueListenableBuilder(
-            valueListenable: viewModel.stateNotifier,
-            builder: (_, state, child) {
-              if (state.status == ConnectViewStatus.connecting) {
-                return Positioned.fill(
-                  child: Container(
-                    color: Colors.black54,
-                    child: const Center(
-                      child: CircularProgressIndicator(),
+            ValueListenableBuilder(
+              valueListenable: viewModel.stateNotifier,
+              builder: (_, state, child) {
+                if (state.status == ConnectViewStatus.connecting) {
+                  return Positioned.fill(
+                    child: Container(
+                      color: Colors.black54,
+                      child: const Center(
+                        child: CircularProgressIndicator(),
+                      ),
                     ),
-                  ),
-                );
-              }
-              return const SizedBox.shrink();
-            },
-          ),
-        ],
+                  );
+                }
+                return const SizedBox.shrink();
+              },
+            ),
+          ],
+        ),
       );
 
   Widget _buildBody(BuildContext context, ConnectViewModel viewModel) =>
@@ -124,11 +127,6 @@ class _ConnectViewState extends State<ConnectView> {
                       height: 50,
                       child: ElevatedButton(
                         onPressed: () => viewModel.connect(),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor:
-                              Theme.of(context).colorScheme.primary,
-                          foregroundColor: Colors.white,
-                        ),
                         child: localizations.connectButtonText
                             .localizedTextOf(context),
                       ),

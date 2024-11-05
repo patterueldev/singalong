@@ -14,6 +14,14 @@ class DownloadException extends GenericException {
         return downloadLocalizations.invalidUrl;
       case ExceptionType.unableToIdentifySong:
         return downloadLocalizations.unableToIdentifySong;
+      case ExceptionType.alreadyExists:
+        return downloadLocalizations.alreadyExists;
+      case ExceptionType.emptySongTitle:
+        return downloadLocalizations.emptySongTitle;
+      case ExceptionType.emptySongArtist:
+        return downloadLocalizations.emptySongArtist;
+      case ExceptionType.emptySongLanguage:
+        return downloadLocalizations.emptySongLanguage;
       default:
         return super.localizedFrom(localizations);
     }
@@ -25,10 +33,24 @@ class DownloadException extends GenericException {
       const DownloadException._(ExceptionType.invalidUrl);
   factory DownloadException.unableToIdentifySong() =>
       const DownloadException._(ExceptionType.unableToIdentifySong);
+  factory DownloadException.alreadyExists() =>
+      const DownloadException._(ExceptionType.alreadyExists);
+
+  factory DownloadException.emptySongTitle() =>
+      const DownloadException._(ExceptionType.emptySongTitle);
+  factory DownloadException.emptySongArtist() =>
+      const DownloadException._(ExceptionType.emptySongArtist);
+  factory DownloadException.emptySongLanguage() =>
+      const DownloadException._(ExceptionType.emptySongLanguage);
 }
 
 enum ExceptionType {
   emptyUrl,
   invalidUrl,
   unableToIdentifySong,
+  alreadyExists,
+
+  emptySongTitle,
+  emptySongArtist,
+  emptySongLanguage,
 }

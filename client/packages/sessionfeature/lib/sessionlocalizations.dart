@@ -2,7 +2,6 @@ part of 'sessionfeature.dart';
 
 abstract class SessionLocalizations implements GenericLocalizations {
   LocalizedString get disconnectButtonText;
-  LocalizedString get cancelButtonText;
   LocalizedString get skipButtonText;
   LocalizedString get pauseButtonText;
   LocalizedString get playNextButtonText;

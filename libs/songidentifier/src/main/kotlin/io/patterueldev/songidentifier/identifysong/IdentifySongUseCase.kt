@@ -17,6 +17,16 @@ internal class IdentifySongUseCase(
                         message = "Song not found",
                         status = 404,
                     )
+
+            val existing = identifiedSongRepository.getExistingSong(identifiedSong)
+            println("Attempting to check if song already exists")
+            if (existing != null) {
+                println("Song already exists")
+                return GenericResponse.success(existing)
+            }
+
+            println("Song does not exist")
+
             val enhancedSong = identifiedSongRepository.enhanceSong(identifiedSong)
             return GenericResponse.success(enhancedSong)
         } catch (e: Exception) {

@@ -7,7 +7,7 @@ class SongDetailsView extends StatefulWidget {
     required this.localizations,
   }) : super();
 
-  final DownloadFlowController flow;
+  final DownloadFlowCoordinator flow;
   final DownloadLocalizations localizations;
 
   @override
@@ -15,7 +15,7 @@ class SongDetailsView extends StatefulWidget {
 }
 
 class _SongDetailsViewState extends State<SongDetailsView> {
-  DownloadFlowController get flow => widget.flow;
+  DownloadFlowCoordinator get flow => widget.flow;
   DownloadLocalizations get localizations => widget.localizations;
 
   @override
@@ -159,14 +159,14 @@ class _SongDetailsViewState extends State<SongDetailsView> {
                 placeholder: localizations.lyricsPlaceholderText,
                 onChange: viewModel.updateSongLyrics),
             const SizedBox(height: 16),
-            TextButton(
-              onPressed: () => viewModel.download(false),
-              child: localizations.downloadOnlyText.localizedTextOf(context),
-            ),
             ElevatedButton(
-              onPressed: () => viewModel.download(true),
+              onPressed: () => viewModel.download(andReserve: true),
               child:
                   localizations.downloadAndReserveText.localizedTextOf(context),
+            ),
+            TextButton(
+              onPressed: () => viewModel.download(andReserve: false),
+              child: localizations.downloadOnlyText.localizedTextOf(context),
             ),
           ],
         ),

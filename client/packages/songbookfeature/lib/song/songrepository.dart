@@ -90,26 +90,6 @@ class LoadSongsParameters {
   }
 }
 
-class Pagination {}
-
-class OffsetPagination extends Pagination {
-  final int offset;
-
-  OffsetPagination(this.offset);
-}
-
-class CursorPagination extends Pagination {
-  final String cursor;
-
-  CursorPagination(this.cursor);
-}
-
-class PagePagination extends Pagination {
-  final int page;
-
-  PagePagination(this.page);
-}
-
 /*
 
     fun nextPage(): Pagination? {

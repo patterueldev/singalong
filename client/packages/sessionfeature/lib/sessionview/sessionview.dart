@@ -222,24 +222,35 @@ class _SessionViewState extends State<SessionView> {
           builder: (context) => AlertDialog(
             title: prompt.title.localizedTextOf(context),
             content: prompt.message.localizedTextOf(context),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-                child: localizations.cancelButtonText.localizedTextOf(context),
-              ),
-              TextButton(
-                onPressed: () {
-                  prompt.onAction();
-                  Navigator.of(context).pop();
-                },
-                style: TextButton.styleFrom(
-                  foregroundColor: Theme.of(context).colorScheme.error,
-                ),
-                child: prompt.actionText.localizedTextOf(context),
-              ),
-            ],
+            actions: prompt.actions
+                .map(
+                  (action) => TextButton(
+                    onPressed: () {
+                      action.action?.call();
+                      Navigator.of(context).pop();
+                    },
+                    child: action.title.localizedTextOf(context),
+                  ),
+                )
+                .toList(),
+            // [
+            //   TextButton(
+            //     onPressed: () {
+            //       Navigator.of(context).pop();
+            //     },
+            //     child: localizations.cancelButtonText.localizedTextOf(context),
+            //   ),
+            //   TextButton(
+            //     onPressed: () {
+            //       prompt.onAction();
+            //       Navigator.of(context).pop();
+            //     },
+            //     style: TextButton.styleFrom(
+            //       foregroundColor: Theme.of(context).colorScheme.error,
+            //     ),
+            //     child: prompt.actionText.localizedTextOf(context),
+            //   ),
+            // ],
           ),
         );
       });

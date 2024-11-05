@@ -23,7 +23,11 @@ class DefaultIdentifySongUrlUseCase implements IdentifySongUrlUseCase {
           throw DownloadException.invalidUrl();
         }
 
-        return await songIdentifierRepository.identifySongUrl(url);
+        final result = await songIdentifierRepository.identifySongUrl(url);
+        if (result.alreadyExists) {
+          throw DownloadException.alreadyExists();
+        }
+        return result;
       }, (e, s) {
         if (e is GenericException) {
           return e;

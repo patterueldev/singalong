@@ -38,7 +38,8 @@ class SongRepositoryDS implements SongRepository {
         nextPage: result.nextPage,
       );
     } catch (e) {
-      throw e;
+      debugPrint("Error: $e");
+      rethrow;
     }
   }
 

@@ -72,13 +72,12 @@ class DefaultSessionViewModel extends SessionViewModel {
       message = localizations.cancelSongMessage;
       actionText = localizations.cancelSongActionText;
     }
-    promptNotifier.value = PromptModel(
+    promptNotifier.value = PromptModel.standard(
+      localizations,
       title: title,
       message: message,
       actionText: actionText,
-      onAction: () {
-        completer.complete(true);
-      },
+      action: () => completer.complete(true),
     );
 
     final result = await completer.future;

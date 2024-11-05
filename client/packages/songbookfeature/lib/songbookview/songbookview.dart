@@ -3,13 +3,11 @@ part of '../songbookfeature.dart';
 class SongBookView extends StatefulWidget {
   const SongBookView({
     super.key,
-    required this.viewModel,
     required this.navigationCoordinator,
     required this.localizations,
     required this.assets,
   });
 
-  final SongBookViewModel viewModel;
   final SongBookFlowCoordinator navigationCoordinator;
   final SongBookLocalizations localizations;
   final SongBookAssets assets;
@@ -18,7 +16,8 @@ class SongBookView extends StatefulWidget {
 }
 
 class _SongBookViewState extends State<SongBookView> {
-  SongBookViewModel get viewModel => widget.viewModel;
+  SongBookViewModel get viewModel =>
+      Provider.of<SongBookViewModel>(context, listen: false);
   SongBookFlowCoordinator get navigationCoordinator =>
       widget.navigationCoordinator;
   SongBookLocalizations get localizations => widget.localizations;
@@ -53,29 +52,12 @@ class _SongBookViewState extends State<SongBookView> {
   }
 
   @override
-  Widget build(BuildContext context) => Stack(
-        children: [
-          _buildScaffold(context),
-          ValueListenableBuilder(
-            valueListenable: viewModel.isLoadingNotifier,
-            builder: (context, isLoading, child) {
-              if (isLoading) {
-                return Positioned.fill(
-                  child: Container(
-                    color: Colors.black54,
-                    child: const Center(
-                      child: CircularProgressIndicator(),
-                    ),
-                  ),
-                );
-              }
-              return const SizedBox.shrink();
-            },
-          ),
-        ],
+  Widget build(BuildContext context) => Consumer<SongBookViewModel>(
+        builder: (context, viewModel, _) => _buildScaffold(context, viewModel),
       );
 
-  Widget _buildScaffold(BuildContext context) => Scaffold(
+  Widget _buildScaffold(BuildContext context, SongBookViewModel viewModel) =>
+      Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         appBar: AppBar(
           title: ValueListenableBuilder<bool>(
@@ -93,6 +75,10 @@ class _SongBookViewState extends State<SongBookView> {
                       controller: _searchController,
                       focusNode: _searchFocusNode,
                       onChanged: viewModel.updateSearchQuery,
+                      onSubmitted: (query) {
+                        viewModel.updateSearchQuery(query);
+                        viewModel.fetchSongs(false);
+                      },
                       decoration: InputDecoration(
                         hintText: localizations.searchHint.localizedOf(context),
                         border: InputBorder.none,
@@ -137,54 +123,103 @@ class _SongBookViewState extends State<SongBookView> {
                   } else if (state is Loaded) {
                     songList = state.songList;
                   }
-                  return _buildSongList(songList, isLoading);
+                  return _buildSongList(songList, viewModel, isLoading);
 
-                case SongBookViewStateType.empty:
-                  final emptyState = state as Empty;
+                case SongBookViewStateType.notFound:
+                  final emptyState = state as NotFound;
                   return _buildEmpty(emptyState);
+
+                case SongBookViewStateType.urlDetected:
+                  final urlDetectedState = state as URLDetected;
+                  return _buildURLDetected(urlDetectedState);
 
                 case SongBookViewStateType.failure:
                   final failureState = state as Failure;
-                  return _buildError(failureState);
+                  return _buildError(failureState, viewModel);
               }
             },
           ),
         ),
       );
 
-  Widget _buildEmpty(Empty state) => Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const SizedBox(height: 150),
-          assets.errorBannerImage.image(
-            height: 200,
-          ),
-          state.localizedFrom(localizations).localizedTextOf(
-                context,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey,
+  Widget _buildEmpty(NotFound state) => SingleChildScrollView(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const SizedBox(height: 50),
+            assets.errorBannerImage.image(height: 200),
+            state.localizedFrom(localizations).localizedTextOf(
+                  context,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    color: Colors.grey,
+                  ),
                 ),
+            TextButton(
+              onPressed: () => widget.navigationCoordinator
+                  .openSearchDownloadablesScreen(context,
+                      query: state.searchText),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.search),
+                  const SizedBox(width: 8),
+                  localizations.search.localizedTextOf(context),
+                ],
               ),
-          TextButton(
-            onPressed: () =>
-                widget.navigationCoordinator.openDownloadScreen(context),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.download),
-                const SizedBox(width: 8),
-                Text(
-                  localizations.download.localizedOf(context),
-                ),
-              ],
             ),
-          ),
-        ],
+            TextButton(
+              onPressed: () =>
+                  widget.navigationCoordinator.openDownloadScreen(context),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.download),
+                  const SizedBox(width: 8),
+                  localizations.download.localizedTextOf(context),
+                ],
+              ),
+            ),
+          ],
+        ),
       );
 
-  Widget _buildSongList(List<SongItem> songList, bool isLoading,
+  Widget _buildURLDetected(URLDetected state) => SingleChildScrollView(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const SizedBox(height: 150),
+            assets.identifySongBannerImage.image(height: 200),
+            state.localizedFrom(localizations).localizedTextOf(
+                  context,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    color: Colors.grey,
+                  ),
+                ),
+            TextButton(
+              onPressed: () => widget.navigationCoordinator
+                  .openDownloadScreen(context, url: state.url),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.search),
+                  const SizedBox(width: 8),
+                  localizations.continueIdentifyButtonText
+                      .localizedTextOf(context),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+
+  Widget _buildSongList(
+          List<SongItem> songList, SongBookViewModel viewModel, bool isLoading,
           {double height = 50}) =>
       Skeletonizer(
         enabled: isLoading,
@@ -193,14 +228,17 @@ class _SongBookViewState extends State<SongBookView> {
           itemBuilder: (context, index) => Card(
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: _buildItem(songList[index], height),
+              child: _buildItem(songList[index], viewModel, height),
             ),
           ),
         ),
       );
 
-  Widget _buildItem(SongItem song, double height) => _popupButton(
+  Widget _buildItem(
+          SongItem song, SongBookViewModel viewModel, double height) =>
+      _popupButton(
         song,
+        viewModel,
         Row(
           mainAxisAlignment: MainAxisAlignment.start,
           crossAxisAlignment: CrossAxisAlignment.center,
@@ -238,7 +276,9 @@ class _SongBookViewState extends State<SongBookView> {
         ),
       );
 
-  Widget _popupButton(SongItem song, Widget child) => PopupMenuButton<String>(
+  Widget _popupButton(
+          SongItem song, SongBookViewModel viewModel, Widget child) =>
+      PopupMenuButton<String>(
         onSelected: (value) {
           switch (value) {
             case 'reserve':
@@ -249,28 +289,26 @@ class _SongBookViewState extends State<SongBookView> {
               break;
           }
         },
-        itemBuilder: (BuildContext context) {
-          return [
-            PopupMenuItem<String>(
-              value: 'reserve',
-              child: Text("Reserve Song"),
-            ),
-            PopupMenuItem<String>(
-              value: 'details',
-              child: Text("View Details"),
-            ),
-          ];
-        },
+        itemBuilder: (BuildContext context) => const [
+          PopupMenuItem<String>(
+            value: 'reserve',
+            child: Text("Reserve Song"),
+          ),
+          PopupMenuItem<String>(
+            value: 'details',
+            child: Text("View Details"),
+          ),
+        ],
         child: child,
       );
 
-  Widget _buildError(Failure state) => Column(
+  Widget _buildError(Failure state, SongBookViewModel viewModel) => Column(
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          assets.errorBannerImage.image(),
+          assets.errorBannerImage.image(height: 100),
           Text(
-            state.error,
+            state.exception.localizedFrom(localizations).localizedOf(context),
             textAlign: TextAlign.center,
             style: const TextStyle(
               fontSize: 16,
@@ -278,7 +316,7 @@ class _SongBookViewState extends State<SongBookView> {
             ),
           ),
           TextButton(
-            onPressed: () => viewModel.fetchSongs(true),
+            onPressed: () => viewModel.fetchSongs(false),
             child: const Row(
               mainAxisSize: MainAxisSize.min,
               children: [

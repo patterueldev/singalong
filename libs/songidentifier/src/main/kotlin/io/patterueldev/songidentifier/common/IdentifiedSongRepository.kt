@@ -1,7 +1,12 @@
 package io.patterueldev.songidentifier.common
 
+import io.patterueldev.roomuser.RoomUser
+import io.patterueldev.songidentifier.searchsong.SearchResultItem
+
 interface IdentifiedSongRepository {
     suspend fun identifySong(url: String): IdentifiedSong?
+
+    suspend fun getExistingSong(identifiedSong: IdentifiedSong): IdentifiedSong?
 
     suspend fun enhanceSong(identifiedSong: IdentifiedSong): IdentifiedSong
 
@@ -29,7 +34,12 @@ interface IdentifiedSongRepository {
     ): SavedSong
 
     suspend fun reserveSong(
+        roomUser: RoomUser,
         songId: String,
-        sessionId: String,
     )
+
+    suspend fun searchSongs(
+        keyword: String,
+        limit: Int,
+    ): List<SearchResultItem>
 }
