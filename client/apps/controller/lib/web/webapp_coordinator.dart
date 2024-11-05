@@ -15,7 +15,7 @@ class WebAppCoordinator
         ConnectFlowCoordinator,
         SessionFlowCoordinator,
         SongBookFlowCoordinator,
-        DownloadFlowController {
+        DownloadFlowCoordinator {
   const WebAppCoordinator();
 
   @override
@@ -42,7 +42,7 @@ class WebAppCoordinator
 
   @override
   void openSearchDownloadablesScreen(BuildContext context, {String? query}) {
-    // TODO: implement openSearchDownloadablesScreen
+    AppRoute.downloadables.push(context, arguments: query);
   }
 
   @override
@@ -64,5 +64,17 @@ class WebAppCoordinator
   @override
   void onDownloadSuccess(BuildContext context) {
     Navigator.popUntil(context, (route) => route.isFirst);
+  }
+
+  @override
+  void navigateToURLIdentifierView(BuildContext context) {
+    openDownloadScreen(context);
+  }
+
+  @override
+  void previewDownloadable(
+      BuildContext context, DownloadableItem downloadable) {
+    // TODO: implement previewDownloadable
+    // Open new tab with preview link; or try to open the YT app
   }
 }

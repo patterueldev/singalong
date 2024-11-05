@@ -7,7 +7,7 @@ class SongDetailsView extends StatefulWidget {
     required this.localizations,
   }) : super();
 
-  final DownloadFlowController flow;
+  final DownloadFlowCoordinator flow;
   final DownloadLocalizations localizations;
 
   @override
@@ -15,7 +15,7 @@ class SongDetailsView extends StatefulWidget {
 }
 
 class _SongDetailsViewState extends State<SongDetailsView> {
-  DownloadFlowController get flow => widget.flow;
+  DownloadFlowCoordinator get flow => widget.flow;
   DownloadLocalizations get localizations => widget.localizations;
 
   @override

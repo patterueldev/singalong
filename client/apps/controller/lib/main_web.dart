@@ -50,7 +50,7 @@ void main() {
       Provider<ConnectFlowCoordinator>.value(value: appCoordinator),
       Provider<SessionFlowCoordinator>.value(value: appCoordinator),
       Provider<SongBookFlowCoordinator>.value(value: appCoordinator),
-      Provider<DownloadFlowController>.value(value: appCoordinator),
+      Provider<DownloadFlowCoordinator>.value(value: appCoordinator),
       Provider<SingalongAPIConfiguration>.value(value: APIConfiguration()),
       buildProviders(),
     ],

@@ -1,6 +1,6 @@
 part of '../songbookfeature.dart';
 
-abstract class SongBookViewModel {
+abstract class SongBookViewModel extends ChangeNotifier {
   ValueNotifier<SongBookViewState> get stateNotifier;
   ValueNotifier<bool> get isSearchActive;
   ValueNotifier<bool> get isLoadingNotifier; // for the HUD overlay

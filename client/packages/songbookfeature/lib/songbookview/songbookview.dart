@@ -3,13 +3,11 @@ part of '../songbookfeature.dart';
 class SongBookView extends StatefulWidget {
   const SongBookView({
     super.key,
-    required this.viewModel,
     required this.navigationCoordinator,
     required this.localizations,
     required this.assets,
   });
 
-  final SongBookViewModel viewModel;
   final SongBookFlowCoordinator navigationCoordinator;
   final SongBookLocalizations localizations;
   final SongBookAssets assets;
@@ -18,7 +16,8 @@ class SongBookView extends StatefulWidget {
 }
 
 class _SongBookViewState extends State<SongBookView> {
-  SongBookViewModel get viewModel => widget.viewModel;
+  SongBookViewModel get viewModel =>
+      Provider.of<SongBookViewModel>(context, listen: false);
   SongBookFlowCoordinator get navigationCoordinator =>
       widget.navigationCoordinator;
   SongBookLocalizations get localizations => widget.localizations;
@@ -53,29 +52,12 @@ class _SongBookViewState extends State<SongBookView> {
   }
 
   @override
-  Widget build(BuildContext context) => Stack(
-        children: [
-          _buildScaffold(context),
-          ValueListenableBuilder(
-            valueListenable: viewModel.isLoadingNotifier,
-            builder: (context, isLoading, child) {
-              if (isLoading) {
-                return Positioned.fill(
-                  child: Container(
-                    color: Colors.black54,
-                    child: const Center(
-                      child: CircularProgressIndicator(),
-                    ),
-                  ),
-                );
-              }
-              return const SizedBox.shrink();
-            },
-          ),
-        ],
+  Widget build(BuildContext context) => Consumer<SongBookViewModel>(
+        builder: (context, viewModel, _) => _buildScaffold(context, viewModel),
       );
 
-  Widget _buildScaffold(BuildContext context) => Scaffold(
+  Widget _buildScaffold(BuildContext context, SongBookViewModel viewModel) =>
+      Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         appBar: AppBar(
           title: ValueListenableBuilder<bool>(
@@ -141,7 +123,7 @@ class _SongBookViewState extends State<SongBookView> {
                   } else if (state is Loaded) {
                     songList = state.songList;
                   }
-                  return _buildSongList(songList, isLoading);
+                  return _buildSongList(songList, viewModel, isLoading);
 
                 case SongBookViewStateType.notFound:
                   final emptyState = state as NotFound;
@@ -153,7 +135,7 @@ class _SongBookViewState extends State<SongBookView> {
 
                 case SongBookViewStateType.failure:
                   final failureState = state as Failure;
-                  return _buildError(failureState);
+                  return _buildError(failureState, viewModel);
               }
             },
           ),
@@ -236,7 +218,8 @@ class _SongBookViewState extends State<SongBookView> {
         ),
       );
 
-  Widget _buildSongList(List<SongItem> songList, bool isLoading,
+  Widget _buildSongList(
+          List<SongItem> songList, SongBookViewModel viewModel, bool isLoading,
           {double height = 50}) =>
       Skeletonizer(
         enabled: isLoading,
@@ -245,14 +228,17 @@ class _SongBookViewState extends State<SongBookView> {
           itemBuilder: (context, index) => Card(
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: _buildItem(songList[index], height),
+              child: _buildItem(songList[index], viewModel, height),
             ),
           ),
         ),
       );
 
-  Widget _buildItem(SongItem song, double height) => _popupButton(
+  Widget _buildItem(
+          SongItem song, SongBookViewModel viewModel, double height) =>
+      _popupButton(
         song,
+        viewModel,
         Row(
           mainAxisAlignment: MainAxisAlignment.start,
           crossAxisAlignment: CrossAxisAlignment.center,
@@ -290,7 +276,9 @@ class _SongBookViewState extends State<SongBookView> {
         ),
       );
 
-  Widget _popupButton(SongItem song, Widget child) => PopupMenuButton<String>(
+  Widget _popupButton(
+          SongItem song, SongBookViewModel viewModel, Widget child) =>
+      PopupMenuButton<String>(
         onSelected: (value) {
           switch (value) {
             case 'reserve':
@@ -301,22 +289,20 @@ class _SongBookViewState extends State<SongBookView> {
               break;
           }
         },
-        itemBuilder: (BuildContext context) {
-          return [
-            PopupMenuItem<String>(
-              value: 'reserve',
-              child: Text("Reserve Song"),
-            ),
-            PopupMenuItem<String>(
-              value: 'details',
-              child: Text("View Details"),
-            ),
-          ];
-        },
+        itemBuilder: (BuildContext context) => const [
+          PopupMenuItem<String>(
+            value: 'reserve',
+            child: Text("Reserve Song"),
+          ),
+          PopupMenuItem<String>(
+            value: 'details',
+            child: Text("View Details"),
+          ),
+        ],
         child: child,
       );
 
-  Widget _buildError(Failure state) => Column(
+  Widget _buildError(Failure state, SongBookViewModel viewModel) => Column(
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -330,7 +316,7 @@ class _SongBookViewState extends State<SongBookView> {
             ),
           ),
           TextButton(
-            onPressed: () => viewModel.fetchSongs(true),
+            onPressed: () => viewModel.fetchSongs(false),
             child: const Row(
               mainAxisSize: MainAxisSize.min,
               children: [

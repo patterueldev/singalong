@@ -48,6 +48,13 @@ Route<dynamic>? onGenerateRoute(RouteSettings settings, BuildContext context) {
             .read<SongBookFeatureProvider>()
             .buildSongBookView(context: context),
       );
+    case AppRoute.downloadables:
+      final query = settings.arguments as String?;
+      return MaterialPageRoute(
+        builder: (context) => context
+            .read<DownloadFeatureProvider>()
+            .buildSearchDownloadableView(query: query),
+      );
     case AppRoute.identify:
       final String? url = settings.arguments as String?;
       return MaterialPageRoute(

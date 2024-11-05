@@ -9,7 +9,7 @@ class IdentifySongView extends StatefulWidget {
   }) : super();
 
   final DownloadAssets assets;
-  final DownloadFlowController flow;
+  final DownloadFlowCoordinator flow;
   final DownloadLocalizations localizations;
 
   @override
@@ -18,7 +18,7 @@ class IdentifySongView extends StatefulWidget {
 
 class _IdentifySongViewState extends State<IdentifySongView> {
   DownloadAssets get assets => widget.assets;
-  DownloadFlowController get coordinator => widget.flow;
+  DownloadFlowCoordinator get coordinator => widget.flow;
   DownloadLocalizations get localizations => widget.localizations;
 
   @override

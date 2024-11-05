@@ -264,4 +264,12 @@ mixin DownloadLocalizationsMixin implements DownloadLocalizations {
   @override
   final emptySongLanguage =
       _getLocalizedString((localizations) => localizations.emptySongLanguage);
+
+  @override
+  final searchByURL =
+      _getLocalizedString((localizations) => localizations.searchByURL);
+
+  @override
+  LocalizedString itemNotFound(String item) =>
+      _getLocalizedString((localizations) => localizations.itemNotFound(item));
 }

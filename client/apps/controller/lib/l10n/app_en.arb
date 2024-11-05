@@ -153,6 +153,9 @@
   "emptySongLanguage": "Song language cannot be empty",
   "emptySongLanguageDescription": "Error message for empty song language",
 
+  "searchByURL": "Identify URL",
+  "searchByURLDescription": "Text for the search by URL button",
+
   "isUrlPromptTitle": "Identify URL?",
   "isUrlPromptTitleDescription": "Title for the identify URL prompt",
 
@@ -166,5 +169,8 @@
   "continueIdentifyButtonTextDescription": "Text for the continue identify button",
 
   "urlDetected": "\"{url}\" seems to be a URL. Do you want to identify the song?",
-  "urlDetectedDescription": "Message for URL detected"
+  "urlDetectedDescription": "Message for URL detected",
+
+  "itemNotFound": "\"{query}\" was not found from the downloadables.",
+  "itemNotFoundDescription": "Message for song not found"
 }

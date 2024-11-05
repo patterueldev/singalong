@@ -1,10 +1,13 @@
 library downloadfeature;
 
+import 'dart:async';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:fpdart/fpdart.dart' show TaskEither, Unit, unit;
 import 'package:provider/provider.dart';
 import 'package:shared/shared.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
 part 'downloadassets.dart';
 part 'downloadexception.dart';
@@ -16,15 +19,18 @@ part 'shared/songidentifierrepository.dart';
 part 'manual/identifysongview.dart';
 part 'manual/identifysongviewmodel.dart';
 part 'manual/identifysubmissionstate.dart';
-part 'search/songsearchview.dart';
-part 'search/downloadablesearchviewmodel.dart';
+part 'search/searchdownloadableview.dart';
+part 'search/searchdownloadableviewmodel.dart';
+part 'search/searchdownloadableviewstate.dart';
+part 'search/searchdownloadableusecase.dart';
+part 'search/downloadableitem.dart';
 part 'details/songdetailsview.dart';
 part 'details/songdetailsviewmodel.dart';
 part 'details/songdetailsdownloadstate.dart';
 part 'details/downloadusecase.dart';
 
 class DownloadFeatureProvider {
-  final DownloadFlowController coordinator;
+  final DownloadFlowCoordinator coordinator;
   final DownloadLocalizations localizations;
   final DownloadAssets assets;
   final SongIdentifierRepository songIdentifierRepository;
@@ -55,10 +61,15 @@ class DownloadFeatureProvider {
         ),
       );
 
-  Widget buildSongSearchView() =>
-      ChangeNotifierProvider<DownloadableSearchViewModel>(
-        create: (context) => DefaultDownloadableSearchViewModel(),
-        child: DownloadableSongSearchView(),
+  Widget buildSearchDownloadableView({String? query}) =>
+      ChangeNotifierProvider<SearchDownloadableViewModel>(
+        create: (context) =>
+            DefaultSearchDownloadableViewModel(query: query ?? ''),
+        child: SearchDownloadableView(
+          coordinator: coordinator,
+          localizations: localizations,
+          assets: assets,
+        ),
       );
 
   Widget buildSongDetailsView({

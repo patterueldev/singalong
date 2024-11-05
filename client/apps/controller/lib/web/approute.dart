@@ -5,6 +5,7 @@ enum AppRoute {
   sessionConnect,
   session,
   songBook,
+  downloadables,
   identify,
   identifiedSongDetails,
   notFound,
@@ -20,6 +21,8 @@ enum AppRoute {
         return '/session/active';
       case AppRoute.songBook:
         return '/session/active/songbook';
+      case AppRoute.downloadables:
+        return '/session/active/downloadables';
       case AppRoute.identify:
         return '/session/active/songbook/identify';
       case AppRoute.identifiedSongDetails:

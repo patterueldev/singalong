@@ -13,7 +13,7 @@ class MobileAppCoordinator
         ConnectFlowCoordinator,
         SessionFlowCoordinator,
         SongBookFlowCoordinator,
-        DownloadFlowController {
+        DownloadFlowCoordinator {
   @override
   void onUnauthenticated(BuildContext context) {
     final connectProvider = context.read<ConnectFeatureBuilder>();
@@ -58,7 +58,13 @@ class MobileAppCoordinator
 
   @override
   void openSearchDownloadablesScreen(BuildContext context, {String? query}) {
-    // TODO: implement openSearchDownloadablesScreen
+    DownloadFeatureProvider downloadFeatureProvider = context.read();
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) =>
+            downloadFeatureProvider.buildSearchDownloadableView(query: query),
+      ),
+    );
   }
 
   @override
@@ -94,5 +100,17 @@ class MobileAppCoordinator
   @override
   void onDownloadSuccess(BuildContext context) {
     Navigator.popUntil(context, (route) => route.isFirst);
+  }
+
+  @override
+  void navigateToURLIdentifierView(BuildContext context) {
+    openDownloadScreen(context);
+  }
+
+  @override
+  void previewDownloadable(
+      BuildContext context, DownloadableItem downloadable) {
+    // TODO: implement previewDownloadable
+    // open browser
   }
 }
