@@ -5,8 +5,8 @@ class APISaveSongResponseData {
   final String id;
   final String source;
   final String sourceId;
-  final String thumbnailPath;
-  final String videoPath;
+  final String? thumbnailPath;
+  final String? videoPath;
   final String songTitle;
   final String songArtist;
   final String songLanguage;
@@ -19,8 +19,8 @@ class APISaveSongResponseData {
     required this.id,
     required this.source,
     required this.sourceId,
-    required this.thumbnailPath,
-    required this.videoPath,
+    this.thumbnailPath,
+    this.videoPath,
     required this.songTitle,
     required this.songArtist,
     required this.songLanguage,

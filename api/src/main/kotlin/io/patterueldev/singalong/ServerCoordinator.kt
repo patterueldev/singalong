@@ -2,10 +2,11 @@ package io.patterueldev.singalong
 
 import io.patterueldev.reservation.ReservationCoordinator
 import io.patterueldev.singalong.realtime.OnEventListener
+import io.patterueldev.songidentifier.SongIdentifierCoordinator
 import org.springframework.stereotype.Component
 
 @Component
-class ServerCoordinator : ReservationCoordinator {
+class ServerCoordinator : ReservationCoordinator, SongIdentifierCoordinator {
     private var onReserveUpdateListener: OnEventListener? = null
     private var onCurrentSongUpdateListener: OnEventListener? = null
 

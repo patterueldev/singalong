@@ -58,13 +58,14 @@ class DefaultSongIdentifierRepository implements SongIdentifierRepository {
       final result = await apiClient.saveSong(parameters);
       debugPrint("Save song result: $result");
 
-      if (reserve) {
-        await apiClient
-            .reserveSong(APIReserveSongParameters(songId: result.id));
-        debugPrint("Song reserved");
-      }
+      // if (reserve) {
+      //   await apiClient
+      //       .reserveSong(APIReserveSongParameters(songId: result.id));
+      //   debugPrint("Song reserved");
+      // }
     } catch (e, st) {
       debugPrint("Error: $e");
+      debugPrint("Stacktrace: $st");
       rethrow;
     }
   }

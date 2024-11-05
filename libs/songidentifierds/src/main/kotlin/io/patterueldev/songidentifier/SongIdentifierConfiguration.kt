@@ -41,7 +41,8 @@ open class SongIdentifierConfiguration {
     open fun songIdentifierService(
         @Autowired identifiedSongRepository: IdentifiedSongRepository,
         @Autowired roomUserRepository: RoomUserRepository,
-    ) = SongIdentifierService(identifiedSongRepository, roomUserRepository)
+        @Autowired(required = false) songIdentifierCoordinator: SongIdentifierCoordinator? = null,
+    ) = SongIdentifierService(identifiedSongRepository, roomUserRepository, songIdentifierCoordinator)
 
     @Bean
     open fun openAIClient(
