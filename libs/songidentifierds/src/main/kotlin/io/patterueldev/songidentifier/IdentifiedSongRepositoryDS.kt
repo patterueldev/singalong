@@ -235,13 +235,19 @@ internal class IdentifiedSongRepositoryDS : IdentifiedSongRepository {
         delay(1000)
     }
 
-    override suspend fun searchSongs(keyword: String): List<SearchResultItem> {
+    override suspend fun searchSongs(
+        keyword: String,
+        limit: Int,
+    ): List<SearchResultItem> {
         return try {
             println("Searching for songs with keyword: $keyword")
             withContext(Dispatchers.IO) {
                 val urlEncodedKeyword = URLEncoder.encode(keyword, StandardCharsets.UTF_8.toString())
+                val urlQueries = mapOf("keyword" to urlEncodedKeyword, "limit" to limit.toString())
+                val query = urlQueries.map { "${it.key}=${it.value}" }.joinToString("&")
+                val urlPath = "/search?$query"
                 songDownloaderClient.get()
-                    .uri("/search?keyword=$urlEncodedKeyword")
+                    .uri(urlPath)
                     .retrieve()
                     .bodyToMono(Array<SearchResultItem>::class.java)
                     .block()

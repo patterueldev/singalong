@@ -6,6 +6,7 @@ import io.patterueldev.songidentifier.identifysong.IdentifySongParameters
 import io.patterueldev.songidentifier.identifysong.IdentifySongUseCase
 import io.patterueldev.songidentifier.savesong.SaveSongParameters
 import io.patterueldev.songidentifier.savesong.SaveSongUseCase
+import io.patterueldev.songidentifier.searchsong.SearchSongParameters
 import io.patterueldev.songidentifier.searchsong.SearchSongUseCase
 
 class SongIdentifierService(
@@ -28,5 +29,5 @@ class SongIdentifierService(
 
     suspend fun saveSong(parameters: SaveSongParameters) = saveSongUseCase(parameters)
 
-    suspend fun searchSong(keyword: String) = searchSongUseCase(keyword)
+    suspend fun searchSong(parameters: SearchSongParameters) = searchSongUseCase(parameters)
 }

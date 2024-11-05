@@ -23,6 +23,7 @@ part 'models/song.dart';
 part 'models/identified_song_details.dart';
 part 'models/save_song_parameters.dart';
 part 'models/save_song_response.dart';
+part 'models/downloadable_item.dart';
 
 enum HttpMethod { GET, POST, PATCH, PUT, DELETE }
 
@@ -164,6 +165,21 @@ class SingalongAPIClient {
       payload: parameters.toJson(),
     );
     return APISaveSongResponseData.fromJson(result.objectData());
+  }
+
+  Future<List<APIDownloadableData>> searchDownloadables(
+      APISearchDownloadablesParameters parameters) async {
+    final query = parameters.toJson();
+    final getUri = _configuration.buildEndpoint(APIPath.songs.value,
+        queryParameters: query);
+    final result = await request(
+      uri: getUri,
+      method: HttpMethod.GET,
+    );
+    return result
+        .arrayData()
+        .map((e) => APIDownloadableData.fromJson(e))
+        .toList();
   }
 
   // TODO: Move this to a separate client, maybe SingalongAPISocketClient; might as well rename this to SingalongAPIRestClient

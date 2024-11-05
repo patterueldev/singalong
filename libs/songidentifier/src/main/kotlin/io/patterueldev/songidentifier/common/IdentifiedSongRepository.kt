@@ -37,5 +37,8 @@ interface IdentifiedSongRepository {
         sessionId: String,
     )
 
-    suspend fun searchSongs(keyword: String): List<SearchResultItem>
+    suspend fun searchSongs(
+        keyword: String,
+        limit: Int,
+    ): List<SearchResultItem>
 }

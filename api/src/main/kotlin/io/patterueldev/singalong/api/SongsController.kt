@@ -14,6 +14,7 @@ import io.patterueldev.songidentifier.common.SaveSongResponse
 import io.patterueldev.songidentifier.common.SearchSongResponse
 import io.patterueldev.songidentifier.identifysong.IdentifySongParameters
 import io.patterueldev.songidentifier.savesong.SaveSongParameters
+import io.patterueldev.songidentifier.searchsong.SearchSongParameters
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PostMapping
@@ -69,7 +70,14 @@ class SongsController(
     @GetMapping("/downloadable")
     suspend fun getDownloadableSongs(
         @RequestParam keyword: String,
-    ): SearchSongResponse = songIdentifierService.searchSong(keyword)
+        @RequestParam limit: Int = 20,
+    ): SearchSongResponse =
+        songIdentifierService.searchSong(
+            SearchSongParameters(
+                keyword = keyword,
+                limit = limit,
+            ),
+        )
 
     @PatchMapping("/next")
     suspend fun nextSong(): NextSongResponse = reservationService.nextSong()

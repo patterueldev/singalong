@@ -15,10 +15,10 @@ handle_error() {
 trap 'handle_error $LINENO' ERR
 
 # Format
-#./gradlew ktlintFormat
 
 # Build the api
 cd $api
+./gradlew ktlintFormat
 ./gradlew build
 echo "Gradle build completed successfully."
 cd $root

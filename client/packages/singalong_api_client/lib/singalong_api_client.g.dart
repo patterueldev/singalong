@@ -267,3 +267,108 @@ Map<String, dynamic> _$APISaveSongResponseDataToJson(
       'songLyrics': instance.songLyrics,
       'lengthSeconds': instance.lengthSeconds,
     };
+
+APISearchDownloadablesParameters _$APISearchDownloadablesParametersFromJson(
+        Map<String, dynamic> json) =>
+    APISearchDownloadablesParameters(
+      keyword: json['keyword'] as String,
+      limit: (json['limit'] as num?)?.toInt() ?? 20,
+    );
+
+Map<String, dynamic> _$APISearchDownloadablesParametersToJson(
+        APISearchDownloadablesParameters instance) =>
+    <String, dynamic>{
+      'keyword': instance.keyword,
+      'limit': instance.limit,
+    };
+
+APIDownloadableData _$APIDownloadableDataFromJson(Map<String, dynamic> json) =>
+    APIDownloadableData(
+      type: json['type'] as String,
+      name: json['name'] as String,
+      id: json['id'] as String,
+      url: json['url'] as String,
+      thumbnail: json['thumbnail'] as String,
+      thumbnails: (json['thumbnails'] as List<dynamic>)
+          .map((e) => APIThumbnail.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      isUpcoming: json['isUpcoming'] as bool,
+      upcoming: json['upcoming'],
+      isLive: json['isLive'] as bool,
+      badges: json['badges'] as List<dynamic>,
+      author: APIAuthor.fromJson(json['author'] as Map<String, dynamic>),
+      description: json['description'] as String,
+      views: (json['views'] as num).toInt(),
+      duration: json['duration'] as String,
+      uploadedAt: json['uploadedAt'] as String,
+      alreadyExists: json['alreadyExists'] as bool,
+    );
+
+Map<String, dynamic> _$APIDownloadableDataToJson(
+        APIDownloadableData instance) =>
+    <String, dynamic>{
+      'type': instance.type,
+      'name': instance.name,
+      'id': instance.id,
+      'url': instance.url,
+      'thumbnail': instance.thumbnail,
+      'thumbnails': instance.thumbnails,
+      'isUpcoming': instance.isUpcoming,
+      'upcoming': instance.upcoming,
+      'isLive': instance.isLive,
+      'badges': instance.badges,
+      'author': instance.author,
+      'description': instance.description,
+      'views': instance.views,
+      'duration': instance.duration,
+      'uploadedAt': instance.uploadedAt,
+      'alreadyExists': instance.alreadyExists,
+    };
+
+APIThumbnail _$APIThumbnailFromJson(Map<String, dynamic> json) => APIThumbnail(
+      url: json['url'] as String,
+      width: (json['width'] as num).toInt(),
+      height: (json['height'] as num).toInt(),
+    );
+
+Map<String, dynamic> _$APIThumbnailToJson(APIThumbnail instance) =>
+    <String, dynamic>{
+      'url': instance.url,
+      'width': instance.width,
+      'height': instance.height,
+    };
+
+APIAuthor _$APIAuthorFromJson(Map<String, dynamic> json) => APIAuthor(
+      name: json['name'] as String,
+      channelID: json['channelID'] as String,
+      url: json['url'] as String,
+      bestAvatar:
+          APIAvatar.fromJson(json['bestAvatar'] as Map<String, dynamic>),
+      avatars: (json['avatars'] as List<dynamic>)
+          .map((e) => APIAvatar.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      ownerBadges: json['ownerBadges'] as List<dynamic>,
+      verified: json['verified'] as bool,
+    );
+
+Map<String, dynamic> _$APIAuthorToJson(APIAuthor instance) => <String, dynamic>{
+      'name': instance.name,
+      'channelID': instance.channelID,
+      'url': instance.url,
+      'bestAvatar': instance.bestAvatar,
+      'avatars': instance.avatars,
+      'ownerBadges': instance.ownerBadges,
+      'verified': instance.verified,
+    };
+
+APIAvatar _$APIAvatarFromJson(Map<String, dynamic> json) => APIAvatar(
+      url: json['url'] as String,
+      width: (json['width'] as num).toInt(),
+      height: (json['height'] as num).toInt(),
+    );
+
+Map<String, dynamic> _$APIAvatarToJson(APIAvatar instance) => <String, dynamic>{
+      'url': instance.url,
+      'width': instance.width,
+      'height': instance.height,
+    };
