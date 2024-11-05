@@ -7,77 +7,78 @@ abstract class SearchDownloadableViewModel extends ChangeNotifier {
   ValueNotifier<bool> isLoadingNotifier =
       ValueNotifier(false); // for the HUD overlay
   ValueNotifier<String?> toastMessageNotifier = ValueNotifier(null);
+  ValueNotifier<IdentifySubmissionState> submissionStateNotifier =
+      ValueNotifier(IdentifySubmissionState.idle());
 
-  void searchDownloadables(bool loadsNext);
-  void updateSearchQuery(String query);
+  void searchDownloadables();
+  void updateSearchQuery(String query,
+      {Duration debounceTime = const Duration(milliseconds: 500)});
   void identifyDownloadable(DownloadableItem downloadable);
 }
 
 class DefaultSearchDownloadableViewModel extends SearchDownloadableViewModel {
+  final SearchDownloadableSongUseCase searchDownloadableSongUseCase;
+  final IdentifySongUrlUseCase identifySongUrlUseCase;
   DefaultSearchDownloadableViewModel({
-    String query = '',
+    required this.searchDownloadableSongUseCase,
+    required this.identifySongUrlUseCase,
+    this.searchQuery = '',
   }) {
-    _searchQuery = query;
-    searchController.text = query;
+    searchController.text = searchQuery;
   }
 
-  String _searchQuery = '';
+  String searchQuery;
   Timer? _searchDebounce;
 
-  Pagination? nextPage;
+  @override
+  void searchDownloadables() async {
+    stateNotifier.value = SearchDownloadableViewState.loading();
 
-  List<DownloadableItem> _downloadables = []; // Replace with your song model
-
-  void _filterSongs(String query) {
-    final filtered = _downloadables.where((song) {
-      final titleLower = song.title.toLowerCase();
-      final artistLower = song.artist.toLowerCase();
-      final searchLower = query.toLowerCase();
-
-      return titleLower.contains(searchLower) ||
-          artistLower.contains(searchLower);
-    }).toList();
-
-    stateNotifier.value = filtered.isEmpty
-        ? SearchDownloadableViewState.loaded(_downloadables)
-        : SearchDownloadableViewState.loaded(filtered);
-
-    final state = stateNotifier.value;
-    if (state is Loaded) {
-      debugPrint('Downloadable list: ${state.downloadableList}');
-    }
+    final result = await searchDownloadableSongUseCase(searchQuery).run();
+    result.fold(
+      (exception) {
+        stateNotifier.value = SearchDownloadableViewState.failure(exception);
+      },
+      (downloadables) {
+        if (downloadables.isEmpty) {
+          stateNotifier.value =
+              SearchDownloadableViewState.notFound(searchText: searchQuery);
+        } else {
+          stateNotifier.value =
+              SearchDownloadableViewState.loaded(downloadables);
+        }
+      },
+    );
   }
 
   @override
-  void searchDownloadables(bool loadsNext) {
-    if (_searchQuery.isEmpty) {
-      stateNotifier.value = SearchDownloadableViewState.initial();
-      return;
-    }
+  void identifyDownloadable(DownloadableItem downloadable) async {
+    isLoadingNotifier.value = true;
 
-    if (_searchDebounce?.isActive ?? false) {
-      _searchDebounce?.cancel();
-    }
+    final url = downloadable.sourceUrl;
+    final result = await identifySongUrlUseCase(url).run();
 
-    _downloadables = getSongs();
-
-    _searchDebounce = Timer(const Duration(milliseconds: 500), () {
-      _filterSongs(_searchQuery);
-    });
+    result.fold(
+      (exception) {
+        submissionStateNotifier.value =
+            IdentifySubmissionState.failure(exception);
+      },
+      (details) {
+        submissionStateNotifier.value =
+            IdentifySubmissionState.success(details);
+      },
+    );
+    isLoadingNotifier.value = false;
   }
 
   @override
-  void identifyDownloadable(DownloadableItem downloadable) {
-    // Do something with the downloadable
-  }
-
-  @override
-  void updateSearchQuery(String query) {
-    if (_searchQuery == query) return;
-    Duration debounceTime;
-    _searchQuery = query;
-    debounceTime = const Duration(milliseconds: 500);
+  void updateSearchQuery(
+    String query, {
+    Duration debounceTime = const Duration(milliseconds: 500),
+  }) {
+    if (searchQuery == query) return;
+    searchQuery = query;
     _searchDebounce?.cancel();
-    _searchDebounce = Timer(debounceTime, () => searchDownloadables(false));
+    _searchDebounce = Timer(debounceTime, () => searchDownloadables());
   }
 }

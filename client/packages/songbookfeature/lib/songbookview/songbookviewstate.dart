@@ -12,7 +12,8 @@ class SongBookViewState {
   factory SongBookViewState.notFound({required String searchText}) =>
       NotFound(searchText);
   factory SongBookViewState.urlDetected(String url) => URLDetected(url);
-  factory SongBookViewState.failure(String error) => Failure(error);
+  factory SongBookViewState.failure(GenericException exception) =>
+      Failure(exception);
 
   @override
   String toString() {
@@ -68,8 +69,8 @@ class URLDetected extends SongBookViewState {
 }
 
 class Failure extends SongBookViewState {
-  final String error;
-  Failure(this.error) : super(SongBookViewStateType.failure);
+  final GenericException exception;
+  Failure(this.exception) : super(SongBookViewStateType.failure);
 }
 
 enum SongBookViewStateType {

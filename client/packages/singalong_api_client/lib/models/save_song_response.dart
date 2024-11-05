@@ -35,24 +35,3 @@ class APISaveSongResponseData {
 
   Map<String, dynamic> toJson() => _$APISaveSongResponseDataToJson(this);
 }
-/*
-{
-    "success": true,
-    "status": 200,
-    "data": {
-        "id": "67289505dd458d760dfcffba",
-        "source": "https://www.youtube.com/watch?v=JAotjuGdoQ4",
-        "sourceId": "JAotjuGdoQ4",
-        "thumbnailPath": "thumbnails/[歌詞・音程バーカラオケ-練習用]-μ`s---僕らのlive-君とのlife-(アニメ`ラブライブ!`ost)-【原曲キー】-♪-j-pop-karaoke[JAotjuGdoQ4].jpg",
-        "videoPath": "videos/[歌詞・音程バーカラオケ-練習用]-μ`s---僕らのlive-君とのlife-(アニメ`ラブライブ!`ost)-【原曲キー】-♪-j-pop-karaoke[JAotjuGdoQ4].mp4",
-        "songTitle": "[歌詞・音程バーカラオケ/練習用] μ`s - 僕らのLIVE 君とのLIFE (アニメ`ラブライブ!`OST) 【原曲キー】 ♪ J-POP Karaoke",
-        "songArtist": "Unknown Artist",
-        "songLanguage": "Unknown",
-        "isOffVocal": false,
-        "videoHasLyrics": false,
-        "songLyrics": "",
-        "lengthSeconds": 330
-    },
-    "message": null
-}
- */

@@ -1,7 +1,7 @@
 part of '../songbookfeature.dart';
 
 abstract class ReserveSongUseCase {
-  TaskEither<SongBookException, Unit> call(SongItem song);
+  TaskEither<GenericException, Unit> call(SongItem song);
 }
 
 class DefaultReserveSongUseCase implements ReserveSongUseCase {
@@ -12,14 +12,14 @@ class DefaultReserveSongUseCase implements ReserveSongUseCase {
   });
 
   @override
-  TaskEither<SongBookException, Unit> call(SongItem song) =>
+  TaskEither<GenericException, Unit> call(SongItem song) =>
       TaskEither.tryCatch(() async {
         await songRepository.reserveSong(song);
         return unit;
       }, (e, s) {
-        if (e is SongBookException) {
+        if (e is GenericException) {
           return e;
         }
-        return SongBookException('Failed to reserve song');
+        return GenericException.unhandled(e);
       });
 }

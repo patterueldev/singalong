@@ -50,6 +50,11 @@ class DownloadFeatureProvider {
     identifiedSongRepository: songIdentifierRepository,
   );
 
+  late final _searchDownloadableSongUseCase =
+      DefaultSearchDownloadableSongUseCase(
+    identifiedSongRepository: songIdentifierRepository,
+  );
+
   Widget buildIdentifyUrlView({required BuildContext context, String? url}) =>
       ChangeNotifierProvider<IdentifySongViewModel>(
         create: (context) => DefaultIdentifySongViewModel(
@@ -63,8 +68,10 @@ class DownloadFeatureProvider {
 
   Widget buildSearchDownloadableView({String? query}) =>
       ChangeNotifierProvider<SearchDownloadableViewModel>(
-        create: (context) =>
-            DefaultSearchDownloadableViewModel(query: query ?? ''),
+        create: (context) => DefaultSearchDownloadableViewModel(
+            searchDownloadableSongUseCase: _searchDownloadableSongUseCase,
+            identifySongUrlUseCase: _identifySongUseCase,
+            searchQuery: query ?? ''),
         child: SearchDownloadableView(
           coordinator: coordinator,
           localizations: localizations,

@@ -19,7 +19,7 @@ class SearchDownloadableView extends StatefulWidget {
 class _SearchDownloadableViewState extends State<SearchDownloadableView> {
   SearchDownloadableViewModel get viewModel =>
       Provider.of<SearchDownloadableViewModel>(context, listen: false);
-  DownloadFlowCoordinator get navigationCoordinator => widget.coordinator;
+  DownloadFlowCoordinator get coordinator => widget.coordinator;
   DownloadLocalizations get localizations => widget.localizations;
   DownloadAssets get assets => widget.assets;
   final FocusNode _searchFocusNode = FocusNode();
@@ -29,7 +29,8 @@ class _SearchDownloadableViewState extends State<SearchDownloadableView> {
     super.initState();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      viewModel.searchDownloadables(false);
+      viewModel.searchDownloadables();
+      viewModel.submissionStateNotifier.addListener(_submissionResultListener);
     });
   }
 
@@ -39,9 +40,85 @@ class _SearchDownloadableViewState extends State<SearchDownloadableView> {
     super.dispose();
   }
 
+  void _submissionResultListener() {
+    final result = viewModel.submissionStateNotifier.value;
+
+    if (result is IdentifySubmissionSuccess) {
+      debugPrint('Identified song: ${result.identifiedSongDetails}');
+      coordinator.navigateToIdentifiedSongDetailsView(
+        context,
+        details: result.identifiedSongDetails,
+      );
+    }
+
+    if (result is IdentifySubmissionFailure) {
+      final exception = result.exception;
+      if (exception is DownloadException) {
+        debugPrint("exception type: ${exception.type}");
+        if (exception.type == ExceptionType.alreadyExists) {
+          _showErrorDialog(context, exception, localizations);
+          return;
+        }
+      }
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content:
+            exception.localizedFrom(localizations).localizedTextOf(context),
+      ));
+    }
+  }
+
+  void _showErrorDialog(BuildContext context, DownloadException exception,
+      DownloadLocalizations localizations) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Error'),
+          content:
+              Text(exception.localizedFrom(localizations).localizedOf(context)),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                // Handle Cancel action
+                Navigator.of(context).pop();
+              },
+              child: Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                // Handle View action
+                Navigator.of(context).pop();
+              },
+              child: Text('Reserve'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) => Consumer<SearchDownloadableViewModel>(
-        builder: (context, viewModel, _) => _buildScaffold(context, viewModel),
+        builder: (context, viewModel, _) => Stack(
+          children: [
+            _buildScaffold(context, viewModel),
+            ValueListenableBuilder(
+                valueListenable: viewModel.isLoadingNotifier,
+                builder: (context, isLoading, child) {
+                  if (isLoading) {
+                    return Positioned.fill(
+                      child: Container(
+                        color: Colors.black54,
+                        child: const Center(
+                          child: CircularProgressIndicator(),
+                        ),
+                      ),
+                    );
+                  }
+                  return const SizedBox.shrink();
+                }),
+          ],
+        ),
       );
 
   Widget _buildScaffold(
@@ -64,7 +141,8 @@ class _SearchDownloadableViewState extends State<SearchDownloadableView> {
             IconButton(
               icon: const Icon(Icons.close),
               onPressed: () => {
-                viewModel.searchController.clear(),
+                viewModel.updateSearchQuery('', debounceTime: Duration.zero),
+                _searchFocusNode.requestFocus(),
               },
             ),
           ],
@@ -109,7 +187,9 @@ class _SearchDownloadableViewState extends State<SearchDownloadableView> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const SizedBox(height: 150),
-            assets.errorBannerImage.image(height: 200),
+            state.searchText.isNotEmpty
+                ? assets.errorBannerImage.image(height: 200)
+                : assets.identifySongBannerImage.image(height: 200),
             state.localizedFrom(localizations).localizedTextOf(
                   context,
                   textAlign: TextAlign.center,
@@ -184,7 +264,7 @@ class _SearchDownloadableViewState extends State<SearchDownloadableView> {
                 children: [
                   Text(item.title),
                   const SizedBox(width: 16),
-                  Text(item.artist),
+                  Text("${item.duration} | ${item.artist}"),
                 ],
               ),
             ),
@@ -201,7 +281,7 @@ class _SearchDownloadableViewState extends State<SearchDownloadableView> {
               viewModel.identifyDownloadable(item);
               break;
             case 'preview':
-              navigationCoordinator.previewDownloadable(context, item);
+              coordinator.previewDownloadable(context, item);
               break;
           }
         },
@@ -225,7 +305,7 @@ class _SearchDownloadableViewState extends State<SearchDownloadableView> {
         children: [
           assets.errorBannerImage.image(height: 100),
           Text(
-            state.error,
+            state.exception.localizedFrom(localizations).localizedOf(context),
             textAlign: TextAlign.center,
             style: const TextStyle(
               fontSize: 16,
@@ -233,7 +313,7 @@ class _SearchDownloadableViewState extends State<SearchDownloadableView> {
             ),
           ),
           TextButton(
-            onPressed: () => viewModel.searchDownloadables(false),
+            onPressed: () => viewModel.searchDownloadables(),
             child: const Row(
               mainAxisSize: MainAxisSize.min,
               children: [

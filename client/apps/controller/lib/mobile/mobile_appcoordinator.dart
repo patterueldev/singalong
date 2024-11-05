@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sessionfeature/sessionfeature.dart';
 import 'package:songbookfeature/songbookfeature.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../splash/splash_coordinator.dart';
 
@@ -110,7 +111,15 @@ class MobileAppCoordinator
   @override
   void previewDownloadable(
       BuildContext context, DownloadableItem downloadable) {
-    // TODO: implement previewDownloadable
-    // open browser
+    final sourceUrl = downloadable.sourceUrl;
+    final url = Uri.parse(sourceUrl);
+    debugPrint("Launching URL: $url");
+    canLaunchUrl(url).then((canLaunch) async {
+      if (!canLaunch) {
+        debugPrint("Cannot launch URL: $url");
+        return;
+      }
+      await launchUrl(url, mode: LaunchMode.externalApplication);
+    });
   }
 }

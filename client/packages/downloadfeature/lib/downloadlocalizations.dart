@@ -26,6 +26,7 @@ abstract class DownloadLocalizations implements GenericLocalizations {
   LocalizedString get emptySongLanguage;
 
   LocalizedString get searchByURL;
+  LocalizedString get enterSearchKeyword;
 
   LocalizedString itemNotFound(String item);
 }

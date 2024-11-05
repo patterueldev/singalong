@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sessionfeature/sessionfeature.dart';
 import 'package:songbookfeature/songbookfeature.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../splash/splash_coordinator.dart';
 
@@ -74,7 +75,13 @@ class WebAppCoordinator
   @override
   void previewDownloadable(
       BuildContext context, DownloadableItem downloadable) {
-    // TODO: implement previewDownloadable
-    // Open new tab with preview link; or try to open the YT app
+    final url = Uri.parse(downloadable.sourceUrl);
+    canLaunchUrl(url).then((canLaunch) async {
+      if (!canLaunch) {
+        debugPrint("Cannot launch URL: $url");
+        return;
+      }
+      await launchUrl(url);
+    });
   }
 }

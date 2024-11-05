@@ -68,4 +68,25 @@ class DefaultSongIdentifierRepository implements SongIdentifierRepository {
       rethrow;
     }
   }
+
+  @override
+  Future<List<DownloadableItem>> searchDownloadableSong(String query) async {
+    try {
+      final result = await apiClient.searchDownloadables(
+        APISearchDownloadablesParameters(keyword: query),
+      );
+      return result
+          .map((e) => DownloadableItem(
+                sourceUrl: e.url,
+                title: e.name,
+                artist: e.author.name,
+                thumbnailURL: e.thumbnail,
+                duration: e.duration,
+              ))
+          .toList();
+    } catch (e, st) {
+      debugPrint("Error: $e");
+      rethrow;
+    }
+  }
 }

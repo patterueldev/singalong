@@ -1,27 +1,31 @@
 part of '../downloadfeature.dart';
 
 abstract class SearchDownloadableSongUseCase {
-  TaskEither<GenericException, DownloadableSongsResult> call(String query);
+  TaskEither<GenericException, List<DownloadableItem>> call(String query);
 }
 
-class DownloadableSongsResult {
-  final List<DownloadableItem> songs;
-  final int? nextOffset;
-  final String? nextCursor;
-  final int? nextPage;
+class DefaultSearchDownloadableSongUseCase
+    implements SearchDownloadableSongUseCase {
+  final SongIdentifierRepository identifiedSongRepository;
 
-  DownloadableSongsResult(this.songs,
-      {this.nextOffset, this.nextCursor, this.nextPage});
+  DefaultSearchDownloadableSongUseCase({
+    required this.identifiedSongRepository,
+  });
 
-  Pagination? next() {
-    if (nextOffset != null) {
-      return OffsetPagination(nextOffset as int);
-    } else if (nextCursor != null) {
-      return CursorPagination(nextCursor as String);
-    } else if (nextPage != null) {
-      return PagePagination(nextPage as int);
-    } else {
-      return null;
-    }
-  }
+  @override
+  TaskEither<GenericException, List<DownloadableItem>> call(String query) =>
+      TaskEither.tryCatch(
+        () async {
+          final result =
+              await identifiedSongRepository.searchDownloadableSong(query);
+          return result;
+        },
+        (e, s) {
+          if (e is DownloadException) {
+            return e;
+          }
+
+          return GenericException.unhandled(e);
+        },
+      );
 }

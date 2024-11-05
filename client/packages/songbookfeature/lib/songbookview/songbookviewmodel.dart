@@ -12,16 +12,6 @@ abstract class SongBookViewModel extends ChangeNotifier {
   void reserveSong(SongItem song);
 }
 
-class SongBookException extends GenericException {
-  final String message;
-
-  SongBookException(this.message);
-
-  // TODO: Can't really figure out what to throw for now;
-  // for now, it's just the generic unknown error/unhandled exception
-  // this will be updated later
-}
-
 class DefaultSongBookViewModel extends SongBookViewModel {
   final FetchSongsUseCase fetchSongsUseCase;
   final ReserveSongUseCase reserveSongUseCase;
@@ -71,36 +61,36 @@ class DefaultSongBookViewModel extends SongBookViewModel {
     final result = await fetchSongsUseCase(parameters).run();
     result.fold(
       (exception) {
-        stateNotifier.value = SongBookViewState.failure(exception.message);
+        stateNotifier.value = SongBookViewState.failure(exception);
       },
       (fetchSongResult) {
         final songList = fetchSongResult.songs;
         nextPage = fetchSongResult.next();
-        if (songList.isEmpty) {
-          try {
-            debugPrint('Checking if keyword is a URL');
-            if (keyword == null) {
-              throw Exception('Keyword is null');
-            }
-            final url = Uri.parse(keyword);
-            if (!url.isAbsolute) {
-              throw Exception('Keyword is not a URL');
-            }
-            debugPrint('Is URL: $url');
-            stateNotifier.value = SongBookViewState.urlDetected(url.toString());
-            return;
-          } catch (e) {
-            debugPrint(e.toString());
-            stateNotifier.value =
-                SongBookViewState.notFound(searchText: _searchQuery ?? '');
-          }
-        } else {
+
+        if (songList.isNotEmpty) {
           final state = stateNotifier.value;
           if (state is Loaded) {
             final currentSongs = state.songList;
             songList.insertAll(0, currentSongs);
           }
           stateNotifier.value = SongBookViewState.loaded(songList);
+          return;
+        }
+
+        // song is empty
+        try {
+          if (keyword == null) {
+            throw Exception('Keyword is null');
+          }
+          final url = Uri.parse(keyword);
+          if (!url.isAbsolute) {
+            throw Exception('Keyword is not a URL');
+          }
+          stateNotifier.value = SongBookViewState.urlDetected(url.toString());
+        } catch (e) {
+          debugPrint(e.toString());
+          stateNotifier.value =
+              SongBookViewState.notFound(searchText: _searchQuery ?? '');
         }
       },
     );
@@ -113,7 +103,7 @@ class DefaultSongBookViewModel extends SongBookViewModel {
     result.fold(
       (exception) {
         isLoadingNotifier.value = false;
-        stateNotifier.value = SongBookViewState.failure(exception.message);
+        stateNotifier.value = SongBookViewState.failure(exception);
       },
       (_) {
         isLoadingNotifier.value = false;

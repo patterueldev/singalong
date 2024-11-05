@@ -170,7 +170,7 @@ class SingalongAPIClient {
   Future<List<APIDownloadableData>> searchDownloadables(
       APISearchDownloadablesParameters parameters) async {
     final query = parameters.toJson();
-    final getUri = _configuration.buildEndpoint(APIPath.songs.value,
+    final getUri = _configuration.buildEndpoint(APIPath.downloadable.value,
         queryParameters: query);
     final result = await request(
       uri: getUri,

@@ -13,7 +13,8 @@ class SearchDownloadableViewState {
       Loaded(songList);
   factory SearchDownloadableViewState.notFound({required String searchText}) =>
       NotFound(searchText);
-  factory SearchDownloadableViewState.failure(String error) => Failure(error);
+  factory SearchDownloadableViewState.failure(GenericException exception) =>
+      Failure(exception);
 
   @override
   String toString() {
@@ -28,6 +29,7 @@ class Loading extends SearchDownloadableViewState {
   final List<DownloadableItem> downloadableList = List.generate(
     10,
     (index) => DownloadableItem(
+      sourceUrl: 'https://example.com/song$index.mp3',
       title: 'Song $index',
       artist: 'Artist $index',
       thumbnailURL: 'https://example.com/thumbnail1.jpg',
@@ -48,13 +50,16 @@ class NotFound extends SearchDownloadableViewState {
 
   LocalizedString localizedFrom(GenericLocalizations localizations) {
     final songBookLocalizations = localizations as DownloadLocalizations;
+    if (searchText.isEmpty) {
+      return songBookLocalizations.enterSearchKeyword;
+    }
     return songBookLocalizations.itemNotFound(searchText);
   }
 }
 
 class Failure extends SearchDownloadableViewState {
-  final String error;
-  Failure(this.error) : super(SearchDownloadableViewStateType.failure);
+  final GenericException exception;
+  Failure(this.exception) : super(SearchDownloadableViewStateType.failure);
 }
 
 enum SearchDownloadableViewStateType {

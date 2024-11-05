@@ -144,10 +144,10 @@ class _SongBookViewState extends State<SongBookView> {
 
   Widget _buildEmpty(NotFound state) => SingleChildScrollView(
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.start,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const SizedBox(height: 150),
+            const SizedBox(height: 50),
             assets.errorBannerImage.image(height: 200),
             state.localizedFrom(localizations).localizedTextOf(
                   context,
@@ -308,7 +308,7 @@ class _SongBookViewState extends State<SongBookView> {
         children: [
           assets.errorBannerImage.image(height: 100),
           Text(
-            state.error,
+            state.exception.localizedFrom(localizations).localizedOf(context),
             textAlign: TextAlign.center,
             style: const TextStyle(
               fontSize: 16,

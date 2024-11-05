@@ -141,7 +141,7 @@
   "unableToIdentifySong": "Unable to identify the song",
   "unableToIdentifySongDescription": "Message for unable to identify the song",
 
-  "alreadyExists": "The song was identified but already exists. Would you like to reserve the song?",
+  "alreadyExists": "The song was identified but already exists in the song book. Would you like to reserve the song instead?",
   "alreadyExistsDescription": "Message if the song from the specified url already exists.",
 
   "emptySongTitle": "Song title cannot be empty",
@@ -170,6 +170,9 @@
 
   "urlDetected": "\"{url}\" seems to be a URL. Do you want to identify the song?",
   "urlDetectedDescription": "Message for URL detected",
+
+  "enterSearchKeyword": "Enter a search keyword",
+  "enterSearchKeywordDescription": "Message for empty search keyword",
 
   "itemNotFound": "\"{query}\" was not found from the downloadables.",
   "itemNotFoundDescription": "Message for song not found"

@@ -270,6 +270,10 @@ mixin DownloadLocalizationsMixin implements DownloadLocalizations {
       _getLocalizedString((localizations) => localizations.searchByURL);
 
   @override
+  final enterSearchKeyword =
+      _getLocalizedString((localizations) => localizations.enterSearchKeyword);
+
+  @override
   LocalizedString itemNotFound(String item) =>
       _getLocalizedString((localizations) => localizations.itemNotFound(item));
 }

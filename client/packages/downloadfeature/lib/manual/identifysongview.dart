@@ -76,24 +76,18 @@ class _IdentifySongViewState extends State<IdentifySongView> {
           actions: <Widget>[
             TextButton(
               onPressed: () {
-                // Handle Reserve action
+                // Handle Cancel action
+                Navigator.of(context).pop();
                 Navigator.of(context).pop();
               },
-              child: Text('Reserve'),
+              child: Text('Back'),
             ),
             TextButton(
               onPressed: () {
                 // Handle View action
                 Navigator.of(context).pop();
               },
-              child: Text('View'),
-            ),
-            TextButton(
-              onPressed: () {
-                // Handle Cancel action
-                Navigator.of(context).pop();
-              },
-              child: Text('Cancel'),
+              child: Text('Change'),
             ),
           ],
         );
