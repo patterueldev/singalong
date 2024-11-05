@@ -16,17 +16,6 @@ class _PlayerViewState extends State<PlayerView> {
     });
   }
 
-  // to be safe
-  List<VideoPlayerController> _controllers = [];
-
-  void _clearControllers() {
-    for (final controller in _controllers) {
-      controller.pause();
-      controller.dispose();
-    }
-    _controllers.clear();
-  }
-
   @override
   Widget build(BuildContext context) => Consumer<PlayerViewModel>(
         builder: (_, viewModel, __) => Scaffold(
@@ -97,12 +86,10 @@ class _PlayerViewState extends State<PlayerView> {
                   return _buildIdleConnected();
                 }
                 if (state is PlayerViewPlaying) {
-                  _clearControllers();
-                  _controllers.add(state.videoPlayerController);
                   return _buildPlaying(state.videoPlayerController);
                 }
                 if (state is PlayerViewScore) {
-                  return _buildScore(state.score);
+                  return _buildScore(state);
                 }
                 if (state is PlayerViewFailure) {
                   return _buildErrorWithRetry(state.errorMessage, viewModel);
@@ -141,8 +128,35 @@ class _PlayerViewState extends State<PlayerView> {
             : CircularProgressIndicator(),
       );
 
-  Widget _buildScore(int score) => Center(
-        child: Text('Score: $score'),
+  Widget _buildScore(PlayerViewScore state) => Center(
+        child: Stack(
+          children: [
+            state.videoPlayerController != null
+                ? VideoPlayer(state.videoPlayerController!)
+                : SizedBox.shrink(),
+            Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    state.score.toString(),
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize:
+                          60, // TODO: Will be a percentage of the screen size
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    state.message,
+                    style: TextStyle(color: Colors.white, fontSize: 24),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       );
 
   Widget _buildErrorWithRetry(String error, PlayerViewModel viewModel) =>
@@ -162,7 +176,6 @@ class _PlayerViewState extends State<PlayerView> {
 
   @override
   void dispose() {
-    _clearControllers();
     super.dispose();
   }
 }

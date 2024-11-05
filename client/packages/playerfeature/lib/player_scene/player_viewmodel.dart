@@ -8,18 +8,21 @@ abstract class PlayerViewModel extends ChangeNotifier {
 
 class DefaultPlayerViewModel extends PlayerViewModel {
   final AuthorizeConnectionUseCase connectUseCase;
+  final NextSongUseCase nextSongUseCase;
   final ListenToCurrentSongUpdatesUseCase listenToCurrentSongUpdatesUseCase;
   final ConnectRepository connectRepository;
   final ReservedViewModel reservedViewModel;
 
   DefaultPlayerViewModel({
     required this.connectUseCase,
+    required this.nextSongUseCase,
     required this.listenToCurrentSongUpdatesUseCase,
     required this.connectRepository,
     required this.reservedViewModel,
   });
 
   StreamSubscription? _currentSongListener;
+  final List<VideoController> _videoControllers = [];
 
   @override
   final ValueNotifier<bool> isConnected = ValueNotifier(false);
@@ -76,24 +79,23 @@ class DefaultPlayerViewModel extends PlayerViewModel {
         listenToCurrentSongUpdatesUseCase().listen((currentSong) async {
       debugPrint("Current song: $currentSong");
       try {
-        final currentState = playerViewStateNotifier.value;
-        if (currentState is PlayerViewPlaying) {
-          await currentState.videoPlayerController.pause();
-          await currentState.videoPlayerController.dispose();
-        }
+        await _clearVideoControllers();
         if (currentSong == null) {
           playerViewStateNotifier.value = PlayerViewState.connected();
           return;
         }
         final videoUrl = currentSong.videoURL;
         debugPrint("Playing video: $videoUrl");
-        final controller = VideoPlayerController.networkUrl(
-          Uri.parse(videoUrl),
-        );
+        final controller = VideoController.network(videoUrl);
+        _videoControllers.add(controller);
         await controller.initialize();
         playerViewStateNotifier.value = PlayerViewState.playing(controller);
 
         await controller.play();
+
+        controller.addListener(() {
+          _videoPlayerListener(controller);
+        });
       } catch (e, s) {
         debugPrint("Error: $e");
         playerViewStateNotifier.value = PlayerViewState.failure(e.toString());
@@ -101,14 +103,54 @@ class DefaultPlayerViewModel extends PlayerViewModel {
     });
   }
 
-  @override
-  void dispose() {
-    _currentSongListener?.cancel();
-    final currentState = playerViewStateNotifier.value;
-    if (currentState is PlayerViewPlaying) {
-      currentState.videoPlayerController.pause();
-      currentState.videoPlayerController.dispose();
+  void _videoPlayerListener(VideoController controller) async {
+    if (controller.value.position >= controller.value.duration) {
+      controller.pause();
+      // TODO: Maybe some video score calculation here
+      final host = "thursday.local"; // TODO: this should be configurable
+      final url = "http://$host:9000/assets/fireworks.mp4";
+      final scoreVideoController = VideoController.network(url);
+      _videoControllers.add(scoreVideoController);
+      await scoreVideoController.initialize();
+      await scoreVideoController.play();
+      playerViewStateNotifier.value = PlayerViewState.score(PlayerViewScore(
+        score: 100,
+        message: "You are a great singer!",
+        videoPlayerController: scoreVideoController,
+      ));
+
+      scoreVideoController.addListener(() {
+        _scoreVideoListener(scoreVideoController);
+      });
+
+      // TODO: Send command to the server to update the score and play the next song
     }
+  }
+
+  void _scoreVideoListener(VideoController controller) async {
+    final minSeconds = min(10, controller.value.duration.inSeconds);
+    final duration = Duration(seconds: minSeconds);
+    if (controller.value.position >= duration) {
+      controller.pause();
+      await _clearVideoControllers();
+      // TODO: Send command to the server to update the score and play the next song
+      await nextSongUseCase();
+    }
+  }
+
+  Future<void> _clearVideoControllers() async {
+    for (final controller in _videoControllers) {
+      await controller.pause();
+      await controller.dispose();
+    }
+    _videoControllers.clear();
+  }
+
+  @override
+  void dispose() async {
+    await _clearVideoControllers();
+
+    _currentSongListener?.cancel();
     playerViewStateNotifier.value = PlayerViewState.disconnected();
 
     super.dispose();

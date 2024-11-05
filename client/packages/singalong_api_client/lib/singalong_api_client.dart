@@ -182,6 +182,14 @@ class SingalongAPIClient {
         .toList();
   }
 
+  Future<void> nextSong() async {
+    final patchUri = _configuration.buildEndpoint(APIPath.next.value);
+    await request(
+      uri: patchUri,
+      method: HttpMethod.PATCH,
+    );
+  }
+
   // TODO: Move this to a separate client, maybe SingalongAPISocketClient; might as well rename this to SingalongAPIRestClient
   // listen to reserved songs list from server
   Stream<List<APIReservedSong>> listenReservedSongs() {

@@ -16,7 +16,7 @@ class PlayerViewState {
   factory PlayerViewState.playing(
           VideoPlayerController videoPlayerController) =>
       PlayerViewPlaying(videoPlayerController: videoPlayerController);
-  factory PlayerViewState.score(int score) => PlayerViewScore(score: score);
+  factory PlayerViewState.score(PlayerViewScore state) => state;
   factory PlayerViewState.failure(String errorMessage) =>
       PlayerViewFailure(errorMessage: errorMessage);
 }
@@ -30,8 +30,12 @@ class PlayerViewPlaying extends PlayerViewState {
 
 class PlayerViewScore extends PlayerViewState {
   final int score;
+  final String message;
+  final VideoPlayerController? videoPlayerController;
   const PlayerViewScore({
     required this.score,
+    required this.message,
+    this.videoPlayerController,
   }) : super(PlayerViewStatus.score);
 }
 
