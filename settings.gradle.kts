@@ -21,8 +21,8 @@ dependencyResolutionManagement {
 
 rootProject.name = "singalong"
 
-include(":singalong-api")
-project(":singalong-api").projectDir = file("server/api")
+include(":api")
+project(":api").projectDir = file("server/api")
 
 apply(from = file("api_settings.gradle.kts"))
 apply(from = file("client_settings.gradle.kts"))
