@@ -4,6 +4,7 @@ abstract class ControlPanelRepository {
   Stream<CurrentSong?> listenToCurrentSongUpdates();
   Stream<int> listenSeekDurationInMillisecondsUpdates();
   Future<void> seekToDuration(int durationInSeconds);
+  Future<void> skipToNextSong();
 }
 
 class CurrentSong {

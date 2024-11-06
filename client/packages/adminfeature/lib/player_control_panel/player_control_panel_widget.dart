@@ -84,9 +84,7 @@ class PlayerControlPanelWidget extends StatelessWidget {
                   ),
                   IconButton(
                     icon: Icon(Icons.skip_next),
-                    onPressed: () {
-                      // Handle next song action
-                    },
+                    onPressed: () => viewModel.nextSong(),
                   ),
                 ],
               ),

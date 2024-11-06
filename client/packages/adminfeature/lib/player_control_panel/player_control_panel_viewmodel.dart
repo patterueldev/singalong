@@ -105,6 +105,7 @@ class DefaultPlayerControlPanelViewModel extends PlayerControlPanelViewModel {
   @override
   void nextSong() {
     // Handle next song action
+    controlPanelRepository.skipToNextSong();
   }
 
   @override

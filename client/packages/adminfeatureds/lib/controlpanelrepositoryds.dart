@@ -38,4 +38,9 @@ class ControlPanelRepositoryDS implements ControlPanelRepository {
       yield currentSong;
     }
   }
+
+  @override
+  Future<void> skipToNextSong() {
+    return apiClient.nextSong();
+  }
 }
