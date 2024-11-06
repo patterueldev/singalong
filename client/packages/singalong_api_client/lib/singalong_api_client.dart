@@ -226,6 +226,46 @@ class SingalongAPIClient {
     return controller.stream;
   }
 
+  // listen to seek duration from server
+  Stream<int> listenSeekDurationInMilliseconds() {
+    final socket = _sessionManager.getSocket();
+    if (socket.hasListeners('seek')) {
+      throw Exception();
+    }
+
+    final controller = StreamController<int>();
+    socket.on('seekDuration', (data) {
+      final seekValue = data as int;
+      controller.add(seekValue);
+    });
+    return controller.stream;
+  }
+
+  // update seek duration to server
+  Future<void> updateSeekDuration(int durationInMilliseconds) async {
+    final socket = _sessionManager.getSocket();
+    socket.emit('seekDuration', durationInMilliseconds);
+  }
+
+  Stream<int> listenSeekUpdatesInSeconds() {
+    final socket = _sessionManager.getSocket();
+    if (socket.hasListeners('seek')) {
+      throw Exception();
+    }
+
+    final controller = StreamController<int>();
+    socket.on('seek', (data) {
+      final seekValue = data as int;
+      controller.add(seekValue);
+    });
+    return controller.stream;
+  }
+
+  Future<void> seekToDuration(int durationInSeconds) async {
+    final socket = _sessionManager.getSocket();
+    socket.emit('seek', durationInSeconds);
+  }
+
   String resourceURL(String path) {
     String host = _configuration.host;
     // TODO: port will be configurable

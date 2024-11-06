@@ -28,6 +28,24 @@ class SingalongSocketIOModule(
         namespace.addDisconnectListener(onDisconnected())
         serverCoordinator.setOnReserveUpdateListener(::onReserveSuccess)
         serverCoordinator.setOnCurrentSongUpdateListener(::onCurrentSongUpdate)
+
+        val seekDurationEvent = SocketEvent.SEEK_DURATION.value
+        namespace.addEventListener(seekDurationEvent, String::class.java) { client, data, _ ->
+            val username = client.get<String>("username")
+            val roomId = client.get<String>("roomId")
+            val seekDuration = data.toInt()
+            println("Client[$username] - Seek duration: $seekDuration")
+            namespace.broadcastOperations.sendEvent(seekDurationEvent, seekDuration)
+        }
+
+        val seekEvent = SocketEvent.SEEK.value
+        namespace.addEventListener(seekEvent, String::class.java) { client, data, _ ->
+            val username = client.get<String>("username")
+            val roomId = client.get<String>("roomId")
+            val seek = data.toInt()
+            println("Client[$username] - Seek: $seek")
+            namespace.broadcastOperations.sendEvent(seekEvent, seek)
+        }
     }
 
     private fun onReserveSuccess() {
@@ -100,7 +118,11 @@ class SingalongSocketIOModule(
                     val reservedSongs = singalongService.getReservedSongs()
                     client.sendEvent(SocketEvent.RESERVED_SONGS.value, reservedSongs)
                 }
-                ClientType.ADMIN -> {}
+                ClientType.ADMIN -> {
+                    val currentSong = singalongService.getCurrentSong()
+                    println("Is null? ${currentSong == null}")
+                    client.sendEvent(SocketEvent.CURRENT_SONG.value, currentSong)
+                }
                 ClientType.PLAYER -> {
                     val currentSong = singalongService.getCurrentSong()
                     println("Is null? ${currentSong == null}")

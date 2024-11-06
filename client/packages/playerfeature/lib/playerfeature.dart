@@ -14,6 +14,7 @@ import 'package:video_player/video_player.dart'
 import "package:video_controls/video_controls.dart" show VideoController;
 
 part 'connect/connectrepository.dart';
+part 'socket/socketrepository.dart';
 part 'player_scene/player_view.dart';
 part 'player_scene/player_viewmodel.dart';
 part 'player_scene/player_viewstate.dart';
@@ -29,11 +30,13 @@ part 'connectivity_panel_widget/connectivity_panel_widget.dart';
 
 class PlayerFeatureBuilder {
   final ConnectRepository connectRepository;
+  final SocketRepository socketRepository;
   final CurrentSongRepository currentSongRepository;
   final ReservedSongListRepository reservedSongListRepository;
 
   PlayerFeatureBuilder({
     required this.connectRepository,
+    required this.socketRepository,
     required this.currentSongRepository,
     required this.reservedSongListRepository,
   });
@@ -62,6 +65,7 @@ class PlayerFeatureBuilder {
               listenToCurrentSongUpdatesUseCase:
                   listenToCurrentSongUpdatesUseCase,
               connectRepository: context.read(),
+              socketRepository: context.read(),
               reservedViewModel: context.read(),
             ),
           ),

@@ -10,4 +10,6 @@ enum class SocketEvent(val value: String) {
     ERROR("error"),
     USER_JOINED("userJoined"),
     USER_LEFT("userLeft"),
+    SEEK_DURATION("seekDuration"),
+    SEEK("seek"),
 }

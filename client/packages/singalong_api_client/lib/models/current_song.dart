@@ -7,6 +7,7 @@ class APICurrentSong {
   final String artist;
   final String thumbnailPath;
   final String videoPath;
+  final int durationInSeconds;
   final String reservingUser;
 
   APICurrentSong({
@@ -15,6 +16,7 @@ class APICurrentSong {
     required this.artist,
     required this.thumbnailPath,
     required this.videoPath,
+    required this.durationInSeconds,
     required this.reservingUser,
   });
 

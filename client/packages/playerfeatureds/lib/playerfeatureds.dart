@@ -7,6 +7,7 @@ import 'package:singalong_api_client/singalong_api_client.dart';
 
 part 'connectrepositoryds.dart';
 part 'currentsongrepositoryds.dart';
+part 'socketrepositoryds.dart';
 
 class PlayerFeatureDSProvider {
   final providers = MultiProvider(
@@ -15,6 +16,11 @@ class PlayerFeatureDSProvider {
         create: (context) => ConnectRepositoryDS(
           client: context.read(),
           sessionManager: context.read(),
+        ),
+      ),
+      Provider<SocketRepository>(
+        create: (context) => SocketRepositoryDS(
+          client: context.read(),
         ),
       ),
       Provider<CurrentSongRepository>(
@@ -32,6 +38,7 @@ class PlayerFeatureDSProvider {
       Provider(
         create: (context) => PlayerFeatureBuilder(
           connectRepository: context.read(),
+          socketRepository: context.read(),
           currentSongRepository: context.read(),
           reservedSongListRepository: context.read(),
         ),

@@ -1,10 +1,10 @@
-part of '../main.dart';
+part of '../_main.dart';
 
 class MasterView extends StatefulWidget {
   const MasterView({super.key});
 
   @override
-  _MasterViewState createState() => _MasterViewState();
+  State<MasterView> createState() => _MasterViewState();
 }
 
 class _MasterViewState extends State<MasterView> {
@@ -33,7 +33,7 @@ class _MasterViewState extends State<MasterView> {
                 // Top left quarter
                 Expanded(
                   flex: 1,
-                  child: _buildTopLeft(),
+                  child: _buildTopLeft(context),
                 ),
                 const Divider(),
                 // Bottom left quarter
@@ -55,9 +55,8 @@ class _MasterViewState extends State<MasterView> {
     );
   }
 
-  Widget _buildTopLeft() => Container(
-        child: Center(child: Text('Top Left Corner')),
-      );
+  Widget _buildTopLeft(BuildContext context) =>
+      context.read<AdminFeatureProvider>().buildPlayerControlPanel();
 
   Widget _buildBottomLeft() => Container(
         child: Center(child: Text('Bottom Left Corner')),

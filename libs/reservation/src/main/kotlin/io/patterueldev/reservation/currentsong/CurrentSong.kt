@@ -6,5 +6,6 @@ interface CurrentSong {
     val artist: String
     val thumbnailPath: String
     val videoPath: String
+    val durationInSeconds: Int
     val reservingUser: String
 }

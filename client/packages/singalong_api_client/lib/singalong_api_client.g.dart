@@ -89,6 +89,7 @@ APICurrentSong _$APICurrentSongFromJson(Map<String, dynamic> json) =>
       artist: json['artist'] as String,
       thumbnailPath: json['thumbnailPath'] as String,
       videoPath: json['videoPath'] as String,
+      durationInSeconds: (json['durationInSeconds'] as num).toInt(),
       reservingUser: json['reservingUser'] as String,
     );
 
@@ -99,6 +100,7 @@ Map<String, dynamic> _$APICurrentSongToJson(APICurrentSong instance) =>
       'artist': instance.artist,
       'thumbnailPath': instance.thumbnailPath,
       'videoPath': instance.videoPath,
+      'durationInSeconds': instance.durationInSeconds,
       'reservingUser': instance.reservingUser,
     };
 

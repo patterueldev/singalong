@@ -11,6 +11,7 @@ class DefaultPlayerViewModel extends PlayerViewModel {
   final NextSongUseCase nextSongUseCase;
   final ListenToCurrentSongUpdatesUseCase listenToCurrentSongUpdatesUseCase;
   final ConnectRepository connectRepository;
+  final SocketRepository socketRepository;
   final ReservedViewModel reservedViewModel;
 
   DefaultPlayerViewModel({
@@ -18,11 +19,13 @@ class DefaultPlayerViewModel extends PlayerViewModel {
     required this.nextSongUseCase,
     required this.listenToCurrentSongUpdatesUseCase,
     required this.connectRepository,
+    required this.socketRepository,
     required this.reservedViewModel,
   });
 
   StreamSubscription? _currentSongListener;
   final List<VideoController> _videoControllers = [];
+  VideoController? _activeVideoController;
 
   @override
   final ValueNotifier<bool> isConnected = ValueNotifier(false);
@@ -92,6 +95,7 @@ class DefaultPlayerViewModel extends PlayerViewModel {
         playerViewStateNotifier.value = PlayerViewState.playing(controller);
 
         await controller.play();
+        _activeVideoController = controller;
 
         controller.addListener(() {
           _videoPlayerListener(controller);
@@ -101,10 +105,16 @@ class DefaultPlayerViewModel extends PlayerViewModel {
         playerViewStateNotifier.value = PlayerViewState.failure(e.toString());
       }
     });
+
+    socketRepository.listenSeekUpdatesInSeconds().listen((seekValue) {
+      debugPrint("Seek value: $seekValue");
+      _activeVideoController?.seekTo(Duration(seconds: seekValue));
+    });
   }
 
   void _videoPlayerListener(VideoController controller) async {
-    if (controller.value.position >= controller.value.duration) {
+    final position = controller.value.position;
+    if (position >= controller.value.duration) {
       controller.pause();
       // TODO: Maybe some video score calculation here
       final host = "thursday.local"; // TODO: this should be configurable
@@ -124,6 +134,9 @@ class DefaultPlayerViewModel extends PlayerViewModel {
       });
 
       // TODO: Send command to the server to update the score and play the next song
+    } else {
+      // send the current position to the server
+      socketRepository.updateSeekDuration(position.inMilliseconds);
     }
   }
 
