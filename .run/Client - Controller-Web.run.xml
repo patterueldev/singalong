@@ -1,7 +1,0 @@
-<component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Client - Controller-Web" type="FlutterRunConfigurationType" factoryName="Flutter">
-    <option name="additionalArgs" value="-d chrome --web-port=8085" />
-    <option name="filePath" value="$PROJECT_DIR$/client/apps/controller/lib/main_web.dart" />
-    <method v="2" />
-  </configuration>
-</component>
