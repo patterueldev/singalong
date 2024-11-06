@@ -1,6 +1,6 @@
 part of '../common.dart';
 
-abstract class PersistenceService {
+abstract class PersistenceRepository {
   Future<void> saveUsername(String username);
   Future<String?> getUsername();
 

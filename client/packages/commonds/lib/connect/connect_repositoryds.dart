@@ -3,7 +3,7 @@ part of '../commonds.dart';
 class ConnectRepositoryDS implements ConnectRepository {
   final SingalongAPIClient client;
   final APISessionManager sessionManager;
-  final PersistenceService persistenceService;
+  final PersistenceRepository persistenceService;
 
   ConnectRepositoryDS({
     required this.client,

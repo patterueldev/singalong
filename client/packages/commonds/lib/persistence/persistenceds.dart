@@ -1,6 +1,10 @@
 part of '../commonds.dart';
 
-class PersistenceServiceImpl implements PersistenceService {
+class PersistenceRepositoryDS implements PersistenceRepository {
+  final String encryptionKey;
+
+  PersistenceRepositoryDS({required this.encryptionKey});
+
   final roomKey = 'room';
   final usernameKey = 'username';
 
@@ -8,7 +12,6 @@ class PersistenceServiceImpl implements PersistenceService {
 
   Future<void> configureSharedPref() async {
     if (sharedPref == null) {
-      const encryptionKey = '1234567890123456';
       await EncryptedSharedPreferences.initialize(encryptionKey);
       sharedPref = EncryptedSharedPreferences.getInstance();
     }

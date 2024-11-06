@@ -11,7 +11,8 @@ part 'persistence/persistenceds.dart';
 
 class CommonProvider {
   final providers = MultiProvider(providers: [
-    Provider<PersistenceService>.value(value: PersistenceServiceImpl()),
+    Provider<PersistenceRepository>.value(
+        value: PersistenceRepositoryDS(encryptionKey: "1234567890123456")),
     Provider<ConnectRepository>(
       create: (context) => ConnectRepositoryDS(
         client: context.read(),

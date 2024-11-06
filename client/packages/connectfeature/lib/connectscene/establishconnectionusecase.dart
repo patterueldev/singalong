@@ -12,7 +12,7 @@ class EstablishConnectionParameters {
 class EstablishConnectionUseCase
     extends ServiceUseCase<EstablishConnectionParameters, ConnectViewState> {
   final ConnectRepository connectRepository;
-  final PersistenceService persistenceService;
+  final PersistenceRepository persistenceService;
   EstablishConnectionUseCase({
     required this.connectRepository,
     required this.persistenceService,

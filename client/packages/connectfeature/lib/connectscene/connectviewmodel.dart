@@ -11,7 +11,7 @@ abstract class ConnectViewModel extends ChangeNotifier {
 
 class DefaultConnectViewModel extends ConnectViewModel {
   final ConnectRepository connectRepository;
-  final PersistenceService persistenceService;
+  final PersistenceRepository persistenceService;
 
   DefaultConnectViewModel({
     required this.connectRepository,

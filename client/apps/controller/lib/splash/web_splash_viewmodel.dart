@@ -9,7 +9,7 @@ import 'dart:html' as html;
 import 'splash_viewmodel.dart';
 
 class WebSplashScreenViewModel extends SplashScreenViewModel {
-  final PersistenceService
+  final PersistenceRepository
       persistenceService; // Might need this when restoring authentication
 
   WebSplashScreenViewModel({required this.persistenceService});
