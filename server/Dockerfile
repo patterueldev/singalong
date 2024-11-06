@@ -2,9 +2,9 @@ FROM azul/zulu-openjdk:21
 
 WORKDIR /app
 
-COPY /build/libs/singalong-api-0.0.1-SNAPSHOT.jar /app/app.jar
-COPY /application-docker.yml /app/application-docker.yml
-COPY /application-secrets.yml /app/application-secrets.yml
+COPY /api/build/libs/api-0.0.1-SNAPSHOT.jar /app/app.jar
+COPY /api/src/main/resources/application-docker.yml /app/application-docker.yml
+COPY /api/src/main/resources/application-secrets.yml /app/application-secrets.yml
 
 #HTTP
 EXPOSE 8080
