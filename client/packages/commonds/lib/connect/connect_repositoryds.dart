@@ -32,7 +32,9 @@ extension ConnectParametersMapper on ConnectParameters {
   APIConnectParameters toAPI() {
     return APIConnectParameters(
       username: username,
+      userPasscode: userPasscode,
       roomId: roomId,
+      roomPasscode: roomPasscode,
       clientType: clientType,
     );
   }

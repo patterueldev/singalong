@@ -22,7 +22,7 @@ Map<String, Widget Function(BuildContext)> routes = {
   AppRoute.sessionConnect.path: (context) =>
       context.read<ConnectFeatureBuilder>().buildConnectView(context),
   AppRoute.session.path: (context) =>
-      context.read<SessionFeatureBuilder>().buildSessionView(),
+      context.read<SessionFeatureBuilder>().buildSessionView(context),
   AppRoute.songBook.path: (context) => context
       .read<SongBookFeatureProvider>()
       .buildSongBookView(context: context),

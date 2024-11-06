@@ -55,7 +55,6 @@ class EstablishConnectionUseCase
             connectRepository.provideAccessToken(accessToken);
             persistenceService.saveUsername(parameters.username);
             persistenceService.saveRoomId(parameters.roomId);
-            connectRepository.connectSocket();
             return ConnectViewState.connected();
           }
           throw GenericException.unknown();

@@ -1,11 +1,11 @@
 include("client-app-admin")
-project(":client-app-admin").projectDir = file("apps/admin")
+project(":client-app-admin").projectDir = file("client/apps/admin")
 
 include("client-app-controller")
-project(":client-app-controller").projectDir = file("apps/controller")
+project(":client-app-controller").projectDir = file("client/apps/controller")
 
 include("client-app-player")
-project(":client-app-player").projectDir = file("apps/player")
+project(":client-app-player").projectDir = file("client/apps/player")
 
 // Packages - Core
 include("client-package-singalong_api_client")

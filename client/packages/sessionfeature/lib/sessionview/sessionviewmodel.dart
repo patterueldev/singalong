@@ -1,11 +1,12 @@
 part of '../sessionfeature.dart';
 
-abstract class SessionViewModel {
-  ValueNotifier<SessionViewState> get stateNotifier;
-  ValueNotifier<List<ReservedSongItem>> get songListNotifier;
-  ValueNotifier<PromptModel?> get promptNotifier;
-  ValueNotifier<ReservedSongItem?> get songDetailsNotifier;
-  ValueNotifier<bool> get isSongBookOpenNotifier;
+abstract class SessionViewModel extends ChangeNotifier {
+  ValueNotifier<SessionViewState> stateNotifier =
+      ValueNotifier(SessionViewState.initial());
+  ValueNotifier<List<ReservedSongItem>> songListNotifier = ValueNotifier([]);
+  ValueNotifier<PromptModel?> promptNotifier = ValueNotifier(null);
+  ValueNotifier<ReservedSongItem?> songDetailsNotifier = ValueNotifier(null);
+  ValueNotifier<bool> isSongBookOpenNotifier = ValueNotifier(false);
 
   void setupSession();
   void dismissSong(ReservedSongItem song);
@@ -17,10 +18,12 @@ abstract class SessionViewModel {
 
 class DefaultSessionViewModel extends SessionViewModel {
   final ListenToSongListUpdatesUseCase listenToSongListUpdatesUseCase;
+  final ConnectRepository connectRepository;
   final SessionLocalizations localizations;
 
   DefaultSessionViewModel({
     required this.listenToSongListUpdatesUseCase,
+    required this.connectRepository,
     required this.localizations,
     List<ReservedSongItem>? songList,
   }) {
@@ -28,18 +31,6 @@ class DefaultSessionViewModel extends SessionViewModel {
       songListNotifier.value = songList;
     }
   }
-
-  @override
-  ValueNotifier<SessionViewState> stateNotifier =
-      ValueNotifier(SessionViewState.initial());
-  @override
-  ValueNotifier<List<ReservedSongItem>> songListNotifier = ValueNotifier([]);
-  @override
-  ValueNotifier<PromptModel?> promptNotifier = ValueNotifier(null);
-  @override
-  ValueNotifier<ReservedSongItem?> songDetailsNotifier = ValueNotifier(null);
-  @override
-  ValueNotifier<bool> isSongBookOpenNotifier = ValueNotifier(false);
 
   @override
   void setupSession() async {
@@ -55,6 +46,8 @@ class DefaultSessionViewModel extends SessionViewModel {
     listenToSongListUpdatesUseCase().listen((songList) {
       songListNotifier.value = songList;
     });
+
+    connectRepository.connectSocket();
   }
 
   @override

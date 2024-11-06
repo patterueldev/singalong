@@ -38,7 +38,8 @@ class MobileAppCoordinator
     SessionFeatureBuilder sessionFeatureBuilder = context.read();
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(
-          builder: (context) => sessionFeatureBuilder.buildSessionView()),
+          builder: (context) =>
+              sessionFeatureBuilder.buildSessionView(context)),
     );
   }
 

@@ -1,7 +1,6 @@
 import 'package:connectfeature/connectfeature.dart';
 import 'package:controller/splash/splash_coordinator.dart';
 import 'package:controller/web/on_generate_routes.dart';
-import 'package:controller/web/screen_route_builder.dart';
 import 'package:controller/web/webapp_coordinator.dart';
 import 'package:downloadfeature/downloadfeature.dart';
 import 'package:flutter/material.dart';
@@ -38,14 +37,12 @@ class APIConfiguration extends SingalongAPIConfiguration {
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  final screenRouteBuilder = ScreenRouteBuilder();
   const appCoordinator = WebAppCoordinator();
 
   setPathUrlStrategy();
 
   runApp(MultiProvider(
     providers: [
-      Provider<ScreenRouteBuilder>.value(value: screenRouteBuilder),
       Provider<SplashFlowCoordinator>.value(value: appCoordinator),
       Provider<ConnectFlowCoordinator>.value(value: appCoordinator),
       Provider<SessionFlowCoordinator>.value(value: appCoordinator),

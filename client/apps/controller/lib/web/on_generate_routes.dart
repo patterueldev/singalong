@@ -1,5 +1,4 @@
 import 'package:connectfeature/connectfeature.dart';
-import 'package:controller/web/screen_route_builder.dart';
 import 'package:downloadfeature/downloadfeature.dart';
 import 'package:flutter/material.dart';
 import 'dart:html' as html;
@@ -40,7 +39,7 @@ Route<dynamic>? onGenerateRoute(RouteSettings settings, BuildContext context) {
     case AppRoute.session:
       return MaterialPageRoute(
         builder: (context) =>
-            context.read<SessionFeatureBuilder>().buildSessionView(),
+            context.read<SessionFeatureBuilder>().buildSessionView(context),
       );
     case AppRoute.songBook:
       return MaterialPageRoute(
