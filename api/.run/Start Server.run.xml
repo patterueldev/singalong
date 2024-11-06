@@ -1,7 +1,7 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="Start Server" type="JetRunConfigurationType">
     <option name="MAIN_CLASS_NAME" value="io.patterueldev.singalong.MainKt" />
-    <module name="singalong-api.main" />
+    <module name="singalong.singalong-api.main" />
     <shortenClasspath name="NONE" />
     <option name="VM_PARAMETERS" value="-Dspring.profiles.active=development,secrets" />
     <extension name="net.ashald.envfile">
