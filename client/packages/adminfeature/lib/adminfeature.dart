@@ -3,6 +3,7 @@ library adminfeature;
 import 'dart:async';
 
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:common/common.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -11,7 +12,8 @@ import 'package:provider/provider.dart';
 import 'package:shared/shared.dart';
 
 part 'common/sliderdata.dart';
-part 'connect/connectrepository.dart';
+part 'signinscreen/signin_screen.dart';
+part 'signinscreen/signin_viewmodel.dart';
 part 'player_control_panel/player_control_panel_widget.dart';
 part 'player_control_panel/player_control_panel_viewmodel.dart';
 part 'player_control_panel/controlpanelrepository.dart';

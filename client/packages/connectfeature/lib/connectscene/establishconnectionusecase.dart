@@ -12,8 +12,10 @@ class EstablishConnectionParameters {
 class EstablishConnectionUseCase
     extends ServiceUseCase<EstablishConnectionParameters, ConnectViewState> {
   final ConnectRepository connectRepository;
+  final PersistenceService persistenceService;
   EstablishConnectionUseCase({
     required this.connectRepository,
+    required this.persistenceService,
   });
 
   @override
@@ -51,10 +53,9 @@ class EstablishConnectionUseCase
             // store the access token somewhere
             debugPrint("Access token: $accessToken");
             connectRepository.provideAccessToken(accessToken);
-            connectRepository.saveSession(
-              parameters.username,
-              parameters.roomId,
-            );
+            persistenceService.saveUsername(parameters.username);
+            persistenceService.saveRoomId(parameters.roomId);
+            connectRepository.connectSocket();
             return ConnectViewState.connected();
           }
           throw GenericException.unknown();

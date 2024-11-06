@@ -1,3 +1,4 @@
+import 'package:commonds/commonds.dart';
 import 'package:flutter/material.dart';
 import 'package:playerfeature/playerfeature.dart';
 import 'package:playerfeatureds/playerfeatureds.dart';
@@ -28,11 +29,13 @@ class APIConfiguration extends SingalongAPIConfiguration {
 
 void main() {
   final singalongAPIClientProvider = SingalongAPIClientProvider();
+  final commonProvider = CommonProvider();
   final playerFeatureDSProvider = PlayerFeatureDSProvider();
   runApp(MultiProvider(
     providers: [
       Provider<SingalongAPIConfiguration>.value(value: APIConfiguration()),
       singalongAPIClientProvider.providers,
+      commonProvider.providers,
       playerFeatureDSProvider.providers,
     ],
     child: const PlayerApp(),

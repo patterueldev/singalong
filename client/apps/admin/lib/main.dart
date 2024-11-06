@@ -1,5 +1,6 @@
 import 'package:adminfeature/adminfeature.dart';
 import 'package:adminfeatureds/adminfeatureds.dart';
+import 'package:commonds/commonds.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:singalong_api_client/singalong_api_client.dart';
@@ -28,11 +29,13 @@ class APIConfiguration extends SingalongAPIConfiguration {
 
 void main() {
   final singalongAPIClientProvider = SingalongAPIClientProvider();
+  final commonProvider = CommonProvider();
   final adminFeatureDSProvider = AdminFeatureDSProvider();
   runApp(MultiProvider(
     providers: [
       Provider<SingalongAPIConfiguration>.value(value: APIConfiguration()),
       singalongAPIClientProvider.providers,
+      commonProvider.providers,
       adminFeatureDSProvider.providers,
     ],
     child: const AdminApp(),

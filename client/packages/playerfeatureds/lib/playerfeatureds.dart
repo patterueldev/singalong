@@ -5,19 +5,12 @@ import 'package:playerfeature/playerfeature.dart';
 import 'package:provider/provider.dart';
 import 'package:singalong_api_client/singalong_api_client.dart';
 
-part 'connectrepositoryds.dart';
 part 'currentsongrepositoryds.dart';
 part 'socketrepositoryds.dart';
 
 class PlayerFeatureDSProvider {
   final providers = MultiProvider(
     providers: [
-      Provider<ConnectRepository>(
-        create: (context) => ConnectRepositoryDS(
-          client: context.read(),
-          sessionManager: context.read(),
-        ),
-      ),
       Provider<SocketRepository>(
         create: (context) => SocketRepositoryDS(
           client: context.read(),

@@ -1,4 +1,4 @@
-part of 'shared.dart';
+part of '../common.dart';
 
 abstract class PersistenceService {
   Future<void> saveUsername(String username);

@@ -1,12 +1,14 @@
-part of 'adminfeatureds.dart';
+part of '../commonds.dart';
 
 class ConnectRepositoryDS implements ConnectRepository {
   final SingalongAPIClient client;
   final APISessionManager sessionManager;
+  final PersistenceService persistenceService;
 
   ConnectRepositoryDS({
     required this.client,
     required this.sessionManager,
+    required this.persistenceService,
   });
 
   @override
@@ -30,9 +32,7 @@ extension ConnectParametersMapper on ConnectParameters {
   APIConnectParameters toAPI() {
     return APIConnectParameters(
       username: username,
-      userPasscode: userPasscode,
       roomId: roomId,
-      roomPasscode: roomPasscode,
       clientType: clientType,
     );
   }

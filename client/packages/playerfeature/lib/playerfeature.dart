@@ -4,6 +4,7 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:common/common.dart';
 import 'package:flutter/material.dart';
 import 'package:fpdart/fpdart.dart' show TaskEither, Unit, unit;
 import 'package:provider/provider.dart';
@@ -13,7 +14,6 @@ import 'package:video_player/video_player.dart'
     show VideoPlayerController, VideoPlayer;
 import "package:video_controls/video_controls.dart" show VideoController;
 
-part 'connect/connectrepository.dart';
 part 'socket/socketrepository.dart';
 part 'player_scene/player_view.dart';
 part 'player_scene/player_viewmodel.dart';

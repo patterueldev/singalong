@@ -10,15 +10,21 @@ abstract class ConnectViewModel extends ChangeNotifier {
 }
 
 class DefaultConnectViewModel extends ConnectViewModel {
-  final EstablishConnectionUseCase connectUseCase;
+  final ConnectRepository connectRepository;
   final PersistenceService persistenceService;
 
   DefaultConnectViewModel({
-    required this.connectUseCase,
+    required this.connectRepository,
     required this.persistenceService,
     this.name,
     this.roomId,
   });
+
+  late final EstablishConnectionUseCase connectUseCase =
+      EstablishConnectionUseCase(
+    connectRepository: connectRepository,
+    persistenceService: persistenceService,
+  );
 
   @override
   final TextEditingController nameController = TextEditingController();

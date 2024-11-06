@@ -1,4 +1,6 @@
-# melos_managed_dependency_overrides: shared
+# melos_managed_dependency_overrides: shared,common
 dependency_overrides:
+  common:
+    path: ../common
   shared:
     path: ../shared

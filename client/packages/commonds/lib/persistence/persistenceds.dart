@@ -1,6 +1,4 @@
-import 'package:encrypt_shared_preferences/provider.dart';
-import 'package:flutter/foundation.dart';
-import 'package:shared/shared.dart';
+part of '../commonds.dart';
 
 class PersistenceServiceImpl implements PersistenceService {
   final roomKey = 'room';

@@ -32,6 +32,8 @@ dependencies:
     sdk: flutter
 
   singalong_api_client:
+  common:
+  commonds:
   adminfeature:
   adminfeatureds:
 
