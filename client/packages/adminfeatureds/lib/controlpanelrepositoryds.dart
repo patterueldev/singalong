@@ -54,6 +54,14 @@ class ControlPanelRepositoryDS implements ControlPanelSocketRepository {
   }
 
   @override
+  StreamController<bool> togglePlayPauseStreamController() {
+    return socket.buildEventStreamController(SocketEvent.togglePlayPause,
+        (data, controller) {
+      controller.add(data as bool);
+    });
+  }
+
+  @override
   void seekDurationFromControl(int durationInSeconds) {
     return socket.emitEvent(
         SocketEvent.seekDurationFromControl, durationInSeconds);
@@ -62,5 +70,11 @@ class ControlPanelRepositoryDS implements ControlPanelSocketRepository {
   @override
   void skipSong() {
     return socket.emitEvent(SocketEvent.skipSong, null);
+  }
+
+  @override
+  void togglePlayPause(bool isPlaying) {
+    debugPrint('Toggling play/pause');
+    return socket.emitEvent(SocketEvent.togglePlayPause, isPlaying);
   }
 }

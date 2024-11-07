@@ -60,4 +60,13 @@ class PlayerSocketRepositoryDS implements PlayerSocketRepository {
   void skipSong() {
     socket.emitEvent(SocketEvent.skipSong, null);
   }
+
+  @override
+  StreamController<bool> togglePlayPauseStreamController() {
+    return socket.buildEventStreamController(SocketEvent.togglePlayPause,
+        (data, controller) {
+      debugPrint("Player - Toggle play/pause: $data");
+      controller.add(data as bool);
+    });
+  }
 }

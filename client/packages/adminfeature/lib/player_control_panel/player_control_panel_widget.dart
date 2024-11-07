@@ -76,12 +76,15 @@ class PlayerControlPanelWidget extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  IconButton(
-                    icon: Icon(Icons.pause),
-                    onPressed: () {
-                      // Handle pause action
-                    },
-                  ),
+                  ValueListenableBuilder(
+                      valueListenable: state.isPlayingNotifier,
+                      builder: (context, isPlaying, child) => IconButton(
+                            icon: isPlaying
+                                ? Icon(Icons.pause)
+                                : Icon(Icons.play_arrow),
+                            onPressed: () =>
+                                viewModel.togglePlayPause(!isPlaying),
+                          )),
                   IconButton(
                     icon: Icon(Icons.skip_next),
                     onPressed: () => viewModel.nextSong(),

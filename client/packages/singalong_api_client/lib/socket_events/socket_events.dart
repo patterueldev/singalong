@@ -5,8 +5,7 @@ enum SocketEvent {
   currentSong,
   seekDurationFromPlayer,
   seekDurationFromControl,
-  pauseSong,
-  playSong,
+  togglePlayPause,
   skipSong,
   ;
 
@@ -20,10 +19,8 @@ enum SocketEvent {
         return 'seekDurationFromPlayer';
       case SocketEvent.seekDurationFromControl:
         return 'seekDurationFromControl';
-      case SocketEvent.pauseSong:
-        return 'pauseSong';
-      case SocketEvent.playSong:
-        return 'playSong';
+      case SocketEvent.togglePlayPause:
+        return 'togglePlayPause';
       case SocketEvent.skipSong:
         return 'skipSong';
     }

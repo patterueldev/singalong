@@ -18,6 +18,8 @@ class ActiveState extends PlayerControlPanelState {
   final double minVolumeValue;
   final double maxVolumeValue;
 
+  final ValueNotifier<bool> isPlayingNotifier = ValueNotifier(true);
+
   ActiveState({
     required this.title,
     required this.artist,

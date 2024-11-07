@@ -3,7 +3,9 @@ part of '../adminfeature.dart';
 abstract class ControlPanelSocketRepository {
   StreamController<CurrentSong?> currentSongStreamController();
   StreamController<int> seekDurationInMillisecondsStreamController();
+  StreamController<bool> togglePlayPauseStreamController();
   void seekDurationFromControl(int durationInSeconds);
+  void togglePlayPause(bool isPlaying);
   void skipSong();
 }
 

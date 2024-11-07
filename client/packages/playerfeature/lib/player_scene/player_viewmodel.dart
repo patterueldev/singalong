@@ -23,6 +23,7 @@ class DefaultPlayerViewModel extends PlayerViewModel {
   // StreamSubscription? _currentSongListener;
   StreamController<CurrentSong?>? _currentSongController;
   StreamController<int>? _seekDurationFromControlStreamController;
+  StreamController<bool>? _togglePlayPauseStreamController;
 
   final List<VideoController> _videoControllers = [];
   VideoController? _activeSongVideoController;
@@ -114,6 +115,17 @@ class DefaultPlayerViewModel extends PlayerViewModel {
       debugPrint("Seek value: $seekValue");
       _activeSongVideoController?.seekTo(Duration(seconds: seekValue));
     });
+
+    _togglePlayPauseStreamController =
+        playerSocketRepository.togglePlayPauseStreamController();
+    _togglePlayPauseStreamController?.stream.listen((isPlaying) {
+      debugPrint("Toggle play/pause: $isPlaying");
+      if (isPlaying) {
+        _activeSongVideoController?.play();
+      } else {
+        _activeSongVideoController?.pause();
+      }
+    });
   }
 
   void _videoPlayerListener(VideoController controller) async {
@@ -170,6 +182,7 @@ class DefaultPlayerViewModel extends PlayerViewModel {
 
     _currentSongController?.close();
     _seekDurationFromControlStreamController?.close();
+    _togglePlayPauseStreamController?.close();
     playerViewStateNotifier.value = PlayerViewState.disconnected();
 
     super.dispose();

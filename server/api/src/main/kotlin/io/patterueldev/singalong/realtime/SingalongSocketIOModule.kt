@@ -58,6 +58,12 @@ class SingalongSocketIOModule(
                 println("Skip song result: $result")
             }
         }
+
+        val togglePlayPauseEvent = SocketEvent.TOGGLE_PLAY_PAUSE.value
+        namespace.addEventListener(togglePlayPauseEvent, Boolean::class.java) { client, data, _ ->
+            println("Client[${client.sessionId}] - Toggle play/pause event received: $data")
+            namespace.broadcastOperations.sendEvent(togglePlayPauseEvent, data)
+        }
     }
 
     private fun onReserveSuccess() {

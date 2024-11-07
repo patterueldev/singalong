@@ -8,7 +8,7 @@ abstract class PlayerControlPanelViewModel extends ChangeNotifier {
   bool isSeeking = false;
 
   void setup();
-  void pause();
+  void togglePlayPause(bool isPlaying);
   void nextSong();
   void seek(double value) {
     currentSeekValueNotifier.value = value;
@@ -40,6 +40,7 @@ class DefaultPlayerControlPanelViewModel extends PlayerControlPanelViewModel {
 
   StreamController<int>? _seekDurationUpdatesStreamController;
   StreamController<CurrentSong?>? _currentSongStreamController;
+  StreamController<bool>? _togglePlayPauseStreamController;
 
   @override
   void setup() async {
@@ -96,12 +97,20 @@ class DefaultPlayerControlPanelViewModel extends PlayerControlPanelViewModel {
       );
       debugPrint("Duration in seconds: $durationInSeconds");
     });
+
+    _togglePlayPauseStreamController =
+        controlPanelRepository.togglePlayPauseStreamController();
+    _togglePlayPauseStreamController?.stream.listen((isPlaying) {
+      final currentState = stateNotifier.value;
+      if (currentState is ActiveState) {
+        currentState.isPlayingNotifier.value = isPlaying;
+      }
+    });
   }
 
   @override
-  void pause() {
-    // Handle pause action
-  }
+  void togglePlayPause(bool isPlaying) =>
+      controlPanelRepository.togglePlayPause(isPlaying);
 
   @override
   void nextSong() => controlPanelRepository.skipSong();
