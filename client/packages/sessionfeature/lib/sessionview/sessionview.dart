@@ -3,12 +3,10 @@ part of '../sessionfeature.dart';
 class SessionView extends StatefulWidget {
   const SessionView({
     super.key,
-    required this.viewModel,
     required this.flow,
     required this.localizations,
   });
 
-  final SessionViewModel viewModel;
   final SessionFlowCoordinator flow;
   final SessionLocalizations localizations;
 
@@ -17,7 +15,8 @@ class SessionView extends StatefulWidget {
 }
 
 class _SessionViewState extends State<SessionView> {
-  SessionViewModel get viewModel => widget.viewModel;
+  SessionViewModel get viewModel =>
+      Provider.of<SessionViewModel>(context, listen: false);
   SessionLocalizations get localizations => widget.localizations;
   SessionFlowCoordinator get flow => widget.flow;
 
@@ -32,51 +31,53 @@ class _SessionViewState extends State<SessionView> {
   }
 
   @override
-  Widget build(BuildContext context) => Stack(
-        children: [
-          Scaffold(
-            appBar: AppBar(
-              leading: PopupMenuButton<String>(
-                onSelected: (value) {
-                  if (value == 'disconnect') {
-                    viewModel.disconnect();
-                  }
-                },
-                itemBuilder: (BuildContext context) {
-                  return [
-                    PopupMenuItem<String>(
-                      value: 'disconnect',
-                      child: localizations.disconnectButtonText
-                          .localizedTextOf(context),
-                    ),
-                  ];
-                },
-                icon: const Icon(Icons.menu),
+  Widget build(BuildContext context) => Consumer<SessionViewModel>(
+        builder: (context, viewModel, child) => Stack(
+          children: [
+            Scaffold(
+              appBar: AppBar(
+                leading: PopupMenuButton<String>(
+                  onSelected: (value) {
+                    if (value == 'disconnect') {
+                      viewModel.disconnect();
+                    }
+                  },
+                  itemBuilder: (BuildContext context) {
+                    return [
+                      PopupMenuItem<String>(
+                        value: 'disconnect',
+                        child: localizations.disconnectButtonText
+                            .localizedTextOf(context),
+                      ),
+                    ];
+                  },
+                  icon: const Icon(Icons.menu),
+                ),
+              ),
+              body: _buildBody(context, viewModel),
+              floatingActionButton: FloatingActionButton(
+                onPressed: () => widget.flow.onSongBook(context),
+                child: const Icon(Icons.menu_book),
               ),
             ),
-            body: _buildBody(context, viewModel),
-            floatingActionButton: FloatingActionButton(
-              onPressed: () => widget.flow.onSongBook(context),
-              child: const Icon(Icons.menu_book),
-            ),
-          ),
-          ValueListenableBuilder(
-            valueListenable: viewModel.stateNotifier,
-            builder: (context, state, child) {
-              if (state.status == SessionViewStatus.loading) {
-                return Positioned.fill(
-                  child: Container(
-                    color: Colors.black54,
-                    child: const Center(
-                      child: CircularProgressIndicator(),
+            ValueListenableBuilder(
+              valueListenable: viewModel.stateNotifier,
+              builder: (context, state, child) {
+                if (state.status == SessionViewStatus.loading) {
+                  return Positioned.fill(
+                    child: Container(
+                      color: Colors.black54,
+                      child: const Center(
+                        child: CircularProgressIndicator(),
+                      ),
                     ),
-                  ),
-                );
-              }
-              return const SizedBox.shrink();
-            },
-          ),
-        ],
+                  );
+                }
+                return const SizedBox.shrink();
+              },
+            ),
+          ],
+        ),
       );
 
   Widget _buildBody(BuildContext context, SessionViewModel viewModel) {

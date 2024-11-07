@@ -1,12 +1,15 @@
+// ignore_for_file: avoid_web_libraries_in_flutter
+// This is a web-specific file and should not have any Flutter-specific code.
+
+import 'package:common/common.dart';
 import 'package:controller/web/approute.dart';
 import 'package:flutter/material.dart';
-import 'package:shared/shared.dart';
 
 import 'dart:html' as html;
 import 'splash_viewmodel.dart';
 
 class WebSplashScreenViewModel extends SplashScreenViewModel {
-  final PersistenceService
+  final PersistenceRepository
       persistenceService; // Might need this when restoring authentication
 
   WebSplashScreenViewModel({required this.persistenceService});

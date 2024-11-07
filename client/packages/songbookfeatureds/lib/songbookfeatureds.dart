@@ -2,6 +2,7 @@ library songbookfeatureds;
 
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
+import 'package:shared/shared.dart';
 import 'package:songbookfeature/songbookfeature.dart';
 import 'package:singalong_api_client/singalong_api_client.dart';
 
@@ -11,7 +12,8 @@ class SongBookFeatureDSProvider {
   final providers = MultiProvider(providers: [
     Provider<SongRepository>(
       create: (context) => SongRepositoryDS(
-        apiClient: context.read(),
+        api: context.read(),
+        configuration: context.read(),
       ),
     ),
     Provider(

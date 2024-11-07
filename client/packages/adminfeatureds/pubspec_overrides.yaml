@@ -1,0 +1,10 @@
+# melos_managed_dependency_overrides: adminfeature,singalong_api_client,shared,common
+dependency_overrides:
+  adminfeature:
+    path: ../adminfeature
+  common:
+    path: ../common
+  shared:
+    path: ../shared
+  singalong_api_client:
+    path: ../singalong_api_client

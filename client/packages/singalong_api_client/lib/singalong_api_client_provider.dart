@@ -11,13 +11,31 @@ class SingalongAPIClientProvider {
       create: (context) => Client(),
       dispose: (context, client) => client.close(),
     ),
-    Provider<SingalongAPIClient>(
-      create: (context) => SingalongAPIClient(
+    Provider<APIClient>(
+      create: (context) => APIClient(
         client: context.read(),
-        // socket: context.read(),
         sessionManager: context.read(),
         configuration: context.read(),
       ),
     ),
+    Provider<SingalongAPI>(
+      create: (context) => SingalongAPI(
+        apiClient: context.read(),
+      ),
+    ),
+    Provider<SingalongSocket>(
+      create: (context) => SingalongSocket(
+        configuration: context.read(),
+        sessionManager: context.read(),
+      ),
+    ),
+    // Provider<SingalongAPIClient>(
+    //   create: (context) => SingalongAPIClient(
+    //     client: context.read(),
+    //     // socket: context.read(),
+    //     sessionManager: context.read(),
+    //     configuration: context.read(),
+    //   ),
+    // ),
   ]);
 }

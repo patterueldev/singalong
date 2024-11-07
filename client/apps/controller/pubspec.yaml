@@ -33,6 +33,8 @@ dependencies:
 
   shared:
   singalong_api_client:
+  common:
+  commonds:
   connectfeature:
   connectfeatureds:
   sessionfeature:
@@ -46,7 +48,6 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.6
   provider: ^6.1.2
-  encrypt_shared_preferences: ^0.7.6
   flutter_localizations:
     sdk: flutter
   intl: ^0.18.1

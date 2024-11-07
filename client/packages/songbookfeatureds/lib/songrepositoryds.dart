@@ -1,10 +1,12 @@
 part of 'songbookfeatureds.dart';
 
 class SongRepositoryDS implements SongRepository {
-  final SingalongAPIClient apiClient;
+  final SingalongAPI api;
+  final SingalongConfiguration configuration;
 
   SongRepositoryDS({
-    required this.apiClient,
+    required this.api,
+    required this.configuration,
   });
 
   @override
@@ -12,7 +14,7 @@ class SongRepositoryDS implements SongRepository {
     try {
       debugPrint(
           'SongRepositoryDS: Fetching songs with parameters: $parameters');
-      final result = await apiClient.loadSongs(
+      final result = await api.loadSongs(
         APILoadSongsParameters(
           keyword: parameters.keyword,
           limit: parameters.limit,
@@ -27,7 +29,9 @@ class SongRepositoryDS implements SongRepository {
                 id: apiSong.id,
                 title: apiSong.title,
                 artist: apiSong.artist,
-                thumbnailURL: apiClient.resourceURL(apiSong.thumbnailPath),
+                thumbnailURL: configuration
+                    .buildResourceURL(apiSong.thumbnailPath)
+                    .toString(),
                 alreadyPlayed: false,
               ))
           .toList();
@@ -48,7 +52,7 @@ class SongRepositoryDS implements SongRepository {
     try {
       debugPrint('SongRepositoryDS: Reserving song: $song');
       final parameters = APIReserveSongParameters(songId: song.id);
-      return await apiClient.reserveSong(parameters);
+      return await api.reserveSong(parameters);
     } catch (e) {
       throw e;
     }

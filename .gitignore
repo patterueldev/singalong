@@ -92,3 +92,6 @@ app.*.map.json
 
 
 *.bkp
+
+### Application Configuration ###
+application-secrets.yml

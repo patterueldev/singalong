@@ -1,16 +1,16 @@
 part of 'downloadfeature_ds.dart';
 
 class DefaultSongIdentifierRepository implements SongIdentifierRepository {
-  final SingalongAPIClient apiClient;
+  final SingalongAPI api;
 
   const DefaultSongIdentifierRepository({
-    required this.apiClient,
+    required this.api,
   });
 
   @override
   Future<IdentifiedSongDetails> identifySongUrl(String url) async {
     try {
-      final result = await apiClient.identifySong(
+      final result = await api.identifySong(
         APIIdentifySongParameters(url: url),
       );
       return IdentifiedSongDetails(
@@ -55,14 +55,7 @@ class DefaultSongIdentifierRepository implements SongIdentifierRepository {
         song: apiDetails,
         thenReserve: reserve,
       );
-      final result = await apiClient.saveSong(parameters);
-      debugPrint("Save song result: $result");
-
-      // if (reserve) {
-      //   await apiClient
-      //       .reserveSong(APIReserveSongParameters(songId: result.id));
-      //   debugPrint("Song reserved");
-      // }
+      await api.saveSong(parameters);
     } catch (e, st) {
       debugPrint("Error: $e");
       debugPrint("Stacktrace: $st");
@@ -73,7 +66,7 @@ class DefaultSongIdentifierRepository implements SongIdentifierRepository {
   @override
   Future<List<DownloadableItem>> searchDownloadableSong(String query) async {
     try {
-      final result = await apiClient.searchDownloadables(
+      final result = await api.searchDownloadables(
         APISearchDownloadablesParameters(keyword: query),
       );
       return result

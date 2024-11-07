@@ -1,12 +1,12 @@
 import 'package:connectfeature/connectfeature.dart';
 import 'package:controller/splash/splash_coordinator.dart';
 import 'package:controller/web/on_generate_routes.dart';
-import 'package:controller/web/screen_route_builder.dart';
 import 'package:controller/web/webapp_coordinator.dart';
 import 'package:downloadfeature/downloadfeature.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sessionfeature/sessionfeature.dart';
+import 'package:shared/shared.dart';
 import 'package:singalong_api_client/singalong_api_client.dart';
 import 'package:songbookfeature/songbookfeature.dart';
 import 'package:url_strategy/url_strategy.dart';
@@ -15,7 +15,7 @@ import '_main.dart';
 
 import 'web/controller_webapp.dart';
 
-class APIConfiguration extends SingalongAPIConfiguration {
+class APIConfiguration extends SingalongConfiguration {
   @override
   final String protocol = 'http';
 
@@ -34,24 +34,28 @@ class APIConfiguration extends SingalongAPIConfiguration {
 
   @override
   final int socketPort = 9092;
+
+  @override
+  final int storagePort = 9000;
+
+  @override
+  final String persistenceStorageKey = "1234567890123456";
 }
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  final screenRouteBuilder = ScreenRouteBuilder();
   const appCoordinator = WebAppCoordinator();
 
   setPathUrlStrategy();
 
   runApp(MultiProvider(
     providers: [
-      Provider<ScreenRouteBuilder>.value(value: screenRouteBuilder),
       Provider<SplashFlowCoordinator>.value(value: appCoordinator),
       Provider<ConnectFlowCoordinator>.value(value: appCoordinator),
       Provider<SessionFlowCoordinator>.value(value: appCoordinator),
       Provider<SongBookFlowCoordinator>.value(value: appCoordinator),
       Provider<DownloadFlowCoordinator>.value(value: appCoordinator),
-      Provider<SingalongAPIConfiguration>.value(value: APIConfiguration()),
+      Provider<SingalongConfiguration>.value(value: APIConfiguration()),
       buildProviders(),
     ],
     child: const ControllerWebApp(),

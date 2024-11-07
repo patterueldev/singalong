@@ -10,12 +10,12 @@ services:
     networks:
       - singalong-server
 
-  api:
-    image: singalong-api:1.0.0
+  server:
+    image: singalong-server:1.0.0
     build:
-      context: api
+      context: server
       dockerfile: Dockerfile
-    container_name: api-container
+    container_name: server-container
     ports:
       - "8080:8080" # App port
       - "5005:5005" # Debug port

@@ -2,7 +2,7 @@
 set -e
 
 root=$(pwd)
-api="$root/api"
+api="$root/server"
 fluttercontrollerapp="$root/client/apps/controller"
 
 # Function to handle errors

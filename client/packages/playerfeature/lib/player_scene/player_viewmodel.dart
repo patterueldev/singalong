@@ -7,22 +7,26 @@ abstract class PlayerViewModel extends ChangeNotifier {
 }
 
 class DefaultPlayerViewModel extends PlayerViewModel {
-  final AuthorizeConnectionUseCase connectUseCase;
-  final NextSongUseCase nextSongUseCase;
-  final ListenToCurrentSongUpdatesUseCase listenToCurrentSongUpdatesUseCase;
   final ConnectRepository connectRepository;
+  final PlayerSocketRepository playerSocketRepository;
   final ReservedViewModel reservedViewModel;
 
   DefaultPlayerViewModel({
-    required this.connectUseCase,
-    required this.nextSongUseCase,
-    required this.listenToCurrentSongUpdatesUseCase,
     required this.connectRepository,
+    required this.playerSocketRepository,
     required this.reservedViewModel,
   });
 
-  StreamSubscription? _currentSongListener;
+  late final AuthorizeConnectionUseCase connectUseCase =
+      AuthorizeConnectionUseCase(connectRepository: connectRepository);
+
+  // StreamSubscription? _currentSongListener;
+  StreamController<CurrentSong?>? _currentSongController;
+  StreamController<int>? _seekDurationFromControlStreamController;
+  StreamController<bool>? _togglePlayPauseStreamController;
+
   final List<VideoController> _videoControllers = [];
+  VideoController? _activeSongVideoController;
 
   @override
   final ValueNotifier<bool> isConnected = ValueNotifier(false);
@@ -75,8 +79,10 @@ class DefaultPlayerViewModel extends PlayerViewModel {
   void setupListeners() {
     // 2. Listen to the current song updates
     debugPrint("Listening to current song updates");
-    _currentSongListener =
-        listenToCurrentSongUpdatesUseCase().listen((currentSong) async {
+
+    _currentSongController =
+        playerSocketRepository.currentSongStreamController();
+    _currentSongController?.stream.listen((currentSong) async {
       debugPrint("Current song: $currentSong");
       try {
         await _clearVideoControllers();
@@ -92,6 +98,7 @@ class DefaultPlayerViewModel extends PlayerViewModel {
         playerViewStateNotifier.value = PlayerViewState.playing(controller);
 
         await controller.play();
+        _activeSongVideoController = controller;
 
         controller.addListener(() {
           _videoPlayerListener(controller);
@@ -101,10 +108,29 @@ class DefaultPlayerViewModel extends PlayerViewModel {
         playerViewStateNotifier.value = PlayerViewState.failure(e.toString());
       }
     });
+
+    _seekDurationFromControlStreamController =
+        playerSocketRepository.seekDurationFromControlStreamController();
+    _seekDurationFromControlStreamController?.stream.listen((seekValue) {
+      debugPrint("Seek value: $seekValue");
+      _activeSongVideoController?.seekTo(Duration(seconds: seekValue));
+    });
+
+    _togglePlayPauseStreamController =
+        playerSocketRepository.togglePlayPauseStreamController();
+    _togglePlayPauseStreamController?.stream.listen((isPlaying) {
+      debugPrint("Toggle play/pause: $isPlaying");
+      if (isPlaying) {
+        _activeSongVideoController?.play();
+      } else {
+        _activeSongVideoController?.pause();
+      }
+    });
   }
 
   void _videoPlayerListener(VideoController controller) async {
-    if (controller.value.position >= controller.value.duration) {
+    final position = controller.value.position;
+    if (position >= controller.value.duration) {
       controller.pause();
       // TODO: Maybe some video score calculation here
       final host = "thursday.local"; // TODO: this should be configurable
@@ -124,6 +150,9 @@ class DefaultPlayerViewModel extends PlayerViewModel {
       });
 
       // TODO: Send command to the server to update the score and play the next song
+    } else {
+      // send the current position to the server
+      playerSocketRepository.seekDurationFromPlayer(position.inMilliseconds);
     }
   }
 
@@ -132,9 +161,10 @@ class DefaultPlayerViewModel extends PlayerViewModel {
     final duration = Duration(seconds: minSeconds);
     if (controller.value.position >= duration) {
       controller.pause();
+      playerViewStateNotifier.value = PlayerViewState.connected();
       await _clearVideoControllers();
       // TODO: Send command to the server to update the score and play the next song
-      await nextSongUseCase();
+      playerSocketRepository.skipSong();
     }
   }
 
@@ -150,7 +180,9 @@ class DefaultPlayerViewModel extends PlayerViewModel {
   void dispose() async {
     await _clearVideoControllers();
 
-    _currentSongListener?.cancel();
+    _currentSongController?.close();
+    _seekDurationFromControlStreamController?.close();
+    _togglePlayPauseStreamController?.close();
     playerViewStateNotifier.value = PlayerViewState.disconnected();
 
     super.dispose();

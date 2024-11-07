@@ -1,8 +1,8 @@
+import 'package:common/common.dart';
+import 'package:commonds/commonds.dart';
 import 'package:connectfeature/connectfeature.dart';
 import 'package:connectfeatureds/connectfeatureds.dart';
-import 'package:controller/shared/persistence_service.dart';
 import 'package:controller/splash/splash_provider.dart';
-import 'package:encrypt_shared_preferences/provider.dart';
 import 'package:provider/provider.dart';
 import 'package:sessionfeature/sessionfeature.dart';
 import 'package:sessionfeatureds/sessionfeatureds.dart';
@@ -17,8 +17,8 @@ import 'assets/app_assets.dart';
 import 'localizations/app_localizations.dart';
 
 MultiProvider buildProviders() {
-  final persistenceService = PersistenceServiceImpl();
   final singalongAPIClientProvider = SingalongAPIClientProvider();
+  final commonProvider = CommonProvider();
   final connectFeatureDSProvider = ConnectFeatureDSProvider();
   final sessionFeatureDSProvider = SessionFeatureDSProvider();
   final songBookFeatureProvider = SongBookFeatureDSProvider();
@@ -28,7 +28,6 @@ MultiProvider buildProviders() {
 
   return MultiProvider(
     providers: [
-      Provider<PersistenceService>.value(value: persistenceService),
       Provider<ConnectAssets>.value(value: assets),
       Provider<ConnectLocalizations>.value(value: localizations),
       Provider<SessionLocalizations>.value(value: localizations),
@@ -37,6 +36,7 @@ MultiProvider buildProviders() {
       Provider<DownloadAssets>.value(value: assets),
       Provider<DownloadLocalizations>.value(value: localizations),
       singalongAPIClientProvider.providers,
+      commonProvider.providers,
       connectFeatureDSProvider.providers,
       sessionFeatureDSProvider.providers,
       songBookFeatureProvider.providers,

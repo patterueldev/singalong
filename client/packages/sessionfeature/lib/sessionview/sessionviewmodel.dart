@@ -1,11 +1,12 @@
 part of '../sessionfeature.dart';
 
-abstract class SessionViewModel {
-  ValueNotifier<SessionViewState> get stateNotifier;
-  ValueNotifier<List<ReservedSongItem>> get songListNotifier;
-  ValueNotifier<PromptModel?> get promptNotifier;
-  ValueNotifier<ReservedSongItem?> get songDetailsNotifier;
-  ValueNotifier<bool> get isSongBookOpenNotifier;
+abstract class SessionViewModel extends ChangeNotifier {
+  ValueNotifier<SessionViewState> stateNotifier =
+      ValueNotifier(SessionViewState.initial());
+  ValueNotifier<List<ReservedSongItem>> songListNotifier = ValueNotifier([]);
+  ValueNotifier<PromptModel?> promptNotifier = ValueNotifier(null);
+  ValueNotifier<ReservedSongItem?> songDetailsNotifier = ValueNotifier(null);
+  ValueNotifier<bool> isSongBookOpenNotifier = ValueNotifier(false);
 
   void setupSession();
   void dismissSong(ReservedSongItem song);
@@ -16,11 +17,13 @@ abstract class SessionViewModel {
 }
 
 class DefaultSessionViewModel extends SessionViewModel {
-  final ListenToSongListUpdatesUseCase listenToSongListUpdatesUseCase;
+  final ReservedSongListSocketRepository reservedSongListSocketRepository;
+  final ConnectRepository connectRepository;
   final SessionLocalizations localizations;
 
   DefaultSessionViewModel({
-    required this.listenToSongListUpdatesUseCase,
+    required this.reservedSongListSocketRepository,
+    required this.connectRepository,
     required this.localizations,
     List<ReservedSongItem>? songList,
   }) {
@@ -29,32 +32,20 @@ class DefaultSessionViewModel extends SessionViewModel {
     }
   }
 
-  @override
-  ValueNotifier<SessionViewState> stateNotifier =
-      ValueNotifier(SessionViewState.initial());
-  @override
-  ValueNotifier<List<ReservedSongItem>> songListNotifier = ValueNotifier([]);
-  @override
-  ValueNotifier<PromptModel?> promptNotifier = ValueNotifier(null);
-  @override
-  ValueNotifier<ReservedSongItem?> songDetailsNotifier = ValueNotifier(null);
-  @override
-  ValueNotifier<bool> isSongBookOpenNotifier = ValueNotifier(false);
+  StreamController<List<ReservedSongItem>>? streamController;
 
   @override
   void setupSession() async {
-    // this class will essentially "prepare" the session
-    // maybe processing some stuff at first
-    // then setup an active observer to listen to changes for the song list
     stateNotifier.value = SessionViewState.loading();
-    await Future.delayed(const Duration(seconds: 2));
-    // if there's an error, we can throw an exception; use Failure state instead of Loading
-    stateNotifier.value = SessionViewState.loaded();
-    // then start listening to changes
 
-    listenToSongListUpdatesUseCase().listen((songList) {
+    streamController =
+        reservedSongListSocketRepository.reservedSongListStreamController();
+    streamController?.stream.listen((songList) {
       songListNotifier.value = songList;
     });
+
+    connectRepository.connectSocket();
+    stateNotifier.value = SessionViewState.loaded();
   }
 
   @override
@@ -103,5 +94,11 @@ class DefaultSessionViewModel extends SessionViewModel {
   void disconnect() {
     // dispose of the observer
     stateNotifier.value = SessionViewState.disconnected();
+  }
+
+  @override
+  void dispose() {
+    streamController?.close();
+    super.dispose();
   }
 }

@@ -31,7 +31,10 @@ dependencies:
   flutter:
     sdk: flutter
 
+  shared:
   singalong_api_client:
+  common:
+  commonds:
   playerfeature:
   playerfeatureds:
 

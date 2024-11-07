@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:playerfeature/playerfeature.dart';
 import 'package:playerfeatureds/playerfeatureds.dart';
 import 'package:provider/provider.dart';
+import 'package:shared/shared.dart';
 import 'package:singalong_api_client/singalong_api_client.dart';
 
-class APIConfiguration extends SingalongAPIConfiguration {
+class APIConfiguration extends SingalongConfiguration {
   @override
   final String protocol = 'http';
 
@@ -21,6 +22,12 @@ class APIConfiguration extends SingalongAPIConfiguration {
 
   @override
   final int socketPort = 9092;
+
+  @override
+  final int storagePort = 9000;
+
+  @override
+  final String persistenceStorageKey = "1234567890123456";
 }
 
 void main() async {
@@ -28,7 +35,7 @@ void main() async {
   final playerFeatureDSProvider = PlayerFeatureDSProvider();
   runApp(MultiProvider(
     providers: [
-      Provider<SingalongAPIConfiguration>.value(value: APIConfiguration()),
+      Provider<SingalongConfiguration>.value(value: APIConfiguration()),
       singalongAPIClientProvider.providers,
       playerFeatureDSProvider.providers,
     ],
@@ -48,7 +55,7 @@ class PlayerApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: context.read<PlayerFeatureBuilder>().buildPlayerView(),
+      home: context.read<PlayerFeatureUIBuilder>().buildPlayerView(),
     );
   }
 }

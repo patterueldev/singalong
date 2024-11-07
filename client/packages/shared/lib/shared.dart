@@ -9,7 +9,7 @@ part 'promptmodel.dart';
 part 'genericexception.dart';
 part 'assetsource.dart';
 part 'service_usecase.dart';
-part 'persistenceservice.dart';
+part 'singalongconfiguration.dart';
 
 class Pagination {}
 

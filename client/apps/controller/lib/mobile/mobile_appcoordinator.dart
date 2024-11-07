@@ -35,10 +35,11 @@ class MobileAppCoordinator
 
   @override
   void onConnected(BuildContext context) {
-    SessionFeatureBuilder sessionFeatureBuilder = context.read();
+    SessionFeatureUIBuilder sessionFeatureBuilder = context.read();
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(
-          builder: (context) => sessionFeatureBuilder.buildSessionView()),
+          builder: (context) =>
+              sessionFeatureBuilder.buildSessionView(context)),
     );
   }
 

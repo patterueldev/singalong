@@ -7,13 +7,17 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart';
 import 'package:json_annotation/json_annotation.dart';
 import 'package:provider/provider.dart';
+import 'package:shared/shared.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 
 part 'singalong_api_client.g.dart';
 part 'api_path.dart';
 part 'api_session_manager.dart';
-part 'singalong_api_configuration.dart';
+part 'api_client.dart';
+part 'singalong_api.dart';
 part 'singalong_api_client_provider.dart';
+part 'singalong_socket.dart';
+part 'socket_events/socket_events.dart';
 part 'models/generic_response.dart';
 part 'models/connect_parameters.dart';
 part 'models/connect_response.dart';
@@ -25,7 +29,7 @@ part 'models/save_song_parameters.dart';
 part 'models/save_song_response.dart';
 part 'models/downloadable_item.dart';
 
-enum HttpMethod { GET, POST, PATCH, PUT, DELETE }
+/*
 
 class SingalongAPIClient {
   final Client _client;
@@ -226,9 +230,50 @@ class SingalongAPIClient {
     return controller.stream;
   }
 
+  // listen to seek duration from server
+  Stream<int> listenSeekDurationInMilliseconds() {
+    final socket = _sessionManager.getSocket();
+    if (socket.hasListeners('seek')) {
+      throw Exception();
+    }
+
+    final controller = StreamController<int>();
+    socket.on('seekDuration', (data) {
+      final seekValue = data as int;
+      controller.add(seekValue);
+    });
+    return controller.stream;
+  }
+
+  // update seek duration to server
+  Future<void> updateSeekDuration(int durationInMilliseconds) async {
+    final socket = _sessionManager.getSocket();
+    socket.emit('seekDuration', durationInMilliseconds);
+  }
+
+  Stream<int> listenSeekUpdatesInSeconds() {
+    final socket = _sessionManager.getSocket();
+    if (socket.hasListeners('seek')) {
+      throw Exception();
+    }
+
+    final controller = StreamController<int>();
+    socket.on('seek', (data) {
+      final seekValue = data as int;
+      controller.add(seekValue);
+    });
+    return controller.stream;
+  }
+
+  Future<void> seekToDuration(int durationInSeconds) async {
+    final socket = _sessionManager.getSocket();
+    socket.emit('seek', durationInSeconds);
+  }
+
   String resourceURL(String path) {
     String host = _configuration.host;
     // TODO: port will be configurable
     return "http://$host:9000/$path";
   }
 }
+ */

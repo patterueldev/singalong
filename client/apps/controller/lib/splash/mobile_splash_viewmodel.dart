@@ -1,10 +1,11 @@
+import 'package:common/common.dart';
 import 'package:flutter/material.dart';
 import 'package:shared/shared.dart';
 
 import 'splash_viewmodel.dart';
 
 class MobileSplashScreenViewModel extends SplashScreenViewModel {
-  final PersistenceService persistenceService;
+  final PersistenceRepository persistenceService;
 
   MobileSplashScreenViewModel({required this.persistenceService});
 

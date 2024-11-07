@@ -1,5 +1,7 @@
-# melos_managed_dependency_overrides: sessionfeature,shared,singalong_api_client
+# melos_managed_dependency_overrides: sessionfeature,shared,singalong_api_client,common
 dependency_overrides:
+  common:
+    path: ../common
   sessionfeature:
     path: ../sessionfeature
   shared:
