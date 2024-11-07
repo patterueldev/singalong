@@ -1,4 +1,4 @@
-part of 'shared.dart';
+part of 'core.dart';
 
 class LocalizedString {
   final String Function(BuildContext context) textBuilder;

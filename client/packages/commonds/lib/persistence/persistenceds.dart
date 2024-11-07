@@ -7,6 +7,7 @@ class PersistenceRepositoryDS implements PersistenceRepository {
 
   final roomKey = 'room';
   final usernameKey = 'username';
+  final accessTokenKey = 'accessToken';
 
   EncryptedSharedPreferences? sharedPref;
 
@@ -34,6 +35,14 @@ class PersistenceRepositoryDS implements PersistenceRepository {
   }
 
   @override
+  Future<String?> getAccessToken() async {
+    await configureSharedPref();
+    final accessToken = sharedPref!.getString(accessTokenKey);
+    debugPrint('Retrieved access token: $accessToken');
+    return accessToken;
+  }
+
+  @override
   Future<void> saveRoomId(String roomId) async {
     await configureSharedPref();
     debugPrint('Saving room id: $roomId');
@@ -45,5 +54,12 @@ class PersistenceRepositoryDS implements PersistenceRepository {
     await configureSharedPref();
     debugPrint('Saving username: $username');
     sharedPref!.setString(usernameKey, username);
+  }
+
+  @override
+  Future<void> saveAccessToken(String accessToken) async {
+    await configureSharedPref();
+    debugPrint('Saving access token: $accessToken');
+    sharedPref!.setString(accessTokenKey, accessToken);
   }
 }

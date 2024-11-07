@@ -8,10 +8,7 @@ class APISessionManager {
 
   String? _accessToken;
 
-  void setAccessToken(String token) => {
-        if (_accessToken != null) throw Exception('Access token already set'),
-        _accessToken = token
-      };
+  void setAccessToken(String token) => _accessToken = token;
   String getAccessToken() => _accessToken!;
   bool hasAccessToken() => _accessToken != null;
   void clearAccessToken() => _accessToken = null;

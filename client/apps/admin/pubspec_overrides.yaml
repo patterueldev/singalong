@@ -1,4 +1,4 @@
-# melos_managed_dependency_overrides: adminfeature,adminfeatureds,singalong_api_client,shared,common,commonds
+# melos_managed_dependency_overrides: adminfeature,adminfeatureds,singalong_api_client,common,commonds,core
 dependency_overrides:
   adminfeature:
     path: ../../packages/adminfeature
@@ -8,7 +8,7 @@ dependency_overrides:
     path: ../../packages/common
   commonds:
     path: ../../packages/commonds
-  shared:
-    path: ../../packages/shared
+  core:
+    path: ../../packages/core
   singalong_api_client:
     path: ../../packages/singalong_api_client

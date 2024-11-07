@@ -1,6 +1,6 @@
 import 'package:controller/web/approute.dart';
 import 'package:flutter/material.dart';
-import 'package:shared/shared.dart';
+import 'package:core/core.dart';
 
 abstract class SplashScreenViewModel extends ChangeNotifier {
   ValueNotifier<SplashState> get didFinishStateNotifier;

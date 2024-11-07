@@ -37,7 +37,7 @@ class EstablishConnectionUseCase
               userPasscode: null,
               roomId: parameters.roomId,
               roomPasscode: null,
-              clientType: "CONTROLLER",
+              clientType: ClientType.CONTROLLER,
             ),
           );
 

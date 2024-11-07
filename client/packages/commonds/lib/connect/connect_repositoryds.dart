@@ -4,13 +4,13 @@ class ConnectRepositoryDS implements ConnectRepository {
   final SingalongAPI client;
   final SingalongSocket socket;
   final APISessionManager sessionManager;
-  final PersistenceRepository persistenceService;
+  final PersistenceRepository persistenceRepository;
 
   ConnectRepositoryDS({
     required this.client,
     required this.socket,
     required this.sessionManager,
-    required this.persistenceService,
+    required this.persistenceRepository,
   });
 
   @override
@@ -29,6 +29,18 @@ class ConnectRepositoryDS implements ConnectRepository {
   void connectSocket() {
     socket.connectSocket();
   }
+
+  @override
+  Future<bool> checkAuthentication() async {
+    final accessToken = await persistenceRepository.getAccessToken();
+    if (accessToken != null) {
+      debugPrint('Access token found: $accessToken');
+      sessionManager.setAccessToken(accessToken);
+      return true;
+    }
+    debugPrint('No access token found');
+    return false;
+  }
 }
 
 extension ConnectParametersMapper on ConnectParameters {
@@ -38,7 +50,7 @@ extension ConnectParametersMapper on ConnectParameters {
       userPasscode: userPasscode,
       roomId: roomId,
       roomPasscode: roomPasscode,
-      clientType: clientType,
+      clientType: clientType.value,
     );
   }
 }

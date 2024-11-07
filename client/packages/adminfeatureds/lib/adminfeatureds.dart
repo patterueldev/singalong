@@ -5,7 +5,7 @@ import 'dart:async';
 import 'package:adminfeature/adminfeature.dart';
 import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
-import 'package:shared/shared.dart';
+import 'package:core/core.dart';
 import 'package:singalong_api_client/singalong_api_client.dart';
 
 part 'controlpanelrepositoryds.dart';
@@ -19,10 +19,7 @@ class AdminFeatureDSProvider {
       ),
     ),
     Provider(
-      create: (context) => AdminFeatureProvider(
-        connectRepository: context.read(),
-        controlPanelRepository: context.read(),
-      ),
+      create: (context) => AdminFeatureUIProvider(),
     )
   ]);
 }

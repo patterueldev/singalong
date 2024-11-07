@@ -2,7 +2,7 @@ import 'package:connectfeature/connectfeature.dart';
 import 'package:downloadfeature/downloadfeature.dart';
 import 'package:flutter/material.dart';
 import 'package:sessionfeature/sessionfeature.dart';
-import 'package:shared/shared.dart';
+import 'package:core/core.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:songbookfeature/songbookfeature.dart';
 

@@ -11,7 +11,7 @@ dependencies:
   flutter:
     sdk: flutter
 
-  shared:
+  core:
   common:
   singalong_api_client:
 

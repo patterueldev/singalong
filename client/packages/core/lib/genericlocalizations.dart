@@ -1,4 +1,4 @@
-part of 'shared.dart';
+part of 'core.dart';
 
 abstract class GenericLocalizations {
   LocalizedString get cancelButtonText;

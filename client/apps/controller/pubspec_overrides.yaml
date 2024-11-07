@@ -1,4 +1,4 @@
-# melos_managed_dependency_overrides: connectfeature,connectfeatureds,downloadfeature,downloadfeature_ds,sessionfeature,sessionfeatureds,shared,singalong_api_client,songbookfeature,songbookfeatureds,common,commonds
+# melos_managed_dependency_overrides: connectfeature,connectfeatureds,downloadfeature,downloadfeature_ds,sessionfeature,sessionfeatureds,singalong_api_client,songbookfeature,songbookfeatureds,common,commonds,core
 dependency_overrides:
   common:
     path: ../../packages/common
@@ -8,6 +8,8 @@ dependency_overrides:
     path: ../../packages/connectfeature
   connectfeatureds:
     path: ../../packages/connectfeatureds
+  core:
+    path: ../../packages/core
   downloadfeature:
     path: ../../packages/downloadfeature
   downloadfeature_ds:
@@ -16,8 +18,6 @@ dependency_overrides:
     path: ../../packages/sessionfeature
   sessionfeatureds:
     path: ../../packages/sessionfeatureds
-  shared:
-    path: ../../packages/shared
   singalong_api_client:
     path: ../../packages/singalong_api_client
   songbookfeature:

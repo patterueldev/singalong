@@ -24,17 +24,17 @@ abstract class PlayerControlPanelViewModel extends ChangeNotifier {
 }
 
 class DefaultPlayerControlPanelViewModel extends PlayerControlPanelViewModel {
-  final AuthorizeConnectionUseCase authorizeConnectionUseCase;
   final ConnectRepository connectRepository;
   final ControlPanelSocketRepository controlPanelRepository;
 
   DefaultPlayerControlPanelViewModel({
-    required this.authorizeConnectionUseCase,
     required this.connectRepository,
     required this.controlPanelRepository,
   }) {
     setup();
   }
+  late AuthorizeConnectionUseCase authorizeConnectionUseCase =
+      AuthorizeConnectionUseCase(connectRepository: connectRepository);
 
   Timer? _seekDebounceTimer;
 
@@ -50,7 +50,7 @@ class DefaultPlayerControlPanelViewModel extends PlayerControlPanelViewModel {
         username: "pat",
         userPasscode: "1234",
         roomId: "569841",
-        clientType: "ADMIN",
+        clientType: ClientType.ADMIN,
       ),
     );
 

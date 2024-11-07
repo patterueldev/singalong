@@ -49,7 +49,7 @@ class DefaultPlayerViewModel extends PlayerViewModel {
       ConnectParameters(
         username: "player",
         roomId: "569841",
-        clientType: "PLAYER",
+        clientType: ClientType.PLAYER,
       ),
     );
     connectResult.fold(

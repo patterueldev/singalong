@@ -9,7 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:fpdart/fpdart.dart' show TaskEither, Unit, unit;
 import 'package:provider/provider.dart';
 import 'package:qr_flutter/qr_flutter.dart';
-import 'package:shared/shared.dart';
+import 'package:core/core.dart';
 import 'package:video_player/video_player.dart'
     show VideoPlayerController, VideoPlayer;
 import "package:video_controls/video_controls.dart" show VideoController;

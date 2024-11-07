@@ -56,7 +56,7 @@ class _MasterViewState extends State<MasterView> {
   }
 
   Widget _buildTopLeft(BuildContext context) =>
-      context.read<AdminFeatureProvider>().buildPlayerControlPanel();
+      context.read<AdminFeatureUIProvider>().buildPlayerControlPanel();
 
   Widget _buildBottomLeft() => Container(
         child: Center(child: Text('Bottom Left Corner')),

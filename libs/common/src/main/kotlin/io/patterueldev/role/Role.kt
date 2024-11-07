@@ -1,7 +1,7 @@
 package io.patterueldev.role
 
 enum class Role {
-    ADMIN,
-    USER_HOST,
-    USER_GUEST,
+    ADMIN, // for the admin user using the Admin App
+    USER_HOST, // for users using the Player App
+    USER_GUEST, // for users using the Controller App (Songbook app)
 }

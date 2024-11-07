@@ -11,7 +11,7 @@ dependencies:
   flutter:
     sdk: flutter
 
-  shared:
+  core:
   songbookfeature:
   singalong_api_client:
 

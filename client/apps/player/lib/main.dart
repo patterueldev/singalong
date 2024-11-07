@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:playerfeature/playerfeature.dart';
 import 'package:playerfeatureds/playerfeatureds.dart';
 import 'package:provider/provider.dart';
-import 'package:shared/shared.dart';
+import 'package:core/core.dart';
 import 'package:singalong_api_client/singalong_api_client.dart';
 import 'package:video_player/video_player.dart';
 

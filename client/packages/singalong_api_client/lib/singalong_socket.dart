@@ -13,10 +13,6 @@ class SingalongSocket {
   IO.Socket get socket => _socket!;
 
   void buildSocket() {
-    if (_socket != null) {
-      throw Exception('Socket already built');
-    }
-
     final uri = configuration.buildSocketURL("singalong");
     final option = IO.OptionBuilder()
         .setTransports(['websocket']) // for Flutter or Dart VM

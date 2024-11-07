@@ -6,4 +6,7 @@ abstract class PersistenceRepository {
 
   Future<void> saveRoomId(String roomId);
   Future<String?> getRoomId();
+
+  Future<void> saveAccessToken(String accessToken);
+  Future<String?> getAccessToken();
 }

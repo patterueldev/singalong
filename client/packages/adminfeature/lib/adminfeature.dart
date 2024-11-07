@@ -7,10 +7,12 @@ import 'package:common/common.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:fpdart/fpdart.dart' show TaskEither, Unit, unit;
 import 'package:provider/provider.dart';
-import 'package:shared/shared.dart';
+import 'package:core/core.dart';
 
+part 'admincoordinator.dart';
 part 'common/sliderdata.dart';
 part 'signinscreen/signin_screen.dart';
 part 'signinscreen/signin_viewmodel.dart';
@@ -20,26 +22,31 @@ part 'player_control_panel/controlpanelsocketrepository.dart';
 part 'player_control_panel/authorize_connection_usecase.dart';
 part 'player_control_panel/player_control_panel_state.dart';
 
-class AdminFeatureProvider {
-  final ConnectRepository connectRepository;
-  final ControlPanelSocketRepository controlPanelRepository;
+class AdminFeatureUIProvider {
+  AdminFeatureUIProvider();
 
-  AdminFeatureProvider({
-    required this.connectRepository,
-    required this.controlPanelRepository,
-  });
-
-  late final AuthorizeConnectionUseCase _authorizeConnectionUseCase =
-      AuthorizeConnectionUseCase(
-    connectRepository: connectRepository,
-  );
+  Widget buildSignInScreen(
+    BuildContext context, {
+    String username = '',
+    String password = '',
+  }) =>
+      ChangeNotifierProvider<SignInViewModel>(
+        create: (context) => DefaultSignInViewModel(
+          connectRepository: context.read(),
+          persistenceRepository: context.read(),
+          username: username,
+          password: password,
+        ),
+        child: SignInScreen(
+          coordinator: context.read(),
+        ),
+      );
 
   Widget buildPlayerControlPanel() =>
       ChangeNotifierProvider<PlayerControlPanelViewModel>(
-        create: (_) => DefaultPlayerControlPanelViewModel(
-          authorizeConnectionUseCase: _authorizeConnectionUseCase,
-          connectRepository: connectRepository,
-          controlPanelRepository: controlPanelRepository,
+        create: (context) => DefaultPlayerControlPanelViewModel(
+          connectRepository: context.read(),
+          controlPanelRepository: context.read(),
         ),
         child: const PlayerControlPanelWidget(),
       );
