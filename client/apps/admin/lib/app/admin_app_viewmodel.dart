@@ -19,7 +19,6 @@ class DefaultAdminAppViewModel extends AdminAppViewModel {
   @override
   void checkAuthentication() async {
     final isAuthenticated = await connectRepository.checkAuthentication();
-    debugPrint('isAuthenticated: $isAuthenticated');
     if (isAuthenticated) {
       authenticationState = const AuthenticationState.authenticated();
     } else {

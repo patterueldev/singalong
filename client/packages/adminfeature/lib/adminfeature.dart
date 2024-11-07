@@ -14,8 +14,9 @@ import 'package:core/core.dart';
 
 part 'admincoordinator.dart';
 part 'common/sliderdata.dart';
-part 'signinscreen/signin_screen.dart';
-part 'signinscreen/signin_viewmodel.dart';
+part 'signin/signin_screen.dart';
+part 'signin/signin_viewmodel.dart';
+part 'sessionmanager/session_manager_screen.dart';
 part 'player_control_panel/player_control_panel_widget.dart';
 part 'player_control_panel/player_control_panel_viewmodel.dart';
 part 'player_control_panel/controlpanelsocketrepository.dart';
@@ -41,6 +42,8 @@ class AdminFeatureUIProvider {
           coordinator: context.read(),
         ),
       );
+
+  Widget buildSessionManagerScreen() => const SessionManagerScreen();
 
   Widget buildPlayerControlPanel() =>
       ChangeNotifierProvider<PlayerControlPanelViewModel>(

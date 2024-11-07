@@ -11,16 +11,17 @@ class AdminApp extends StatelessWidget {
         themeMode: ThemeMode.dark,
         home: Consumer<AdminAppViewModel>(
           builder: (context, viewModel, child) {
+            final adminFeatureUIProvider =
+                context.read<AdminFeatureUIProvider>();
             switch (viewModel.authenticationState.status) {
               case AuthenticationStatus.loading:
                 return const StartUpScreen();
               case AuthenticationStatus.unauthenticated:
-                return context.read<AdminFeatureUIProvider>().buildSignInScreen(
-                    context,
-                    username: 'pat',
-                    password: '1234');
+                return adminFeatureUIProvider.buildSignInScreen(context,
+                    username: 'pat', password: '1234');
               case AuthenticationStatus.authenticated:
-                return const MasterView();
+                return adminFeatureUIProvider.buildSessionManagerScreen();
+              // return const MasterView();
             }
           },
         ),
