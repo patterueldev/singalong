@@ -1,51 +1,35 @@
 part of '../playerfeature.dart';
 
 abstract class ReservedViewModel extends ChangeNotifier {
-  ValueNotifier<List<ReservedSongItem>> get reservedViewStateNotifier;
+  final ValueNotifier<List<ReservedSongItem>> reservedViewStateNotifier =
+      ValueNotifier([]);
   void setupListeners();
 }
 
-class ReservedSongItem {
-  final String thumbnailURL;
-  final String title;
-  final String artist;
-  final String reservedBy;
-  final bool isPlaying;
-
-  ReservedSongItem({
-    required this.thumbnailURL,
-    required this.title,
-    required this.artist,
-    required this.reservedBy,
-    required this.isPlaying,
-  });
-}
-
 class DefaultReservedViewModel extends ReservedViewModel {
-  final ListenToSongListUpdatesUseCase listenToSongListUpdatesUseCase;
+  final ReservedSongListSocketRepository reservedSongListSocketRepository;
+
   DefaultReservedViewModel({
-    required this.listenToSongListUpdatesUseCase,
+    required this.reservedSongListSocketRepository,
   });
 
-  StreamSubscription? reservedSongsListener;
-
-  @override
-  final ValueNotifier<List<ReservedSongItem>> reservedViewStateNotifier =
-      ValueNotifier([]);
+  StreamController<List<ReservedSongItem>>? reservedSongsStreamController;
 
   @override
   void setupListeners() {
     debugPrint('Setting up socket for reserved songs');
-    reservedSongsListener?.cancel();
-    reservedSongsListener = listenToSongListUpdatesUseCase().listen((songs) {
-      debugPrint('Received new songs: $songs');
-      reservedViewStateNotifier.value = List.from(songs);
+
+    reservedSongsStreamController =
+        reservedSongListSocketRepository.reservedSongsStreamController();
+    reservedSongsStreamController?.stream.listen((event) {
+      debugPrint('Received new songs: $event');
+      reservedViewStateNotifier.value = List.from(event);
     });
   }
 
   @override
   void dispose() {
-    reservedSongsListener?.cancel();
+    reservedSongsStreamController?.close();
     super.dispose();
   }
 }

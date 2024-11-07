@@ -17,12 +17,12 @@ abstract class SessionViewModel extends ChangeNotifier {
 }
 
 class DefaultSessionViewModel extends SessionViewModel {
-  final ListenToSongListUpdatesUseCase listenToSongListUpdatesUseCase;
+  final ReservedSongListSocketRepository reservedSongListSocketRepository;
   final ConnectRepository connectRepository;
   final SessionLocalizations localizations;
 
   DefaultSessionViewModel({
-    required this.listenToSongListUpdatesUseCase,
+    required this.reservedSongListSocketRepository,
     required this.connectRepository,
     required this.localizations,
     List<ReservedSongItem>? songList,
@@ -32,22 +32,20 @@ class DefaultSessionViewModel extends SessionViewModel {
     }
   }
 
+  StreamController<List<ReservedSongItem>>? streamController;
+
   @override
   void setupSession() async {
-    // this class will essentially "prepare" the session
-    // maybe processing some stuff at first
-    // then setup an active observer to listen to changes for the song list
     stateNotifier.value = SessionViewState.loading();
-    await Future.delayed(const Duration(seconds: 2));
-    // if there's an error, we can throw an exception; use Failure state instead of Loading
-    stateNotifier.value = SessionViewState.loaded();
-    // then start listening to changes
 
-    listenToSongListUpdatesUseCase().listen((songList) {
+    streamController =
+        reservedSongListSocketRepository.reservedSongListStreamController();
+    streamController?.stream.listen((songList) {
       songListNotifier.value = songList;
     });
 
     connectRepository.connectSocket();
+    stateNotifier.value = SessionViewState.loaded();
   }
 
   @override
@@ -96,5 +94,11 @@ class DefaultSessionViewModel extends SessionViewModel {
   void disconnect() {
     // dispose of the observer
     stateNotifier.value = SessionViewState.disconnected();
+  }
+
+  @override
+  void dispose() {
+    streamController?.close();
+    super.dispose();
   }
 }

@@ -5,23 +5,21 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
 import 'package:sessionfeature/sessionfeature.dart';
+import 'package:shared/shared.dart';
 import 'package:singalong_api_client/singalong_api_client.dart';
 
-part 'reservedsonglistrepositoryds.dart';
+part 'reservedsonglistsocketrepositoryds.dart';
 
 class SessionFeatureDSProvider {
   final providers = MultiProvider(providers: [
-    Provider<ReservedSongListRepository>(
-      create: (context) => ReservedSongListRepositoryDS(
-        apiClient: context.read(),
+    Provider<ReservedSongListSocketRepository>(
+      create: (context) => ReservedSongListSocketRepositoryDS(
+        socket: context.read(),
+        configuration: context.read(),
       ),
     ),
     Provider(
-      create: (context) => SessionFeatureBuilder(
-        localizations: context.read(),
-        coordinator: context.read(),
-        reservedSongListRepository: context.read(),
-      ),
+      create: (context) => SessionFeatureUIBuilder(),
     ),
   ]);
 }

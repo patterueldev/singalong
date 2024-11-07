@@ -16,13 +16,13 @@ part 'signinscreen/signin_screen.dart';
 part 'signinscreen/signin_viewmodel.dart';
 part 'player_control_panel/player_control_panel_widget.dart';
 part 'player_control_panel/player_control_panel_viewmodel.dart';
-part 'player_control_panel/controlpanelrepository.dart';
+part 'player_control_panel/controlpanelsocketrepository.dart';
 part 'player_control_panel/authorize_connection_usecase.dart';
 part 'player_control_panel/player_control_panel_state.dart';
 
 class AdminFeatureProvider {
   final ConnectRepository connectRepository;
-  final ControlPanelRepository controlPanelRepository;
+  final ControlPanelSocketRepository controlPanelRepository;
 
   AdminFeatureProvider({
     required this.connectRepository,

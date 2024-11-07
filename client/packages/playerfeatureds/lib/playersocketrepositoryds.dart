@@ -1,10 +1,10 @@
-part of 'adminfeatureds.dart';
+part of 'playerfeatureds.dart';
 
-class ControlPanelRepositoryDS implements ControlPanelSocketRepository {
+class PlayerSocketRepositoryDS implements PlayerSocketRepository {
   final SingalongSocket socket;
   final SingalongConfiguration configuration;
 
-  ControlPanelRepositoryDS({
+  PlayerSocketRepositoryDS({
     required this.socket,
     required this.configuration,
   });
@@ -16,7 +16,6 @@ class ControlPanelRepositoryDS implements ControlPanelSocketRepository {
     StreamController<CurrentSong?> controller = StreamController<CurrentSong?>(
       onCancel: () => currentSongStreamController.close(),
     );
-
     currentSongStreamController.stream.listen((apiCurrentSong) {
       if (apiCurrentSong == null) {
         controller.add(null);
@@ -30,7 +29,6 @@ class ControlPanelRepositoryDS implements ControlPanelSocketRepository {
             .buildResourceURL(apiCurrentSong.thumbnailPath)
             .toString(),
         reservingUser: apiCurrentSong.reservingUser,
-        durationInSeconds: apiCurrentSong.durationInSeconds,
         videoURL:
             configuration.buildResourceURL(apiCurrentSong.videoPath).toString(),
       );
@@ -40,27 +38,26 @@ class ControlPanelRepositoryDS implements ControlPanelSocketRepository {
   }
 
   @override
-  StreamController<int> seekDurationInMillisecondsStreamController() {
-    final seekDurationInMillisecondsStreamController =
-        socket.buildSeekDurationFromPlayerStreamController();
-    StreamController<int> controller = StreamController<int>(
-      onCancel: () => seekDurationInMillisecondsStreamController.close(),
-    );
+  void seekDurationFromPlayer(int durationInMilliseconds) {
+    socket.emitEvent(
+        SocketEvent.seekDurationFromPlayer, durationInMilliseconds);
+  }
 
-    seekDurationInMillisecondsStreamController.stream.listen((duration) {
+  @override
+  StreamController<int> seekDurationFromControlStreamController() {
+    final seekUpdatesFromControlStreamController =
+        socket.buildSeekDurationFromControlStreamController();
+    StreamController<int> controller = StreamController<int>(
+      onCancel: () => seekUpdatesFromControlStreamController.close(),
+    );
+    seekUpdatesFromControlStreamController.stream.listen((duration) {
       controller.add(duration);
     });
     return controller;
   }
 
   @override
-  void seekDurationFromControl(int durationInSeconds) {
-    return socket.emitEvent(
-        SocketEvent.seekDurationFromControl, durationInSeconds);
-  }
-
-  @override
   void skipSong() {
-    return socket.emitEvent(SocketEvent.skipSong, null);
+    socket.emitEvent(SocketEvent.skipSong, null);
   }
 }

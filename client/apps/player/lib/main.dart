@@ -3,12 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:playerfeature/playerfeature.dart';
 import 'package:playerfeatureds/playerfeatureds.dart';
 import 'package:provider/provider.dart';
+import 'package:shared/shared.dart';
 import 'package:singalong_api_client/singalong_api_client.dart';
 import 'package:video_player/video_player.dart';
 
 import 'gen/assets.gen.dart';
 
-class APIConfiguration extends SingalongAPIConfiguration {
+class APIConfiguration extends SingalongConfiguration {
   @override
   final String protocol = 'http';
 
@@ -25,6 +26,12 @@ class APIConfiguration extends SingalongAPIConfiguration {
 
   @override
   final int socketPort = 9092;
+
+  @override
+  final int storagePort = 9000;
+
+  @override
+  final String persistenceStorageKey = "1234567890123456";
 }
 
 void main() {
@@ -33,7 +40,7 @@ void main() {
   final playerFeatureDSProvider = PlayerFeatureDSProvider();
   runApp(MultiProvider(
     providers: [
-      Provider<SingalongAPIConfiguration>.value(value: APIConfiguration()),
+      Provider<SingalongConfiguration>.value(value: APIConfiguration()),
       singalongAPIClientProvider.providers,
       commonProvider.providers,
       playerFeatureDSProvider.providers,
@@ -84,7 +91,7 @@ class _PlayerWrapperState extends State<PlayerWrapper> {
     _controller?.pause();
     _controller?.dispose();
 
-    final configuration = context.read<SingalongAPIConfiguration>();
+    final configuration = context.read<SingalongConfiguration>();
     final host = configuration.host;
     // TODO: this will be customizable in the future
     final url = "http://$host:9000/assets/flames-loop.mp4";
@@ -104,7 +111,7 @@ class _PlayerWrapperState extends State<PlayerWrapper> {
         child: Stack(
           children: [
             _buildBackground(_controller),
-            context.read<PlayerFeatureBuilder>().buildPlayerView()
+            context.read<PlayerFeatureUIBuilder>().buildPlayerView()
           ],
         ),
       );

@@ -1,15 +1,19 @@
-part of 'singalong_api_client.dart';
+part of 'shared.dart';
 
-abstract class SingalongAPIConfiguration {
+abstract class SingalongConfiguration {
   String get protocol; //TODO: Might not be needed
   String get host;
   int get apiPort;
   int get socketPort;
+  int get storagePort;
+
+  String get persistenceStorageKey;
 
   String get apiBaseUrl => "http://$host:$apiPort";
   String get socketBaseUrl => "http://$host:$socketPort";
+  String get storageBaseUrl => "http://$host:$storagePort";
 
-  Uri buildEndpoint(String path, {Map<String, dynamic>? queryParameters}) {
+  Uri buildURL(String path, {Map<String, dynamic>? queryParameters}) {
     final filterBaseUrl = apiBaseUrl.removeSuffix("/");
     final filteredPath = path.removePrefix("/");
     final raw = "$filterBaseUrl/$filteredPath";
@@ -24,6 +28,18 @@ abstract class SingalongAPIConfiguration {
       return Uri.parse(raw).replace(query: query);
     }
     return Uri.parse(raw);
+  }
+
+  Uri buildSocketURL(String path) {
+    final filterBaseUrl = socketBaseUrl.removeSuffix("/");
+    final filteredPath = path.removePrefix("/");
+    return Uri.parse("$filterBaseUrl/$filteredPath");
+  }
+
+  Uri buildResourceURL(String path) {
+    final filterBaseUrl = storageBaseUrl.removeSuffix("/");
+    final filteredPath = path.removePrefix("/");
+    return Uri.parse("$filterBaseUrl/$filteredPath");
   }
 }
 

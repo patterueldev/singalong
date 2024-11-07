@@ -2,10 +2,13 @@ package io.patterueldev.reservation.next
 
 import io.patterueldev.common.GenericResponse
 import io.patterueldev.common.NoParametersUseCase
+import io.patterueldev.common.ServiceUseCase
 import io.patterueldev.reservation.ReservationCoordinator
 import io.patterueldev.reservation.currentsong.CurrentSongRepository
 import io.patterueldev.reservation.reservedsong.ReservedSong
 import io.patterueldev.reservation.reservedsong.ReservedSongsRepository
+import io.patterueldev.role.Role
+import io.patterueldev.roomuser.RoomUser
 import io.patterueldev.roomuser.RoomUserRepository
 import java.time.LocalDateTime
 
@@ -14,11 +17,11 @@ internal class NextSongUseCase(
     val currentSongRepository: CurrentSongRepository,
     val roomUserRepository: RoomUserRepository,
     val reservationCoordinator: ReservationCoordinator?,
-) : NoParametersUseCase<NextSongResponse> {
-    override suspend fun execute(): NextSongResponse {
+) : ServiceUseCase<RoomUser?, NextSongResponse> {
+    override suspend fun execute(parameters: RoomUser?): NextSongResponse {
         return try {
-            val currentUser = roomUserRepository.currentUser()
             // TODO: Only either the room owner, the admin, or the reserving user can do this.
+            val currentUser = parameters ?: roomUserRepository.currentUser()
             val currentSong =
                 currentSongRepository.loadCurrentSong(roomId = currentUser.roomId)
                     ?: return GenericResponse.failure("No song is currently playing.")

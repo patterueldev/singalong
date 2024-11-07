@@ -1,6 +1,8 @@
-# melos_managed_dependency_overrides: common,singalong_api_client
+# melos_managed_dependency_overrides: common,singalong_api_client,shared
 dependency_overrides:
   common:
     path: ../common
+  shared:
+    path: ../shared
   singalong_api_client:
     path: ../singalong_api_client

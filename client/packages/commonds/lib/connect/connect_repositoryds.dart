@@ -1,12 +1,14 @@
 part of '../commonds.dart';
 
 class ConnectRepositoryDS implements ConnectRepository {
-  final SingalongAPIClient client;
+  final SingalongAPI client;
+  final SingalongSocket socket;
   final APISessionManager sessionManager;
   final PersistenceRepository persistenceService;
 
   ConnectRepositoryDS({
     required this.client,
+    required this.socket,
     required this.sessionManager,
     required this.persistenceService,
   });
@@ -20,11 +22,12 @@ class ConnectRepositoryDS implements ConnectRepository {
   @override
   void provideAccessToken(String accessToken) {
     sessionManager.setAccessToken(accessToken);
+    socket.buildSocket();
   }
 
   @override
   void connectSocket() {
-    sessionManager.connectSocket();
+    socket.connectSocket();
   }
 }
 

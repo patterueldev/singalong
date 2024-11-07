@@ -9,6 +9,7 @@ import io.patterueldev.client.ClientType
 import io.patterueldev.session.jwt.JwtUtil
 import io.patterueldev.singalong.ServerCoordinator
 import io.patterueldev.singalong.SingalongService
+import kotlinx.coroutines.runBlocking
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 
@@ -29,22 +30,33 @@ class SingalongSocketIOModule(
         serverCoordinator.setOnReserveUpdateListener(::onReserveSuccess)
         serverCoordinator.setOnCurrentSongUpdateListener(::onCurrentSongUpdate)
 
-        val seekDurationEvent = SocketEvent.SEEK_DURATION.value
+        val seekDurationEvent = SocketEvent.SEEK_DURATION_FROM_PLAYER.value
         namespace.addEventListener(seekDurationEvent, String::class.java) { client, data, _ ->
             val username = client.get<String>("username")
             val roomId = client.get<String>("roomId")
             val seekDuration = data.toInt()
-            println("Client[$username] - Seek duration: $seekDuration")
             namespace.broadcastOperations.sendEvent(seekDurationEvent, seekDuration)
         }
 
-        val seekEvent = SocketEvent.SEEK.value
+        val seekEvent = SocketEvent.SEEK_DURATION_FROM_CONTROL.value
         namespace.addEventListener(seekEvent, String::class.java) { client, data, _ ->
             val username = client.get<String>("username")
             val roomId = client.get<String>("roomId")
             val seek = data.toInt()
             println("Client[$username] - Seek: $seek")
             namespace.broadcastOperations.sendEvent(seekEvent, seek)
+        }
+
+        val skipSongEvent = SocketEvent.SKIP_SONG.value
+        namespace.addEventListener(skipSongEvent, String::class.java) { client, _, _ ->
+            println("Client[${client.sessionId}] - Skip song event received.")
+            runBlocking {
+                val result = singalongService.skipSong(
+                    username = client.get("username"),
+                    roomId = client.get("roomId"),
+                )
+                println("Skip song result: $result")
+            }
         }
     }
 

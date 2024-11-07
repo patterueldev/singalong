@@ -1,71 +1,34 @@
 library playerfeatureds;
 
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:playerfeature/playerfeature.dart';
 import 'package:provider/provider.dart';
+import 'package:shared/shared.dart';
 import 'package:singalong_api_client/singalong_api_client.dart';
 
-part 'currentsongrepositoryds.dart';
-part 'socketrepositoryds.dart';
+part 'playersocketrepositoryds.dart';
+part 'reservedsonglistsocketrepositoryds.dart';
 
 class PlayerFeatureDSProvider {
   final providers = MultiProvider(
     providers: [
-      Provider<SocketRepository>(
-        create: (context) => SocketRepositoryDS(
-          client: context.read(),
+      Provider<PlayerSocketRepository>(
+        create: (context) => PlayerSocketRepositoryDS(
+          socket: context.read(),
+          configuration: context.read(),
         ),
       ),
-      Provider<CurrentSongRepository>(
-        create: (context) => CurrentSongRepositoryDS(
-          client: context.read(),
-          sessionManager: context.read(),
-        ),
-      ),
-      Provider<ReservedSongListRepository>(
+      Provider<ReservedSongListSocketRepository>(
         create: (context) => ReservedSongListRepositoryDS(
           apiClient: context.read(),
-          sessionManager: context.read(),
+          configuration: context.read(),
         ),
       ),
       Provider(
-        create: (context) => PlayerFeatureBuilder(
-          connectRepository: context.read(),
-          socketRepository: context.read(),
-          currentSongRepository: context.read(),
-          reservedSongListRepository: context.read(),
-        ),
+        create: (context) => PlayerFeatureUIBuilder(),
       ),
     ],
   );
-}
-
-class ReservedSongListRepositoryDS implements ReservedSongListRepository {
-  final SingalongAPIClient apiClient;
-  final APISessionManager sessionManager;
-
-  ReservedSongListRepositoryDS({
-    required this.apiClient,
-    required this.sessionManager,
-  });
-
-  @override
-  Stream<List<ReservedSongItem>> listenToSongListUpdates() async* {
-    await for (final apiReservedSongs in apiClient.listenReservedSongs()) {
-      final reservedSongList = apiReservedSongs
-          .map(
-            (apiReservedSong) => ReservedSongItem(
-              title: apiReservedSong.title,
-              artist: apiReservedSong.artist,
-              reservedBy: apiReservedSong.reservingUser,
-              thumbnailURL:
-                  apiClient.resourceURL(apiReservedSong.thumbnailPath),
-              isPlaying: apiReservedSong.currentPlaying,
-            ),
-          )
-          .toList();
-      debugPrint("Reserved Song List: $reservedSongList");
-      yield reservedSongList;
-    }
-  }
 }

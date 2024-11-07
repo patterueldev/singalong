@@ -4,6 +4,7 @@ import com.corundumstudio.socketio.SocketIOServer
 import io.patterueldev.reservation.ReservationService
 import io.patterueldev.reservation.currentsong.LoadCurrentSongParameters
 import io.patterueldev.reservation.list.LoadReservationListParameters
+import io.patterueldev.roomuser.RoomUser
 import io.patterueldev.session.SessionService
 import io.patterueldev.session.room.Room
 import jakarta.annotation.PreDestroy
@@ -56,4 +57,16 @@ class SingalongService {
                 parameters = LoadCurrentSongParameters(activeRoom.id),
             ).data
         }
+
+    suspend fun skipSong(
+        username: String,
+        roomId: String,
+    ) = reservationService.nextSong(
+        object : RoomUser {
+            override val username: String
+                get() = username
+            override val roomId: String
+                get() = roomId
+        }
+    )
 }

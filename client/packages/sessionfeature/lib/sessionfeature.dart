@@ -21,30 +21,19 @@ part 'songview/songmodel.dart';
 part 'sessionnavigationcoordinator.dart';
 part 'sessionlocalizations.dart';
 
-class SessionFeatureBuilder {
-  final SessionFlowCoordinator coordinator;
-  final SessionLocalizations localizations;
-  final ReservedSongListRepository reservedSongListRepository;
-
-  SessionFeatureBuilder({
-    required this.coordinator,
-    required this.localizations,
-    required this.reservedSongListRepository,
-  });
-
-  late final _listenToSongListUpdatesUseCase = ListenToSongListUpdatesUseCase(
-      reservedSongListRepository: reservedSongListRepository);
+class SessionFeatureUIBuilder {
+  SessionFeatureUIBuilder();
 
   Widget buildSessionView(BuildContext context) =>
       ChangeNotifierProvider<SessionViewModel>(
         create: (context) => DefaultSessionViewModel(
-          listenToSongListUpdatesUseCase: _listenToSongListUpdatesUseCase,
+          reservedSongListSocketRepository: context.read(),
           connectRepository: context.read(),
-          localizations: localizations,
+          localizations: context.read(),
         ),
         child: SessionView(
-          localizations: localizations,
-          flow: coordinator,
+          localizations: context.read(),
+          flow: context.read(),
         ),
       );
 }

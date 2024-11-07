@@ -7,25 +7,25 @@ abstract class PlayerViewModel extends ChangeNotifier {
 }
 
 class DefaultPlayerViewModel extends PlayerViewModel {
-  final AuthorizeConnectionUseCase connectUseCase;
-  final NextSongUseCase nextSongUseCase;
-  final ListenToCurrentSongUpdatesUseCase listenToCurrentSongUpdatesUseCase;
   final ConnectRepository connectRepository;
-  final SocketRepository socketRepository;
+  final PlayerSocketRepository playerSocketRepository;
   final ReservedViewModel reservedViewModel;
 
   DefaultPlayerViewModel({
-    required this.connectUseCase,
-    required this.nextSongUseCase,
-    required this.listenToCurrentSongUpdatesUseCase,
     required this.connectRepository,
-    required this.socketRepository,
+    required this.playerSocketRepository,
     required this.reservedViewModel,
   });
 
-  StreamSubscription? _currentSongListener;
+  late final AuthorizeConnectionUseCase connectUseCase =
+      AuthorizeConnectionUseCase(connectRepository: connectRepository);
+
+  // StreamSubscription? _currentSongListener;
+  StreamController<CurrentSong?>? _currentSongController;
+  StreamController<int>? _seekDurationFromControlStreamController;
+
   final List<VideoController> _videoControllers = [];
-  VideoController? _activeVideoController;
+  VideoController? _activeSongVideoController;
 
   @override
   final ValueNotifier<bool> isConnected = ValueNotifier(false);
@@ -78,8 +78,10 @@ class DefaultPlayerViewModel extends PlayerViewModel {
   void setupListeners() {
     // 2. Listen to the current song updates
     debugPrint("Listening to current song updates");
-    _currentSongListener =
-        listenToCurrentSongUpdatesUseCase().listen((currentSong) async {
+
+    _currentSongController =
+        playerSocketRepository.currentSongStreamController();
+    _currentSongController?.stream.listen((currentSong) async {
       debugPrint("Current song: $currentSong");
       try {
         await _clearVideoControllers();
@@ -95,7 +97,7 @@ class DefaultPlayerViewModel extends PlayerViewModel {
         playerViewStateNotifier.value = PlayerViewState.playing(controller);
 
         await controller.play();
-        _activeVideoController = controller;
+        _activeSongVideoController = controller;
 
         controller.addListener(() {
           _videoPlayerListener(controller);
@@ -106,9 +108,11 @@ class DefaultPlayerViewModel extends PlayerViewModel {
       }
     });
 
-    socketRepository.listenSeekUpdatesInSeconds().listen((seekValue) {
+    _seekDurationFromControlStreamController =
+        playerSocketRepository.seekDurationFromControlStreamController();
+    _seekDurationFromControlStreamController?.stream.listen((seekValue) {
       debugPrint("Seek value: $seekValue");
-      _activeVideoController?.seekTo(Duration(seconds: seekValue));
+      _activeSongVideoController?.seekTo(Duration(seconds: seekValue));
     });
   }
 
@@ -136,7 +140,7 @@ class DefaultPlayerViewModel extends PlayerViewModel {
       // TODO: Send command to the server to update the score and play the next song
     } else {
       // send the current position to the server
-      socketRepository.updateSeekDuration(position.inMilliseconds);
+      playerSocketRepository.seekDurationFromPlayer(position.inMilliseconds);
     }
   }
 
@@ -145,9 +149,10 @@ class DefaultPlayerViewModel extends PlayerViewModel {
     final duration = Duration(seconds: minSeconds);
     if (controller.value.position >= duration) {
       controller.pause();
+      playerViewStateNotifier.value = PlayerViewState.connected();
       await _clearVideoControllers();
       // TODO: Send command to the server to update the score and play the next song
-      await nextSongUseCase();
+      playerSocketRepository.skipSong();
     }
   }
 
@@ -163,7 +168,8 @@ class DefaultPlayerViewModel extends PlayerViewModel {
   void dispose() async {
     await _clearVideoControllers();
 
-    _currentSongListener?.cancel();
+    _currentSongController?.close();
+    _seekDurationFromControlStreamController?.close();
     playerViewStateNotifier.value = PlayerViewState.disconnected();
 
     super.dispose();

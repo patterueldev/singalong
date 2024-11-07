@@ -722,7 +722,7 @@ packages:
     source: hosted
     version: "0.28.0"
   shared:
-    dependency: "direct overridden"
+    dependency: "direct main"
     description:
       path: "../../packages/shared"
       relative: true

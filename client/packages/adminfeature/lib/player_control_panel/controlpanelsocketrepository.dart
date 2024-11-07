@@ -1,10 +1,10 @@
 part of '../adminfeature.dart';
 
-abstract class ControlPanelRepository {
-  Stream<CurrentSong?> listenToCurrentSongUpdates();
-  Stream<int> listenSeekDurationInMillisecondsUpdates();
-  Future<void> seekToDuration(int durationInSeconds);
-  Future<void> skipToNextSong();
+abstract class ControlPanelSocketRepository {
+  StreamController<CurrentSong?> currentSongStreamController();
+  StreamController<int> seekDurationInMillisecondsStreamController();
+  void seekDurationFromControl(int durationInSeconds);
+  void skipSong();
 }
 
 class CurrentSong {

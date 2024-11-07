@@ -39,7 +39,7 @@ Route<dynamic>? onGenerateRoute(RouteSettings settings, BuildContext context) {
     case AppRoute.session:
       return MaterialPageRoute(
         builder: (context) =>
-            context.read<SessionFeatureBuilder>().buildSessionView(context),
+            context.read<SessionFeatureUIBuilder>().buildSessionView(context),
       );
     case AppRoute.songBook:
       return MaterialPageRoute(

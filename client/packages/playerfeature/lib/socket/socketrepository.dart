@@ -1,6 +1,8 @@
 part of '../playerfeature.dart';
 
-abstract class SocketRepository {
-  Future<void> updateSeekDuration(int durationInMilliseconds);
-  Stream<int> listenSeekUpdatesInSeconds();
+abstract class PlayerSocketRepository {
+  StreamController<int> seekDurationFromControlStreamController();
+  StreamController<CurrentSong?> currentSongStreamController();
+  void seekDurationFromPlayer(int durationInMilliseconds);
+  void skipSong();
 }

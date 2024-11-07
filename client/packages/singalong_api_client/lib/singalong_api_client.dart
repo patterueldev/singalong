@@ -7,13 +7,17 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart';
 import 'package:json_annotation/json_annotation.dart';
 import 'package:provider/provider.dart';
+import 'package:shared/shared.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 
 part 'singalong_api_client.g.dart';
 part 'api_path.dart';
 part 'api_session_manager.dart';
-part 'singalong_api_configuration.dart';
+part 'api_client.dart';
+part 'singalong_api.dart';
 part 'singalong_api_client_provider.dart';
+part 'singalong_socket.dart';
+part 'socket_events/socket_events.dart';
 part 'models/generic_response.dart';
 part 'models/connect_parameters.dart';
 part 'models/connect_response.dart';
@@ -25,7 +29,7 @@ part 'models/save_song_parameters.dart';
 part 'models/save_song_response.dart';
 part 'models/downloadable_item.dart';
 
-enum HttpMethod { GET, POST, PATCH, PUT, DELETE }
+/*
 
 class SingalongAPIClient {
   final Client _client;
@@ -272,3 +276,4 @@ class SingalongAPIClient {
     return "http://$host:9000/$path";
   }
 }
+ */

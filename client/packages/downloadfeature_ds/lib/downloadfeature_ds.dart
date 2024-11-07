@@ -13,7 +13,7 @@ class DownloadFeatureDSProvider {
   final providers = MultiProvider(providers: [
     Provider<SongIdentifierRepository>(
       create: (context) => DefaultSongIdentifierRepository(
-        apiClient: context.read(),
+        api: context.read(),
       ),
     ),
     Provider(

@@ -9,6 +9,7 @@ import io.patterueldev.reservation.next.NextSongUseCase
 import io.patterueldev.reservation.reserve.ReserveParameters
 import io.patterueldev.reservation.reserve.ReserveUseCase
 import io.patterueldev.reservation.reservedsong.ReservedSongsRepository
+import io.patterueldev.roomuser.RoomUser
 import io.patterueldev.roomuser.RoomUserRepository
 
 class ReservationService(
@@ -35,7 +36,7 @@ class ReservationService(
 
     suspend fun reserveSong(parameters: ReserveParameters) = reserveUseCase(parameters)
 
-    suspend fun nextSong() = nextSongUseCase()
+    suspend fun nextSong(user: RoomUser? = null) = nextSongUseCase(user)
 
     suspend fun loadReservationList(parameters: LoadReservationListParameters) = loadReservationListUseCase(parameters)
 

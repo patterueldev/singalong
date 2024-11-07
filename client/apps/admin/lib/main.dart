@@ -3,12 +3,13 @@ import 'package:adminfeatureds/adminfeatureds.dart';
 import 'package:commonds/commonds.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shared/shared.dart';
 import 'package:singalong_api_client/singalong_api_client.dart';
 
 import '_main.dart';
 
 // TODO: TEMPORARY Configuration
-class APIConfiguration extends SingalongAPIConfiguration {
+class APIConfiguration extends SingalongConfiguration {
   @override
   final String protocol = 'http';
 
@@ -25,6 +26,12 @@ class APIConfiguration extends SingalongAPIConfiguration {
 
   @override
   final int socketPort = 9092;
+
+  @override
+  final int storagePort = 9000;
+
+  @override
+  final String persistenceStorageKey = "1234567890123456";
 }
 
 void main() {
@@ -33,7 +40,7 @@ void main() {
   final adminFeatureDSProvider = AdminFeatureDSProvider();
   runApp(MultiProvider(
     providers: [
-      Provider<SingalongAPIConfiguration>.value(value: APIConfiguration()),
+      Provider<SingalongConfiguration>.value(value: APIConfiguration()),
       singalongAPIClientProvider.providers,
       commonProvider.providers,
       adminFeatureDSProvider.providers,

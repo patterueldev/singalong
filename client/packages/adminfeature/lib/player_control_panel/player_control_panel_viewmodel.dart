@@ -26,7 +26,7 @@ abstract class PlayerControlPanelViewModel extends ChangeNotifier {
 class DefaultPlayerControlPanelViewModel extends PlayerControlPanelViewModel {
   final AuthorizeConnectionUseCase authorizeConnectionUseCase;
   final ConnectRepository connectRepository;
-  final ControlPanelRepository controlPanelRepository;
+  final ControlPanelSocketRepository controlPanelRepository;
 
   DefaultPlayerControlPanelViewModel({
     required this.authorizeConnectionUseCase,
@@ -36,9 +36,10 @@ class DefaultPlayerControlPanelViewModel extends PlayerControlPanelViewModel {
     setup();
   }
 
-  StreamSubscription? _seekDurationUpdatesListener;
-
   Timer? _seekDebounceTimer;
+
+  StreamController<int>? _seekDurationUpdatesStreamController;
+  StreamController<CurrentSong?>? _currentSongStreamController;
 
   @override
   void setup() async {
@@ -68,8 +69,19 @@ class DefaultPlayerControlPanelViewModel extends PlayerControlPanelViewModel {
     if (!canProceed) {
       return;
     }
+    _seekDurationUpdatesStreamController =
+        controlPanelRepository.seekDurationInMillisecondsStreamController();
+    _seekDurationUpdatesStreamController?.stream.listen((value) {
+      if (isSeeking) {
+        return;
+      }
+      double seconds = value / 1000;
+      currentSeekValueNotifier.value = seconds;
+    });
 
-    controlPanelRepository.listenToCurrentSongUpdates().listen((song) {
+    _currentSongStreamController =
+        controlPanelRepository.currentSongStreamController();
+    _currentSongStreamController?.stream.listen((song) {
       debugPrint('Current song: $song');
       if (song == null) {
         stateNotifier.value = PlayerControlPanelState.inactive();
@@ -84,17 +96,6 @@ class DefaultPlayerControlPanelViewModel extends PlayerControlPanelViewModel {
       );
       debugPrint("Duration in seconds: $durationInSeconds");
     });
-
-    _seekDurationUpdatesListener = controlPanelRepository
-        .listenSeekDurationInMillisecondsUpdates()
-        .listen((value) {
-      if (isSeeking) {
-        return;
-      }
-      double seconds = value / 1000;
-      debugPrint('Seek duration in seconds: $seconds');
-      currentSeekValueNotifier.value = seconds;
-    });
   }
 
   @override
@@ -103,20 +104,17 @@ class DefaultPlayerControlPanelViewModel extends PlayerControlPanelViewModel {
   }
 
   @override
-  void nextSong() {
-    // Handle next song action
-    controlPanelRepository.skipToNextSong();
-  }
+  void nextSong() => controlPanelRepository.skipSong();
 
   @override
   void seek(double value) {
     super.seek(value);
 
     _seekDebounceTimer?.cancel();
-    _seekDebounceTimer = Timer(const Duration(milliseconds: 500), () {
+    _seekDebounceTimer = Timer(const Duration(milliseconds: 100), () {
       // Handle seek action
       debugPrint('Will seek to $value');
-      controlPanelRepository.seekToDuration(value.toInt());
+      controlPanelRepository.seekDurationFromControl(value.toInt());
     });
   }
 
@@ -130,7 +128,8 @@ class DefaultPlayerControlPanelViewModel extends PlayerControlPanelViewModel {
 
   @override
   void dispose() {
-    _seekDurationUpdatesListener?.cancel();
+    _seekDurationUpdatesStreamController?.close();
+    _currentSongStreamController?.close();
     super.dispose();
   }
 }
