@@ -51,10 +51,11 @@ class SingalongSocketIOModule(
         namespace.addEventListener(skipSongEvent, String::class.java) { client, _, _ ->
             println("Client[${client.sessionId}] - Skip song event received.")
             runBlocking {
-                val result = singalongService.skipSong(
-                    username = client.get("username"),
-                    roomId = client.get("roomId"),
-                )
+                val result =
+                    singalongService.skipSong(
+                        username = client.get("username"),
+                        roomId = client.get("roomId"),
+                    )
                 println("Skip song result: $result")
             }
         }

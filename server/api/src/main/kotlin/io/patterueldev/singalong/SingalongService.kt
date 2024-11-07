@@ -67,6 +67,6 @@ class SingalongService {
                 get() = username
             override val roomId: String
                 get() = roomId
-        }
+        },
     )
 }

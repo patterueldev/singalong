@@ -1,13 +1,11 @@
 package io.patterueldev.reservation.next
 
 import io.patterueldev.common.GenericResponse
-import io.patterueldev.common.NoParametersUseCase
 import io.patterueldev.common.ServiceUseCase
 import io.patterueldev.reservation.ReservationCoordinator
 import io.patterueldev.reservation.currentsong.CurrentSongRepository
 import io.patterueldev.reservation.reservedsong.ReservedSong
 import io.patterueldev.reservation.reservedsong.ReservedSongsRepository
-import io.patterueldev.role.Role
 import io.patterueldev.roomuser.RoomUser
 import io.patterueldev.roomuser.RoomUserRepository
 import java.time.LocalDateTime
