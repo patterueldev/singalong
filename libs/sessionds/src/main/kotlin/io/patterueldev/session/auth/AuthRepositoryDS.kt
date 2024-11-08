@@ -8,10 +8,10 @@ import io.patterueldev.mongods.user.UserDocumentRepository
 import io.patterueldev.session.authuser.AuthUser
 import io.patterueldev.session.jwt.JwtUtil
 import io.patterueldev.session.room.Room
-import java.time.LocalDateTime
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
+import java.time.LocalDateTime
 
 @Service
 class AuthRepositoryDS : AuthRepository {
@@ -32,7 +32,11 @@ class AuthRepositoryDS : AuthRepository {
         return passwordEncoder.matches(plainPasscode, hashedPasscode)
     }
 
-    override fun checkUserFromRoom(authUser: AuthUser, room: Room, clientType: ClientType): UserFromRoom? {
+    override fun checkUserFromRoom(
+        authUser: AuthUser,
+        room: Room,
+        clientType: ClientType,
+    ): UserFromRoom? {
         val userDocument = userDocumentRepository.findByUsername(authUser.username) ?: throw IllegalArgumentException("User not found")
         val roomDocument = roomDocumentRepository.findRoomById(room.id) ?: throw IllegalArgumentException("Room not found")
 
@@ -52,17 +56,18 @@ class AuthRepositoryDS : AuthRepository {
         authUser: AuthUser,
         room: Room,
         clientType: ClientType,
-        deviceId: String
+        deviceId: String,
     ): AuthResponse {
         val userDocument = userDocumentRepository.findByUsername(authUser.username) ?: throw IllegalArgumentException("User not found")
         val roomDocument = roomDocumentRepository.findRoomById(room.id) ?: throw IllegalArgumentException("Room not found")
 
         var sessionDocument = sessionDocumentRepository.findBy(userDocument.username, roomDocument.id, clientType)
         if (sessionDocument == null) {
-            sessionDocument = SessionDocument(
-                userDocument = userDocument,
-                roomDocument = roomDocument,
-            )
+            sessionDocument =
+                SessionDocument(
+                    userDocument = userDocument,
+                    roomDocument = roomDocument,
+                )
         }
         sessionDocument.deviceId = deviceId
         sessionDocument.lastConnectedAt = LocalDateTime.now()

@@ -113,7 +113,7 @@ internal class ConnectUseCase(
         // if the user is connecting as a controller, and if the user is a guest, check if the user is already in the room
         // otherwise, override if the user is an admin or host (although hosts should not be able to connect as a controller)
 
-        if(parameters.clientType == ClientType.CONTROLLER && user.role == Role.USER_GUEST) {
+        if (parameters.clientType == ClientType.CONTROLLER && user.role == Role.USER_GUEST) {
             val userFromRoom = authRepository.checkUserFromRoom(user, room, parameters.clientType)
 
             // if the user is signing in from a different device, check if the user is already in the room
@@ -121,7 +121,7 @@ internal class ConnectUseCase(
             println("deviceId: ${parameters.deviceId}")
             println("userFromRoom.deviceId: ${userFromRoom?.deviceId}")
 
-            if(userFromRoom != null && userFromRoom.deviceId != parameters.deviceId) {
+            if (userFromRoom != null && userFromRoom.deviceId != parameters.deviceId) {
                 // check if the user is still connected to the room; maybe via socket, or via session
                 // TODO: on sign out, mark the user as disconnected
                 if (userFromRoom.isConnected) {

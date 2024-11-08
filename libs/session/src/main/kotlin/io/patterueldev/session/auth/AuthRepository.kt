@@ -11,8 +11,18 @@ interface AuthRepository {
         hashedPasscode: String,
     ): Boolean
 
-    fun upsertUserToRoom(authUser: AuthUser, room: Room, clientType: ClientType, deviceId: String): AuthResponse
-    fun checkUserFromRoom(authUser: AuthUser, room: Room, clientType: ClientType): UserFromRoom?
+    fun upsertUserToRoom(
+        authUser: AuthUser,
+        room: Room,
+        clientType: ClientType,
+        deviceId: String,
+    ): AuthResponse
+
+    fun checkUserFromRoom(
+        authUser: AuthUser,
+        room: Room,
+        clientType: ClientType,
+    ): UserFromRoom?
 }
 
 interface UserFromRoom {
