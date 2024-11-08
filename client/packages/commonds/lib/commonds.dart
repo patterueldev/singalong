@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
 import 'package:core/core.dart';
 import 'package:singalong_api_client/singalong_api_client.dart';
+import 'package:uuid/uuid.dart';
 
 part 'connect/connect_repositoryds.dart';
 part 'persistence/persistenceds.dart';

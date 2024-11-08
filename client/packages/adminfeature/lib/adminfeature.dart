@@ -17,6 +17,7 @@ part 'common/sliderdata.dart';
 part 'signin/signin_screen.dart';
 part 'signin/signin_viewmodel.dart';
 part 'sessionmanager/session_manager_screen.dart';
+part 'sessionmanager/session_manager_viewmodel.dart';
 part 'player_control_panel/player_control_panel_widget.dart';
 part 'player_control_panel/player_control_panel_viewmodel.dart';
 part 'player_control_panel/controlpanelsocketrepository.dart';
@@ -43,7 +44,13 @@ class AdminFeatureUIProvider {
         ),
       );
 
-  Widget buildSessionManagerScreen() => const SessionManagerScreen();
+  Widget buildSessionManagerScreen() =>
+      ChangeNotifierProvider<SessionManagerViewModel>(
+        create: (context) => DefaultSessionManagerViewModel(
+          persistenceRepository: context.read(),
+        ),
+        child: const SessionManagerScreen(),
+      );
 
   Widget buildPlayerControlPanel() =>
       ChangeNotifierProvider<PlayerControlPanelViewModel>(

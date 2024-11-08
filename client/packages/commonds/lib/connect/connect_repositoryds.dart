@@ -15,7 +15,10 @@ class ConnectRepositoryDS implements ConnectRepository {
 
   @override
   Future<ConnectResponse> connect(ConnectParameters parameters) async {
-    final result = await client.connect(parameters.toAPI());
+    String deviceId = await persistenceRepository.getDeviceId();
+    final result = await client.connect(parameters.toAPI(
+      deviceId: deviceId,
+    ));
     return result.fromAPI();
   }
 
@@ -33,24 +36,35 @@ class ConnectRepositoryDS implements ConnectRepository {
   @override
   Future<bool> checkAuthentication() async {
     final accessToken = await persistenceRepository.getAccessToken();
-    if (accessToken != null) {
-      debugPrint('Access token found: $accessToken');
-      sessionManager.setAccessToken(accessToken);
-      return true;
+    if (accessToken == null) {
+      debugPrint('No access token found');
+      return false;
     }
-    debugPrint('No access token found');
-    return false;
+
+    debugPrint('Access token found: $accessToken');
+    sessionManager.setAccessToken(accessToken);
+    socket.buildSocket();
+
+    try {
+      final result = await client.check();
+      debugPrint('Check result: $result');
+      return true;
+    } catch (e) {
+      debugPrint('Check error: $e');
+      return false;
+    }
   }
 }
 
 extension ConnectParametersMapper on ConnectParameters {
-  APIConnectParameters toAPI() {
+  APIConnectParameters toAPI({required String deviceId}) {
     return APIConnectParameters(
       username: username,
       userPasscode: userPasscode,
       roomId: roomId,
       roomPasscode: roomPasscode,
       clientType: clientType.value,
+      deviceId: deviceId,
     );
   }
 }

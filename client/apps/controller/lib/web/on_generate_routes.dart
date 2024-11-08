@@ -24,8 +24,10 @@ Route<dynamic>? onGenerateRoute(RouteSettings settings, BuildContext context) {
     case AppRoute.initial:
       return MaterialPageRoute(
         builder: (context) => ChangeNotifierProvider<SplashScreenViewModel>(
-          create: (context) =>
-              WebSplashScreenViewModel(persistenceService: context.read()),
+          create: (context) => WebSplashScreenViewModel(
+            connectRepository: context.read(),
+            persistenceService: context.read(),
+          ),
           child: SplashScreen(flow: context.read()),
         ),
       );

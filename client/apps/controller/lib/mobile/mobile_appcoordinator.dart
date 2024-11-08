@@ -30,7 +30,14 @@ class MobileAppCoordinator
     BuildContext context, {
     String? redirectPath,
   }) {
-    // TODO: implement onAuthenticated
+    debugPrint(
+        "Is Authenticated, will redirect to $redirectPath or session view");
+    SessionFeatureUIBuilder sessionFeatureBuilder = context.read();
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(
+          builder: (context) =>
+              sessionFeatureBuilder.buildSessionView(context)),
+    );
   }
 
   @override

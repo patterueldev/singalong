@@ -6,6 +6,7 @@ import io.jsonwebtoken.security.Keys
 import io.patterueldev.authuser.RoomUserDetails
 import io.patterueldev.client.ClientType
 import io.patterueldev.mongods.room.RoomDocumentRepository
+import io.patterueldev.mongods.session.SessionDocumentRepository
 import io.patterueldev.mongods.user.UserDocumentRepository
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.security.core.authority.SimpleGrantedAuthority
@@ -19,6 +20,7 @@ class JwtUtil(
     @Value("\${jwt.secret}") private val secret: String,
     private val userDocumentRepository: UserDocumentRepository,
     private val roomDocumentRepository: RoomDocumentRepository,
+    private val sessionDocumentRepository: SessionDocumentRepository,
 ) {
     private val key = Keys.hmacShaKeyFor(secret.toByteArray(StandardCharsets.UTF_8))
 
@@ -33,6 +35,21 @@ class JwtUtil(
             .claim("clientType", clientType)
             .issuedAt(Date())
             .expiration(Date.from(Instant.now().plusSeconds(JWT_EXPIRATION_TIME)))
+            .signWith(key)
+            .compact()
+    }
+
+    fun generateRefreshToken(
+        username: String,
+        roomid: String,
+        clientType: ClientType,
+    ): String {
+        return Jwts.builder()
+            .subject(username)
+            .claim("roomId", roomid)
+            .claim("clientType", clientType)
+            .issuedAt(Date())
+            .expiration(Date.from(Instant.now().plusSeconds(REFRESH_TOKEN_EXPIRATION_TIME)))
             .signWith(key)
             .compact()
     }
@@ -75,9 +92,12 @@ class JwtUtil(
     }
 
     fun isTokenValid(token: String): Boolean {
-        val isValid = !isTokenExpired(token)
-        println("Is Valid: $isValid")
-        return isValid
+        val isExpired = isTokenExpired(token)
+        if (isExpired) {
+            println("- - - - [EXPIRED TOKEN] - - - -")
+            return false
+        }
+        return isInSession(token)
     }
 
     private fun isTokenExpired(token: String): Boolean {
@@ -92,6 +112,21 @@ class JwtUtil(
         } catch (e: Exception) {
             println("-  - - - [EXPIRED TOKEN] - - - -")
             true
+        }
+    }
+
+    private fun isInSession(token: String): Boolean {
+        try {
+            val jwtSubject = extractSubject(token) ?: throw Exception("Subject not found")
+            val jwtRoomId = extractRoomId(token) ?: throw Exception("Room ID not found")
+            val clientType = extractClientType(token) ?: throw Exception("Client Type not found")
+            sessionDocumentRepository.findBy(jwtSubject, jwtRoomId, clientType) ?: throw Exception("Session not found")
+            return true
+        } catch (e: Exception) {
+            println("Error: ${e.message}")
+            e.printStackTrace()
+            println("- - - - [SESSION NOT FOUND] - - - -")
+            return false
         }
     }
 
@@ -119,5 +154,6 @@ class JwtUtil(
         private const val ONE_HOUR: Long = (60 * 60)
         private const val ONE_DAY: Long = (24 * ONE_HOUR)
         const val JWT_EXPIRATION_TIME = ONE_DAY
+        const val REFRESH_TOKEN_EXPIRATION_TIME = 7 * ONE_DAY
     }
 }

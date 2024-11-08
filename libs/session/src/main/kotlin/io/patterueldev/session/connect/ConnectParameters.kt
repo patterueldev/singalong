@@ -8,4 +8,5 @@ data class ConnectParameters(
     val roomId: String,
     val roomPasscode: String?,
     val clientType: ClientType,
+    val deviceId: String,
 )

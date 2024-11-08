@@ -23,7 +23,7 @@ class DefaultConnectViewModel extends ConnectViewModel {
   late final EstablishConnectionUseCase connectUseCase =
       EstablishConnectionUseCase(
     connectRepository: connectRepository,
-    persistenceService: persistenceService,
+    persistenceRepository: persistenceService,
   );
 
   @override

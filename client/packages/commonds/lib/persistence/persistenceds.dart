@@ -8,8 +8,10 @@ class PersistenceRepositoryDS implements PersistenceRepository {
   final roomKey = 'room';
   final usernameKey = 'username';
   final accessTokenKey = 'accessToken';
+  final deviceIdKey = 'deviceId';
 
   EncryptedSharedPreferences? sharedPref;
+  final uuid = Uuid();
 
   Future<void> configureSharedPref() async {
     if (sharedPref == null) {
@@ -61,5 +63,16 @@ class PersistenceRepositoryDS implements PersistenceRepository {
     await configureSharedPref();
     debugPrint('Saving access token: $accessToken');
     sharedPref!.setString(accessTokenKey, accessToken);
+  }
+
+  @override
+  Future<String> getDeviceId() async {
+    await configureSharedPref();
+    var deviceId = sharedPref!.getString(deviceIdKey);
+    if (deviceId == null) {
+      deviceId = uuid.v4();
+      sharedPref!.setString(deviceIdKey, deviceId);
+    }
+    return deviceId;
   }
 }

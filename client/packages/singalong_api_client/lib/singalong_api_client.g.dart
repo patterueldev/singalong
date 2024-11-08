@@ -30,6 +30,7 @@ APIConnectParameters _$APIConnectParametersFromJson(
       roomId: json['roomId'] as String,
       roomPasscode: json['roomPasscode'] as String?,
       clientType: json['clientType'] as String,
+      deviceId: json['deviceId'] as String,
     );
 
 Map<String, dynamic> _$APIConnectParametersToJson(
@@ -40,6 +41,7 @@ Map<String, dynamic> _$APIConnectParametersToJson(
       'roomId': instance.roomId,
       'roomPasscode': instance.roomPasscode,
       'clientType': instance.clientType,
+      'deviceId': instance.deviceId,
     };
 
 APIConnectResponseData _$APIConnectResponseDataFromJson(

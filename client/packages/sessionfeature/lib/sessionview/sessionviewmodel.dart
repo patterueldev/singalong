@@ -36,16 +36,29 @@ class DefaultSessionViewModel extends SessionViewModel {
 
   @override
   void setupSession() async {
-    stateNotifier.value = SessionViewState.loading();
+    try {
+      debugPrint('Setting up session');
+      stateNotifier.value = SessionViewState.loading();
 
-    streamController =
-        reservedSongListSocketRepository.reservedSongListStreamController();
-    streamController?.stream.listen((songList) {
-      songListNotifier.value = songList;
-    });
+      debugPrint('Opening socket');
+      streamController =
+          reservedSongListSocketRepository.reservedSongListStreamController();
+      debugPrint('Listening to stream');
+      streamController?.stream.listen((songList) {
+        songListNotifier.value = songList;
+      });
 
-    connectRepository.connectSocket();
-    stateNotifier.value = SessionViewState.loaded();
+      debugPrint('Connecting to socket');
+
+      connectRepository.connectSocket();
+      stateNotifier.value = SessionViewState.loaded();
+
+      debugPrint('Session setup complete; State: ${stateNotifier.value}');
+    } catch (e, st) {
+      debugPrint('Error setting up session: $e');
+      debugPrintStack(stackTrace: st);
+      stateNotifier.value = SessionViewState.failure(e.toString());
+    }
   }
 
   @override

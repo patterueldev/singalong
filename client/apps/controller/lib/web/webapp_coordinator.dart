@@ -24,7 +24,13 @@ class WebAppCoordinator
       AppRoute.sessionConnect.pushReplacement(context);
 
   @override
-  void onAuthenticated(BuildContext context, {String? redirectPath}) {}
+  void onAuthenticated(BuildContext context, {String? redirectPath}) {
+    if (redirectPath != null) {
+      Navigator.of(context).pushReplacementNamed(redirectPath);
+    } else {
+      AppRoute.session.pushReplacement(context);
+    }
+  }
 
   @override
   void onConnected(BuildContext context) {

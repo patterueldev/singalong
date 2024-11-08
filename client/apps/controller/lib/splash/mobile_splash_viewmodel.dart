@@ -5,9 +5,13 @@ import 'package:core/core.dart';
 import 'splash_viewmodel.dart';
 
 class MobileSplashScreenViewModel extends SplashScreenViewModel {
+  final ConnectRepository connectRepository;
   final PersistenceRepository persistenceService;
 
-  MobileSplashScreenViewModel({required this.persistenceService});
+  MobileSplashScreenViewModel({
+    required this.connectRepository,
+    required this.persistenceService,
+  });
 
   @override
   final ValueNotifier<SplashState> didFinishStateNotifier =
@@ -15,7 +19,14 @@ class MobileSplashScreenViewModel extends SplashScreenViewModel {
 
   @override
   void load() async {
-    await Future.delayed(const Duration(seconds: 2));
-    didFinishStateNotifier.value = SplashState.unauthenticated();
+    debugPrint('MobileSplashScreenViewModel.load()');
+    final isAuthenticated = await connectRepository.checkAuthentication();
+    debugPrint(
+        'MobileSplashScreenViewModel.load() isAuthenticated: $isAuthenticated');
+    if (isAuthenticated) {
+      didFinishStateNotifier.value = SplashState.authenticated(null);
+    } else {
+      didFinishStateNotifier.value = SplashState.unauthenticated();
+    }
   }
 }

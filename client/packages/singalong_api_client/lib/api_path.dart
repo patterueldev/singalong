@@ -2,6 +2,7 @@ part of 'singalong_api_client.dart';
 
 enum APIPath {
   sessionConnect,
+  sessionCheck,
   songs,
   reserveSong,
   identifySong,
@@ -12,6 +13,8 @@ enum APIPath {
     switch (this) {
       case sessionConnect:
         return '/session/connect';
+      case sessionCheck:
+        return '/session/check';
       case songs:
         return '/songs';
       case reserveSong:

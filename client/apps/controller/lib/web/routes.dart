@@ -15,8 +15,10 @@ Map<String, Widget Function(BuildContext)> routes = {
   //     context.read<SplashProvider>().buildSplashScreen(context),
   AppRoute.initial.path: (context) =>
       ChangeNotifierProvider<SplashScreenViewModel>(
-        create: (context) =>
-            WebSplashScreenViewModel(persistenceService: context.read()),
+        create: (context) => WebSplashScreenViewModel(
+          connectRepository: context.read(),
+          persistenceService: context.read(),
+        ),
         child: SplashScreen(flow: context.read()),
       ),
   AppRoute.sessionConnect.path: (context) =>

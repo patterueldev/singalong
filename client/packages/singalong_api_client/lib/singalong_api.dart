@@ -16,6 +16,14 @@ class SingalongAPI {
     return APIConnectResponseData.fromJson(result.objectData());
   }
 
+  Future<String> check() async {
+    final result = await apiClient.request(
+      path: APIPath.sessionCheck,
+      method: HttpMethod.GET,
+    );
+    return result.data as String;
+  }
+
   Future<APIPaginatedSongs> loadSongs(APILoadSongsParameters parameters) async {
     final result = await apiClient.request(
       path: APIPath.songs,

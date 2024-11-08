@@ -9,4 +9,6 @@ abstract class PersistenceRepository {
 
   Future<void> saveAccessToken(String accessToken);
   Future<String?> getAccessToken();
+
+  Future<String> getDeviceId();
 }

@@ -8,6 +8,7 @@ import io.patterueldev.mongods.user.UserDocumentRepository
 import io.patterueldev.session.authuser.AuthUser
 import io.patterueldev.session.jwt.JwtUtil
 import io.patterueldev.session.room.Room
+import java.time.LocalDateTime
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
@@ -31,22 +32,50 @@ class AuthRepositoryDS : AuthRepository {
         return passwordEncoder.matches(plainPasscode, hashedPasscode)
     }
 
-    override fun addUserToRoom(
-        authUser: AuthUser,
-        room: Room,
-        clientType: ClientType,
-    ): String {
+    override fun checkUserFromRoom(authUser: AuthUser, room: Room, clientType: ClientType): UserFromRoom? {
         val userDocument = userDocumentRepository.findByUsername(authUser.username) ?: throw IllegalArgumentException("User not found")
         val roomDocument = roomDocumentRepository.findRoomById(room.id) ?: throw IllegalArgumentException("Room not found")
 
-        sessionDocumentRepository.save(
-            SessionDocument(
+        println("checkUserFromRoom: $userDocument, $roomDocument")
+
+        val sessionDocument = sessionDocumentRepository.findBy(userDocument.username, roomDocument.id, clientType) ?: return null
+        return object : UserFromRoom {
+            override val user: AuthUser = authUser
+            override val room: Room = room
+            override val deviceId: String = sessionDocument.deviceId
+            override val lastConnectedAt: LocalDateTime = sessionDocument.lastConnectedAt
+            override val isConnected: Boolean = sessionDocument.isConnected
+        }
+    }
+
+    override fun upsertUserToRoom(
+        authUser: AuthUser,
+        room: Room,
+        clientType: ClientType,
+        deviceId: String
+    ): AuthResponse {
+        val userDocument = userDocumentRepository.findByUsername(authUser.username) ?: throw IllegalArgumentException("User not found")
+        val roomDocument = roomDocumentRepository.findRoomById(room.id) ?: throw IllegalArgumentException("Room not found")
+
+        var sessionDocument = sessionDocumentRepository.findBy(userDocument.username, roomDocument.id, clientType)
+        if (sessionDocument == null) {
+            sessionDocument = SessionDocument(
                 userDocument = userDocument,
                 roomDocument = roomDocument,
-            ),
-        )
+            )
+        }
+        sessionDocument.deviceId = deviceId
+        sessionDocument.lastConnectedAt = LocalDateTime.now()
+        sessionDocument.isConnected = true
+        sessionDocument.connectedOnClient = clientType
+        sessionDocumentRepository.save(sessionDocument)
 
         // Generate JWT token
-        return jwtUtil.generateToken(authUser.username, room.id, clientType)
+        val accessToken = jwtUtil.generateToken(authUser.username, room.id, clientType)
+        val refreshToken = jwtUtil.generateRefreshToken(authUser.username, room.id, clientType)
+        return object : AuthResponse {
+            override val accessToken: String = accessToken
+            override val refreshToken: String = refreshToken
+        }
     }
 }

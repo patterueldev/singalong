@@ -9,10 +9,14 @@ import 'dart:html' as html;
 import 'splash_viewmodel.dart';
 
 class WebSplashScreenViewModel extends SplashScreenViewModel {
+  final ConnectRepository connectRepository;
   final PersistenceRepository
       persistenceService; // Might need this when restoring authentication
 
-  WebSplashScreenViewModel({required this.persistenceService});
+  WebSplashScreenViewModel({
+    required this.connectRepository,
+    required this.persistenceService,
+  });
 
   @override
   final ValueNotifier<SplashState> didFinishStateNotifier =
@@ -31,10 +35,14 @@ class WebSplashScreenViewModel extends SplashScreenViewModel {
         // no need to check for authentication
         return;
       }
+      final isAuthenticated = await connectRepository.checkAuthentication();
+      if (isAuthenticated) {
+        didFinishStateNotifier.value = SplashState.authenticated(null);
+      } else {
+        didFinishStateNotifier.value = SplashState.unauthenticated();
+      }
     } catch (e) {
       debugPrint("Error while loading: $e");
     }
-    await Future.delayed(const Duration(seconds: 2));
-    didFinishStateNotifier.value = SplashState.unauthenticated();
   }
 }
