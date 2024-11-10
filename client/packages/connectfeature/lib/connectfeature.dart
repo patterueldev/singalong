@@ -27,6 +27,7 @@ class ConnectFeatureBuilder {
         create: (context) => DefaultConnectViewModel(
           connectRepository: context.read(),
           persistenceService: context.read(),
+          singalongConfiguration: context.read(),
           name: name,
           roomId: roomId,
         ),

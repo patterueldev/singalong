@@ -9,6 +9,7 @@ class PersistenceRepositoryDS implements PersistenceRepository {
   final usernameKey = 'username';
   final accessTokenKey = 'accessToken';
   final deviceIdKey = 'deviceId';
+  final customHostKey = 'customHost';
 
   EncryptedSharedPreferences? sharedPref;
   final uuid = Uuid();
@@ -45,6 +46,14 @@ class PersistenceRepositoryDS implements PersistenceRepository {
   }
 
   @override
+  Future<String?> getCustomHost() async {
+    await configureSharedPref();
+    final customHost = sharedPref!.getString(customHostKey);
+    debugPrint('Retrieved custom host: $customHost');
+    return customHost;
+  }
+
+  @override
   Future<void> saveRoomId(String roomId) async {
     await configureSharedPref();
     debugPrint('Saving room id: $roomId');
@@ -66,6 +75,13 @@ class PersistenceRepositoryDS implements PersistenceRepository {
   }
 
   @override
+  Future<void> saveCustomHost(String customHost) async {
+    await configureSharedPref();
+    debugPrint('Saving custom host: $customHost');
+    sharedPref!.setString(customHostKey, customHost);
+  }
+
+  @override
   Future<String> getDeviceId() async {
     await configureSharedPref();
     var deviceId = sharedPref!.getString(deviceIdKey);
@@ -74,5 +90,19 @@ class PersistenceRepositoryDS implements PersistenceRepository {
       sharedPref!.setString(deviceIdKey, deviceId);
     }
     return deviceId;
+  }
+
+  @override
+  Future<void> clearAccessToken() async {
+    await configureSharedPref();
+    debugPrint('Clearing access token');
+    sharedPref!.remove(accessTokenKey);
+  }
+
+  @override
+  Future<void> clearCustomHost() async {
+    await configureSharedPref();
+    debugPrint('Clearing custom host');
+    sharedPref!.remove(customHostKey);
   }
 }

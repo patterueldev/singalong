@@ -1,17 +1,20 @@
 part of 'core.dart';
 
 abstract class SingalongConfiguration {
-  String get protocol; //TODO: Might not be needed
-  String get host;
-  int get apiPort;
-  int get socketPort;
-  int get storagePort;
+  String get defaultHost;
+  String? customHost;
 
-  String get persistenceStorageKey;
+  String protocol = "http";
+  String get host => customHost ?? defaultHost;
+  int apiPort = 8080;
+  int socketPort = 9092;
+  int storagePort = 9000;
 
   String get apiBaseUrl => "http://$host:$apiPort";
   String get socketBaseUrl => "http://$host:$socketPort";
   String get storageBaseUrl => "http://$host:$storagePort";
+
+  String get persistenceStorageKey;
 
   Uri buildURL(String path, {Map<String, dynamic>? queryParameters}) {
     final filterBaseUrl = apiBaseUrl.removeSuffix("/");

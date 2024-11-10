@@ -32,6 +32,11 @@ class SingalongSocket {
     socket.connect();
   }
 
+  void disconnectSocket() {
+    socket.disconnect();
+    _socket = null;
+  }
+
   StreamController<T> buildEventStreamController<T>(
       SocketEvent event, Function(dynamic, StreamController<T>) handler) {
     if (socket.hasListeners(event.value)) {

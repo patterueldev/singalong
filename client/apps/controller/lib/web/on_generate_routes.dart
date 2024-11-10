@@ -27,6 +27,7 @@ Route<dynamic>? onGenerateRoute(RouteSettings settings, BuildContext context) {
           create: (context) => WebSplashScreenViewModel(
             connectRepository: context.read(),
             persistenceService: context.read(),
+            configuration: context.read(),
           ),
           child: SplashScreen(flow: context.read()),
         ),

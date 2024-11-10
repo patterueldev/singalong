@@ -39,7 +39,7 @@ class WebAppCoordinator
 
   @override
   void onDisconnected(BuildContext context) {
-    // TODO: implement onDisconnected
+    AppRoute.initial.pushReplacement(context);
   }
 
   @override

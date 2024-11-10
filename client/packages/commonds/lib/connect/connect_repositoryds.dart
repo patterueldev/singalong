@@ -54,6 +54,13 @@ class ConnectRepositoryDS implements ConnectRepository {
       return false;
     }
   }
+
+  @override
+  Future<void> disconnect() async {
+    socket.disconnectSocket();
+    sessionManager.clearAccessToken();
+    await persistenceRepository.clearAccessToken();
+  }
 }
 
 extension ConnectParametersMapper on ConnectParameters {

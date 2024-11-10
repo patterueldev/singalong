@@ -80,6 +80,19 @@ mixin ConnectLocalizationsMixin implements ConnectLocalizations {
     return _getLocalizedString(
         (localizations) => localizations.invalidSessionId(sessionId));
   }
+
+  @override
+  LocalizedString get editServerHostDialogTitle => LocalizedString(
+        (context) => "Customize Server Host",
+      );
+  @override
+  LocalizedString get serverHostPlaceholderText => LocalizedString(
+        (context) => "Enter the server host",
+      );
+  @override
+  LocalizedString get saveButtonText => LocalizedString(
+        (context) => "Save",
+      );
 }
 
 mixin SessionLocalizationsMixin implements SessionLocalizations {

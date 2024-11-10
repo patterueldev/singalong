@@ -7,10 +7,12 @@ import 'splash_viewmodel.dart';
 class MobileSplashScreenViewModel extends SplashScreenViewModel {
   final ConnectRepository connectRepository;
   final PersistenceRepository persistenceService;
+  final SingalongConfiguration configuration;
 
   MobileSplashScreenViewModel({
     required this.connectRepository,
     required this.persistenceService,
+    required this.configuration,
   });
 
   @override
@@ -19,6 +21,11 @@ class MobileSplashScreenViewModel extends SplashScreenViewModel {
 
   @override
   void load() async {
+    final customHost = await persistenceService.getCustomHost();
+    if (customHost != null) {
+      configuration.customHost = customHost;
+    }
+
     debugPrint('MobileSplashScreenViewModel.load()');
     final isAuthenticated = await connectRepository.checkAuthentication();
     debugPrint(

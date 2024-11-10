@@ -5,4 +5,5 @@ abstract class ConnectRepository {
   void provideAccessToken(String accessToken);
   void connectSocket();
   Future<bool> checkAuthentication();
+  Future<void> disconnect();
 }

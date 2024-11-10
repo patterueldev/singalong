@@ -7,32 +7,8 @@ import 'package:core/core.dart';
 import 'package:singalong_api_client/singalong_api_client.dart';
 import 'package:video_player/video_player.dart';
 
+import '_main.dart';
 import 'gen/assets.gen.dart';
-
-class APIConfiguration extends SingalongConfiguration {
-  @override
-  final String protocol = 'http';
-
-  @override
-  late final String host = _host;
-
-  String get _host {
-    final host = "thursday.local";
-    return host;
-  }
-
-  @override
-  final int apiPort = 8080;
-
-  @override
-  final int socketPort = 9092;
-
-  @override
-  final int storagePort = 9000;
-
-  @override
-  final String persistenceStorageKey = "1234567890123456";
-}
 
 void main() {
   final singalongAPIClientProvider = SingalongAPIClientProvider();

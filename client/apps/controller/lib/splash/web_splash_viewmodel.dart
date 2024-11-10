@@ -3,6 +3,7 @@
 
 import 'package:common/common.dart';
 import 'package:controller/web/approute.dart';
+import 'package:core/core.dart';
 import 'package:flutter/material.dart';
 
 import 'dart:html' as html;
@@ -12,10 +13,12 @@ class WebSplashScreenViewModel extends SplashScreenViewModel {
   final ConnectRepository connectRepository;
   final PersistenceRepository
       persistenceService; // Might need this when restoring authentication
+  final SingalongConfiguration configuration;
 
   WebSplashScreenViewModel({
     required this.connectRepository,
     required this.persistenceService,
+    required this.configuration,
   });
 
   @override
@@ -25,6 +28,11 @@ class WebSplashScreenViewModel extends SplashScreenViewModel {
   @override
   void load() async {
     try {
+      final customHost = await persistenceService.getCustomHost();
+      if (customHost != null) {
+        configuration.customHost = customHost;
+      }
+
       // check current address from browser
       final uri = html.window.location.href;
       final path = html.window.location.pathname;

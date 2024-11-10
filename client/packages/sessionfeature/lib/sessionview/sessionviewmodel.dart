@@ -104,8 +104,8 @@ class DefaultSessionViewModel extends SessionViewModel {
   }
 
   @override
-  void disconnect() {
-    // dispose of the observer
+  void disconnect() async {
+    await connectRepository.disconnect();
     stateNotifier.value = SessionViewState.disconnected();
   }
 

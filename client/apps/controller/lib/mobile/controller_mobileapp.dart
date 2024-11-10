@@ -25,6 +25,7 @@ class ControllerMobileApp extends StatelessWidget {
         create: (_) => MobileSplashScreenViewModel(
           connectRepository: context.read(),
           persistenceService: context.read(),
+          configuration: context.read(),
         ),
         child: SplashScreen(flow: context.read()),
       ),

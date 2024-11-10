@@ -1,39 +1,43 @@
 part of '../connectfeature.dart';
 
 abstract class ConnectViewModel extends ChangeNotifier {
-  ValueNotifier<ConnectViewState> get stateNotifier;
-  TextEditingController get nameController;
-  TextEditingController get sessionIdController;
+  final ValueNotifier<ConnectViewState> stateNotifier =
+      ValueNotifier(ConnectViewState.initial());
+  final TextEditingController nameController = TextEditingController();
+  final TextEditingController sessionIdController = TextEditingController();
+
+  // SingalongConfiguration get singalongConfiguration;
+  ValueNotifier<SingalongConfiguration> get singalongConfigurationNotifier;
+
   void load();
   void connect();
   void clear();
+
+  void updateServerHost(String host);
+  void resetServerHost();
 }
 
 class DefaultConnectViewModel extends ConnectViewModel {
   final ConnectRepository connectRepository;
   final PersistenceRepository persistenceService;
+  @override
+  // final SingalongConfiguration singalongConfiguration;
+  late final ValueNotifier<SingalongConfiguration>
+      singalongConfigurationNotifier;
 
   DefaultConnectViewModel({
     required this.connectRepository,
     required this.persistenceService,
+    required SingalongConfiguration singalongConfiguration,
     this.name,
     this.roomId,
-  });
+  }) : singalongConfigurationNotifier = ValueNotifier(singalongConfiguration);
 
   late final EstablishConnectionUseCase connectUseCase =
       EstablishConnectionUseCase(
     connectRepository: connectRepository,
     persistenceRepository: persistenceService,
   );
-
-  @override
-  final TextEditingController nameController = TextEditingController();
-  @override
-  final TextEditingController sessionIdController = TextEditingController();
-
-  @override
-  final ValueNotifier<ConnectViewState> stateNotifier =
-      ValueNotifier(ConnectViewState.initial());
 
   String? name;
   String? roomId;
@@ -49,6 +53,7 @@ class DefaultConnectViewModel extends ConnectViewModel {
     sessionIdController.text = roomId ?? sessionIdController.text;
     debugPrint('name: $name, roomId: $roomId');
     stateNotifier.value = ConnectViewState.initial();
+    notifyListeners();
   }
 
   @override
@@ -73,6 +78,7 @@ class DefaultConnectViewModel extends ConnectViewModel {
     );
     result.fold(
       (e) {
+        debugPrint('fold error: $e');
         stateNotifier.value = ConnectViewState.failure(e);
       },
       (_) {
@@ -85,5 +91,23 @@ class DefaultConnectViewModel extends ConnectViewModel {
   void clear() {
     nameController.clear();
     sessionIdController.clear();
+  }
+
+  @override
+  void updateServerHost(String host) async {
+    stateNotifier.value = ConnectViewState.connecting();
+    persistenceService.saveCustomHost(host);
+    singalongConfigurationNotifier.value.customHost = host;
+    singalongConfigurationNotifier.notifyListeners();
+    stateNotifier.value = ConnectViewState.initial();
+  }
+
+  @override
+  void resetServerHost() async {
+    stateNotifier.value = ConnectViewState.connecting();
+    await persistenceService.clearCustomHost();
+    singalongConfigurationNotifier.value.customHost = null;
+    singalongConfigurationNotifier.notifyListeners();
+    stateNotifier.value = ConnectViewState.initial();
   }
 }

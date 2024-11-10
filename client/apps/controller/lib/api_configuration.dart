@@ -11,23 +11,17 @@ import 'package:singalong_api_client/singalong_api_client.dart';
 import 'package:songbookfeature/songbookfeature.dart';
 import '_main.dart';
 
-import 'api_configuration.dart';
 import 'mobile/controller_mobileapp.dart';
 import 'mobile/mobile_appcoordinator.dart';
 
-void main() {
-  final appCoordinator = MobileAppCoordinator();
+class APIConfiguration extends SingalongConfiguration {
+  @override
+  final String defaultHost;
 
-  runApp(MultiProvider(
-    providers: [
-      Provider<SplashFlowCoordinator>.value(value: appCoordinator),
-      Provider<ConnectFlowCoordinator>.value(value: appCoordinator),
-      Provider<SessionFlowCoordinator>.value(value: appCoordinator),
-      Provider<SongBookFlowCoordinator>.value(value: appCoordinator),
-      Provider<DownloadFlowCoordinator>.value(value: appCoordinator),
-      Provider<SingalongConfiguration>.value(value: APIConfiguration()),
-      buildProviders(),
-    ],
-    child: const ControllerMobileApp(),
-  ));
+  APIConfiguration({
+    this.defaultHost = 'thursday.local',
+  });
+
+  @override
+  final String persistenceStorageKey = "1234567890123456";
 }

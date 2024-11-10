@@ -12,4 +12,14 @@ abstract class ConnectLocalizations implements GenericLocalizations {
   LocalizedString get emptySessionId;
   LocalizedString invalidName(String name);
   LocalizedString invalidSessionId(String sessionId);
+
+  LocalizedString get editServerHostDialogTitle => LocalizedString(
+        (context) => "Customize Server Host",
+      );
+  LocalizedString get serverHostPlaceholderText => LocalizedString(
+        (context) => "Enter the server host",
+      );
+  LocalizedString get saveButtonText => LocalizedString(
+        (context) => "Save",
+      );
 }
