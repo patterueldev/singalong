@@ -49,6 +49,7 @@ class SecurityConfiguration(
             .securityContext { it.securityContextRepository(jwtSecurityContextRepository) }
             .authorizeHttpRequests {
                 whitelisted.forEach { path -> it.requestMatchers(path).permitAll() }
+                it.requestMatchers("/admin/**").hasRole("ADMIN")
                 it.anyRequest().authenticated()
             }
             .build()

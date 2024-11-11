@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Start Server" type="JetRunConfigurationType">
+  <configuration default="false" name="Server" type="JetRunConfigurationType">
     <option name="MAIN_CLASS_NAME" value="io.patterueldev.singalong.MainKt" />
     <module name="singalong.api.main" />
     <shortenClasspath name="NONE" />

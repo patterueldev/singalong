@@ -33,6 +33,30 @@ class _SessionManagerScreenState extends State<SessionManagerScreen> {
       );
 
   Widget _buildScaffold(SessionManagerViewModel viewModel) => Scaffold(
+        appBar: AppBar(
+          leading: PopupMenuButton<String>(
+            onSelected: (value) {
+              if (value == 'disconnect') {
+                // viewModel.disconnect();
+              }
+            },
+            itemBuilder: (BuildContext context) {
+              return [
+                PopupMenuItem<String>(
+                  value: 'disconnect',
+                  child: Text("Disconnect"),
+                ),
+              ];
+            },
+            icon: const Icon(Icons.menu),
+          ),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.add),
+              onPressed: () => viewModel.createRoom(),
+            ),
+          ],
+        ),
         body: SafeArea(
           child: Container(
             alignment: Alignment.topLeft,
@@ -44,10 +68,7 @@ class _SessionManagerScreenState extends State<SessionManagerScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // create new room button
-                  ElevatedButton(
-                    child: const Text('Create New Room'),
-                    onPressed: () => viewModel.load(),
-                  ),
+
                   const SizedBox(height: 16),
                   Expanded(
                     child: ValueListenableBuilder(

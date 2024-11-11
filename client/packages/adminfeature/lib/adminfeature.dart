@@ -18,6 +18,8 @@ part 'signin/signin_screen.dart';
 part 'signin/signin_viewmodel.dart';
 part 'sessionmanager/session_manager_screen.dart';
 part 'sessionmanager/session_manager_viewmodel.dart';
+part 'sessionmanager/load_rooms_usecase.dart';
+part 'sessionmanager/rooms_repository.dart';
 part 'player_control_panel/player_control_panel_widget.dart';
 part 'player_control_panel/player_control_panel_viewmodel.dart';
 part 'player_control_panel/controlpanelsocketrepository.dart';
@@ -47,6 +49,7 @@ class AdminFeatureUIProvider {
   Widget buildSessionManagerScreen() =>
       ChangeNotifierProvider<SessionManagerViewModel>(
         create: (context) => DefaultSessionManagerViewModel(
+          roomsRepository: context.read(),
           persistenceRepository: context.read(),
         ),
         child: const SessionManagerScreen(),

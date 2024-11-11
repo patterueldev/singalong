@@ -1,40 +1,17 @@
-part of '../songbookfeature.dart';
+part of '../adminfeature.dart';
 
-class LoadSongsResult {
-  final List<SongItem> songs;
-  final int? nextOffset;
-  final String? nextCursor;
-  final int? nextPage;
-
-  LoadSongsResult(this.songs,
-      {this.nextOffset, this.nextCursor, this.nextPage});
-
-  Pagination? next() {
-    if (nextOffset != null) {
-      return OffsetPagination(nextOffset as int);
-    } else if (nextCursor != null) {
-      return CursorPagination(nextCursor as String);
-    } else if (nextPage != null) {
-      return PagePagination(nextPage as int);
-    } else {
-      return null;
-    }
-  }
+abstract class RoomsRepository {
+  Future<LoadRoomsResponse> loadRooms(LoadRoomsParameters parameters);
 }
 
-abstract class SongRepository {
-  Future<LoadSongsResult> loadSongs(LoadSongsParameters parameters);
-  Future<void> reserveSong(SongItem song);
-}
-
-class LoadSongsParameters {
+class LoadRoomsParameters {
   final String? keyword;
   final int? limit;
   final int? nextOffset;
   final String? nextCursor;
   final int? nextPage;
 
-  LoadSongsParameters._({
+  LoadRoomsParameters._({
     this.keyword,
     this.limit,
     this.nextOffset,
@@ -51,28 +28,28 @@ class LoadSongsParameters {
 
   @override
   String toString() {
-    return 'LoadSongsParameters{keyword: $keyword, limit: $limit, nextOffset: $nextOffset, nextCursor: $nextCursor, nextPage: $nextPage}';
+    return 'LoadRoomsParameters{limit: $limit, nextOffset: $nextOffset, nextCursor: $nextCursor, nextPage: $nextPage}';
   }
 
-  factory LoadSongsParameters.next({
+  factory LoadRoomsParameters.next({
     String? keyword,
     int? limit,
     Pagination? nextPage,
   }) {
     if (nextPage is OffsetPagination) {
-      return LoadSongsParameters._(
+      return LoadRoomsParameters._(
         keyword: keyword,
         limit: limit,
         nextOffset: nextPage.offset,
       );
     } else if (nextPage is CursorPagination) {
-      return LoadSongsParameters._(
+      return LoadRoomsParameters._(
         keyword: keyword,
         limit: limit,
         nextCursor: nextPage.cursor,
       );
     } else if (nextPage is PagePagination) {
-      return LoadSongsParameters._(
+      return LoadRoomsParameters._(
         keyword: keyword,
         limit: limit,
         nextPage: nextPage.page,
@@ -81,11 +58,25 @@ class LoadSongsParameters {
       if (nextPage != null) {
         throw ArgumentError("Invalid pagination type");
       } else {
-        return LoadSongsParameters._(
+        return LoadRoomsParameters._(
           keyword: keyword,
           limit: limit,
         );
       }
     }
   }
+}
+
+class LoadRoomsResponse {
+  final List<Room> rooms;
+  final int? nextOffset;
+  final String? nextCursor;
+  final int? nextPage;
+
+  LoadRoomsResponse({
+    required this.rooms,
+    this.nextOffset,
+    this.nextCursor,
+    this.nextPage,
+  });
 }

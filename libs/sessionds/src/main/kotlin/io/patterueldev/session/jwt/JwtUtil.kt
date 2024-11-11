@@ -28,11 +28,13 @@ class JwtUtil(
         username: String,
         roomid: String,
         clientType: ClientType,
+        roles: List<String>,
     ): String {
         return Jwts.builder()
             .subject(username)
             .claim("roomId", roomid)
             .claim("clientType", clientType)
+            .claim("roles", roles)
             .issuedAt(Date())
             .expiration(Date.from(Instant.now().plusSeconds(JWT_EXPIRATION_TIME)))
             .signWith(key)

@@ -30,3 +30,9 @@ project(":reservation").projectDir = file("./libs/reservation")
 
 include(":reservationds")
 project(":reservationds").projectDir = file("./libs/reservationds")
+
+include(":admin")
+project(":admin").projectDir = file("./libs/admin")
+
+include(":adminds")
+project(":adminds").projectDir = file("./libs/adminds")
