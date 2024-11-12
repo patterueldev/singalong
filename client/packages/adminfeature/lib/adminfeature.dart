@@ -13,6 +13,7 @@ import 'package:provider/provider.dart';
 import 'package:core/core.dart';
 
 part 'admincoordinator.dart';
+part 'adminlocalizations.dart';
 part 'common/sliderdata.dart';
 part 'signin/signin_screen.dart';
 part 'signin/signin_viewmodel.dart';
@@ -38,11 +39,13 @@ class AdminFeatureUIProvider {
         create: (context) => DefaultSignInViewModel(
           connectRepository: context.read(),
           persistenceRepository: context.read(),
+          singalongConfiguration: context.read(),
           username: username,
           password: password,
         ),
         child: SignInScreen(
           coordinator: context.read(),
+          localizations: context.read(),
         ),
       );
 

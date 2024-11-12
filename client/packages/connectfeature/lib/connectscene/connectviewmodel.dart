@@ -6,7 +6,6 @@ abstract class ConnectViewModel extends ChangeNotifier {
   final TextEditingController nameController = TextEditingController();
   final TextEditingController sessionIdController = TextEditingController();
 
-  // SingalongConfiguration get singalongConfiguration;
   ValueNotifier<SingalongConfiguration> get singalongConfigurationNotifier;
 
   void load();
@@ -19,15 +18,11 @@ abstract class ConnectViewModel extends ChangeNotifier {
 
 class DefaultConnectViewModel extends ConnectViewModel {
   final ConnectRepository connectRepository;
-  final PersistenceRepository persistenceService;
-  @override
-  // final SingalongConfiguration singalongConfiguration;
-  late final ValueNotifier<SingalongConfiguration>
-      singalongConfigurationNotifier;
+  final PersistenceRepository persistenceRepository;
 
   DefaultConnectViewModel({
     required this.connectRepository,
-    required this.persistenceService,
+    required this.persistenceRepository,
     required SingalongConfiguration singalongConfiguration,
     this.name,
     this.roomId,
@@ -36,8 +31,12 @@ class DefaultConnectViewModel extends ConnectViewModel {
   late final EstablishConnectionUseCase connectUseCase =
       EstablishConnectionUseCase(
     connectRepository: connectRepository,
-    persistenceRepository: persistenceService,
+    persistenceRepository: persistenceRepository,
   );
+
+  @override
+  late final ValueNotifier<SingalongConfiguration>
+      singalongConfigurationNotifier;
 
   String? name;
   String? roomId;
@@ -47,8 +46,8 @@ class DefaultConnectViewModel extends ConnectViewModel {
   @override
   void load() async {
     stateNotifier.value = ConnectViewState.connecting();
-    name = name ?? await persistenceService.getUsername();
-    roomId = roomId ?? await persistenceService.getRoomId();
+    name = name ?? await persistenceRepository.getUsername();
+    roomId = roomId ?? await persistenceRepository.getRoomId();
     nameController.text = name ?? nameController.text;
     sessionIdController.text = roomId ?? sessionIdController.text;
     debugPrint('name: $name, roomId: $roomId');
@@ -96,7 +95,7 @@ class DefaultConnectViewModel extends ConnectViewModel {
   @override
   void updateServerHost(String host) async {
     stateNotifier.value = ConnectViewState.connecting();
-    persistenceService.saveCustomHost(host);
+    persistenceRepository.saveCustomHost(host);
     singalongConfigurationNotifier.value.customHost = host;
     singalongConfigurationNotifier.notifyListeners();
     stateNotifier.value = ConnectViewState.initial();
@@ -105,7 +104,7 @@ class DefaultConnectViewModel extends ConnectViewModel {
   @override
   void resetServerHost() async {
     stateNotifier.value = ConnectViewState.connecting();
-    await persistenceService.clearCustomHost();
+    await persistenceRepository.clearCustomHost();
     singalongConfigurationNotifier.value.customHost = null;
     singalongConfigurationNotifier.notifyListeners();
     stateNotifier.value = ConnectViewState.initial();

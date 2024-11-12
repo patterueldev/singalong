@@ -14,6 +14,7 @@ class SessionManagerScreen extends StatefulWidget {
 
 class _SessionManagerScreenState extends State<SessionManagerScreen> {
   AdminCoordinator get coordinator => widget.coordinator;
+
   SessionManagerViewModel get viewModel =>
       Provider.of<SessionManagerViewModel>(context, listen: false);
   @override

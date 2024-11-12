@@ -13,10 +13,12 @@ void main() {
   final commonProvider = CommonProvider();
   final adminFeatureDSProvider = AdminFeatureDSProvider();
   final coordinator = AppCoordinator();
+  final appLocalizations = AppLocalizations();
   runApp(MultiProvider(
     providers: [
       Provider<SingalongConfiguration>.value(value: APIConfiguration()),
       Provider<AdminCoordinator>.value(value: coordinator),
+      Provider<AdminLocalizations>.value(value: appLocalizations),
       singalongAPIClientProvider.providers,
       commonProvider.providers,
       adminFeatureDSProvider.providers,
@@ -43,3 +45,5 @@ class AppCoordinator extends AdminCoordinator {
     context.read<AdminAppViewModel>().checkAuthentication();
   }
 }
+
+class AppLocalizations extends AdminLocalizations {}

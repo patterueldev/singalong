@@ -7,7 +7,12 @@ abstract class SignInViewModel extends ChangeNotifier {
   TextEditingController usernameController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
 
+  ValueNotifier<SingalongConfiguration> get singalongConfigurationNotifier;
+
   void signIn();
+
+  void updateServerHost(String host);
+  void resetServerHost();
 }
 
 class DefaultSignInViewModel extends SignInViewModel {
@@ -17,17 +22,23 @@ class DefaultSignInViewModel extends SignInViewModel {
   DefaultSignInViewModel({
     required this.connectRepository,
     required this.persistenceRepository,
+    required SingalongConfiguration singalongConfiguration,
     String username = '',
     String password = '',
   }) : super() {
     usernameController.text = username;
     passwordController.text = password;
+    singalongConfigurationNotifier = ValueNotifier(singalongConfiguration);
   }
 
   late final SignInUseCase signInUseCase = SignInUseCase(
     connectRepository: connectRepository,
     persistenceRepository: persistenceRepository,
   );
+
+  @override
+  late final ValueNotifier<SingalongConfiguration>
+      singalongConfigurationNotifier;
 
   @override
   void signIn() async {
@@ -48,6 +59,24 @@ class DefaultSignInViewModel extends SignInViewModel {
         // keep isLoading true to prevent user from interacting with the UI
       },
     );
+  }
+
+  @override
+  void updateServerHost(String host) async {
+    isLoading.value = true;
+    persistenceRepository.saveCustomHost(host);
+    singalongConfigurationNotifier.value.customHost = host;
+    singalongConfigurationNotifier.notifyListeners();
+    isLoading.value = false;
+  }
+
+  @override
+  void resetServerHost() async {
+    isLoading.value = true;
+    await persistenceRepository.clearCustomHost();
+    singalongConfigurationNotifier.value.customHost = null;
+    singalongConfigurationNotifier.notifyListeners();
+    isLoading.value = false;
   }
 }
 

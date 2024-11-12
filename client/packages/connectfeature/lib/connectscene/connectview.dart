@@ -133,6 +133,7 @@ class _ConnectViewState extends State<ConnectView> {
                         const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     child: Text(
                       configuration.apiBaseUrl,
+                      textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                             decoration: TextDecoration.underline,
                           ),

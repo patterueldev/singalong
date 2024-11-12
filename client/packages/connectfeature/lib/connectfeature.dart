@@ -26,7 +26,7 @@ class ConnectFeatureBuilder {
       ChangeNotifierProvider<ConnectViewModel>(
         create: (context) => DefaultConnectViewModel(
           connectRepository: context.read(),
-          persistenceService: context.read(),
+          persistenceRepository: context.read(),
           singalongConfiguration: context.read(),
           name: name,
           roomId: roomId,
