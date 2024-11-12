@@ -36,4 +36,10 @@ class AppCoordinator extends AdminCoordinator {
     debugPrint('onSignInSuccess');
     context.read<AdminAppViewModel>().checkAuthentication();
   }
+
+  @override
+  void onDisconnect(BuildContext context) {
+    debugPrint('onDisconnect');
+    context.read<AdminAppViewModel>().checkAuthentication();
+  }
 }

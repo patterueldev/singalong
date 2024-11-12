@@ -46,13 +46,16 @@ class AdminFeatureUIProvider {
         ),
       );
 
-  Widget buildSessionManagerScreen() =>
+  Widget buildSessionManagerScreen(BuildContext context) =>
       ChangeNotifierProvider<SessionManagerViewModel>(
         create: (context) => DefaultSessionManagerViewModel(
           roomsRepository: context.read(),
+          connectRepository: context.read(),
           persistenceRepository: context.read(),
         ),
-        child: const SessionManagerScreen(),
+        child: SessionManagerScreen(
+          coordinator: context.read(),
+        ),
       );
 
   Widget buildPlayerControlPanel() =>

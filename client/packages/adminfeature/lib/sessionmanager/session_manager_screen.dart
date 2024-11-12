@@ -1,13 +1,38 @@
 part of '../adminfeature.dart';
 
 class SessionManagerScreen extends StatefulWidget {
-  const SessionManagerScreen({super.key});
+  const SessionManagerScreen({
+    super.key,
+    required this.coordinator,
+  });
+
+  final AdminCoordinator coordinator;
 
   @override
   State<SessionManagerScreen> createState() => _SessionManagerScreenState();
 }
 
 class _SessionManagerScreenState extends State<SessionManagerScreen> {
+  AdminCoordinator get coordinator => widget.coordinator;
+  SessionManagerViewModel get viewModel =>
+      Provider.of<SessionManagerViewModel>(context, listen: false);
+  @override
+  void initState() {
+    super.initState();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      viewModel.isDisconnectedNotifier.addListener(_isDisconnectedListener);
+    });
+  }
+
+  void _isDisconnectedListener() {
+    final isDisconnected =
+        context.read<SessionManagerViewModel>().isDisconnectedNotifier.value;
+    if (isDisconnected) {
+      coordinator.onDisconnect(context);
+    }
+  }
+
   @override
   Widget build(BuildContext context) => Consumer<SessionManagerViewModel>(
         builder: (context, viewModel, child) => Stack(
@@ -37,7 +62,7 @@ class _SessionManagerScreenState extends State<SessionManagerScreen> {
           leading: PopupMenuButton<String>(
             onSelected: (value) {
               if (value == 'disconnect') {
-                // viewModel.disconnect();
+                viewModel.disconnect();
               }
             },
             itemBuilder: (BuildContext context) {

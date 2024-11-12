@@ -3,17 +3,21 @@ part of '../adminfeature.dart';
 abstract class SessionManagerViewModel extends ChangeNotifier {
   ValueNotifier<bool> isLoadingNotifier = ValueNotifier(false);
   ValueNotifier<List<Room>> roomsNotifier = ValueNotifier([]);
+  ValueNotifier<bool> isDisconnectedNotifier = ValueNotifier(false);
 
   void load();
   void createRoom();
+  void disconnect();
 }
 
 class DefaultSessionManagerViewModel extends SessionManagerViewModel {
   final RoomsRepository roomsRepository;
+  final ConnectRepository connectRepository;
   final PersistenceRepository persistenceRepository;
 
   DefaultSessionManagerViewModel({
     required this.roomsRepository,
+    required this.connectRepository,
     required this.persistenceRepository,
   }) {
     load();
@@ -53,6 +57,12 @@ class DefaultSessionManagerViewModel extends SessionManagerViewModel {
 
   @override
   void createRoom() {}
+
+  @override
+  void disconnect() async {
+    await connectRepository.disconnect();
+    isDisconnectedNotifier.value = true;
+  }
 }
 
 class Room {

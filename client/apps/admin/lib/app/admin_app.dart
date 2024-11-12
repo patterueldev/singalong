@@ -20,7 +20,8 @@ class AdminApp extends StatelessWidget {
                 return adminFeatureUIProvider.buildSignInScreen(context,
                     username: 'pat', password: '1234');
               case AuthenticationStatus.authenticated:
-                return adminFeatureUIProvider.buildSessionManagerScreen();
+                return adminFeatureUIProvider
+                    .buildSessionManagerScreen(context);
               // return const MasterView();
             }
           },
