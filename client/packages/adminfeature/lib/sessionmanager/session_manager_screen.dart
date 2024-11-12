@@ -75,32 +75,32 @@ class _SessionManagerScreenState extends State<SessionManagerScreen> {
                       valueListenable: viewModel.roomsNotifier,
                       builder: (context, rooms, child) => ListView.builder(
                         itemCount: rooms.length,
-                        itemBuilder: (context, index) {
-                          final room = rooms[index];
-                          return InkWell(
-                            onTap: () => {},
-                            child: Opacity(
-                              opacity: room.isActive ? 1.0 : 0.5,
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(room.name),
-                                  Text('ID: ${room.id}'),
-                                  if (!room.isActive && room.lastActive != null)
-                                    Text('Last Active: ${room.lastActive}'),
-                                  Text(room.isSecured ? 'Secured' : 'Unecured'),
-                                  const Divider(),
-                                ],
-                              ),
-                            ),
-                          );
-                        },
+                        itemBuilder: (context, index) =>
+                            _buildRoomItem(rooms[index]),
                       ),
                     ),
                   ),
                 ],
               ),
             ),
+          ),
+        ),
+      );
+
+  Widget _buildRoomItem(Room room) => InkWell(
+        onTap: () => {},
+        child: Opacity(
+          opacity: room.isActive ? 1.0 : 0.5,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(room.name),
+              Text('ID: ${room.id}'),
+              if (!room.isActive && room.lastActive != null)
+                Text('Last Active: ${room.lastActive}'),
+              Text(room.isSecured ? 'Secured' : 'Unsecured'),
+              const Divider(),
+            ],
           ),
         ),
       );

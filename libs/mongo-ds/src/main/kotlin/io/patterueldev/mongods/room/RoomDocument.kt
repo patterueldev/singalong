@@ -17,4 +17,5 @@ data class RoomDocument(
     @CreatedDate val createdAt: LocalDateTime = LocalDateTime.now(),
     @LastModifiedDate val updatedAt: LocalDateTime = LocalDateTime.now(),
     val archivedAt: LocalDateTime? = null,
+    val lastActiveAt: LocalDateTime = LocalDateTime.now(),
 )

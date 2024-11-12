@@ -4,10 +4,10 @@ import io.patterueldev.client.ClientType
 import io.patterueldev.common.GenericResponse
 import io.patterueldev.common.ServiceUseCase
 import io.patterueldev.role.Role
+import io.patterueldev.room.RoomRepository
 import io.patterueldev.session.auth.AuthRepository
 import io.patterueldev.session.authuser.AuthUserRepository
 import io.patterueldev.session.common.ConnectResponse
-import io.patterueldev.session.room.RoomRepository
 import java.time.LocalDateTime
 
 internal class ConnectUseCase(

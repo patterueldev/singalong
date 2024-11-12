@@ -376,3 +376,60 @@ Map<String, dynamic> _$APIAvatarToJson(APIAvatar instance) => <String, dynamic>{
       'width': instance.width,
       'height': instance.height,
     };
+
+APIPaginatedRoomList _$APIPaginatedRoomListFromJson(
+        Map<String, dynamic> json) =>
+    APIPaginatedRoomList(
+      items: (json['items'] as List<dynamic>)
+          .map((e) => APIRoomItem.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      nextOffset: (json['nextOffset'] as num?)?.toInt(),
+      nextCursor: json['nextCursor'] as String?,
+      nextPage: (json['nextPage'] as num?)?.toInt(),
+    );
+
+Map<String, dynamic> _$APIPaginatedRoomListToJson(
+        APIPaginatedRoomList instance) =>
+    <String, dynamic>{
+      'items': instance.items,
+      'nextOffset': instance.nextOffset,
+      'nextCursor': instance.nextCursor,
+      'nextPage': instance.nextPage,
+    };
+
+APIRoomItem _$APIRoomItemFromJson(Map<String, dynamic> json) => APIRoomItem(
+      id: json['id'] as String,
+      name: json['name'] as String,
+      isSecured: json['isSecured'] as bool,
+      isActive: json['isActive'] as bool,
+      lastActive: DateTime.parse(json['lastActive'] as String),
+    );
+
+Map<String, dynamic> _$APIRoomItemToJson(APIRoomItem instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'name': instance.name,
+      'isSecured': instance.isSecured,
+      'isActive': instance.isActive,
+      'lastActive': instance.lastActive.toIso8601String(),
+    };
+
+APILoadRoomListParameters _$APILoadRoomListParametersFromJson(
+        Map<String, dynamic> json) =>
+    APILoadRoomListParameters(
+      keyword: json['keyword'] as String?,
+      limit: (json['limit'] as num?)?.toInt(),
+      nextOffset: (json['nextOffset'] as num?)?.toInt(),
+      nextCursor: json['nextCursor'] as String?,
+      nextPage: (json['nextPage'] as num?)?.toInt(),
+    );
+
+Map<String, dynamic> _$APILoadRoomListParametersToJson(
+        APILoadRoomListParameters instance) =>
+    <String, dynamic>{
+      'keyword': instance.keyword,
+      'limit': instance.limit,
+      'nextOffset': instance.nextOffset,
+      'nextCursor': instance.nextCursor,
+      'nextPage': instance.nextPage,
+    };

@@ -75,11 +75,13 @@ class SingalongAPI {
         .toList();
   }
 
-  // TODO: Will do this through socket
-  Future<void> nextSong() async {
-    await apiClient.request(
-      path: APIPath.next,
-      method: HttpMethod.PATCH,
+  Future<APIPaginatedRoomList> loadRooms(
+      APILoadRoomListParameters parameters) async {
+    final result = await apiClient.request(
+      path: APIPath.adminRooms,
+      queryParameters: parameters.toJson(),
+      method: HttpMethod.GET,
     );
+    return APIPaginatedRoomList.fromJson(result.objectData());
   }
 }

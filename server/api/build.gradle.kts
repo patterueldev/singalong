@@ -35,6 +35,7 @@ dependencies {
     implementation(projects.songidentifierds)
     implementation(projects.songbookds)
     implementation(projects.reservationds)
+    implementation(projects.adminds)
 }
 
 kotlin {

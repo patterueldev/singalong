@@ -11,6 +11,7 @@ repositories {
 }
 
 dependencies {
+    implementation(libs.kotlinx.coroutines.core)
     implementation(libs.spring.boot.data.mongodb)
     implementation(libs.spring.boot.security)
     implementation(projects.mongoDs)

@@ -1,7 +1,7 @@
 plugins {
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.kotlin.spring)
-    alias(libs.plugins.ktlint)
+//    alias(libs.plugins.ktlint)
 }
 
 group = "io.patterueldev"

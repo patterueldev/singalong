@@ -1,4 +1,4 @@
-package io.patterueldev.session.room
+package io.patterueldev.room
 
 interface Room {
     val id: String

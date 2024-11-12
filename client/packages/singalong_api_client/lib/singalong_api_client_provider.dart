@@ -29,13 +29,5 @@ class SingalongAPIClientProvider {
         sessionManager: context.read(),
       ),
     ),
-    // Provider<SingalongAPIClient>(
-    //   create: (context) => SingalongAPIClient(
-    //     client: context.read(),
-    //     // socket: context.read(),
-    //     sessionManager: context.read(),
-    //     configuration: context.read(),
-    //   ),
-    // ),
   ]);
 }

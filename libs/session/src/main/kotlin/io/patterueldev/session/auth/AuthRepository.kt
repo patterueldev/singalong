@@ -1,8 +1,8 @@
 package io.patterueldev.session.auth
 
 import io.patterueldev.client.ClientType
+import io.patterueldev.room.Room
 import io.patterueldev.session.authuser.AuthUser
-import io.patterueldev.session.room.Room
 import java.time.LocalDateTime
 
 interface AuthRepository {

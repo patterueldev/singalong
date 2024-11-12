@@ -15,8 +15,7 @@ class AdminFeatureDSProvider {
   final providers = MultiProvider(providers: [
     Provider<RoomsRepository>(
       create: (context) => RoomsRepositoryDS(
-        apiClient: context.read(),
-        configuration: context.read(),
+        api: context.read(),
       ),
     ),
     Provider<ControlPanelSocketRepository>(

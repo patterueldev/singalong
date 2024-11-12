@@ -4,9 +4,9 @@ import com.corundumstudio.socketio.SocketIOServer
 import io.patterueldev.reservation.ReservationService
 import io.patterueldev.reservation.currentsong.LoadCurrentSongParameters
 import io.patterueldev.reservation.list.LoadReservationListParameters
+import io.patterueldev.room.Room
 import io.patterueldev.roomuser.RoomUser
 import io.patterueldev.session.SessionService
-import io.patterueldev.session.room.Room
 import jakarta.annotation.PreDestroy
 import kotlinx.coroutines.runBlocking
 import org.springframework.beans.factory.annotation.Autowired
