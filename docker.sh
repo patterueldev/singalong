@@ -4,6 +4,7 @@ set -e
 root=$(pwd)
 api="$root/server"
 fluttercontrollerapp="$root/client/apps/controller"
+flutteradminapp="$root/client/apps/admin"
 
 # Function to handle errors
 handle_error() {
@@ -23,10 +24,16 @@ cd $api
 echo "Gradle build completed successfully."
 cd $root
 
-# Build the Flutter web project
+# Build the controller
 cd $fluttercontrollerapp
 flutter build web --target=lib/main_web.dart
-echo "Flutter web build completed successfully."
+echo "Flutter controller build completed successfully."
+cd $root
+
+# Build the admin
+cd $flutteradminapp
+flutter build web --target=lib/main.dart
+echo "Flutter admin build completed successfully."
 cd $root
 
 # Bring down any running containers

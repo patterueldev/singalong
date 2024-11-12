@@ -2,11 +2,22 @@ services:
   client:
     image: singalong-client:1.0.0
     build:
-      context: client #TODO: Change to the correct path; this is just a temporary project
+      context: client/apps/controller
       dockerfile: Dockerfile
     container_name: singalong-client-container
     ports:
       - "80:80"
+    networks:
+      - singalong-server
+
+  admin:
+    image: singalong-admin:1.0.0
+    build:
+      context: client/apps/admin
+      dockerfile: Dockerfile
+    container_name: singalong-admin-container
+    ports:
+      - "8081:80"
     networks:
       - singalong-server
 

@@ -2,7 +2,7 @@
 FROM nginx:alpine
 
 # Copy the built Flutter web files to the Nginx HTML directory
-COPY apps/controller/build/web /usr/share/nginx/html
+COPY build/web /usr/share/nginx/html
 
 # Copy the Nginx configuration file
 COPY nginx.conf /etc/nginx/conf.d/default.conf
