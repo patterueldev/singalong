@@ -1,8 +1,8 @@
 package io.patterueldev.session
 
+import io.patterueldev.auth.AuthRepository
+import io.patterueldev.authuser.AuthUserRepository
 import io.patterueldev.room.RoomRepository
-import io.patterueldev.session.auth.AuthRepository
-import io.patterueldev.session.authuser.AuthUserRepository
 import io.patterueldev.session.common.ConnectResponse
 import io.patterueldev.session.connect.ConnectParameters
 import io.patterueldev.session.connect.ConnectUseCase

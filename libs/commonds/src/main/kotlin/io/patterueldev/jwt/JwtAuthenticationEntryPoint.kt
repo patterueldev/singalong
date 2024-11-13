@@ -1,4 +1,4 @@
-package io.patterueldev.session.jwt
+package io.patterueldev.jwt
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import io.patterueldev.common.GenericResponse

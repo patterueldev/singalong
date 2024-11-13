@@ -15,7 +15,9 @@ class PlayerControlPanelWidget extends StatelessWidget {
           ValueListenableBuilder(
               valueListenable: viewModel.stateNotifier,
               builder: (context, value, child) {
-                if (value is ActiveState) {
+                if (value is InactiveState) {
+                  return _buildActive(context, value, viewModel);
+                } else if (value is ActiveState) {
                   return _buildActive(context, value, viewModel);
                 } else {
                   return _buildInactive(context);
@@ -38,41 +40,7 @@ class PlayerControlPanelWidget extends StatelessWidget {
         builder: (context, constraints) => Center(
           child: Column(
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.start,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(height / 2),
-                    child: Container(
-                      color: Colors.grey,
-                      height: height,
-                      width: height,
-                      child: CachedNetworkImage(
-                        imageUrl: state.thumbnailURL.toString(),
-                        placeholder: (context, url) => const Center(
-                          child: CircularProgressIndicator(),
-                        ),
-                        errorWidget: (context, url, error) =>
-                            const Icon(Icons.music_note),
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(state.title),
-                        const SizedBox(width: 16),
-                        Text(state.artist),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
+              _songDetailWidget(state),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -126,6 +94,50 @@ class PlayerControlPanelWidget extends StatelessWidget {
               )
             ],
           ),
+        ),
+      );
+
+  Widget _songDetailWidget(
+    ActiveState state, {
+    double height = 50,
+  }) =>
+      Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            const SizedBox(width: 8),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(height / 2),
+              child: Container(
+                color: Colors.grey,
+                height: height,
+                width: height,
+                child: CachedNetworkImage(
+                  imageUrl: state.thumbnailURL.toString(),
+                  placeholder: (context, url) => const Center(
+                    child: CircularProgressIndicator(),
+                  ),
+                  errorWidget: (context, url, error) =>
+                      const Icon(Icons.music_note),
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(state.title),
+                  const SizedBox(width: 16),
+                  Text(state.artist),
+                ],
+              ),
+            ),
+          ],
         ),
       );
 }

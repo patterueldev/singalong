@@ -1,61 +1,62 @@
 part of '../_main.dart';
 
-class MasterView extends StatefulWidget {
+class MasterView extends StatelessWidget {
   const MasterView({super.key});
 
   @override
-  State<MasterView> createState() => _MasterViewState();
-}
+  Widget build(BuildContext context) => Consumer<MasterViewModel>(
+        builder: (context, viewModel, child) {
+          return _buildScaffold(context, viewModel);
+        },
+      );
 
-class _MasterViewState extends State<MasterView> {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: Icon(Icons.menu),
-          onPressed: () {
-            // Handle menu button press
-          },
+  Widget _buildScaffold(BuildContext context, MasterViewModel viewModel) =>
+      Scaffold(
+        appBar: AppBar(
+          leading: IconButton(
+            icon: Icon(Icons.menu),
+            onPressed: () {
+              // Handle menu button press
+            },
+          ),
+          bottom: const PreferredSize(
+            preferredSize: Size.fromHeight(1.0),
+            child: Divider(),
+          ),
         ),
-        bottom: PreferredSize(
-          preferredSize: Size.fromHeight(1.0),
-          child: Divider(),
-        ),
-      ),
-      body: Row(
-        children: [
-          // Left half
-          Expanded(
-            flex: 1,
-            child: Column(
-              children: [
-                // Top left quarter
-                Expanded(
-                  flex: 1,
-                  child: _buildTopLeft(context),
-                ),
-                const Divider(),
-                // Bottom left quarter
-                Expanded(
-                  flex: 2,
-                  child: _buildBottomLeft(),
-                ),
-              ],
+        body: Row(
+          children: [
+            // Left half
+            Expanded(
+              flex: 1,
+              child: Column(
+                children: [
+                  // Top left quarter
+                  Expanded(
+                    flex: 1,
+                    child: _buildTopLeft(context, viewModel),
+                  ),
+                  const Divider(),
+                  // Bottom left quarter
+                  Expanded(
+                    flex: 2,
+                    child: _buildBottomLeft(),
+                  ),
+                ],
+              ),
             ),
-          ),
-          const VerticalDivider(),
-          // Right half
-          Expanded(
-            flex: 1,
-            child: _buildRightHalf(),
-          ),
-        ],
-      ),
-    );
-  }
+            const VerticalDivider(),
+            // Right half
+            Expanded(
+              flex: 1,
+              child: _buildRightHalf(),
+            ),
+          ],
+        ),
+      );
 
-  Widget _buildTopLeft(BuildContext context) =>
+  // Player Control Panel
+  Widget _buildTopLeft(BuildContext context, MasterViewModel viewModel) =>
       context.read<AdminFeatureUIProvider>().buildPlayerControlPanel();
 
   Widget _buildBottomLeft() => Container(

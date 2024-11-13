@@ -6,7 +6,7 @@ import com.corundumstudio.socketio.SocketIOServer
 import com.corundumstudio.socketio.listener.ConnectListener
 import com.corundumstudio.socketio.listener.DisconnectListener
 import io.patterueldev.client.ClientType
-import io.patterueldev.session.jwt.JwtUtil
+import io.patterueldev.jwt.JwtUtil
 import io.patterueldev.singalong.ServerCoordinator
 import io.patterueldev.singalong.SingalongService
 import kotlinx.coroutines.runBlocking
@@ -64,6 +64,12 @@ class SingalongSocketIOModule(
         namespace.addEventListener(togglePlayPauseEvent, Boolean::class.java) { client, data, _ ->
             println("Client[${client.sessionId}] - Toggle play/pause event received: $data")
             namespace.broadcastOperations.sendEvent(togglePlayPauseEvent, data)
+        }
+
+        val adjustVolumeFromControlEvent = SocketEvent.ADJUST_VOLUME_FROM_CONTROL.value
+        namespace.addEventListener(adjustVolumeFromControlEvent, Double::class.java) { client, data, _ ->
+            println("Client[${client.sessionId}] - Adjust volume event received: $data")
+            namespace.broadcastOperations.sendEvent(adjustVolumeFromControlEvent, data)
         }
     }
 

@@ -16,6 +16,15 @@ class SingalongAPI {
     return APIConnectResponseData.fromJson(result.objectData());
   }
 
+  Future<APIConnectWithRoomResponseData> connectWithRoom(String roomId) async {
+    final result = await apiClient.request(
+      path: APIPath.adminConnectRoom,
+      method: HttpMethod.POST,
+      payload: {'roomId': roomId},
+    );
+    return APIConnectWithRoomResponseData.fromJson(result.objectData());
+  }
+
   Future<String> check() async {
     final result = await apiClient.request(
       path: APIPath.sessionCheck,

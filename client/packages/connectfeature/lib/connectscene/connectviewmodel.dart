@@ -35,8 +35,7 @@ class DefaultConnectViewModel extends ConnectViewModel {
   );
 
   @override
-  late final ValueNotifier<SingalongConfiguration>
-      singalongConfigurationNotifier;
+  final ValueNotifier<SingalongConfiguration> singalongConfigurationNotifier;
 
   String? name;
   String? roomId;

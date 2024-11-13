@@ -29,3 +29,4 @@ part 'models/save_song_parameters.dart';
 part 'models/save_song_response.dart';
 part 'models/downloadable_item.dart';
 part 'models/room.dart';
+part 'models/connect_withroom_response.dart';

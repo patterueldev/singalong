@@ -1,12 +1,12 @@
 package io.patterueldev.session.connect
 
+import io.patterueldev.auth.AuthRepository
+import io.patterueldev.authuser.AuthUserRepository
 import io.patterueldev.client.ClientType
 import io.patterueldev.common.GenericResponse
 import io.patterueldev.common.ServiceUseCase
 import io.patterueldev.role.Role
 import io.patterueldev.room.RoomRepository
-import io.patterueldev.session.auth.AuthRepository
-import io.patterueldev.session.authuser.AuthUserRepository
 import io.patterueldev.session.common.ConnectResponse
 import java.time.LocalDateTime
 

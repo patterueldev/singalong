@@ -22,7 +22,7 @@ class CommonProvider {
     ),
     Provider<ConnectRepository>(
       create: (context) => ConnectRepositoryDS(
-        client: context.read(),
+        api: context.read(),
         socket: context.read(),
         sessionManager: context.read(),
         persistenceRepository: context.read(),

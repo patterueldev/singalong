@@ -5,8 +5,7 @@ class PlayerControlPanelState {
 
   PlayerControlPanelState(this.status);
 
-  factory PlayerControlPanelState.inactive() =>
-      PlayerControlPanelState(PlayerControlPanelStatus.inactive);
+  factory PlayerControlPanelState.inactive() => InactiveState();
 }
 
 class ActiveState extends PlayerControlPanelState {
@@ -28,7 +27,19 @@ class ActiveState extends PlayerControlPanelState {
     required this.maxSeekValue,
     this.minVolumeValue = 0.0,
     this.maxVolumeValue = 1.0,
-  }) : super(PlayerControlPanelStatus.active);
+    PlayerControlPanelStatus status = PlayerControlPanelStatus.active,
+  }) : super(status);
+}
+
+class InactiveState extends ActiveState {
+  InactiveState()
+      : super(
+          title: '',
+          artist: '',
+          thumbnailURL: '',
+          maxSeekValue: 1.0,
+          status: PlayerControlPanelStatus.inactive,
+        );
 }
 
 enum PlayerControlPanelStatus {

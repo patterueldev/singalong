@@ -35,7 +35,7 @@ open class CurrentSongRepositoryDS : CurrentSongRepository {
                 return null
             }
 
-            println("Current song: $currentReservedSong")
+            println("Current reseervd song: $currentReservedSong")
 
             val song =
                 withContext(Dispatchers.IO) {

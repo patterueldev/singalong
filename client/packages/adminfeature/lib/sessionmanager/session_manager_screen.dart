@@ -23,6 +23,7 @@ class _SessionManagerScreenState extends State<SessionManagerScreen> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       viewModel.isDisconnectedNotifier.addListener(_isDisconnectedListener);
+      viewModel.roomSelectionNotifier.addListener(_roomSelectionListener);
     });
   }
 
@@ -31,6 +32,15 @@ class _SessionManagerScreenState extends State<SessionManagerScreen> {
         context.read<SessionManagerViewModel>().isDisconnectedNotifier.value;
     if (isDisconnected) {
       coordinator.onDisconnect(context);
+    }
+  }
+
+  void _roomSelectionListener() {
+    debugPrint('Room selection changed');
+    final room = viewModel.roomSelectionNotifier.value;
+    if (room != null) {
+      debugPrint('Room selected: ${room.name}');
+      coordinator.onRoomSelected(context, room);
     }
   }
 
@@ -114,7 +124,7 @@ class _SessionManagerScreenState extends State<SessionManagerScreen> {
       );
 
   Widget _buildRoomItem(Room room) => InkWell(
-        onTap: () => {},
+        onTap: () => viewModel.selectRoom(room),
         child: Opacity(
           opacity: room.isActive ? 1.0 : 0.5,
           child: Column(

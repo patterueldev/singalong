@@ -12,4 +12,5 @@ enum class SocketEvent(val value: String) {
     ERROR("error"),
     USER_JOINED("userJoined"),
     USER_LEFT("userLeft"),
+    ADJUST_VOLUME_FROM_CONTROL("adjustVolumeFromControl"),
 }

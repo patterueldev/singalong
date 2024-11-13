@@ -1,13 +1,13 @@
 part of '../commonds.dart';
 
 class ConnectRepositoryDS implements ConnectRepository {
-  final SingalongAPI client;
+  final SingalongAPI api;
   final SingalongSocket socket;
   final APISessionManager sessionManager;
   final PersistenceRepository persistenceRepository;
 
   ConnectRepositoryDS({
-    required this.client,
+    required this.api,
     required this.socket,
     required this.sessionManager,
     required this.persistenceRepository,
@@ -16,9 +16,9 @@ class ConnectRepositoryDS implements ConnectRepository {
   @override
   Future<ConnectResponse> connect(ConnectParameters parameters) async {
     String deviceId = await persistenceRepository.getDeviceId();
-    final result = await client.connect(parameters.toAPI(
-      deviceId: deviceId,
-    ));
+    final result = await api.connect(
+      parameters.toAPI(deviceId: deviceId),
+    );
     return result.fromAPI();
   }
 
@@ -46,7 +46,7 @@ class ConnectRepositoryDS implements ConnectRepository {
     socket.buildSocket();
 
     try {
-      final result = await client.check();
+      final result = await api.check();
       debugPrint('Check result: $result');
       return true;
     } catch (e) {
@@ -82,6 +82,7 @@ extension APIConnectResponseMapper on APIConnectResponseData {
       requiresUserPasscode: requiresUserPasscode,
       requiresRoomPasscode: requiresRoomPasscode,
       accessToken: accessToken,
+      refreshToken: refreshToken,
     );
   }
 }

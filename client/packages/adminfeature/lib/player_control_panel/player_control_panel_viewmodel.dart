@@ -7,7 +7,6 @@ abstract class PlayerControlPanelViewModel extends ChangeNotifier {
   ValueNotifier<double> currentVolumeValueNotifier = ValueNotifier(0.5);
   bool isSeeking = false;
 
-  void setup();
   void togglePlayPause(bool isPlaying);
   void nextSong();
   void seek(double value) {
@@ -26,56 +25,31 @@ abstract class PlayerControlPanelViewModel extends ChangeNotifier {
 class DefaultPlayerControlPanelViewModel extends PlayerControlPanelViewModel {
   final ConnectRepository connectRepository;
   final ControlPanelSocketRepository controlPanelRepository;
+  final AuthorizeConnectionUseCase authorizeConnectionUseCase;
 
   DefaultPlayerControlPanelViewModel({
     required this.connectRepository,
     required this.controlPanelRepository,
-  }) {
+  }) : authorizeConnectionUseCase =
+            AuthorizeConnectionUseCase(connectRepository: connectRepository) {
     setup();
   }
-  late AuthorizeConnectionUseCase authorizeConnectionUseCase =
-      AuthorizeConnectionUseCase(connectRepository: connectRepository);
 
   Timer? _seekDebounceTimer;
+  Timer? _volumeDebounceTimer;
 
   StreamController<int>? _seekDurationUpdatesStreamController;
   StreamController<CurrentSong?>? _currentSongStreamController;
   StreamController<bool>? _togglePlayPauseStreamController;
 
-  @override
   void setup() async {
-    // Handle setup action
-    final result = await authorizeConnectionUseCase(
-      ConnectParameters(
-        username: "pat",
-        userPasscode: "1234",
-        roomId: "569841",
-        clientType: ClientType.ADMIN,
-      ),
-    );
-
-    // TODO: TEMPORARY! Will have a separate screen for connection
-    var canProceed = false;
-    result.fold(
-      (error) {
-        debugPrint('Error: $error');
-      },
-      (success) {
-        debugPrint('Success: $success');
-        connectRepository.connectSocket();
-        canProceed = true;
-      },
-    );
-
-    if (!canProceed) {
-      return;
-    }
     _seekDurationUpdatesStreamController =
         controlPanelRepository.seekDurationInMillisecondsStreamController();
     _seekDurationUpdatesStreamController?.stream.listen((value) {
       if (isSeeking) {
         return;
       }
+      debugPrint('Seek value: $value');
       double seconds = value / 1000;
       currentSeekValueNotifier.value = seconds;
     });
@@ -109,11 +83,20 @@ class DefaultPlayerControlPanelViewModel extends PlayerControlPanelViewModel {
   }
 
   @override
-  void togglePlayPause(bool isPlaying) =>
-      controlPanelRepository.togglePlayPause(isPlaying);
+  void togglePlayPause(bool isPlaying) {
+    if (stateNotifier.value is InactiveState) {
+      return;
+    }
+    controlPanelRepository.togglePlayPause(isPlaying);
+  }
 
   @override
-  void nextSong() => controlPanelRepository.skipSong();
+  void nextSong() {
+    if (stateNotifier.value is InactiveState) {
+      return;
+    }
+    controlPanelRepository.skipSong();
+  }
 
   @override
   void seek(double value) {
@@ -123,6 +106,11 @@ class DefaultPlayerControlPanelViewModel extends PlayerControlPanelViewModel {
     _seekDebounceTimer = Timer(const Duration(milliseconds: 100), () {
       // Handle seek action
       debugPrint('Will seek to $value');
+
+      if (stateNotifier.value is InactiveState) {
+        super.seek(0);
+        return;
+      }
       controlPanelRepository.seekDurationFromControl(value.toInt());
     });
   }
@@ -131,8 +119,17 @@ class DefaultPlayerControlPanelViewModel extends PlayerControlPanelViewModel {
   void setVolume(double value) {
     super.setVolume(value);
 
-    // Handle volume change action
-    debugPrint('Setting volume to $value');
+    _volumeDebounceTimer?.cancel();
+    _volumeDebounceTimer = Timer(const Duration(milliseconds: 0), () {
+      // Handle volume action
+      debugPrint('Will set volume to $value');
+
+      if (stateNotifier.value is InactiveState) {
+        super.setVolume(0.5);
+        return;
+      }
+      controlPanelRepository.adjustVolumeFromControl(value);
+    });
   }
 
   @override

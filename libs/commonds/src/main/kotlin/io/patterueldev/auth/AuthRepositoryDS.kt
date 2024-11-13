@@ -1,13 +1,13 @@
-package io.patterueldev.session.auth
+package io.patterueldev.auth
 
+import io.patterueldev.authuser.AuthUser
 import io.patterueldev.client.ClientType
+import io.patterueldev.jwt.JwtUtil
 import io.patterueldev.mongods.room.RoomDocumentRepository
 import io.patterueldev.mongods.session.SessionDocument
 import io.patterueldev.mongods.session.SessionDocumentRepository
 import io.patterueldev.mongods.user.UserDocumentRepository
 import io.patterueldev.room.Room
-import io.patterueldev.session.authuser.AuthUser
-import io.patterueldev.session.jwt.JwtUtil
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service

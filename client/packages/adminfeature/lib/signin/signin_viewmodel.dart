@@ -25,10 +25,10 @@ class DefaultSignInViewModel extends SignInViewModel {
     required SingalongConfiguration singalongConfiguration,
     String username = '',
     String password = '',
-  }) : super() {
+  })  : singalongConfigurationNotifier = ValueNotifier(singalongConfiguration),
+        super() {
     usernameController.text = username;
     passwordController.text = password;
-    singalongConfigurationNotifier = ValueNotifier(singalongConfiguration);
   }
 
   late final SignInUseCase signInUseCase = SignInUseCase(
@@ -37,8 +37,7 @@ class DefaultSignInViewModel extends SignInViewModel {
   );
 
   @override
-  late final ValueNotifier<SingalongConfiguration>
-      singalongConfigurationNotifier;
+  final ValueNotifier<SingalongConfiguration> singalongConfigurationNotifier;
 
   @override
   void signIn() async {
@@ -77,37 +76,5 @@ class DefaultSignInViewModel extends SignInViewModel {
     singalongConfigurationNotifier.value.customHost = null;
     singalongConfigurationNotifier.notifyListeners();
     isLoading.value = false;
-  }
-}
-
-class SignInUseCase extends MacroServiceUseCase<ConnectParameters, void> {
-  final ConnectRepository connectRepository;
-  final PersistenceRepository persistenceRepository;
-
-  SignInUseCase({
-    required this.connectRepository,
-    required this.persistenceRepository,
-  });
-
-  @override
-  Future<void> tryTask(ConnectParameters parameters) async {
-    debugPrint("Attempting to connect");
-    if (parameters.username.isEmpty) {
-      throw Exception('Username cannot be empty');
-    }
-    if (parameters.userPasscode == null || parameters.userPasscode!.isEmpty) {
-      throw Exception('Password cannot be empty');
-    }
-
-    final result = await connectRepository.connect(parameters);
-
-    final accessToken = result.accessToken;
-    if (accessToken == null) {
-      throw Exception('Access token is null');
-    }
-    await persistenceRepository.saveAccessToken(accessToken);
-    connectRepository.provideAccessToken(accessToken);
-    await persistenceRepository.saveUsername(parameters.username);
-    await persistenceRepository.saveRoomId(parameters.roomId);
   }
 }

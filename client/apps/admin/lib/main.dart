@@ -16,6 +16,7 @@ void main() {
   final appLocalizations = AppLocalizations();
   runApp(MultiProvider(
     providers: [
+      Provider.value(value: singalongAPIClientProvider),
       Provider<SingalongConfiguration>.value(value: APIConfiguration()),
       Provider<AdminCoordinator>.value(value: coordinator),
       Provider<AdminLocalizations>.value(value: appLocalizations),
@@ -30,20 +31,6 @@ void main() {
       child: const AdminApp(),
     ),
   ));
-}
-
-class AppCoordinator extends AdminCoordinator {
-  @override
-  void onSignInSuccess(BuildContext context) {
-    debugPrint('onSignInSuccess');
-    context.read<AdminAppViewModel>().checkAuthentication();
-  }
-
-  @override
-  void onDisconnect(BuildContext context) {
-    debugPrint('onDisconnect');
-    context.read<AdminAppViewModel>().checkAuthentication();
-  }
 }
 
 class AppLocalizations extends AdminLocalizations {}

@@ -50,6 +50,7 @@ APIConnectResponseData _$APIConnectResponseDataFromJson(
       requiresUserPasscode: json['requiresUserPasscode'] as bool?,
       requiresRoomPasscode: json['requiresRoomPasscode'] as bool?,
       accessToken: json['accessToken'] as String?,
+      refreshToken: json['refreshToken'] as String?,
     );
 
 Map<String, dynamic> _$APIConnectResponseDataToJson(
@@ -58,6 +59,7 @@ Map<String, dynamic> _$APIConnectResponseDataToJson(
       'requiresUserPasscode': instance.requiresUserPasscode,
       'requiresRoomPasscode': instance.requiresRoomPasscode,
       'accessToken': instance.accessToken,
+      'refreshToken': instance.refreshToken,
     };
 
 APIReservedSong _$APIReservedSongFromJson(Map<String, dynamic> json) =>
@@ -432,4 +434,18 @@ Map<String, dynamic> _$APILoadRoomListParametersToJson(
       'nextOffset': instance.nextOffset,
       'nextCursor': instance.nextCursor,
       'nextPage': instance.nextPage,
+    };
+
+APIConnectWithRoomResponseData _$APIConnectWithRoomResponseDataFromJson(
+        Map<String, dynamic> json) =>
+    APIConnectWithRoomResponseData(
+      accessToken: json['accessToken'] as String,
+      refreshToken: json['refreshToken'] as String,
+    );
+
+Map<String, dynamic> _$APIConnectWithRoomResponseDataToJson(
+        APIConnectWithRoomResponseData instance) =>
+    <String, dynamic>{
+      'accessToken': instance.accessToken,
+      'refreshToken': instance.refreshToken,
     };

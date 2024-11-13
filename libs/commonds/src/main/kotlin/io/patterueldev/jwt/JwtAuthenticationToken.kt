@@ -1,4 +1,4 @@
-package io.patterueldev.session.jwt
+package io.patterueldev.jwt
 
 import io.patterueldev.authuser.RoomUserDetails
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken

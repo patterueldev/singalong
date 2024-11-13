@@ -22,7 +22,6 @@ class AdminApp extends StatelessWidget {
               case AuthenticationStatus.authenticated:
                 return adminFeatureUIProvider
                     .buildSessionManagerScreen(context);
-              // return const MasterView();
             }
           },
         ),

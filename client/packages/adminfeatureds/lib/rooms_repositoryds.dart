@@ -1,9 +1,11 @@
 part of 'adminfeatureds.dart';
 
 class RoomsRepositoryDS implements RoomsRepository {
+  final SingalongAPIClientProvider apiProvider;
   final SingalongAPI api;
 
   RoomsRepositoryDS({
+    required this.apiProvider,
     required this.api,
   });
 
@@ -41,5 +43,20 @@ class RoomsRepositoryDS implements RoomsRepository {
       debugPrint("Error: $e");
       rethrow;
     }
+  }
+
+  @override
+  Future<ConnectWithRoomResponse> connectWithRoom(Room room) async {
+    final result = await api.connectWithRoom(room.id);
+    return result.fromAPI();
+  }
+}
+
+extension APIConnectResponseMapper on APIConnectWithRoomResponseData {
+  ConnectWithRoomResponse fromAPI() {
+    return ConnectWithRoomResponse(
+      accessToken: accessToken,
+      refreshToken: refreshToken,
+    );
   }
 }

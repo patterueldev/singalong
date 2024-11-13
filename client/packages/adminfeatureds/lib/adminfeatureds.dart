@@ -3,6 +3,7 @@ library adminfeatureds;
 import 'dart:async';
 
 import 'package:adminfeature/adminfeature.dart';
+import 'package:common/common.dart';
 import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
 import 'package:core/core.dart';
@@ -15,6 +16,7 @@ class AdminFeatureDSProvider {
   final providers = MultiProvider(providers: [
     Provider<RoomsRepository>(
       create: (context) => RoomsRepositoryDS(
+        apiProvider: context.read(),
         api: context.read(),
       ),
     ),

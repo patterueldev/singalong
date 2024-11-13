@@ -1,4 +1,4 @@
-package io.patterueldev.session.jwt
+package io.patterueldev.jwt
 
 import io.jsonwebtoken.Claims
 import io.jsonwebtoken.Jwts

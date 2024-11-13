@@ -24,6 +24,7 @@ class DefaultPlayerViewModel extends PlayerViewModel {
   StreamController<CurrentSong?>? _currentSongController;
   StreamController<int>? _seekDurationFromControlStreamController;
   StreamController<bool>? _togglePlayPauseStreamController;
+  StreamController<double>? _volumeStreamController;
 
   final List<VideoController> _videoControllers = [];
   VideoController? _activeSongVideoController;
@@ -80,6 +81,7 @@ class DefaultPlayerViewModel extends PlayerViewModel {
     // 2. Listen to the current song updates
     debugPrint("Listening to current song updates");
 
+    // Listen to the current song stream
     _currentSongController =
         playerSocketRepository.currentSongStreamController();
     _currentSongController?.stream.listen((currentSong) async {
@@ -109,6 +111,7 @@ class DefaultPlayerViewModel extends PlayerViewModel {
       }
     });
 
+    // Seek duration from the control stream
     _seekDurationFromControlStreamController =
         playerSocketRepository.seekDurationFromControlStreamController();
     _seekDurationFromControlStreamController?.stream.listen((seekValue) {
@@ -116,6 +119,7 @@ class DefaultPlayerViewModel extends PlayerViewModel {
       _activeSongVideoController?.seekTo(Duration(seconds: seekValue));
     });
 
+    // Toggle play/pause stream
     _togglePlayPauseStreamController =
         playerSocketRepository.togglePlayPauseStreamController();
     _togglePlayPauseStreamController?.stream.listen((isPlaying) {
@@ -125,6 +129,13 @@ class DefaultPlayerViewModel extends PlayerViewModel {
       } else {
         _activeSongVideoController?.pause();
       }
+    });
+
+    // Volume stream
+    _volumeStreamController = playerSocketRepository.volumeStreamController();
+    _volumeStreamController?.stream.listen((volume) {
+      debugPrint("Volume: $volume");
+      _activeSongVideoController?.setVolume(volume);
     });
   }
 
@@ -183,6 +194,7 @@ class DefaultPlayerViewModel extends PlayerViewModel {
     _currentSongController?.close();
     _seekDurationFromControlStreamController?.close();
     _togglePlayPauseStreamController?.close();
+    _volumeStreamController?.close();
     playerViewStateNotifier.value = PlayerViewState.disconnected();
 
     super.dispose();

@@ -1,8 +1,11 @@
 package io.patterueldev.singalong.api
 
 import io.patterueldev.admin.AdminService
+import io.patterueldev.admin.connectwithroom.ConnectWithRoomParameters
 import io.patterueldev.admin.room.LoadRoomListParameters
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
@@ -28,4 +31,9 @@ class AdminController(
             page = nextPage,
         ),
     )
+
+    @PostMapping("/rooms/connect")
+    suspend fun connectWithRoom(
+        @RequestBody connectWithRoomParameters: ConnectWithRoomParameters,
+    ) = adminService.connectWithRoom(connectWithRoomParameters)
 }

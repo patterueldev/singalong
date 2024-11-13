@@ -5,11 +5,13 @@ class APIConnectResponseData {
   final bool? requiresUserPasscode;
   final bool? requiresRoomPasscode;
   final String? accessToken;
+  final String? refreshToken;
 
   APIConnectResponseData({
     this.requiresUserPasscode,
     this.requiresRoomPasscode,
     this.accessToken,
+    this.refreshToken,
   });
 
   factory APIConnectResponseData.fromJson(Map<String, dynamic> json) =>

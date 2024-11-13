@@ -77,4 +77,9 @@ class ControlPanelRepositoryDS implements ControlPanelSocketRepository {
     debugPrint('Toggling play/pause');
     return socket.emitEvent(SocketEvent.togglePlayPause, isPlaying);
   }
+
+  @override
+  void adjustVolumeFromControl(double volume) {
+    return socket.emitEvent(SocketEvent.adjustVolumeFromControl, volume);
+  }
 }

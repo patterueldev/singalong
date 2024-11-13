@@ -1,4 +1,4 @@
-package io.patterueldev.session.jwt
+package io.patterueldev.jwt
 
 import org.springframework.security.authentication.AuthenticationProvider
 import org.springframework.security.authentication.BadCredentialsException

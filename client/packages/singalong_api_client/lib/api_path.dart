@@ -7,7 +7,9 @@ enum APIPath {
   reserveSong,
   identifySong,
   downloadable,
-  adminRooms;
+  adminRooms,
+  adminConnectRoom,
+  ;
 
   String get value {
     switch (this) {
@@ -25,6 +27,8 @@ enum APIPath {
         return '/songs/downloadable';
       case adminRooms:
         return '/admin/rooms';
+      case adminConnectRoom:
+        return '/admin/rooms/connect';
     }
   }
 }

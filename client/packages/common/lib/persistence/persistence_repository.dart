@@ -11,6 +11,10 @@ abstract class PersistenceRepository {
   Future<String?> getAccessToken();
   Future<void> clearAccessToken();
 
+  Future<void> saveRefreshToken(String? refreshToken);
+  Future<String?> getRefreshToken();
+  Future<void> clearRefreshToken();
+
   Future<void> saveCustomHost(String customHost);
   Future<String?> getCustomHost();
   Future<void> clearCustomHost();

@@ -7,6 +7,7 @@ enum SocketEvent {
   seekDurationFromControl,
   togglePlayPause,
   skipSong,
+  adjustVolumeFromControl,
   ;
 
   String get value {
@@ -23,6 +24,8 @@ enum SocketEvent {
         return 'togglePlayPause';
       case SocketEvent.skipSong:
         return 'skipSong';
+      case SocketEvent.adjustVolumeFromControl:
+        return 'adjustVolumeFromControl';
     }
   }
 }

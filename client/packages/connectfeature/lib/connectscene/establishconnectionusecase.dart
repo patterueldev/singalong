@@ -44,6 +44,7 @@ class EstablishConnectionUseCase
           final requiresUserPasscode = result.requiresUserPasscode;
           final requiresRoomPasscode = result.requiresRoomPasscode;
           final accessToken = result.accessToken;
+          final refreshToken = result.refreshToken;
           if (requiresUserPasscode != null && requiresRoomPasscode != null) {
             return ConnectViewState.requiresPasscode(
               requiresUserPasscode: requiresUserPasscode,
@@ -52,7 +53,9 @@ class EstablishConnectionUseCase
           } else if (accessToken != null) {
             // store the access token somewhere
             debugPrint("Access token: $accessToken");
+            debugPrint("Refresh token: $refreshToken");
             await persistenceRepository.saveAccessToken(accessToken);
+            await persistenceRepository.saveRefreshToken(refreshToken);
             connectRepository.provideAccessToken(accessToken);
             await persistenceRepository.saveUsername(parameters.username);
             await persistenceRepository.saveRoomId(parameters.roomId);

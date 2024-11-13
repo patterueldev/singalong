@@ -5,6 +5,7 @@ abstract class ControlPanelSocketRepository {
   StreamController<int> seekDurationInMillisecondsStreamController();
   StreamController<bool> togglePlayPauseStreamController();
   void seekDurationFromControl(int durationInSeconds);
+  void adjustVolumeFromControl(double volume);
   void togglePlayPause(bool isPlaying);
   void skipSong();
 }

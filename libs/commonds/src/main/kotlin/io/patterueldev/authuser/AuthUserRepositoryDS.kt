@@ -1,10 +1,7 @@
-package io.patterueldev.session
+package io.patterueldev.authuser
 
-import io.patterueldev.authuser.RoomUserDetails
 import io.patterueldev.mongods.user.UserDocument
 import io.patterueldev.mongods.user.UserDocumentRepository
-import io.patterueldev.session.authuser.AuthUser
-import io.patterueldev.session.authuser.AuthUserRepository
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.crypto.password.PasswordEncoder

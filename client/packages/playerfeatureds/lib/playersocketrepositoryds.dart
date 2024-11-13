@@ -69,4 +69,13 @@ class PlayerSocketRepositoryDS implements PlayerSocketRepository {
       controller.add(data as bool);
     });
   }
+
+  @override
+  StreamController<double> volumeStreamController() {
+    return socket.buildEventStreamController(
+        SocketEvent.adjustVolumeFromControl, (data, controller) {
+      debugPrint("Player - Volume: $data");
+      controller.add(data as double);
+    });
+  }
 }
