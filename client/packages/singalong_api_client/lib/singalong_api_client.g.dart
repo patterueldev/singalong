@@ -449,3 +449,15 @@ Map<String, dynamic> _$APIConnectWithRoomResponseDataToJson(
       'accessToken': instance.accessToken,
       'refreshToken': instance.refreshToken,
     };
+
+APIPlayerItem _$APIPlayerItemFromJson(Map<String, dynamic> json) =>
+    APIPlayerItem(
+      id: json['id'] as String,
+      name: json['name'] as String,
+    );
+
+Map<String, dynamic> _$APIPlayerItemToJson(APIPlayerItem instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'name': instance.name,
+    };

@@ -20,4 +20,5 @@ abstract class PersistenceRepository {
   Future<void> clearCustomHost();
 
   Future<String> getDeviceId();
+  Future<String> getUniqueName();
 }

@@ -57,7 +57,9 @@ class MasterView extends StatelessWidget {
 
   // Player Control Panel
   Widget _buildTopLeft(BuildContext context, MasterViewModel viewModel) =>
-      context.read<AdminFeatureUIProvider>().buildPlayerControlPanel();
+      context
+          .read<AdminFeatureUIProvider>()
+          .buildPlayerControlPanel(viewModel.room);
 
   Widget _buildBottomLeft() => Container(
         child: Center(child: Text('Bottom Left Corner')),

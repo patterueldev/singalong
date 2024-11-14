@@ -13,6 +13,7 @@ internal class FindOrCreateRoomUseCase(
             // TODO: Admin will now manage the rooms
             // get last active room that is not admin
             var lastActiveRoom = roomRepository.findActiveRoom()
+            println("Last active room: $lastActiveRoom")
             if (lastActiveRoom == null) {
                 lastActiveRoom = roomRepository.createRoom()
                 println("Created room: $lastActiveRoom")

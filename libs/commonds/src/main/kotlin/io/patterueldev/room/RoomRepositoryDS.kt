@@ -4,6 +4,7 @@ import io.patterueldev.common.PaginatedData
 import io.patterueldev.common.Pagination
 import io.patterueldev.mongods.room.RoomDocument
 import io.patterueldev.mongods.room.RoomDocumentRepository
+import io.patterueldev.mongods.user.UserDocumentRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.springframework.beans.factory.annotation.Autowired
@@ -18,19 +19,23 @@ import kotlin.random.Random
 open class RoomRepositoryDS : RoomRepository {
     @Autowired private lateinit var roomDocumentRepository: RoomDocumentRepository
 
+    @Autowired private lateinit var userDocumentRepository: UserDocumentRepository
+
     @Autowired private lateinit var sixDigitIdGenerator: SixDigitIdGenerator
 
-    override fun findRoomById(roomId: String): Room? {
+    override suspend fun findRoomById(roomId: String): Room? {
         val roomDocument = roomDocumentRepository.findRoomById(roomId) ?: return null
         return roomDocument.toRoom()
     }
 
-    override fun findActiveRoom(): Room? {
+    override suspend fun findActiveRoom(): Room? {
+        println("Finding active room")
         val roomDocument = roomDocumentRepository.findActiveRoom() ?: return null
+        println("Found active room: $roomDocument")
         return roomDocument.toRoom()
     }
 
-    override fun createRoom(): Room {
+    override suspend fun createRoom(): Room {
         val rooms = roomDocumentRepository.findAll()
         val existingRoomIds = rooms.map { it.id }
         val id = sixDigitIdGenerator.generateUnique(existingRoomIds)
@@ -68,11 +73,11 @@ open class RoomRepositoryDS : RoomRepository {
             val pageable: Pageable = Pageable.ofSize(limit).withPage(pageNumber - 1)
             val pagedRoomsResult: Page<RoomDocument>
             if (keyword == null) {
-                pagedRoomsResult = roomDocumentRepository.findAllExceptAdmin(pageable)
+                pagedRoomsResult = roomDocumentRepository.findAllExceptPreadded(pageable)
             } else {
                 pagedRoomsResult =
                     withContext(Dispatchers.IO) {
-                        roomDocumentRepository.findByKeywordExceptAdmin(
+                        roomDocumentRepository.findByKeywordExceptPreadded(
                             keyword, pageable,
                         )
                     }
@@ -94,6 +99,21 @@ open class RoomRepositoryDS : RoomRepository {
             println("Error loading rooms: $e")
             throw e
         }
+    }
+
+    override suspend fun assignPlayerToRoom(
+        playerId: String,
+        roomId: String,
+    ) {
+        // pull the room
+        val roomDocument = roomDocumentRepository.findRoomById(roomId) ?: return
+        // pull the user
+        val userDocument = userDocumentRepository.findByUsername(playerId) ?: return
+
+        // assign the player to the room
+        roomDocument.assignedPlayer = userDocument
+
+        roomDocumentRepository.save(roomDocument)
     }
 }
 

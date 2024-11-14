@@ -10,6 +10,12 @@ class PlayerSocketRepositoryDS implements PlayerSocketRepository {
   });
 
   @override
+  StreamController<PlayerConnection> playerConnectionStreamController() {
+    // TODO: implement playerConnectionStreamController
+    throw UnimplementedError();
+  }
+
+  @override
   StreamController<CurrentSong?> currentSongStreamController() {
     final currentSongStreamController =
         socket.buildCurrentSongStreamController();
@@ -78,4 +84,14 @@ class PlayerSocketRepositoryDS implements PlayerSocketRepository {
       controller.add(data as double);
     });
   }
+
+  @override
+  StreamController<String> get roomAssignedStreamController =>
+      socket.buildEventStreamController(
+        SocketEvent.roomAssigned,
+        (data, controller) {
+          debugPrint("Player - Room assigned: $data");
+          controller.add(data as String);
+        },
+      );
 }

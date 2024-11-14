@@ -1,8 +1,61 @@
 part of '../adminfeature.dart';
 
-abstract class PlayerManagerViewModel extends ChangeNotifier {
+abstract class PlayerSelectorViewModel extends ChangeNotifier {
   ValueNotifier<bool> isLoadingNotifier = ValueNotifier(false);
   ValueNotifier<List<PlayerItem>> playersNotifier = ValueNotifier([]);
+  ValueNotifier<PlayerItem?> onAssignedRoom = ValueNotifier(null);
+
+  void selectPlayer(PlayerItem player);
+}
+
+class DefaultPlayerSelectorViewModel extends PlayerSelectorViewModel {
+  final PlayerSocketRepository socketRepository;
+  final Room room;
+
+  DefaultPlayerSelectorViewModel({
+    required this.socketRepository,
+    required this.room,
+  }) {
+    setup();
+  }
+
+  StreamController<List<PlayerItem>>? _playerListController;
+
+  void setup() {
+    _playerListController = socketRepository.playersStreamController;
+    _playerListController?.stream.listen((players) {
+      playersNotifier.value = players;
+    });
+    socketRepository.requestPlayerList();
+  }
+
+  @override
+  void selectPlayer(PlayerItem player) async {
+    isLoadingNotifier.value = true;
+    try {
+      debugPrint("Selected player: ${player.name}");
+      await socketRepository.assignPlayerToRoom(player, room);
+      onAssignedRoom.value = player;
+    } catch (e) {
+      debugPrint("Error: $e");
+    }
+    isLoadingNotifier.value = false;
+  }
+
+  @override
+  void dispose() {
+    isLoadingNotifier.dispose();
+    playersNotifier.dispose();
+    _playerListController?.close();
+    super.dispose();
+  }
+}
+
+abstract class PlayerSocketRepository {
+  StreamController<List<PlayerItem>> get playersStreamController;
+
+  void requestPlayerList();
+  Future<void> assignPlayerToRoom(PlayerItem player, Room room);
 }
 
 // TODO: It goes like this: The admin logs in, and they will see a 'real time' list of players (ideally only 1 player at a time, but who knows)
@@ -22,4 +75,9 @@ class PlayerItem {
     required this.name,
     required this.isIdle,
   });
+
+  @override
+  String toString() {
+    return 'PlayerItem{id: $id, name: $name, isIdle: $isIdle}';
+  }
 }

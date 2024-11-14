@@ -40,6 +40,7 @@ class PlayerFeatureUIBuilder {
             create: (context) => DefaultPlayerViewModel(
               connectRepository: context.read(),
               playerSocketRepository: context.read(),
+              persistenceRepository: context.read(),
               reservedViewModel: context.read(),
             ),
           ),

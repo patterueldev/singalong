@@ -23,10 +23,11 @@ class SingalongService {
     @Autowired
     private lateinit var server: SocketIOServer
 
-    lateinit var activeRoom: Room
+    var activeRoom: Room? = null
 
     fun start() {
         // Start session service
+        println("Starting session service...")
         activeRoom =
             runBlocking {
                 sessionService.findOrCreateRoom()
@@ -46,15 +47,17 @@ class SingalongService {
 
     fun getReservedSongs() =
         runBlocking {
+            val id = activeRoom?.id ?: return@runBlocking listOf()
             reservationService.loadReservationList(
-                parameters = LoadReservationListParameters(activeRoom.id),
+                parameters = LoadReservationListParameters(id),
             ).data ?: listOf()
         }
 
     fun getCurrentSong() =
         runBlocking {
+            val id = activeRoom?.id ?: return@runBlocking null
             reservationService.loadCurrentSong(
-                parameters = LoadCurrentSongParameters(activeRoom.id),
+                parameters = LoadCurrentSongParameters(id),
             ).data
         }
 

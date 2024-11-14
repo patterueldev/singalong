@@ -15,13 +15,13 @@ interface RoomDocumentRepository : MongoRepository<RoomDocument, String> {
     ): RoomDocument?
 
     @Query(
-        value = "{ 'archivedAt': null, 'id': { '\$ne': 'admin' } }",
+        value = "{ 'archivedAt': null, '_id': { '\$nin': ['idle', 'admin'] } }",
         sort = "{ 'createdAt': -1 }",
     )
     fun findActiveRoom(): RoomDocument?
 
     @Query(
-        value = "{ '\$or': [ { 'name': { '\$regex': ?0, '\$options': 'i' } }, { 'id': { '\$regex': ?0, '\$options': 'i' } } ] }",
+        value = "{ '\$or': [ { 'name': { '\$regex': ?0, '\$options': 'i' } }, { '_id': { '\$regex': ?0, '\$options': 'i' } } ] }",
         sort = "{ 'createdAt': -1 }",
     )
     fun findByKeyword(
@@ -30,16 +30,16 @@ interface RoomDocumentRepository : MongoRepository<RoomDocument, String> {
     ): Page<RoomDocument>
 
     @Query(
-        value = "{ 'id': { '\$ne': 'admin' } }",
+        value = "{ '_id': { '\$nin': ['admin', 'idle'] } }",
         sort = "{ 'createdAt': -1 }",
     )
-    fun findAllExceptAdmin(pageable: Pageable): Page<RoomDocument>
+    fun findAllExceptPreadded(pageable: Pageable): Page<RoomDocument>
 
     @Query(
-        value = "{ '\$or': [ { 'name': { '\$regex': ?0, '\$options': 'i' } }, { 'id': { '\$regex': ?0, '\$options': 'i' } } ], 'id': { '\$ne': 'admin' } }",
+        value = "{ '\$or': [ { 'name': { '\$regex': ?0, '\$options': 'i' } }, { '_id': { '\$regex': ?0, '\$options': 'i' } } ], '_id': { '\$nin': ['admin', 'idle'] } }",
         sort = "{ 'createdAt': -1 }",
     )
-    fun findByKeywordExceptAdmin(
+    fun findByKeywordExceptPreadded(
         keyword: String,
         pageable: Pageable,
     ): Page<RoomDocument>

@@ -14,5 +14,6 @@ open class AdminConfiguration {
         @Autowired roomRepository: RoomRepository,
         @Autowired authRepository: AuthRepository,
         @Autowired authUserRepository: AuthUserRepository,
-    ) = AdminService(roomRepository, authRepository, authUserRepository)
+        @Autowired(required = false) coordinator: AdminCoordinator? = null,
+    ) = AdminService(roomRepository, authRepository, authUserRepository, coordinator)
 }

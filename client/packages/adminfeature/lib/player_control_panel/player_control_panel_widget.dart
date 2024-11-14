@@ -11,6 +11,7 @@ class PlayerControlPanelWidget extends StatelessWidget {
   Widget _build(BuildContext context, PlayerControlPanelViewModel viewModel) =>
       Column(
         mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           ValueListenableBuilder(
               valueListenable: viewModel.stateNotifier,
@@ -37,11 +38,16 @@ class PlayerControlPanelWidget extends StatelessWidget {
     double height = 50,
   }) =>
       LayoutBuilder(
-        builder: (context, constraints) => Center(
-          child: Column(
-            children: [
-              _songDetailWidget(state),
-              Row(
+        builder: (context, constraints) => Column(
+          children: [
+            _songDetailWidget(state),
+
+            const SizedBox(height: 16),
+
+            // Play control
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 32),
+              child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   ValueListenableBuilder(
@@ -57,43 +63,53 @@ class PlayerControlPanelWidget extends StatelessWidget {
                     icon: Icon(Icons.skip_next),
                     onPressed: () => viewModel.nextSong(),
                   ),
+                  Spacer(),
+                  ValueListenableBuilder(
+                    valueListenable: viewModel.selectedPlayerItemNotifier,
+                    builder: (context, playerItem, child) =>
+                        _buildSelectedPlayerWidget(context, playerItem),
+                  ),
                 ],
               ),
-              ValueListenableBuilder(
-                valueListenable: viewModel.currentSeekValueNotifier,
-                builder: (context, value, child) => Slider(
-                  value: value,
-                  min: state.minSeekValue,
-                  max: state.maxSeekValue,
-                  onChanged: viewModel.seek,
-                  onChangeStart: (_) => viewModel.toggleSeeking(true),
-                  onChangeEnd: (_) => viewModel.toggleSeeking(false),
-                ),
+            ),
+
+            // Seek control
+            ValueListenableBuilder(
+              valueListenable: viewModel.currentSeekValueNotifier,
+              builder: (context, value, child) => Slider(
+                value: value,
+                min: state.minSeekValue,
+                max: state.maxSeekValue,
+                onChanged: viewModel.seek,
+                onChangeStart: (_) => viewModel.toggleSeeking(true),
+                onChangeEnd: (_) => viewModel.toggleSeeking(false),
               ),
-              Container(
-                width: constraints.maxWidth * 0.5,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.volume_up, color: Colors.grey),
-                    Expanded(
-                      child: ValueListenableBuilder(
-                        valueListenable: viewModel.currentVolumeValueNotifier,
-                        builder: (context, value, child) => Slider(
-                          value: value,
-                          min: state.minVolumeValue,
-                          max: state.maxVolumeValue,
-                          onChanged: viewModel.setVolume,
-                          activeColor: Colors.grey,
-                          inactiveColor: Colors.grey[300],
-                        ),
+            ),
+
+            // Volume control
+            Container(
+              width: constraints.maxWidth * 0.75,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.volume_up, color: Colors.grey),
+                  Expanded(
+                    child: ValueListenableBuilder(
+                      valueListenable: viewModel.currentVolumeValueNotifier,
+                      builder: (context, value, child) => Slider(
+                        value: value,
+                        min: state.minVolumeValue,
+                        max: state.maxVolumeValue,
+                        onChanged: viewModel.setVolume,
+                        activeColor: Colors.grey,
+                        inactiveColor: Colors.grey[300],
                       ),
                     ),
-                  ],
-                ),
-              )
-            ],
-          ),
+                  ),
+                ],
+              ),
+            )
+          ],
         ),
       );
 
@@ -140,4 +156,38 @@ class PlayerControlPanelWidget extends StatelessWidget {
           ],
         ),
       );
+
+  Widget _buildSelectedPlayerWidget(BuildContext context, PlayerItem? player) =>
+      InkWell(
+        customBorder: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        onTap: () => _showPlayerSelector(context, context.read()),
+        child: IgnorePointer(
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Text(
+              player?.name ?? "Select player",
+              textAlign: TextAlign.left,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    decoration: TextDecoration.underline,
+                  ),
+            ),
+          ),
+        ),
+      );
+
+  void _showPlayerSelector(
+      BuildContext context, PlayerControlPanelViewModel viewModel) {
+    showDialog(
+      context: context,
+      builder: (context) => context
+          .read<AdminFeatureUIProvider>()
+          .buildPlayerManagerDialog(viewModel.room),
+    ).then((value) {
+      if (value != null) {
+        viewModel.updateSelectedPlayerItem(value);
+      }
+    });
+  }
 }

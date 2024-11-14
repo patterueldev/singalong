@@ -1,14 +1,13 @@
 part of '../playerfeature.dart';
 
-class ConnectivityPanelWidget extends StatefulWidget {
-  @override
-  State<ConnectivityPanelWidget> createState() =>
-      _ConnectivityPanelWidgetState();
-}
+class ConnectivityPanelWidget extends StatelessWidget {
+  final String roomId;
 
-// TODO: Not a priority now, but the room ID should be dynamic
-class _ConnectivityPanelWidgetState extends State<ConnectivityPanelWidget> {
-  String get roomId => '569841';
+  const ConnectivityPanelWidget({
+    super.key,
+    required this.roomId,
+  });
+
   String get qrData => "http://thursday.local/session/connect?roomId=$roomId";
 
   @override

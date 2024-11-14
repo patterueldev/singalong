@@ -5,7 +5,16 @@ abstract class PlayerControlPanelViewModel extends ChangeNotifier {
       ValueNotifier(PlayerControlPanelState.inactive());
   ValueNotifier<double> currentSeekValueNotifier = ValueNotifier(0.0);
   ValueNotifier<double> currentVolumeValueNotifier = ValueNotifier(0.5);
+  ValueNotifier<PlayerItem?> selectedPlayerItemNotifier = ValueNotifier(null);
+
   bool isSeeking = false;
+
+  Room get room;
+
+  void updateSelectedPlayerItem(PlayerItem? playerItem) {
+    debugPrint('Selected player item: $playerItem');
+    selectedPlayerItemNotifier.value = playerItem;
+  }
 
   void togglePlayPause(bool isPlaying);
   void nextSong();
@@ -27,9 +36,13 @@ class DefaultPlayerControlPanelViewModel extends PlayerControlPanelViewModel {
   final ControlPanelSocketRepository controlPanelRepository;
   final AuthorizeConnectionUseCase authorizeConnectionUseCase;
 
+  @override
+  final Room room;
+
   DefaultPlayerControlPanelViewModel({
     required this.connectRepository,
     required this.controlPanelRepository,
+    required this.room,
   }) : authorizeConnectionUseCase =
             AuthorizeConnectionUseCase(connectRepository: connectRepository) {
     setup();

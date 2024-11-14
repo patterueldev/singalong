@@ -1,6 +1,7 @@
 package io.patterueldev.singalong.api
 
 import io.patterueldev.admin.AdminService
+import io.patterueldev.admin.AssignPlayerToRoomParameters
 import io.patterueldev.admin.connectwithroom.ConnectWithRoomParameters
 import io.patterueldev.admin.room.LoadRoomListParameters
 import org.springframework.web.bind.annotation.GetMapping
@@ -36,4 +37,9 @@ class AdminController(
     suspend fun connectWithRoom(
         @RequestBody connectWithRoomParameters: ConnectWithRoomParameters,
     ) = adminService.connectWithRoom(connectWithRoomParameters)
+
+    @PostMapping("/rooms/assign")
+    suspend fun assignPlayerToRoom(
+        @RequestBody assignPlayerToRoomParameters: AssignPlayerToRoomParameters,
+    ) = adminService.assignPlayerToRoom(assignPlayerToRoomParameters)
 }

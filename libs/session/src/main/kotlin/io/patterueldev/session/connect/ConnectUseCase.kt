@@ -27,7 +27,11 @@ internal class ConnectUseCase(
         var user = authUserRepository.findUserByUsername(parameters.username)
         // step2.1: if the user does not exist, create it
         if (user == null) {
-            user = authUserRepository.createUser(parameters.username, parameters.userPasscode)
+            if (room.isIdleRoom() && parameters.clientType == ClientType.PLAYER) {
+                user = authUserRepository.createUser(parameters.username, parameters.userPasscode, Role.USER_HOST)
+            } else {
+                user = authUserRepository.createUser(parameters.username, parameters.userPasscode)
+            }
         }
         // step2.2: check if the user is still in the room
         // TODO: check if the user is already in the room; not too required right now, but will be useful in the future
@@ -36,7 +40,14 @@ internal class ConnectUseCase(
         val requiresUserPasscode = user.hashedPasscode != null
 
         // step4: check if the room also requires a passcode
-        val requiresRoomPasscode = room.passcode != null
+        var requiresRoomPasscode = room.passcode != null
+        val userIsHostAndClientTypeIsPlayer = user.role == Role.USER_HOST && parameters.clientType == ClientType.PLAYER
+        if (userIsHostAndClientTypeIsPlayer && !room.isIdleRoom()) {
+            // overrides the room passcode requirement;
+            // if the user is a player, and the client type is player, the room passcode is not required
+            // this is because the user is the host, and the host should be able to connect as a player without a passcode
+            requiresRoomPasscode = false
+        }
 
         // Check parameters if passcode(s) were not provided
         if (requiresUserPasscode || requiresRoomPasscode) {

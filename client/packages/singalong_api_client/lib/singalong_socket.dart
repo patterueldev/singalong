@@ -42,7 +42,11 @@ class SingalongSocket {
     if (socket.hasListeners(event.value)) {
       throw Exception("Already listening to ${event.value}");
     }
-    final controller = StreamController<T>();
+    final controller = StreamController<T>(
+      onCancel: () {
+        socket.off(event.value);
+      },
+    );
     socket.on(event.value, (data) {
       handler(data, controller);
     });

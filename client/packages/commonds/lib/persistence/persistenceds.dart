@@ -10,6 +10,7 @@ class PersistenceRepositoryDS implements PersistenceRepository {
   final accessTokenKey = 'accessToken';
   final refreshTokenKey = 'refreshToken';
   final deviceIdKey = 'deviceId';
+  final uniqueNameKey = 'uniqueName';
   final customHostKey = 'customHost';
 
   EncryptedSharedPreferences? sharedPref;
@@ -98,17 +99,6 @@ class PersistenceRepositoryDS implements PersistenceRepository {
   }
 
   @override
-  Future<String> getDeviceId() async {
-    await configureSharedPref();
-    var deviceId = sharedPref!.getString(deviceIdKey);
-    if (deviceId == null) {
-      deviceId = uuid.v4();
-      sharedPref!.setString(deviceIdKey, deviceId);
-    }
-    return deviceId;
-  }
-
-  @override
   Future<void> clearAccessToken() async {
     await configureSharedPref();
     debugPrint('Clearing access token');
@@ -127,5 +117,34 @@ class PersistenceRepositoryDS implements PersistenceRepository {
     await configureSharedPref();
     debugPrint('Clearing refresh token');
     sharedPref!.remove(refreshTokenKey);
+  }
+
+  @override
+  Future<String> getDeviceId() async {
+    await configureSharedPref();
+    var deviceId = sharedPref!.getString(deviceIdKey);
+    if (deviceId == null) {
+      deviceId = uuid.v4();
+      sharedPref!.setString(deviceIdKey, deviceId);
+    }
+    return deviceId;
+  }
+
+  @override
+  Future<String> getUniqueName() async {
+    await configureSharedPref();
+    var uniqueName = sharedPref!.getString(uniqueNameKey);
+    if (uniqueName?.contains(' ') == true) {
+      uniqueName = null;
+    }
+    if (uniqueName == null) {
+      final faker = Faker.instance;
+      final genre = faker.music.genre();
+      final animal = faker.animal.animal();
+      uniqueName = '$genre$animal'.replaceAll(' ', '');
+      sharedPref!.setString(uniqueNameKey, uniqueName);
+    }
+    debugPrint('Unique name: $uniqueName');
+    return uniqueName;
   }
 }

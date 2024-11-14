@@ -13,4 +13,7 @@ enum class SocketEvent(val value: String) {
     USER_JOINED("userJoined"),
     USER_LEFT("userLeft"),
     ADJUST_VOLUME_FROM_CONTROL("adjustVolumeFromControl"),
+    PLAYERS_LIST("playersList"),
+    REQUEST_PLAYERS_LIST("requestPlayersList"),
+    ROOM_ASSIGNED("roomAssigned"),
 }

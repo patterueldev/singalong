@@ -8,6 +8,9 @@ enum SocketEvent {
   togglePlayPause,
   skipSong,
   adjustVolumeFromControl,
+  playersList,
+  requestPlayersList,
+  roomAssigned,
   ;
 
   String get value {
@@ -26,6 +29,12 @@ enum SocketEvent {
         return 'skipSong';
       case SocketEvent.adjustVolumeFromControl:
         return 'adjustVolumeFromControl';
+      case SocketEvent.playersList:
+        return 'playersList';
+      case SocketEvent.requestPlayersList:
+        return 'requestPlayersList';
+      case SocketEvent.roomAssigned:
+        return 'roomAssigned';
     }
   }
 }

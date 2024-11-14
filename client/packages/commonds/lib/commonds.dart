@@ -2,6 +2,7 @@ library commonds;
 
 import 'package:common/common.dart';
 import 'package:encrypt_shared_preferences/provider.dart';
+import 'package:faker_dart/faker_dart.dart';
 import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
 import 'package:core/core.dart';

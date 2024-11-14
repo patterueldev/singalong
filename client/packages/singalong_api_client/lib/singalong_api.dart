@@ -93,4 +93,12 @@ class SingalongAPI {
     );
     return APIPaginatedRoomList.fromJson(result.objectData());
   }
+
+  Future<void> assignPlayerToRoom(String playerId, String roomId) async {
+    await apiClient.request(
+      path: APIPath.adminAssignRoom,
+      method: HttpMethod.POST,
+      payload: {'playerId': playerId, 'roomId': roomId},
+    );
+  }
 }

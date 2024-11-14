@@ -66,12 +66,22 @@ class AdminFeatureUIProvider {
         ),
       );
 
-  Widget buildPlayerControlPanel() =>
+  Widget buildPlayerControlPanel(Room room) =>
       ChangeNotifierProvider<PlayerControlPanelViewModel>(
         create: (context) => DefaultPlayerControlPanelViewModel(
           connectRepository: context.read(),
           controlPanelRepository: context.read(),
+          room: room,
         ),
         child: const PlayerControlPanelWidget(),
+      );
+
+  Widget buildPlayerManagerDialog(Room room) =>
+      ChangeNotifierProvider<PlayerSelectorViewModel>(
+        create: (context) => DefaultPlayerSelectorViewModel(
+          socketRepository: context.read(),
+          room: room,
+        ),
+        child: PlayerSelectorDialogWidget(),
       );
 }

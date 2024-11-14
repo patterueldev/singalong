@@ -2,6 +2,7 @@ package io.patterueldev.authuser
 
 import io.patterueldev.mongods.user.UserDocument
 import io.patterueldev.mongods.user.UserDocumentRepository
+import io.patterueldev.role.Role
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.crypto.password.PasswordEncoder
@@ -21,8 +22,10 @@ class AuthUserRepositoryDS : AuthUserRepository {
     override fun createUser(
         username: String,
         passcode: String?,
+        role: Role,
     ): AuthUser {
         val userDocument = UserDocument(username, passcode)
+        userDocument.role = role
         userDocumentRepository.save(userDocument)
         return userDocument.toUser()
     }

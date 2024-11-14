@@ -1,26 +1,34 @@
 part of '../playerfeature.dart';
 
 abstract class PlayerViewModel extends ChangeNotifier {
-  ValueNotifier<bool> get isConnected;
-  ValueNotifier<PlayerViewState> get playerViewStateNotifier;
-  void establishConnection();
+  ValueNotifier<bool> isConnected = ValueNotifier(false);
+  ValueNotifier<PlayerViewState> playerViewStateNotifier =
+      ValueNotifier(PlayerViewState.loading());
+  ValueNotifier<String?> roomIdNotifier = ValueNotifier(null);
+
+  void setup();
 }
 
 class DefaultPlayerViewModel extends PlayerViewModel {
   final ConnectRepository connectRepository;
   final PlayerSocketRepository playerSocketRepository;
+  final PersistenceRepository persistenceRepository;
   final ReservedViewModel reservedViewModel;
 
   DefaultPlayerViewModel({
     required this.connectRepository,
     required this.playerSocketRepository,
+    required this.persistenceRepository,
     required this.reservedViewModel,
-  });
+  }) {
+    setup();
+  }
 
   late final AuthorizeConnectionUseCase connectUseCase =
       AuthorizeConnectionUseCase(connectRepository: connectRepository);
 
   // StreamSubscription? _currentSongListener;
+  StreamController<String>? _roomAssignedStreamController;
   StreamController<CurrentSong?>? _currentSongController;
   StreamController<int>? _seekDurationFromControlStreamController;
   StreamController<bool>? _togglePlayPauseStreamController;
@@ -30,29 +38,61 @@ class DefaultPlayerViewModel extends PlayerViewModel {
   VideoController? _activeSongVideoController;
 
   @override
-  final ValueNotifier<bool> isConnected = ValueNotifier(false);
-
-  @override
-  final ValueNotifier<PlayerViewState> playerViewStateNotifier =
-      ValueNotifier(PlayerViewState.loading());
-
-  @override
-  void establishConnection() async {
+  void setup() async {
     isConnected.value = false;
     playerViewStateNotifier.value = PlayerViewState.loading();
 
-    // the process will be as follows:
-    // 1. Connect to the server with username and roomId
-    var canProceed = false;
-    // TODO: THESE will probably be managed by an admin device in the future; for now, we'll just hardcode it
-    debugPrint("Player connecting to the server");
+    // initial connection
+    final username = await persistenceRepository.getUniqueName();
     final connectResult = await connectUseCase(
       ConnectParameters(
-        username: "player",
-        roomId: "569841",
+        username: username,
+        roomId: "idle",
+        roomPasscode: "idle",
         clientType: ClientType.PLAYER,
       ),
     );
+
+    debugPrint("Player connecting to the server");
+    connectResult.fold(
+      (l) {
+        debugPrint("Error: $l");
+        playerViewStateNotifier.value = PlayerViewState.failure(l.toString());
+      },
+      (r) {
+        connectRepository.connectSocket();
+        isConnected.value = true;
+        playerViewStateNotifier.value = PlayerViewState.disconnected();
+      },
+    );
+
+    _roomAssignedStreamController =
+        playerSocketRepository.roomAssignedStreamController;
+    _roomAssignedStreamController?.stream.listen((roomId) {
+      debugPrint("Room assigned: $roomId");
+      // re-establish connection
+      establishConnection(roomId);
+    });
+  }
+
+  void establishConnection(String roomId) async {
+    debugPrint("Establishing connection to the room: $roomId");
+    isConnected.value = false;
+    playerViewStateNotifier.value = PlayerViewState.loading();
+
+    final username = await persistenceRepository.getUniqueName();
+
+    debugPrint("Room assigned: $roomId");
+    final connectResult = await connectUseCase(
+      ConnectParameters(
+        username: username,
+        roomId: roomId,
+        clientType: ClientType.PLAYER,
+      ),
+    );
+
+    // 1. Connect to the server with username and roomId
+    var canProceed = false;
     connectResult.fold(
       (l) {
         debugPrint("Error: $l");
@@ -68,9 +108,11 @@ class DefaultPlayerViewModel extends PlayerViewModel {
           PlayerViewState.failure("Unable to connect to the server");
       return;
     }
-    isConnected.value = true;
 
-    playerViewStateNotifier.value = PlayerViewState.disconnected();
+    isConnected.value = true;
+    roomIdNotifier.value = roomId;
+    playerViewStateNotifier.value = PlayerViewState.connected();
+
     setupListeners();
     reservedViewModel.setupListeners();
 

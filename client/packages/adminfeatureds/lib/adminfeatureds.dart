@@ -11,6 +11,7 @@ import 'package:singalong_api_client/singalong_api_client.dart';
 
 part 'controlpanelrepositoryds.dart';
 part 'rooms_repositoryds.dart';
+part 'player_socket_repositoryds.dart';
 
 class AdminFeatureDSProvider {
   final providers = MultiProvider(providers: [
@@ -22,6 +23,13 @@ class AdminFeatureDSProvider {
     ),
     Provider<ControlPanelSocketRepository>(
       create: (context) => ControlPanelRepositoryDS(
+        socket: context.read(),
+        configuration: context.read(),
+      ),
+    ),
+    Provider<PlayerSocketRepository>(
+      create: (context) => PlayerSocketRepositoryDS(
+        api: context.read(),
         socket: context.read(),
         configuration: context.read(),
       ),

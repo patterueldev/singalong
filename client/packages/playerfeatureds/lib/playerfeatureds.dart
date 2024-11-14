@@ -22,7 +22,7 @@ class PlayerFeatureDSProvider {
       ),
       Provider<ReservedSongListSocketRepository>(
         create: (context) => ReservedSongListRepositoryDS(
-          apiClient: context.read(),
+          socket: context.read(),
           configuration: context.read(),
         ),
       ),
