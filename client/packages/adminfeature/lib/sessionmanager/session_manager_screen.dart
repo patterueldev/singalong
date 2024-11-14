@@ -89,7 +89,7 @@ class _SessionManagerScreenState extends State<SessionManagerScreen> {
           actions: [
             IconButton(
               icon: const Icon(Icons.add),
-              onPressed: () => viewModel.createRoom(),
+              onPressed: () => showCreateRoomDialog(context),
             ),
           ],
         ),
@@ -140,4 +140,16 @@ class _SessionManagerScreenState extends State<SessionManagerScreen> {
           ),
         ),
       );
+
+  void showCreateRoomDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => ChangeNotifierProvider<CreateRoomViewModel>(
+        create: (context) => DefaultCreateRoomViewModel(
+          roomRepository: context.read(),
+        ),
+        child: const CreateRoomDialog(),
+      ),
+    );
+  }
 }

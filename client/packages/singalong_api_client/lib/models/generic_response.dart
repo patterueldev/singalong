@@ -22,6 +22,10 @@ class GenericResponse {
     return data as List<dynamic>;
   }
 
+  String stringData() {
+    return data as String;
+  }
+
   factory GenericResponse.fromJson(Map<String, dynamic> json) =>
       _$GenericResponseFromJson(json);
   factory GenericResponse.fromResponse(Response response) {

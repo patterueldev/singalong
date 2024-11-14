@@ -50,6 +50,11 @@ class RoomsRepositoryDS implements RoomsRepository {
     final result = await api.connectWithRoom(room.id);
     return result.fromAPI();
   }
+
+  @override
+  Future<String> newRoomID() async {
+    return await api.newRoomID();
+  }
 }
 
 extension APIConnectResponseMapper on APIConnectWithRoomResponseData {

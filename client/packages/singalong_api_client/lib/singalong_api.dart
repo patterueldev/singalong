@@ -101,4 +101,12 @@ class SingalongAPI {
       payload: {'playerId': playerId, 'roomId': roomId},
     );
   }
+
+  Future<String> newRoomID() async {
+    final result = await apiClient.request(
+      path: APIPath.adminGenerateRoomID,
+      method: HttpMethod.GET,
+    );
+    return result.stringData();
+  }
 }

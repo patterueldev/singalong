@@ -33,6 +33,8 @@ class AdminService(
     suspend fun connectWithRoom(parameters: ConnectWithRoomParameters) = connectWithRoomUseCase(parameters)
 
     suspend fun assignPlayerToRoom(parameters: AssignPlayerToRoomParameters) = assignPlayerToRoomUseCase(parameters)
+
+    suspend fun newRoomId(): GenericResponse<String> = GenericResponse.success(roomRepository.newRoomId())
 }
 
 data class AssignPlayerToRoomParameters(

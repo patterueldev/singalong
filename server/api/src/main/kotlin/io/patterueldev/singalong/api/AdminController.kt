@@ -42,4 +42,7 @@ class AdminController(
     suspend fun assignPlayerToRoom(
         @RequestBody assignPlayerToRoomParameters: AssignPlayerToRoomParameters,
     ) = adminService.assignPlayerToRoom(assignPlayerToRoomParameters)
+
+    @GetMapping("/rooms/generateid")
+    suspend fun generateRoomId() = adminService.newRoomId()
 }

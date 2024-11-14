@@ -40,6 +40,21 @@ class PromptModel {
         message: message,
         actions: actions,
       );
+
+  factory PromptModel.quick({
+    required String title,
+    required String message,
+    required String actionText,
+  }) =>
+      PromptModel._(
+        title: LocalizedString((_) => title),
+        message: LocalizedString((_) => message),
+        actions: [
+          PromptAction(
+            title: LocalizedString((_) => actionText),
+          ),
+        ],
+      );
 }
 
 class PromptAction {

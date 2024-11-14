@@ -3,6 +3,8 @@ package io.patterueldev.room
 import io.patterueldev.common.Pagination
 
 interface RoomRepository {
+    suspend fun newRoomId(): String
+
     suspend fun findRoomById(roomId: String): Room?
 
     suspend fun findActiveRoom(): Room?

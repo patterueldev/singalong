@@ -23,6 +23,12 @@ open class RoomRepositoryDS : RoomRepository {
 
     @Autowired private lateinit var sixDigitIdGenerator: SixDigitIdGenerator
 
+    override suspend fun newRoomId(): String {
+        val rooms = roomDocumentRepository.findAll()
+        val existingRoomIds = rooms.map { it.id }
+        return sixDigitIdGenerator.generateUnique(existingRoomIds)
+    }
+
     override suspend fun findRoomById(roomId: String): Room? {
         val roomDocument = roomDocumentRepository.findRoomById(roomId) ?: return null
         return roomDocument.toRoom()
@@ -139,8 +145,14 @@ internal class SixDigitIdGenerator {
 
     fun generateUnique(existingIds: List<String>): String {
         var id = generate()
-        while (id in existingIds) {
+        val maxRetries = 100
+        var retries = 0
+        while (existingIds.contains(id) && retries < maxRetries) {
             id = generate()
+            retries++
+        }
+        if (retries >= maxRetries) {
+            throw IllegalStateException("Failed to generate a unique id")
         }
         return id
     }

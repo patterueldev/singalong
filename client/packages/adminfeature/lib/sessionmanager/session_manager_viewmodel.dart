@@ -42,19 +42,6 @@ class DefaultSessionManagerViewModel extends SessionManagerViewModel {
         isLoadingNotifier.value = false;
       },
     );
-    // await Future.delayed(Duration(seconds: 1));
-    // final rooms = [
-    //   Room(id: '1', name: 'Room 1', isSecured: true, isActive: true),
-    //   Room(
-    //       id: '2',
-    //       name: 'Room 2',
-    //       isSecured: false,
-    //       isActive: false,
-    //       lastActive: DateTime.now().subtract(Duration(days: 1))),
-    //   // Add more rooms as needed
-    // ];
-    // roomsNotifier.value = rooms;
-    // isLoadingNotifier.value = false;
   }
 
   @override

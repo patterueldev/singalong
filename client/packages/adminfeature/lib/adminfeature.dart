@@ -31,6 +31,8 @@ part 'player_control_panel/player_control_panel_viewmodel.dart';
 part 'player_control_panel/controlpanelsocketrepository.dart';
 part 'player_control_panel/authorize_connection_usecase.dart';
 part 'player_control_panel/player_control_panel_state.dart';
+part 'create_room/create_room_dialog.dart';
+part 'create_room/create_room_viewmodel.dart';
 
 class AdminFeatureUIProvider {
   AdminFeatureUIProvider();
