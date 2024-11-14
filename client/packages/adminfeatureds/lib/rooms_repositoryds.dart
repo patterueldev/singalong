@@ -55,6 +55,21 @@ class RoomsRepositoryDS implements RoomsRepository {
   Future<String> newRoomID() async {
     return await api.newRoomID();
   }
+
+  @override
+  Future<void> createRoom(CreateRoomParameters parameters) async {
+    final result = await api.createRoom(
+      APICreateRoomParameters(
+        roomId: parameters.roomId,
+        roomName: parameters.roomName,
+        roomPasscode: parameters.roomPasscode,
+      ),
+    );
+    debugPrint('Room created: ${result.id}');
+    if (result.id.isEmpty && result.id != parameters.roomId) {
+      throw 'Failed to create room';
+    }
+  }
 }
 
 extension APIConnectResponseMapper on APIConnectWithRoomResponseData {

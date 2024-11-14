@@ -109,4 +109,13 @@ class SingalongAPI {
     );
     return result.stringData();
   }
+
+  Future<APIRoom> createRoom(APICreateRoomParameters parameters) async {
+    final result = await apiClient.request(
+      path: APIPath.adminCreateRoom,
+      method: HttpMethod.POST,
+      payload: parameters.toJson(),
+    );
+    return APIRoom.fromJson(result.objectData());
+  }
 }

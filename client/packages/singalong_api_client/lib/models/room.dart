@@ -60,3 +60,22 @@ class APILoadRoomListParameters {
       _$APILoadRoomListParametersFromJson(json);
   Map<String, dynamic> toJson() => _$APILoadRoomListParametersToJson(this);
 }
+
+@JsonSerializable()
+class APIRoom {
+  final String id;
+  final String name;
+  final String? passcode;
+  final bool isArchived;
+
+  APIRoom({
+    required this.id,
+    required this.name,
+    this.passcode,
+    required this.isArchived,
+  });
+
+  factory APIRoom.fromJson(Map<String, dynamic> json) =>
+      _$APIRoomFromJson(json);
+  Map<String, dynamic> toJson() => _$APIRoomToJson(this);
+}

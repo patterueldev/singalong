@@ -41,16 +41,25 @@ open class RoomRepositoryDS : RoomRepository {
         return roomDocument.toRoom()
     }
 
-    override suspend fun createRoom(): Room {
-        val rooms = roomDocumentRepository.findAll()
-        val existingRoomIds = rooms.map { it.id }
-        val id = sixDigitIdGenerator.generateUnique(existingRoomIds)
-        val count = rooms.count()
+    override suspend fun createRoom(parameters: CreateRoomParameters?): Room {
+        val id: String
+        val name: String
+        val passcode: String?
+        if (parameters == null) {
+            id = newRoomId()
+            name = "Room $id"
+            passcode = null
+        } else {
+            id = parameters.roomId
+            name = parameters.roomName
+            passcode = parameters.roomPasscode.trim().ifBlank { null }
+        }
         val roomDocument =
             roomDocumentRepository.insert(
                 RoomDocument(
                     id = id,
-                    name = "Room $count",
+                    name = name,
+                    passcode = passcode,
                 ),
             )
         return roomDocument.toRoom()

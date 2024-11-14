@@ -150,6 +150,10 @@ class _SessionManagerScreenState extends State<SessionManagerScreen> {
         ),
         child: const CreateRoomDialog(),
       ),
-    );
+    ).then((value) {
+      if (value != null) {
+        viewModel.load();
+      }
+    });
   }
 }

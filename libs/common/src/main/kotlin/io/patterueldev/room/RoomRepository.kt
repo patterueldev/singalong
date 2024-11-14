@@ -9,7 +9,7 @@ interface RoomRepository {
 
     suspend fun findActiveRoom(): Room?
 
-    suspend fun createRoom(): Room
+    suspend fun createRoom(parameters: CreateRoomParameters? = null): Room
 
     suspend fun loadRoomList(
         limit: Int,
@@ -22,3 +22,9 @@ interface RoomRepository {
         roomId: String,
     )
 }
+
+data class CreateRoomParameters(
+    val roomId: String,
+    val roomName: String,
+    val roomPasscode: String = "",
+)

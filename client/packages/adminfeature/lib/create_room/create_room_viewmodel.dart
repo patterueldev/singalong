@@ -2,6 +2,7 @@ part of '../adminfeature.dart';
 
 abstract class CreateRoomViewModel extends ChangeNotifier {
   ValueNotifier<bool> isLoadingNotifier = ValueNotifier(false);
+  ValueNotifier<bool> roomCreatedNotifier = ValueNotifier(false);
   ValueNotifier<PromptModel?> promptNotifier = ValueNotifier(null);
 
   String roomId = '';
@@ -59,15 +60,20 @@ class DefaultCreateRoomViewModel extends CreateRoomViewModel {
     isLoadingNotifier.value = true;
 
     try {
-      await Future.delayed(const Duration(seconds: 2));
-      throw UnimplementedError();
-      // await _roomRepository.create(
-      //   roomId: roomId,
-      //   roomName: roomName,
-      //   roomPasscode: roomPasscode,
-      // );
+      final parameters = CreateRoomParameters(
+        roomId: roomId.trim(),
+        roomName: roomName.trim(),
+        roomPasscode: roomPasscode.trim(),
+      );
+      await roomRepository.createRoom(parameters);
+      roomCreatedNotifier.value = true;
     } catch (e) {
       print(e);
+      promptNotifier.value = PromptModel.quick(
+        title: 'Error',
+        message: 'Failed to create room: $e',
+        actionText: 'OK',
+      );
     }
 
     isLoadingNotifier.value = false;

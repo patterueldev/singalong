@@ -436,6 +436,20 @@ Map<String, dynamic> _$APILoadRoomListParametersToJson(
       'nextPage': instance.nextPage,
     };
 
+APIRoom _$APIRoomFromJson(Map<String, dynamic> json) => APIRoom(
+      id: json['id'] as String,
+      name: json['name'] as String,
+      passcode: json['passcode'] as String?,
+      isArchived: json['isArchived'] as bool,
+    );
+
+Map<String, dynamic> _$APIRoomToJson(APIRoom instance) => <String, dynamic>{
+      'id': instance.id,
+      'name': instance.name,
+      'passcode': instance.passcode,
+      'isArchived': instance.isArchived,
+    };
+
 APIConnectWithRoomResponseData _$APIConnectWithRoomResponseDataFromJson(
         Map<String, dynamic> json) =>
     APIConnectWithRoomResponseData(
@@ -460,4 +474,20 @@ Map<String, dynamic> _$APIPlayerItemToJson(APIPlayerItem instance) =>
     <String, dynamic>{
       'id': instance.id,
       'name': instance.name,
+    };
+
+APICreateRoomParameters _$APICreateRoomParametersFromJson(
+        Map<String, dynamic> json) =>
+    APICreateRoomParameters(
+      roomId: json['roomId'] as String,
+      roomName: json['roomName'] as String,
+      roomPasscode: json['roomPasscode'] as String? ?? '',
+    );
+
+Map<String, dynamic> _$APICreateRoomParametersToJson(
+        APICreateRoomParameters instance) =>
+    <String, dynamic>{
+      'roomId': instance.roomId,
+      'roomName': instance.roomName,
+      'roomPasscode': instance.roomPasscode,
     };

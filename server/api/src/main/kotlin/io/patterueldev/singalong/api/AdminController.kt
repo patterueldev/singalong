@@ -1,9 +1,10 @@
 package io.patterueldev.singalong.api
 
 import io.patterueldev.admin.AdminService
-import io.patterueldev.admin.AssignPlayerToRoomParameters
+import io.patterueldev.admin.assign_player_to_room.AssignPlayerToRoomParameters
 import io.patterueldev.admin.connectwithroom.ConnectWithRoomParameters
 import io.patterueldev.admin.room.LoadRoomListParameters
+import io.patterueldev.room.CreateRoomParameters
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -45,4 +46,9 @@ class AdminController(
 
     @GetMapping("/rooms/generateid")
     suspend fun generateRoomId() = adminService.newRoomId()
+
+    @PostMapping("/rooms/create")
+    suspend fun createRoom(
+        @RequestBody createRoomParameters: CreateRoomParameters,
+    ) = adminService.createRoom(createRoomParameters)
 }
