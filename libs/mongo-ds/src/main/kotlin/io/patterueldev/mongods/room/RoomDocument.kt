@@ -20,5 +20,5 @@ data class RoomDocument(
     @LastModifiedDate val updatedAt: LocalDateTime = LocalDateTime.now(),
     val archivedAt: LocalDateTime? = null,
     val lastActiveAt: LocalDateTime = LocalDateTime.now(),
-    @DBRef var assignedPlayer: UserDocument? = null,
+    var assignedPlayerId: String? = null,
 )

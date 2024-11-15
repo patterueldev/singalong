@@ -32,6 +32,11 @@ internal class ConnectUseCase(
             } else {
                 user = authUserRepository.createUser(parameters.username, parameters.userPasscode)
             }
+        } else {
+            // check if the user is a player; don't log in if the user is a player
+            if (user.role == Role.USER_HOST && parameters.clientType != ClientType.PLAYER) {
+                return GenericResponse.failure("Please use other user name")
+            }
         }
         // step2.2: check if the user is still in the room
         // TODO: check if the user is already in the room; not too required right now, but will be useful in the future

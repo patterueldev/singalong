@@ -1,4 +1,4 @@
-package io.patterueldev.admin.assign_player_to_room
+package io.patterueldev.admin.assignplayertoroom
 
 import io.patterueldev.admin.AdminCoordinator
 import io.patterueldev.authuser.AuthUserRepository

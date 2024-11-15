@@ -1,7 +1,7 @@
 package io.patterueldev.admin
 
-import io.patterueldev.admin.assign_player_to_room.AssignPlayerToRoomParameters
-import io.patterueldev.admin.assign_player_to_room.AssignPlayerToRoomUseCase
+import io.patterueldev.admin.assignplayertoroom.AssignPlayerToRoomParameters
+import io.patterueldev.admin.assignplayertoroom.AssignPlayerToRoomUseCase
 import io.patterueldev.admin.connectwithroom.ConnectWithRoomParameters
 import io.patterueldev.admin.connectwithroom.ConnectWithRoomUseCase
 import io.patterueldev.admin.room.LoadRoomListParameters

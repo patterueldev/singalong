@@ -6,6 +6,25 @@ part of 'singalong_api_client.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
+RoomCommand _$RoomCommandFromJson(Map<String, dynamic> json) => RoomCommand(
+      $enumDecode(_$RoomCommandTypeEnumMap, json['type']),
+      json['data'],
+    );
+
+Map<String, dynamic> _$RoomCommandToJson(RoomCommand instance) =>
+    <String, dynamic>{
+      'type': _$RoomCommandTypeEnumMap[instance.type]!,
+      'data': instance.data,
+    };
+
+const _$RoomCommandTypeEnumMap = {
+  RoomCommandType.skipSong: 'skipSong',
+  RoomCommandType.togglePlayPause: 'togglePlayPause',
+  RoomCommandType.adjustVolume: 'adjustVolume',
+  RoomCommandType.durationUpdate: 'durationUpdate',
+  RoomCommandType.seekDuration: 'seekDuration',
+};
+
 GenericResponse _$GenericResponseFromJson(Map<String, dynamic> json) =>
     GenericResponse(
       success: json['success'] as bool,

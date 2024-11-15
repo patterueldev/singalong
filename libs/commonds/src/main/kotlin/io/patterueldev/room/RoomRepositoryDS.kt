@@ -4,7 +4,6 @@ import io.patterueldev.common.PaginatedData
 import io.patterueldev.common.Pagination
 import io.patterueldev.mongods.room.RoomDocument
 import io.patterueldev.mongods.room.RoomDocumentRepository
-import io.patterueldev.mongods.user.UserDocumentRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.springframework.beans.factory.annotation.Autowired
@@ -18,8 +17,6 @@ import kotlin.random.Random
 @Repository
 open class RoomRepositoryDS : RoomRepository {
     @Autowired private lateinit var roomDocumentRepository: RoomDocumentRepository
-
-    @Autowired private lateinit var userDocumentRepository: UserDocumentRepository
 
     @Autowired private lateinit var sixDigitIdGenerator: SixDigitIdGenerator
 
@@ -38,6 +35,17 @@ open class RoomRepositoryDS : RoomRepository {
         println("Finding active room")
         val roomDocument = roomDocumentRepository.findActiveRoom() ?: return null
         println("Found active room: $roomDocument")
+        return roomDocument.toRoom()
+    }
+
+    override suspend fun findActiveRooms(): List<Room> {
+        return roomDocumentRepository.findActiveRooms().map { it.toRoom() }
+    }
+
+    override suspend fun findAssignedRoomForPlayer(playerId: String): Room? {
+        println("Finding assigned room for player: $playerId")
+        val roomDocument = roomDocumentRepository.findAssignedRoomForPlayer(playerId) ?: return null
+        println("Found assigned room for player: $roomDocument")
         return roomDocument.toRoom()
     }
 
@@ -122,11 +130,9 @@ open class RoomRepositoryDS : RoomRepository {
     ) {
         // pull the room
         val roomDocument = roomDocumentRepository.findRoomById(roomId) ?: return
-        // pull the user
-        val userDocument = userDocumentRepository.findByUsername(playerId) ?: return
 
         // assign the player to the room
-        roomDocument.assignedPlayer = userDocument
+        roomDocument.assignedPlayerId = playerId
 
         roomDocumentRepository.save(roomDocument)
     }

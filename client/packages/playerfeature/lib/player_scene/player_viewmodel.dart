@@ -44,27 +44,31 @@ class DefaultPlayerViewModel extends PlayerViewModel {
 
     // initial connection
     final username = await persistenceRepository.getUniqueName();
-    final connectResult = await connectUseCase(
-      ConnectParameters(
-        username: username,
-        roomId: "idle",
-        roomPasscode: "idle",
-        clientType: ClientType.PLAYER,
-      ),
-    );
+    final deviceId = await persistenceRepository.getDeviceId();
+    await playerSocketRepository.registerIdlePlayer(username, deviceId);
+    // final connectResult = await connectUseCase(
+    //   ConnectParameters(
+    //     username: username,
+    //     roomId: "idle",
+    //     roomPasscode: "idle",
+    //     clientType: ClientType.PLAYER,
+    //   ),
+    // );
+
+    // TODO: Handle unique name to be truly unique, like get it from the server instead of local generation
 
     debugPrint("Player connecting to the server");
-    connectResult.fold(
-      (l) {
-        debugPrint("Error: $l");
-        playerViewStateNotifier.value = PlayerViewState.failure(l.toString());
-      },
-      (r) {
-        connectRepository.connectSocket();
-        isConnected.value = true;
-        playerViewStateNotifier.value = PlayerViewState.disconnected();
-      },
-    );
+    // connectResult.fold(
+    //   (l) {
+    //     debugPrint("Error: $l");
+    //     playerViewStateNotifier.value = PlayerViewState.failure(l.toString());
+    //   },
+    //   (r) {
+    //     connectRepository.connectSocket();
+    isConnected.value = true;
+    playerViewStateNotifier.value = PlayerViewState.disconnected();
+    //   },
+    // );
 
     _roomAssignedStreamController =
         playerSocketRepository.roomAssignedStreamController;
@@ -113,10 +117,12 @@ class DefaultPlayerViewModel extends PlayerViewModel {
     roomIdNotifier.value = roomId;
     playerViewStateNotifier.value = PlayerViewState.connected();
 
+    await connectRepository.connectRoomSocket(roomId);
+
     setupListeners();
     reservedViewModel.setupListeners();
 
-    connectRepository.connectSocket();
+    playerSocketRepository.requestPlayerData();
   }
 
   void setupListeners() {
@@ -124,8 +130,7 @@ class DefaultPlayerViewModel extends PlayerViewModel {
     debugPrint("Listening to current song updates");
 
     // Listen to the current song stream
-    _currentSongController =
-        playerSocketRepository.currentSongStreamController();
+    _currentSongController = playerSocketRepository.currentSongStreamController;
     _currentSongController?.stream.listen((currentSong) async {
       debugPrint("Current song: $currentSong");
       try {
@@ -155,7 +160,7 @@ class DefaultPlayerViewModel extends PlayerViewModel {
 
     // Seek duration from the control stream
     _seekDurationFromControlStreamController =
-        playerSocketRepository.seekDurationFromControlStreamController();
+        playerSocketRepository.seekDurationFromControlStreamController;
     _seekDurationFromControlStreamController?.stream.listen((seekValue) {
       debugPrint("Seek value: $seekValue");
       _activeSongVideoController?.seekTo(Duration(seconds: seekValue));
@@ -163,7 +168,7 @@ class DefaultPlayerViewModel extends PlayerViewModel {
 
     // Toggle play/pause stream
     _togglePlayPauseStreamController =
-        playerSocketRepository.togglePlayPauseStreamController();
+        playerSocketRepository.togglePlayPauseStreamController;
     _togglePlayPauseStreamController?.stream.listen((isPlaying) {
       debugPrint("Toggle play/pause: $isPlaying");
       if (isPlaying) {
@@ -174,7 +179,7 @@ class DefaultPlayerViewModel extends PlayerViewModel {
     });
 
     // Volume stream
-    _volumeStreamController = playerSocketRepository.volumeStreamController();
+    _volumeStreamController = playerSocketRepository.volumeStreamController;
     _volumeStreamController?.stream.listen((volume) {
       debugPrint("Volume: $volume");
       _activeSongVideoController?.setVolume(volume);
@@ -205,7 +210,8 @@ class DefaultPlayerViewModel extends PlayerViewModel {
       // TODO: Send command to the server to update the score and play the next song
     } else {
       // send the current position to the server
-      playerSocketRepository.seekDurationFromPlayer(position.inMilliseconds);
+      playerSocketRepository.durationUpdate(
+          durationInMilliseconds: position.inMilliseconds);
     }
   }
 

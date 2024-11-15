@@ -1,5 +1,5 @@
 package io.patterueldev.songidentifier
 
 interface SongIdentifierCoordinator {
-    fun onReserveUpdate()
+    fun onReserveUpdate(roomId: String)
 }

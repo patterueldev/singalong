@@ -9,6 +9,10 @@ interface RoomRepository {
 
     suspend fun findActiveRoom(): Room?
 
+    suspend fun findActiveRooms(): List<Room>
+
+    suspend fun findAssignedRoomForPlayer(playerId: String): Room?
+
     suspend fun createRoom(parameters: CreateRoomParameters? = null): Room
 
     suspend fun loadRoomList(

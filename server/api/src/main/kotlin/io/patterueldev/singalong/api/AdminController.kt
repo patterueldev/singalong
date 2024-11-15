@@ -1,7 +1,7 @@
 package io.patterueldev.singalong.api
 
 import io.patterueldev.admin.AdminService
-import io.patterueldev.admin.assign_player_to_room.AssignPlayerToRoomParameters
+import io.patterueldev.admin.assignplayertoroom.AssignPlayerToRoomParameters
 import io.patterueldev.admin.connectwithroom.ConnectWithRoomParameters
 import io.patterueldev.admin.room.LoadRoomListParameters
 import io.patterueldev.room.CreateRoomParameters

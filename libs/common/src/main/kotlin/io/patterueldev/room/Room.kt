@@ -10,6 +10,7 @@ interface Room {
         return id == "admin"
     }
 
+    // TODO: Might not need this in the future
     fun isIdleRoom(): Boolean {
         return id == "idle"
     }

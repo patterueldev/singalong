@@ -80,9 +80,12 @@ class PlayerControlPanelWidget extends StatelessWidget {
                 value: value,
                 min: state.minSeekValue,
                 max: state.maxSeekValue,
-                onChanged: viewModel.seek,
+                onChanged: viewModel.updateSliderValue,
                 onChangeStart: (_) => viewModel.toggleSeeking(true),
-                onChangeEnd: (_) => viewModel.toggleSeeking(false),
+                onChangeEnd: (_) {
+                  viewModel.toggleSeeking(false);
+                  viewModel.seek(value);
+                },
               ),
             ),
 

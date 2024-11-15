@@ -21,6 +21,20 @@ interface RoomDocumentRepository : MongoRepository<RoomDocument, String> {
     fun findActiveRoom(): RoomDocument?
 
     @Query(
+        value = "{ 'archivedAt': null, '_id': { '\$nin': ['idle', 'admin'] } }",
+        sort = "{ 'createdAt': -1 }",
+    )
+    fun findActiveRooms(): List<RoomDocument>
+
+    @Query(
+        value = "{ 'archivedAt': null, 'assignedPlayerId': ?0 }",
+        sort = "{ 'createdAt': -1 }",
+    )
+    fun findAssignedRoomForPlayer(
+        playerId: String,
+    ): RoomDocument?
+
+    @Query(
         value = "{ '\$or': [ { 'name': { '\$regex': ?0, '\$options': 'i' } }, { '_id': { '\$regex': ?0, '\$options': 'i' } } ] }",
         sort = "{ 'createdAt': -1 }",
     )

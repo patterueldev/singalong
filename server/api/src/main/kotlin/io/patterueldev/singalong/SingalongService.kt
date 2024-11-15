@@ -4,8 +4,8 @@ import com.corundumstudio.socketio.SocketIOServer
 import io.patterueldev.reservation.ReservationService
 import io.patterueldev.reservation.currentsong.LoadCurrentSongParameters
 import io.patterueldev.reservation.list.LoadReservationListParameters
+import io.patterueldev.reservation.next.SkipSongParameters
 import io.patterueldev.room.Room
-import io.patterueldev.roomuser.RoomUser
 import io.patterueldev.session.SessionService
 import jakarta.annotation.PreDestroy
 import kotlinx.coroutines.runBlocking
@@ -21,55 +21,63 @@ class SingalongService {
     private lateinit var reservationService: ReservationService
 
     @Autowired
-    private lateinit var server: SocketIOServer
+    private lateinit var socketIOServer: SocketIOServer
 
+    // TODO: The active room should not be automatically set now; it will be set by admin
     var activeRoom: Room? = null
+//    var activeRooms = mutableListOf<Room>()
 
-    fun start() {
+    suspend fun start() {
+        // get list of active rooms
+//        activeRooms = sessionService.getActiveRooms().toMutableList()
+//        println("Fetched ${activeRooms.size} room(s)")
         // Start session service
-        println("Starting session service...")
-        activeRoom =
-            runBlocking {
-                sessionService.findOrCreateRoom()
-            }.data!!
-        println("Active room: $activeRoom")
+//        println("Starting session service...")
+//        activeRoom =
+//            runBlocking {
+//                sessionService.findOrCreateRoom()
+//            }.data
+//        println("Active room: $activeRoom")
 
         // Start socket.io server
-        server.start()
+        socketIOServer.start()
     }
 
     @PreDestroy
     fun stopServer() {
         // could potentially mark the room as inactive
         println("Stopping socketIO server...")
-        server.stop()
+        socketIOServer.stop()
     }
 
-    fun getReservedSongs() =
+    fun getActiveRooms() =
         runBlocking {
-            val id = activeRoom?.id ?: return@runBlocking listOf()
+            sessionService.getActiveRooms()
+        }
+
+    fun getAssignedRoom(userId: String) =
+        runBlocking {
+            sessionService.getAssignedRoomForPlayer(userId)
+        }
+
+    fun getReservedSongs(roomId: String) =
+        runBlocking {
             reservationService.loadReservationList(
-                parameters = LoadReservationListParameters(id),
+                parameters = LoadReservationListParameters(roomId),
             ).data ?: listOf()
         }
 
-    fun getCurrentSong() =
+    fun getCurrentSong(roomId: String) =
         runBlocking {
-            val id = activeRoom?.id ?: return@runBlocking null
             reservationService.loadCurrentSong(
-                parameters = LoadCurrentSongParameters(id),
+                parameters = LoadCurrentSongParameters(roomId),
             ).data
         }
 
-    suspend fun skipSong(
-        username: String,
-        roomId: String,
-    ) = reservationService.nextSong(
-        object : RoomUser {
-            override val username: String
-                get() = username
-            override val roomId: String
-                get() = roomId
-        },
-    )
+    fun skipSong(roomId: String) =
+        runBlocking {
+            reservationService.skipSong(
+                parameters = SkipSongParameters(roomId),
+            )
+        }
 }

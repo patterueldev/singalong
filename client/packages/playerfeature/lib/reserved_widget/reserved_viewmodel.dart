@@ -20,7 +20,7 @@ class DefaultReservedViewModel extends ReservedViewModel {
     debugPrint('Setting up socket for reserved songs');
 
     reservedSongsStreamController =
-        reservedSongListSocketRepository.reservedSongsStreamController();
+        reservedSongListSocketRepository.reservedSongsStreamController;
     reservedSongsStreamController?.stream.listen((event) {
       debugPrint('Received new songs: $event');
       reservedViewStateNotifier.value = List.from(event);

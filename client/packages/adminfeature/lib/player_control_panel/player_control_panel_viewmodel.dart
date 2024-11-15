@@ -4,7 +4,7 @@ abstract class PlayerControlPanelViewModel extends ChangeNotifier {
   ValueNotifier<PlayerControlPanelState> stateNotifier =
       ValueNotifier(PlayerControlPanelState.inactive());
   ValueNotifier<double> currentSeekValueNotifier = ValueNotifier(0.0);
-  ValueNotifier<double> currentVolumeValueNotifier = ValueNotifier(0.5);
+  ValueNotifier<double> currentVolumeValueNotifier = ValueNotifier(1.0);
   ValueNotifier<PlayerItem?> selectedPlayerItemNotifier = ValueNotifier(null);
 
   bool isSeeking = false;
@@ -18,9 +18,11 @@ abstract class PlayerControlPanelViewModel extends ChangeNotifier {
 
   void togglePlayPause(bool isPlaying);
   void nextSong();
-  void seek(double value) {
+  void updateSliderValue(double value) {
     currentSeekValueNotifier.value = value;
   }
+
+  void seek(double value);
 
   void toggleSeeking(bool value) {
     isSeeking = value;
@@ -57,18 +59,18 @@ class DefaultPlayerControlPanelViewModel extends PlayerControlPanelViewModel {
 
   void setup() async {
     _seekDurationUpdatesStreamController =
-        controlPanelRepository.seekDurationInMillisecondsStreamController();
+        controlPanelRepository.durationUpdateInMillisecondsStreamController;
     _seekDurationUpdatesStreamController?.stream.listen((value) {
       if (isSeeking) {
         return;
       }
-      debugPrint('Seek value: $value');
+      debugPrint('Duration Update: $value milliseconds');
       double seconds = value / 1000;
       currentSeekValueNotifier.value = seconds;
     });
 
     _currentSongStreamController =
-        controlPanelRepository.currentSongStreamController();
+        controlPanelRepository.currentSongStreamController;
     _currentSongStreamController?.stream.listen((song) {
       debugPrint('Current song: $song');
       if (song == null) {
@@ -86,13 +88,15 @@ class DefaultPlayerControlPanelViewModel extends PlayerControlPanelViewModel {
     });
 
     _togglePlayPauseStreamController =
-        controlPanelRepository.togglePlayPauseStreamController();
+        controlPanelRepository.togglePlayPauseStreamController;
     _togglePlayPauseStreamController?.stream.listen((isPlaying) {
       final currentState = stateNotifier.value;
       if (currentState is ActiveState) {
         currentState.isPlayingNotifier.value = isPlaying;
       }
     });
+
+    controlPanelRepository.requestCurrentSong();
   }
 
   @override
@@ -112,19 +116,18 @@ class DefaultPlayerControlPanelViewModel extends PlayerControlPanelViewModel {
   }
 
   @override
-  void seek(double value) {
-    super.seek(value);
-
+  void seek(double value,
+      {Duration duration = const Duration(milliseconds: 100)}) {
     _seekDebounceTimer?.cancel();
-    _seekDebounceTimer = Timer(const Duration(milliseconds: 100), () {
+    _seekDebounceTimer = Timer(duration, () {
       // Handle seek action
       debugPrint('Will seek to $value');
 
       if (stateNotifier.value is InactiveState) {
-        super.seek(0);
+        super.updateSliderValue(0);
         return;
       }
-      controlPanelRepository.seekDurationFromControl(value.toInt());
+      controlPanelRepository.seekDuration(durationInSeconds: value.toInt());
     });
   }
 

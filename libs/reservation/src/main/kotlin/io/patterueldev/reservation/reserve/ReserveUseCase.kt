@@ -15,9 +15,9 @@ internal class ReserveUseCase(
         return try {
             val user = roomUserRepository.currentUser()
             val reservedSong = reservedSongsRepository.reserveSong(user, parameters.songId)
-            reservationCoordinator?.onReserveUpdate()
+            reservationCoordinator?.onReserveUpdate(user.roomId)
             if (reservedSong.currentPlaying) {
-                reservationCoordinator?.onCurrentSongUpdate()
+                reservationCoordinator?.onCurrentSongUpdate(user.roomId)
             }
             return GenericResponse.success(Unit, message = "Song reserved successfully.")
         } catch (e: Exception) {

@@ -20,11 +20,13 @@ class DefaultSessionViewModel extends SessionViewModel {
   final ReservedSongListSocketRepository reservedSongListSocketRepository;
   final ConnectRepository connectRepository;
   final SessionLocalizations localizations;
+  final PersistenceRepository persistenceRepository;
 
   DefaultSessionViewModel({
     required this.reservedSongListSocketRepository,
     required this.connectRepository,
     required this.localizations,
+    required this.persistenceRepository,
     List<ReservedSongItem>? songList,
   }) {
     if (songList != null) {
@@ -39,18 +41,24 @@ class DefaultSessionViewModel extends SessionViewModel {
     try {
       debugPrint('Setting up session');
       stateNotifier.value = SessionViewState.loading();
+      final roomId = await persistenceRepository.getRoomId();
+      if (roomId == null) {
+        stateNotifier.value = SessionViewState.failure('Room ID not found');
+        return;
+      }
+      await connectRepository.connectRoomSocket(roomId);
 
       debugPrint('Opening socket');
       streamController =
-          reservedSongListSocketRepository.reservedSongListStreamController();
+          reservedSongListSocketRepository.reservedSongListStreamController;
       debugPrint('Listening to stream');
       streamController?.stream.listen((songList) {
         songListNotifier.value = songList;
       });
 
       debugPrint('Connecting to socket');
+      reservedSongListSocketRepository.requestReservedSongList();
 
-      connectRepository.connectSocket();
       stateNotifier.value = SessionViewState.loaded();
 
       debugPrint('Session setup complete; State: ${stateNotifier.value}');

@@ -20,6 +20,10 @@ class SessionService(
     private val connectUseCase: ConnectUseCase by lazy { ConnectUseCase(roomRepository, authUserRepository, authRepository) }
     private val setUserPasscodeUseCase: SetUserPasscodeUseCase by lazy { SetUserPasscodeUseCase(authRepository, authUserRepository) }
 
+    suspend fun getActiveRooms() = roomRepository.findActiveRooms()
+
+    suspend fun getAssignedRoomForPlayer(playerId: String) = roomRepository.findAssignedRoomForPlayer(playerId)
+
     suspend fun findOrCreateRoom() = findOrCreateRoomUseCase.execute()
 
     suspend fun connect(parameters: ConnectParameters): ConnectResponse = connectUseCase(parameters)

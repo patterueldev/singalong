@@ -8,16 +8,17 @@ import org.springframework.stereotype.Component
 
 @Component
 class ServerCoordinator : ReservationCoordinator, SongIdentifierCoordinator, AdminCoordinator {
-    private var onReserveUpdateListener: OnEventListener? = null
-    private var onCurrentSongUpdateListener: OnEventListener? = null
-    private var onAssignedPlayerToRoomListener: ((String, String) -> Unit)? = null
+    var onReserveUpdateListener: ((String) -> Unit)? = null
+    var onCurrentSongUpdateListener: ((String) -> Unit)? = null
+    var onAssignedPlayerToRoomListener: ((String, String) -> Unit)? = null
+    var onRoomUpdateListener: OnEventListener? = null
 
-    override fun onReserveUpdate() {
-        onReserveUpdateListener?.invoke()
+    override fun onReserveUpdate(roomId: String) {
+        onReserveUpdateListener?.invoke(roomId)
     }
 
-    override fun onCurrentSongUpdate() {
-        onCurrentSongUpdateListener?.invoke()
+    override fun onCurrentSongUpdate(roomId: String) {
+        onCurrentSongUpdateListener?.invoke(roomId)
     }
 
     override fun onAssignedPlayerToRoom(
@@ -25,17 +26,5 @@ class ServerCoordinator : ReservationCoordinator, SongIdentifierCoordinator, Adm
         roomId: String,
     ) {
         onAssignedPlayerToRoomListener?.invoke(playerId, roomId)
-    }
-
-    fun setOnReserveUpdateListener(listener: OnEventListener) {
-        onReserveUpdateListener = listener
-    }
-
-    fun setOnCurrentSongUpdateListener(listener: OnEventListener) {
-        onCurrentSongUpdateListener = listener
-    }
-
-    fun setOnAssignedPlayerToRoomListener(listener: (String, String) -> Unit) {
-        onAssignedPlayerToRoomListener = listener
     }
 }

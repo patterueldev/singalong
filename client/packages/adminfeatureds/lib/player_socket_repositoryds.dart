@@ -14,7 +14,7 @@ class PlayerSocketRepositoryDS implements PlayerSocketRepository {
   @override
   void requestPlayerList() {
     debugPrint("requestPlayerList");
-    socket.emitEvent(SocketEvent.requestPlayersList, "Please");
+    socket.emitDataRequestEvent([RoomDataType.playerList]);
   }
 
   @override
@@ -23,24 +23,22 @@ class PlayerSocketRepositoryDS implements PlayerSocketRepository {
   }
 
   @override
-  StreamController<List<PlayerItem>> get playersStreamController {
-    debugPrint("playersStreamController");
-    return socket.buildEventStreamController(
-      SocketEvent.playersList,
-      (data, controller) {
-        debugPrint("playersStreamController Data: $data");
-        final raw = APIPlayerItem.fromList(data);
-        final players = raw
-            .map(
-              (e) => PlayerItem(
-                id: e.id,
-                name: e.name,
-                isIdle: true,
-              ),
-            )
-            .toList();
-        controller.add(players);
-      },
-    );
-  }
+  StreamController<List<PlayerItem>> get playersStreamController =>
+      socket.buildRoomEventStreamController(
+        SocketEvent.playersList,
+        (data, controller) {
+          debugPrint("playersStreamController Data: $data");
+          final raw = APIPlayerItem.fromList(data);
+          final players = raw
+              .map(
+                (e) => PlayerItem(
+                  id: e.id,
+                  name: e.name,
+                  isIdle: true,
+                ),
+              )
+              .toList();
+          controller.add(players);
+        },
+      );
 }

@@ -51,6 +51,7 @@ class DefaultSessionManagerViewModel extends SessionManagerViewModel {
   void selectRoom(Room room) async {
     isLoadingNotifier.value = true;
     try {
+      // TODO: Too many responsibilities in this method; should be in a use case
       final response = await roomsRepository.connectWithRoom(room);
       debugPrint("Response: $response");
       final accessToken = response.accessToken;
@@ -60,7 +61,7 @@ class DefaultSessionManagerViewModel extends SessionManagerViewModel {
       await persistenceRepository.saveAccessToken(accessToken);
       await persistenceRepository.saveRefreshToken(refreshToken);
       connectRepository.provideAccessToken(accessToken);
-      connectRepository.connectSocket();
+      await connectRepository.connectRoomSocket(room.id);
       roomSelectionNotifier.value = room;
     } catch (e) {
       debugPrint("Error while selecting room: $e");

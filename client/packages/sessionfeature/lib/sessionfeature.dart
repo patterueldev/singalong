@@ -29,6 +29,7 @@ class SessionFeatureUIBuilder {
         create: (context) => DefaultSessionViewModel(
           reservedSongListSocketRepository: context.read(),
           connectRepository: context.read(),
+          persistenceRepository: context.read(),
           localizations: context.read(),
         ),
         child: SessionView(
