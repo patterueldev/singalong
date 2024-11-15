@@ -26,8 +26,6 @@ class SingalongSocketIOModule(
     @Autowired private val serverCoordinator: ServerCoordinator,
 ) {
     private var idleNamespace: SocketIONamespace = server.addNamespace("/idle")
-
-//    private var namespace: SocketIONamespace = server.addNamespace("/singalong")
     private val roomNamespaces = mutableListOf<SocketIONamespace>()
 
     init {
@@ -88,40 +86,6 @@ class SingalongSocketIOModule(
         serverCoordinator.onCurrentSongUpdateListener = { broadcastCurrentSongData(it) }
         serverCoordinator.onAssignedPlayerToRoomListener = { playerId, roomId -> broadcastAssignedPlayerToRoom(playerId, roomId) }
         serverCoordinator.onRoomUpdateListener = ::updateRoomNamespaces
-
-//        val seekDurationFromPlayerEvent = SocketEvent.SEEK_DURATION_FROM_PLAYER.value
-//        namespace.addEventListener(seekDurationFromPlayerEvent, String::class.java) { client, data, _ ->
-//            val username = client.get<String>("username")
-//            val roomId = client.get<String>("roomId")
-//            val seekDuration = data.toInt()
-//            val adminClients = server.getNamespace("/singalong").allClients.filter { it.get<String>("clientType") == ClientType.ADMIN.name }
-//            adminClients.forEach { it.sendEvent(seekDurationFromPlayerEvent, seekDuration) }
-//        }
-//
-//        val seekDurationFromControlEvent = SocketEvent.SEEK_DURATION_FROM_CONTROL.value
-//        namespace.addEventListener(seekDurationFromControlEvent, String::class.java) { client, data, _ ->
-//            val username = client.get<String>("username")
-//            val roomId = client.get<String>("roomId")
-//            val seek = data.toInt()
-//            println("Client[$username] - Seek: $seek")
-//            val playerClients =
-//                server.getNamespace(
-//                    "/singalong",
-//                ).allClients.filter { it.get<String>("clientType") == ClientType.PLAYER.name }
-//            playerClients.forEach { it.sendEvent(seekDurationFromControlEvent, seek) }
-//        }
-//
-//        val togglePlayPauseEvent = SocketEvent.TOGGLE_PLAY_PAUSE.value
-//        namespace.addEventListener(togglePlayPauseEvent, Boolean::class.java) { client, data, _ ->
-//            println("Client[${client.sessionId}] - Toggle play/pause event received: $data")
-//            namespace.broadcastOperations.sendEvent(togglePlayPauseEvent, data)
-//        }
-//
-//        val adjustVolumeFromControlEvent = SocketEvent.ADJUST_VOLUME_FROM_CONTROL.value
-//        namespace.addEventListener(adjustVolumeFromControlEvent, Double::class.java) { client, data, _ ->
-//            println("Client[${client.sessionId}] - Adjust volume event received: $data")
-//            namespace.broadcastOperations.sendEvent(adjustVolumeFromControlEvent, data)
-//        }
     }
 
     private fun updateRoomNamespaces() {
@@ -215,29 +179,6 @@ class SingalongSocketIOModule(
             client.set("username", username)
             client.set("roomId", accessRoomID)
             client.set("clientType", clientType.name)
-
-            // will be removed; only triggered when the client requests for the room data
-            when (clientType) {
-                ClientType.CONTROLLER -> {
-                    val reservedSongs = singalongService.getReservedSongs(accessRoomID)
-                    client.sendEvent(SocketEvent.RESERVED_SONGS.value, reservedSongs)
-                }
-                ClientType.ADMIN -> {
-//                    val currentSong = singalongService.getCurrentSong(accessRoomID)
-//                    println("Is null? ${currentSong == null}")
-//                    client.sendEvent(SocketEvent.CURRENT_SONG.value, currentSong)
-                }
-                ClientType.PLAYER -> {
-//                    val currentSong = singalongService.getCurrentSong(accessRoomID)
-//                    println("Is null? ${currentSong == null}")
-//                    client.sendEvent(SocketEvent.CURRENT_SONG.value, currentSong)
-//
-//                    val reservedSongs = singalongService.getReservedSongs(accessRoomID)
-//                    client.sendEvent(SocketEvent.RESERVED_SONGS.value, reservedSongs)
-//
-//                    broadcastPlayerListToAdmin()
-                }
-            }
         }
 
         // Room Disconnect listener
@@ -287,7 +228,6 @@ class SingalongSocketIOModule(
 
             println("Client[${client.sessionId}] - Room player command event received: $commandRaw")
 
-            // TODO: last item: I was converting the command json object to map
             val mapper = jacksonObjectMapper()
             val command = mapper.readValue(commandRaw, Map::class.java)
             val type = command["type"] as String
@@ -297,41 +237,45 @@ class SingalongSocketIOModule(
             when (commandType) {
                 RoomCommandType.SKIP_SONG -> {
                     println("Client[${client.sessionId}] - Skip song event received.")
-                    singalongService.skipSong(
-                        roomId = client.get("roomId"),
-                    )
+                    singalongService.skipSong(roomId = client.get("roomId"))
                 }
                 RoomCommandType.TOGGLE_PLAY_PAUSE -> {
                     println("Client[${client.sessionId}] - Toggle play/pause event received.")
-                    if (data is Boolean) {
-                        roomNamespaces.forEach {
-                            it.broadcastOperations.sendEvent(
-                                SocketEvent.TOGGLE_PLAY_PAUSE.value,
-                                data,
-                            )
-                        }
-                    }
+                    // broadcasted to all; even controllers can toggle
+                    if (data is Boolean) broadcastEventInRoom(SocketEvent.TOGGLE_PLAY_PAUSE, data)
                 }
                 RoomCommandType.ADJUST_VOLUME -> {
                     println("Client[${client.sessionId}] - Adjust volume event received.")
                     if (data is Double) {
-                        roomNamespaces.forEach {
-                            it.broadcastOperations.sendEvent(
-                                SocketEvent.ADJUST_VOLUME_FROM_CONTROL.value,
-                                data,
-                            )
-                        }
+                        broadcastEventInRoom(SocketEvent.ADJUST_VOLUME_FROM_CONTROL, data, ClientType.PLAYER)
                     }
-                }
-                RoomCommandType.DURATION_UPDATE -> {
-                    println("Client[${client.sessionId}] - Duration update event received.")
-                    if (data is Int) roomNamespaces.forEach { it.broadcastOperations.sendEvent(SocketEvent.DURATION_UPDATE.value, data) }
                 }
                 RoomCommandType.SEEK_DURATION -> {
                     println("Client[${client.sessionId}] - Seek duration event received.")
-                    if (data is Int) roomNamespaces.forEach { it.broadcastOperations.sendEvent(SocketEvent.SEEK_DURATION.value, data) }
+                    // will only send to player, which should only be one
+                    if (data is Int) broadcastEventInRoom(SocketEvent.SEEK_DURATION, data, ClientType.PLAYER)
+                }
+                RoomCommandType.DURATION_UPDATE -> {
+                    println("Client[${client.sessionId}] - Duration update event received.")
+                    // will only send to admins
+                    if (data is Int) broadcastEventInRoom(SocketEvent.DURATION_UPDATE, data, ClientType.ADMIN)
                 }
             }
+        }
+    }
+
+    private fun broadcastEventInRoom(
+        event: SocketEvent,
+        data: Any,
+        clientType: ClientType? = null,
+    ) {
+        roomNamespaces.forEach { roomNamespace ->
+            val adminClients =
+                roomNamespace.allClients.filter {
+                    if (clientType == null) return@filter true
+                    it.get<String>("clientType") == clientType.name
+                }
+            adminClients.forEach { it.sendEvent(event.value, data) }
         }
     }
 
@@ -393,9 +337,4 @@ class SingalongSocketIOModule(
         println("Player client found: $playerClient")
         playerClient.sendEvent(SocketEvent.ROOM_ASSIGNED.value, roomId)
     }
-}
-
-interface PlayerItem {
-    val id: String
-    val name: String
 }

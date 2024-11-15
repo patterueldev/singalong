@@ -23,17 +23,17 @@ enum SocketEvent {
         return 'currentSong';
       case roomPlayerCommand:
         return 'roomPlayerCommand';
-      case SocketEvent.durationUpdate:
+      case durationUpdate:
         return 'durationUpdate';
-      case SocketEvent.seekDuration:
+      case seekDuration:
         return 'seekDuration';
-      case SocketEvent.togglePlayPause:
+      case togglePlayPause:
         return 'togglePlayPause';
-      case SocketEvent.adjustVolumeFromControl:
+      case adjustVolumeFromControl:
         return 'adjustVolumeFromControl';
-      case SocketEvent.playersList:
+      case playersList:
         return 'playersList';
-      case SocketEvent.roomAssigned:
+      case roomAssigned:
         return 'roomAssigned';
     }
   }

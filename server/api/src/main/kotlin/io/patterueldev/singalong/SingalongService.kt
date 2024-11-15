@@ -5,7 +5,6 @@ import io.patterueldev.reservation.ReservationService
 import io.patterueldev.reservation.currentsong.LoadCurrentSongParameters
 import io.patterueldev.reservation.list.LoadReservationListParameters
 import io.patterueldev.reservation.next.SkipSongParameters
-import io.patterueldev.room.Room
 import io.patterueldev.session.SessionService
 import jakarta.annotation.PreDestroy
 import kotlinx.coroutines.runBlocking
@@ -23,22 +22,7 @@ class SingalongService {
     @Autowired
     private lateinit var socketIOServer: SocketIOServer
 
-    // TODO: The active room should not be automatically set now; it will be set by admin
-    var activeRoom: Room? = null
-//    var activeRooms = mutableListOf<Room>()
-
     suspend fun start() {
-        // get list of active rooms
-//        activeRooms = sessionService.getActiveRooms().toMutableList()
-//        println("Fetched ${activeRooms.size} room(s)")
-        // Start session service
-//        println("Starting session service...")
-//        activeRoom =
-//            runBlocking {
-//                sessionService.findOrCreateRoom()
-//            }.data
-//        println("Active room: $activeRoom")
-
         // Start socket.io server
         socketIOServer.start()
     }
