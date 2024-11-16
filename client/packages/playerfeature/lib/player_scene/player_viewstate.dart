@@ -14,8 +14,10 @@ class PlayerViewState {
   factory PlayerViewState.loading() =>
       const PlayerViewState(PlayerViewStatus.loading);
   factory PlayerViewState.playing(
-          VideoPlayerController videoPlayerController) =>
-      PlayerViewPlaying(videoPlayerController: videoPlayerController);
+          VideoPlayerController videoPlayerController, double maxSeekValue) =>
+      PlayerViewPlaying(
+          videoPlayerController: videoPlayerController,
+          maxSeekValue: maxSeekValue);
   factory PlayerViewState.score(PlayerViewScore state) => state;
   factory PlayerViewState.failure(String errorMessage) =>
       PlayerViewFailure(errorMessage: errorMessage);
@@ -23,8 +25,12 @@ class PlayerViewState {
 
 class PlayerViewPlaying extends PlayerViewState {
   final VideoPlayerController videoPlayerController;
-  const PlayerViewPlaying({
+  final ValueNotifier<double> currentSeekValueNotifier = ValueNotifier(0.0);
+  final double maxSeekValue;
+
+  PlayerViewPlaying({
     required this.videoPlayerController,
+    required this.maxSeekValue,
   }) : super(PlayerViewStatus.playing);
 }
 

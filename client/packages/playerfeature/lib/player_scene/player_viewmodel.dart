@@ -122,12 +122,14 @@ class DefaultPlayerViewModel extends PlayerViewModel {
           playerViewStateNotifier.value = PlayerViewState.connected();
           return;
         }
+        final durationInSeconds = currentSong.durationInSeconds;
         final videoUrl = currentSong.videoURL;
         debugPrint("Playing video: $videoUrl");
         final controller = VideoController.network(videoUrl);
         _videoControllers.add(controller);
         await controller.initialize();
-        playerViewStateNotifier.value = PlayerViewState.playing(controller);
+        playerViewStateNotifier.value =
+            PlayerViewState.playing(controller, durationInSeconds.toDouble());
 
         await controller.play();
         _activeSongVideoController = controller;
@@ -195,6 +197,11 @@ class DefaultPlayerViewModel extends PlayerViewModel {
       // send the current position to the server
       playerSocketRepository.durationUpdate(
           durationInMilliseconds: position.inMilliseconds);
+
+      final state = playerViewStateNotifier.value;
+      if (state is PlayerViewPlaying) {
+        state.currentSeekValueNotifier.value = position.inSeconds.toDouble();
+      }
     }
   }
 

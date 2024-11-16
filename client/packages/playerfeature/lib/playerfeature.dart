@@ -19,7 +19,6 @@ part 'player_scene/player_view.dart';
 part 'player_scene/player_viewmodel.dart';
 part 'player_scene/player_viewstate.dart';
 part 'player_scene/authorize_connection_usecase.dart';
-part 'current_song/currentsong.dart';
 part 'reserved_widget/reserved_widget.dart';
 part 'reserved_widget/reserved_viewmodel.dart';
 part 'reserved_widget/reservedsonglistsocketrepository.dart';

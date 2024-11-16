@@ -79,7 +79,7 @@ class PlayerView extends StatelessWidget {
                   return _buildIdleConnected(context);
                 }
                 if (state is PlayerViewPlaying) {
-                  return _buildPlaying(state.videoPlayerController);
+                  return _buildPlaying(state);
                 }
                 if (state is PlayerViewScore) {
                   return _buildScore(state);
@@ -115,10 +115,33 @@ class PlayerView extends StatelessWidget {
         ),
       );
 
-  Widget _buildPlaying(VideoPlayerController controller) => Center(
-        child: controller.value.isInitialized
-            ? VideoPlayer(controller)
-            : CircularProgressIndicator(),
+  Widget _buildPlaying(PlayerViewPlaying state) => Column(
+        children: [
+          Expanded(
+            child: Center(
+              child: state.videoPlayerController.value.isInitialized
+                  ? VideoPlayer(state.videoPlayerController)
+                  : CircularProgressIndicator(),
+            ),
+          ),
+          // progress bar/seek bar
+          ValueListenableBuilder(
+              valueListenable: state.currentSeekValueNotifier,
+              builder: (_, value, __) {
+                return Slider(
+                  value: value,
+                  min: 0,
+                  max: state.maxSeekValue,
+                  onChanged: (value) {
+                    state.currentSeekValueNotifier.value = value;
+                  },
+                  onChangeEnd: (value) {
+                    state.videoPlayerController
+                        .seekTo(Duration(seconds: value.toInt()));
+                  },
+                );
+              }),
+        ],
       );
 
   Widget _buildScore(PlayerViewScore state) => Center(
@@ -133,10 +156,9 @@ class PlayerView extends StatelessWidget {
                 children: [
                   Text(
                     state.score.toString(),
-                    style: TextStyle(
+                    style: const TextStyle(
                       color: Colors.white,
-                      fontSize:
-                          60, // TODO: Will be a percentage of the screen size
+                      fontSize: 60,
                       fontWeight: FontWeight.bold,
                     ),
                   ),

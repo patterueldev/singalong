@@ -19,6 +19,7 @@ class MasterView extends StatelessWidget {
               // Handle menu button press
             },
           ),
+          title: Text('Room: ${viewModel.room.name} (${viewModel.room.id})'),
           bottom: const PreferredSize(
             preferredSize: Size.fromHeight(1.0),
             child: Divider(),

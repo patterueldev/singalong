@@ -71,6 +71,7 @@ class DefaultPlayerControlPanelViewModel extends PlayerControlPanelViewModel {
       debugPrint('Current song: $song');
       if (song == null) {
         stateNotifier.value = PlayerControlPanelState.inactive();
+        currentSeekValueNotifier.value = 0;
         return;
       }
       final durationInSeconds = song.durationInSeconds;
