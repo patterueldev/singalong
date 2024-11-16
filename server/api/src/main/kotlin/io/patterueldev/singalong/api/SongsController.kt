@@ -4,7 +4,6 @@ import io.patterueldev.reservation.ReservationService
 import io.patterueldev.reservation.next.NextSongResponse
 import io.patterueldev.reservation.reserve.ReserveParameters
 import io.patterueldev.reservation.reserve.ReserveResponse
-import io.patterueldev.singalong.ServerCoordinator
 import io.patterueldev.songbook.SongBookService
 import io.patterueldev.songbook.loadsongs.LoadSongsParameters
 import io.patterueldev.songbook.loadsongs.LoadSongsResponse
@@ -29,7 +28,6 @@ class SongsController(
     private val songIdentifierService: SongIdentifierService,
     private val songBookService: SongBookService,
     private val reservationService: ReservationService,
-    private val serverCoordinator: ServerCoordinator,
 ) {
     @PostMapping("/identify")
     suspend fun identifySong(

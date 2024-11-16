@@ -1,6 +1,6 @@
 import 'package:connectfeature/connectfeature.dart';
 import 'package:downloadfeature/downloadfeature.dart';
-import 'package:shared/shared.dart';
+import 'package:core/core.dart';
 import 'package:songbookfeature/songbookfeature.dart';
 
 import '../gen/assets.gen.dart';

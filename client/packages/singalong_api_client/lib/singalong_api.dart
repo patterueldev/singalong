@@ -16,6 +16,23 @@ class SingalongAPI {
     return APIConnectResponseData.fromJson(result.objectData());
   }
 
+  Future<APIConnectWithRoomResponseData> connectWithRoom(String roomId) async {
+    final result = await apiClient.request(
+      path: APIPath.adminConnectRoom,
+      method: HttpMethod.POST,
+      payload: {'roomId': roomId},
+    );
+    return APIConnectWithRoomResponseData.fromJson(result.objectData());
+  }
+
+  Future<String> check() async {
+    final result = await apiClient.request(
+      path: APIPath.sessionCheck,
+      method: HttpMethod.GET,
+    );
+    return result.data as String;
+  }
+
   Future<APIPaginatedSongs> loadSongs(APILoadSongsParameters parameters) async {
     final result = await apiClient.request(
       path: APIPath.songs,
@@ -67,11 +84,38 @@ class SingalongAPI {
         .toList();
   }
 
-  // TODO: Will do this through socket
-  Future<void> nextSong() async {
-    await apiClient.request(
-      path: APIPath.next,
-      method: HttpMethod.PATCH,
+  Future<APIPaginatedRoomList> loadRooms(
+      APILoadRoomListParameters parameters) async {
+    final result = await apiClient.request(
+      path: APIPath.adminRooms,
+      queryParameters: parameters.toJson(),
+      method: HttpMethod.GET,
     );
+    return APIPaginatedRoomList.fromJson(result.objectData());
+  }
+
+  Future<void> assignPlayerToRoom(String playerId, String roomId) async {
+    await apiClient.request(
+      path: APIPath.adminAssignRoom,
+      method: HttpMethod.POST,
+      payload: {'playerId': playerId, 'roomId': roomId},
+    );
+  }
+
+  Future<String> newRoomID() async {
+    final result = await apiClient.request(
+      path: APIPath.adminGenerateRoomID,
+      method: HttpMethod.GET,
+    );
+    return result.stringData();
+  }
+
+  Future<APIRoom> createRoom(APICreateRoomParameters parameters) async {
+    final result = await apiClient.request(
+      path: APIPath.adminCreateRoom,
+      method: HttpMethod.POST,
+      payload: parameters.toJson(),
+    );
+    return APIRoom.fromJson(result.objectData());
   }
 }

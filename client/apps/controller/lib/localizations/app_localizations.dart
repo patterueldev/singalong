@@ -2,7 +2,7 @@ import 'package:connectfeature/connectfeature.dart';
 import 'package:downloadfeature/downloadfeature.dart';
 import 'package:flutter/material.dart';
 import 'package:sessionfeature/sessionfeature.dart';
-import 'package:shared/shared.dart';
+import 'package:core/core.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:songbookfeature/songbookfeature.dart';
 
@@ -80,6 +80,19 @@ mixin ConnectLocalizationsMixin implements ConnectLocalizations {
     return _getLocalizedString(
         (localizations) => localizations.invalidSessionId(sessionId));
   }
+
+  @override
+  LocalizedString get editServerHostDialogTitle => LocalizedString(
+        (context) => "Customize Server Host",
+      );
+  @override
+  LocalizedString get serverHostPlaceholderText => LocalizedString(
+        (context) => "Enter the server host",
+      );
+  @override
+  LocalizedString get saveButtonText => LocalizedString(
+        (context) => "Save",
+      );
 }
 
 mixin SessionLocalizationsMixin implements SessionLocalizations {

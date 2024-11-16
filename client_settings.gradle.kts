@@ -11,8 +11,8 @@ project(":client-app-player").projectDir = file("client/apps/player")
 include("client-package-singalong_api_client")
 project(":client-package-singalong_api_client").projectDir = file("client/packages/singalong_api_client")
 
-include("client-package-shared")
-project(":client-package-shared").projectDir = file("client/packages/shared")
+include("client-package-core")
+project(":client-package-core").projectDir = file("client/packages/core")
 
 include("client-package-common")
 project(":client-package-common").projectDir = file("client/packages/common")

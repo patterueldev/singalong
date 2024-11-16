@@ -1,8 +1,8 @@
 package io.patterueldev.singalong.security
 
-import io.patterueldev.session.jwt.JwtAuthenticationEntryPoint
-import io.patterueldev.session.jwt.JwtAuthenticationProvider
-import io.patterueldev.session.jwt.JwtSecurityContextRepository
+import io.patterueldev.jwt.JwtAuthenticationEntryPoint
+import io.patterueldev.jwt.JwtAuthenticationProvider
+import io.patterueldev.jwt.JwtSecurityContextRepository
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
@@ -49,6 +49,7 @@ class SecurityConfiguration(
             .securityContext { it.securityContextRepository(jwtSecurityContextRepository) }
             .authorizeHttpRequests {
                 whitelisted.forEach { path -> it.requestMatchers(path).permitAll() }
+                it.requestMatchers("/admin/**").hasRole("ADMIN")
                 it.anyRequest().authenticated()
             }
             .build()

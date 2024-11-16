@@ -4,9 +4,8 @@ import com.corundumstudio.socketio.SocketIOServer
 import io.patterueldev.reservation.ReservationService
 import io.patterueldev.reservation.currentsong.LoadCurrentSongParameters
 import io.patterueldev.reservation.list.LoadReservationListParameters
-import io.patterueldev.roomuser.RoomUser
+import io.patterueldev.reservation.next.SkipSongParameters
 import io.patterueldev.session.SessionService
-import io.patterueldev.session.room.Room
 import jakarta.annotation.PreDestroy
 import kotlinx.coroutines.runBlocking
 import org.springframework.beans.factory.annotation.Autowired
@@ -21,52 +20,48 @@ class SingalongService {
     private lateinit var reservationService: ReservationService
 
     @Autowired
-    private lateinit var server: SocketIOServer
+    private lateinit var socketIOServer: SocketIOServer
 
-    lateinit var activeRoom: Room
-
-    fun start() {
-        // Start session service
-        activeRoom =
-            runBlocking {
-                sessionService.findOrCreateRoom()
-            }.data!!
-        println("Active room: $activeRoom")
-
+    suspend fun start() {
         // Start socket.io server
-        server.start()
+        socketIOServer.start()
     }
 
     @PreDestroy
     fun stopServer() {
         // could potentially mark the room as inactive
         println("Stopping socketIO server...")
-        server.stop()
+        socketIOServer.stop()
     }
 
-    fun getReservedSongs() =
+    fun getActiveRooms() =
+        runBlocking {
+            sessionService.getActiveRooms()
+        }
+
+    fun getAssignedRoom(userId: String) =
+        runBlocking {
+            sessionService.getAssignedRoomForPlayer(userId)
+        }
+
+    fun getReservedSongs(roomId: String) =
         runBlocking {
             reservationService.loadReservationList(
-                parameters = LoadReservationListParameters(activeRoom.id),
+                parameters = LoadReservationListParameters(roomId),
             ).data ?: listOf()
         }
 
-    fun getCurrentSong() =
+    fun getCurrentSong(roomId: String) =
         runBlocking {
             reservationService.loadCurrentSong(
-                parameters = LoadCurrentSongParameters(activeRoom.id),
+                parameters = LoadCurrentSongParameters(roomId),
             ).data
         }
 
-    suspend fun skipSong(
-        username: String,
-        roomId: String,
-    ) = reservationService.nextSong(
-        object : RoomUser {
-            override val username: String
-                get() = username
-            override val roomId: String
-                get() = roomId
-        },
-    )
+    fun skipSong(roomId: String) =
+        runBlocking {
+            reservationService.skipSong(
+                parameters = SkipSongParameters(roomId),
+            )
+        }
 }

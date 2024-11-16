@@ -7,6 +7,7 @@ class APIConnectParameters {
   final String roomId;
   final String? roomPasscode;
   final String clientType;
+  final String deviceId;
 
   APIConnectParameters({
     required this.username,
@@ -14,6 +15,7 @@ class APIConnectParameters {
     required this.roomId,
     this.roomPasscode,
     required this.clientType,
+    required this.deviceId,
   });
 
   factory APIConnectParameters.fromJson(Map<String, dynamic> json) =>

@@ -1,11 +1,14 @@
 package io.patterueldev.session.connect
 
+import io.patterueldev.auth.AuthRepository
+import io.patterueldev.authuser.AuthUserRepository
+import io.patterueldev.client.ClientType
 import io.patterueldev.common.GenericResponse
 import io.patterueldev.common.ServiceUseCase
-import io.patterueldev.session.auth.AuthRepository
-import io.patterueldev.session.authuser.AuthUserRepository
+import io.patterueldev.role.Role
+import io.patterueldev.room.RoomRepository
 import io.patterueldev.session.common.ConnectResponse
-import io.patterueldev.session.room.RoomRepository
+import java.time.LocalDateTime
 
 internal class ConnectUseCase(
     private val roomRepository: RoomRepository,
@@ -24,7 +27,16 @@ internal class ConnectUseCase(
         var user = authUserRepository.findUserByUsername(parameters.username)
         // step2.1: if the user does not exist, create it
         if (user == null) {
-            user = authUserRepository.createUser(parameters.username, parameters.userPasscode)
+            if (room.isIdleRoom() && parameters.clientType == ClientType.PLAYER) {
+                user = authUserRepository.createUser(parameters.username, parameters.userPasscode, Role.USER_HOST)
+            } else {
+                user = authUserRepository.createUser(parameters.username, parameters.userPasscode)
+            }
+        } else {
+            // check if the user is a player; don't log in if the user is a player
+            if (user.role == Role.USER_HOST && parameters.clientType != ClientType.PLAYER) {
+                return GenericResponse.failure("Please use other user name")
+            }
         }
         // step2.2: check if the user is still in the room
         // TODO: check if the user is already in the room; not too required right now, but will be useful in the future
@@ -33,7 +45,14 @@ internal class ConnectUseCase(
         val requiresUserPasscode = user.hashedPasscode != null
 
         // step4: check if the room also requires a passcode
-        val requiresRoomPasscode = room.passcode != null
+        var requiresRoomPasscode = room.passcode != null
+        val userIsHostAndClientTypeIsPlayer = user.role == Role.USER_HOST && parameters.clientType == ClientType.PLAYER
+        if (userIsHostAndClientTypeIsPlayer && !room.isIdleRoom()) {
+            // overrides the room passcode requirement;
+            // if the user is a player, and the client type is player, the room passcode is not required
+            // this is because the user is the host, and the host should be able to connect as a player without a passcode
+            requiresRoomPasscode = false
+        }
 
         // Check parameters if passcode(s) were not provided
         if (requiresUserPasscode || requiresRoomPasscode) {
@@ -86,19 +105,62 @@ internal class ConnectUseCase(
             // This should never happen, since we checked for room passcode presence earlier
             val roomPasscode = room.passcode ?: return GenericResponse.failure("io.patterueldev.room.Room does not have a passcode")
             val passcodeMatches = authRepository.matchPasscode(passcode, roomPasscode)
-            if (!passcodeMatches) {
-                return GenericResponse.failure("Passcode is incorrect")
+            if (!passcodeMatches) return GenericResponse.failure("Passcode is incorrect")
+        }
+
+        // step6: verify roles
+        when (parameters.clientType) {
+            ClientType.CONTROLLER -> {
+                val supportedRoles = listOf(Role.USER_GUEST, Role.ADMIN)
+                if (user.role !in supportedRoles) return GenericResponse.failure("Host are not allowed to connect as a controller")
+            }
+            ClientType.PLAYER -> {
+                // only the host and admin role is allowed to connect as a player
+                val supportedRoles = listOf(Role.USER_HOST, Role.ADMIN)
+                if (user.role !in supportedRoles) return GenericResponse.failure("Guest are not allowed to connect as a player")
+            }
+            ClientType.ADMIN -> {
+                // only the admin role is allowed to connect as an admin
+                if (user.role != Role.ADMIN) return GenericResponse.failure("Only admin role is allowed to connect as an admin")
             }
         }
 
-        // step6: add the user to the room
-        val token = authRepository.addUserToRoom(user, room, parameters.clientType)
+        // step7: add the user to the room
+        // if the user is connecting as a controller, and if the user is a guest, check if the user is already in the room
+        // otherwise, override if the user is an admin or host (although hosts should not be able to connect as a controller)
+
+        if (parameters.clientType == ClientType.CONTROLLER && user.role == Role.USER_GUEST) {
+            val userFromRoom = authRepository.checkUserFromRoom(user, room, parameters.clientType)
+
+            // if the user is signing in from a different device, check if the user is already in the room
+            println("User from room: $userFromRoom")
+            println("deviceId: ${parameters.deviceId}")
+            println("userFromRoom.deviceId: ${userFromRoom?.deviceId}")
+
+            if (userFromRoom != null && userFromRoom.deviceId != parameters.deviceId) {
+                // check if the user is still connected to the room; maybe via socket, or via session
+                // TODO: on sign out, mark the user as disconnected
+                if (userFromRoom.isConnected) {
+                    // check the connection date
+                    // if user last connected within 3 hours, return failure
+                    val lastConnectedAt = userFromRoom.lastConnectedAt
+                    val now = LocalDateTime.now()
+                    if (lastConnectedAt.plusHours(3).isAfter(now)) {
+                        return GenericResponse.failure("User is already in the room")
+                    }
+                }
+
+                // otherwise, ignore and proceed
+            }
+        }
+
+        val response = authRepository.upsertUserToRoom(user, room, parameters.clientType, parameters.deviceId)
 
         // step6: return success
         return GenericResponse.success(
             ConnectResponseData(
-                accessToken = token,
-//                refreshToken = "refresh-token"
+                accessToken = response.accessToken,
+                refreshToken = response.refreshToken,
             ),
         )
     }

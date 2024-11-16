@@ -1,20 +1,7 @@
 part of '../playerfeature.dart';
 
-class PlayerView extends StatefulWidget {
+class PlayerView extends StatelessWidget {
   const PlayerView({super.key});
-
-  @override
-  State<PlayerView> createState() => _PlayerViewState();
-}
-
-class _PlayerViewState extends State<PlayerView> {
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<PlayerViewModel>().establishConnection();
-    });
-  }
 
   @override
   Widget build(BuildContext context) => Consumer<PlayerViewModel>(
@@ -46,14 +33,20 @@ class _PlayerViewState extends State<PlayerView> {
                       // left panel
                       Expanded(
                         flex: 1,
-                        child: ConnectivityPanelWidget(),
+                        child: ValueListenableBuilder(
+                            valueListenable: viewModel.roomIdNotifier,
+                            builder: (_, roomId, __) {
+                              return roomId != null
+                                  ? ConnectivityPanelWidget(roomId: roomId)
+                                  : SizedBox.shrink();
+                            }),
                       ),
                       Expanded(
                         flex: 9,
                         child: Column(
                           children: [
                             Expanded(
-                              child: _buildBody(viewModel),
+                              child: _buildBody(context, viewModel),
                             ),
                           ],
                         ),
@@ -72,7 +65,7 @@ class _PlayerViewState extends State<PlayerView> {
         ),
       );
 
-  Widget _buildBody(PlayerViewModel viewModel) => Column(
+  Widget _buildBody(BuildContext context, PlayerViewModel viewModel) => Column(
         children: [
           Expanded(
             child: ValueListenableBuilder(
@@ -83,10 +76,10 @@ class _PlayerViewState extends State<PlayerView> {
                   return _buildLoading();
                 }
                 if (state.status == PlayerViewStatus.idleConnected) {
-                  return _buildIdleConnected();
+                  return _buildIdleConnected(context);
                 }
                 if (state is PlayerViewPlaying) {
-                  return _buildPlaying(state.videoPlayerController);
+                  return _buildPlaying(state);
                 }
                 if (state is PlayerViewScore) {
                   return _buildScore(state);
@@ -103,7 +96,7 @@ class _PlayerViewState extends State<PlayerView> {
 
   Widget _buildIdleDisconnected(PlayerViewModel viewModel) => Center(
         child: ElevatedButton(
-          onPressed: () => viewModel.establishConnection(),
+          onPressed: () => viewModel.setup(),
           child: Text('Start Session!'),
         ),
       );
@@ -113,7 +106,7 @@ class _PlayerViewState extends State<PlayerView> {
       );
 
   // could be a video player with "idle" video
-  Widget _buildIdleConnected() => Container(
+  Widget _buildIdleConnected(BuildContext context) => Container(
         child: Center(
           child: Text(
             'Select a song to play',
@@ -122,10 +115,33 @@ class _PlayerViewState extends State<PlayerView> {
         ),
       );
 
-  Widget _buildPlaying(VideoPlayerController controller) => Center(
-        child: controller.value.isInitialized
-            ? VideoPlayer(controller)
-            : CircularProgressIndicator(),
+  Widget _buildPlaying(PlayerViewPlaying state) => Column(
+        children: [
+          Expanded(
+            child: Center(
+              child: state.videoPlayerController.value.isInitialized
+                  ? VideoPlayer(state.videoPlayerController)
+                  : CircularProgressIndicator(),
+            ),
+          ),
+          // progress bar/seek bar
+          ValueListenableBuilder(
+              valueListenable: state.currentSeekValueNotifier,
+              builder: (_, value, __) {
+                return Slider(
+                  value: value,
+                  min: 0,
+                  max: state.maxSeekValue,
+                  onChanged: (value) {
+                    state.currentSeekValueNotifier.value = value;
+                  },
+                  onChangeEnd: (value) {
+                    state.videoPlayerController
+                        .seekTo(Duration(seconds: value.toInt()));
+                  },
+                );
+              }),
+        ],
       );
 
   Widget _buildScore(PlayerViewScore state) => Center(
@@ -140,10 +156,9 @@ class _PlayerViewState extends State<PlayerView> {
                 children: [
                   Text(
                     state.score.toString(),
-                    style: TextStyle(
+                    style: const TextStyle(
                       color: Colors.white,
-                      fontSize:
-                          60, // TODO: Will be a percentage of the screen size
+                      fontSize: 60,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -167,15 +182,10 @@ class _PlayerViewState extends State<PlayerView> {
             Text('Error: $error', style: TextStyle(color: Colors.white)),
             const SizedBox(height: 16),
             ElevatedButton(
-              onPressed: () => viewModel.establishConnection(),
+              onPressed: () => viewModel.setup(),
               child: Text('Retry'),
             ),
           ],
         ),
       );
-
-  @override
-  void dispose() {
-    super.dispose();
-  }
 }

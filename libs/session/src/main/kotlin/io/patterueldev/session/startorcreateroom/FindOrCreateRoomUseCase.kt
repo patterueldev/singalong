@@ -2,16 +2,18 @@ package io.patterueldev.session.startorcreateroom
 
 import io.patterueldev.common.GenericNoParametersUseCase
 import io.patterueldev.common.GenericResponse
-import io.patterueldev.session.room.Room
-import io.patterueldev.session.room.RoomRepository
+import io.patterueldev.room.Room
+import io.patterueldev.room.RoomRepository
 
 internal class FindOrCreateRoomUseCase(
     val roomRepository: RoomRepository,
 ) : GenericNoParametersUseCase<Room> {
     override suspend fun execute(): GenericResponse<Room> {
         try {
+            // TODO: Admin will now manage the rooms
             // get last active room that is not admin
             var lastActiveRoom = roomRepository.findActiveRoom()
+            println("Last active room: $lastActiveRoom")
             if (lastActiveRoom == null) {
                 lastActiveRoom = roomRepository.createRoom()
                 println("Created room: $lastActiveRoom")

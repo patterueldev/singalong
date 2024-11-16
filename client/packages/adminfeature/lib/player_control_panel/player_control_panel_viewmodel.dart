@@ -4,15 +4,20 @@ abstract class PlayerControlPanelViewModel extends ChangeNotifier {
   ValueNotifier<PlayerControlPanelState> stateNotifier =
       ValueNotifier(PlayerControlPanelState.inactive());
   ValueNotifier<double> currentSeekValueNotifier = ValueNotifier(0.0);
-  ValueNotifier<double> currentVolumeValueNotifier = ValueNotifier(0.5);
+  ValueNotifier<double> currentVolumeValueNotifier = ValueNotifier(1.0);
+  ValueNotifier<PlayerItem?> selectedPlayerItemNotifier = ValueNotifier(null);
+
   bool isSeeking = false;
 
-  void setup();
+  Room get room;
+
   void togglePlayPause(bool isPlaying);
   void nextSong();
-  void seek(double value) {
+  void updateSliderValue(double value) {
     currentSeekValueNotifier.value = value;
   }
+
+  void seek(double value);
 
   void toggleSeeking(bool value) {
     isSeeking = value;
@@ -24,68 +29,49 @@ abstract class PlayerControlPanelViewModel extends ChangeNotifier {
 }
 
 class DefaultPlayerControlPanelViewModel extends PlayerControlPanelViewModel {
-  final AuthorizeConnectionUseCase authorizeConnectionUseCase;
   final ConnectRepository connectRepository;
   final ControlPanelSocketRepository controlPanelRepository;
+  final AuthorizeConnectionUseCase authorizeConnectionUseCase;
+
+  @override
+  final Room room;
 
   DefaultPlayerControlPanelViewModel({
-    required this.authorizeConnectionUseCase,
     required this.connectRepository,
     required this.controlPanelRepository,
-  }) {
+    required this.room,
+  }) : authorizeConnectionUseCase =
+            AuthorizeConnectionUseCase(connectRepository: connectRepository) {
     setup();
   }
 
   Timer? _seekDebounceTimer;
+  Timer? _volumeDebounceTimer;
 
   StreamController<int>? _seekDurationUpdatesStreamController;
   StreamController<CurrentSong?>? _currentSongStreamController;
   StreamController<bool>? _togglePlayPauseStreamController;
+  StreamController<PlayerItem?>? _selectedPlayerItemStreamController;
 
-  @override
   void setup() async {
-    // Handle setup action
-    final result = await authorizeConnectionUseCase(
-      ConnectParameters(
-        username: "pat",
-        userPasscode: "1234",
-        roomId: "569841",
-        clientType: "ADMIN",
-      ),
-    );
-
-    // TODO: TEMPORARY! Will have a separate screen for connection
-    var canProceed = false;
-    result.fold(
-      (error) {
-        debugPrint('Error: $error');
-      },
-      (success) {
-        debugPrint('Success: $success');
-        connectRepository.connectSocket();
-        canProceed = true;
-      },
-    );
-
-    if (!canProceed) {
-      return;
-    }
     _seekDurationUpdatesStreamController =
-        controlPanelRepository.seekDurationInMillisecondsStreamController();
+        controlPanelRepository.durationUpdateInMillisecondsStreamController;
     _seekDurationUpdatesStreamController?.stream.listen((value) {
       if (isSeeking) {
         return;
       }
+      // debugPrint('Duration Update: $value milliseconds');
       double seconds = value / 1000;
       currentSeekValueNotifier.value = seconds;
     });
 
     _currentSongStreamController =
-        controlPanelRepository.currentSongStreamController();
+        controlPanelRepository.currentSongStreamController;
     _currentSongStreamController?.stream.listen((song) {
       debugPrint('Current song: $song');
       if (song == null) {
         stateNotifier.value = PlayerControlPanelState.inactive();
+        currentSeekValueNotifier.value = 0;
         return;
       }
       final durationInSeconds = song.durationInSeconds;
@@ -99,31 +85,53 @@ class DefaultPlayerControlPanelViewModel extends PlayerControlPanelViewModel {
     });
 
     _togglePlayPauseStreamController =
-        controlPanelRepository.togglePlayPauseStreamController();
+        controlPanelRepository.togglePlayPauseStreamController;
     _togglePlayPauseStreamController?.stream.listen((isPlaying) {
       final currentState = stateNotifier.value;
       if (currentState is ActiveState) {
         currentState.isPlayingNotifier.value = isPlaying;
       }
     });
+
+    _selectedPlayerItemStreamController =
+        controlPanelRepository.selectedPlayerItemStreamController;
+    _selectedPlayerItemStreamController?.stream.listen((playerItem) {
+      debugPrint('Selected player item: $playerItem');
+      selectedPlayerItemNotifier.value = playerItem;
+    });
+
+    controlPanelRepository.requestControlPanelData();
   }
 
   @override
-  void togglePlayPause(bool isPlaying) =>
-      controlPanelRepository.togglePlayPause(isPlaying);
+  void togglePlayPause(bool isPlaying) {
+    if (stateNotifier.value is InactiveState) {
+      return;
+    }
+    controlPanelRepository.togglePlayPause(isPlaying);
+  }
 
   @override
-  void nextSong() => controlPanelRepository.skipSong();
+  void nextSong() {
+    if (stateNotifier.value is InactiveState) {
+      return;
+    }
+    controlPanelRepository.skipSong();
+  }
 
   @override
-  void seek(double value) {
-    super.seek(value);
-
+  void seek(double value,
+      {Duration duration = const Duration(milliseconds: 100)}) {
     _seekDebounceTimer?.cancel();
-    _seekDebounceTimer = Timer(const Duration(milliseconds: 100), () {
+    _seekDebounceTimer = Timer(duration, () {
       // Handle seek action
       debugPrint('Will seek to $value');
-      controlPanelRepository.seekDurationFromControl(value.toInt());
+
+      if (stateNotifier.value is InactiveState) {
+        super.updateSliderValue(0);
+        return;
+      }
+      controlPanelRepository.seekDuration(durationInSeconds: value.toInt());
     });
   }
 
@@ -131,14 +139,25 @@ class DefaultPlayerControlPanelViewModel extends PlayerControlPanelViewModel {
   void setVolume(double value) {
     super.setVolume(value);
 
-    // Handle volume change action
-    debugPrint('Setting volume to $value');
+    _volumeDebounceTimer?.cancel();
+    _volumeDebounceTimer = Timer(const Duration(milliseconds: 0), () {
+      // Handle volume action
+      debugPrint('Will set volume to $value');
+
+      if (stateNotifier.value is InactiveState) {
+        super.setVolume(0.5);
+        return;
+      }
+      controlPanelRepository.adjustVolumeFromControl(value);
+    });
   }
 
   @override
   void dispose() {
     _seekDurationUpdatesStreamController?.close();
     _currentSongStreamController?.close();
+    _togglePlayPauseStreamController?.close();
+    _selectedPlayerItemStreamController?.close();
     super.dispose();
   }
 }

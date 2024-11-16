@@ -1,14 +1,14 @@
-# melos_managed_dependency_overrides: playerfeature,playerfeatureds,shared,singalong_api_client,common,commonds
+# melos_managed_dependency_overrides: playerfeature,playerfeatureds,singalong_api_client,common,commonds,core
 dependency_overrides:
   common:
     path: ../../packages/common
   commonds:
     path: ../../packages/commonds
+  core:
+    path: ../../packages/core
   playerfeature:
     path: ../../packages/playerfeature
   playerfeatureds:
     path: ../../packages/playerfeatureds
-  shared:
-    path: ../../packages/shared
   singalong_api_client:
     path: ../../packages/singalong_api_client

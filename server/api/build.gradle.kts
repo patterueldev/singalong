@@ -26,6 +26,7 @@ dependencies {
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.netty.socketio)
     implementation(libs.openapi.generator)
+    implementation(libs.jackson.kotlin)
     testRuntimeOnly(libs.junit.platform.launcher)
     testImplementation(libs.spring.boot.test)
     testImplementation(libs.kotlin.test.junit)
@@ -35,6 +36,7 @@ dependencies {
     implementation(projects.songidentifierds)
     implementation(projects.songbookds)
     implementation(projects.reservationds)
+    implementation(projects.adminds)
 }
 
 kotlin {

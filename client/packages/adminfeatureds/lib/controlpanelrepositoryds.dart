@@ -10,71 +10,97 @@ class ControlPanelRepositoryDS implements ControlPanelSocketRepository {
   });
 
   @override
-  StreamController<CurrentSong?> currentSongStreamController() {
-    final currentSongStreamController =
-        socket.buildCurrentSongStreamController();
-    StreamController<CurrentSong?> controller = StreamController<CurrentSong?>(
-      onCancel: () => currentSongStreamController.close(),
-    );
-
-    currentSongStreamController.stream.listen((apiCurrentSong) {
-      if (apiCurrentSong == null) {
-        controller.add(null);
-        return;
-      }
-      final currentSong = CurrentSong(
-        id: apiCurrentSong.id,
-        title: apiCurrentSong.title,
-        artist: apiCurrentSong.artist,
-        thumbnailURL: configuration
-            .buildResourceURL(apiCurrentSong.thumbnailPath)
-            .toString(),
-        reservingUser: apiCurrentSong.reservingUser,
-        durationInSeconds: apiCurrentSong.durationInSeconds,
-        videoURL:
-            configuration.buildResourceURL(apiCurrentSong.videoPath).toString(),
-      );
-      controller.add(currentSong);
-    });
-    return controller;
+  void requestControlPanelData() {
+    final dataTypes = [
+      RoomDataType.currentSong,
+      RoomDataType.assignedPlayerInRoom
+    ];
+    socket.emitRoomDataRequestEvent(dataTypes);
   }
 
   @override
-  StreamController<int> seekDurationInMillisecondsStreamController() {
-    final seekDurationInMillisecondsStreamController =
-        socket.buildSeekDurationFromPlayerStreamController();
-    StreamController<int> controller = StreamController<int>(
-      onCancel: () => seekDurationInMillisecondsStreamController.close(),
-    );
-
-    seekDurationInMillisecondsStreamController.stream.listen((duration) {
-      controller.add(duration);
-    });
-    return controller;
-  }
-
-  @override
-  StreamController<bool> togglePlayPauseStreamController() {
-    return socket.buildEventStreamController(SocketEvent.togglePlayPause,
+  StreamController<CurrentSong?> get currentSongStreamController =>
+      socket.buildRoomEventStreamController(
+        SocketEvent.currentSong,
         (data, controller) {
-      controller.add(data as bool);
-    });
-  }
+          if (data == null) {
+            controller.add(null);
+            return;
+          }
+          final raw = APICurrentSong.fromJson(data);
+          final currentSong = CurrentSong(
+            id: raw.id,
+            title: raw.title,
+            artist: raw.artist,
+            thumbnailURL:
+                configuration.buildResourceURL(raw.thumbnailPath).toString(),
+            reservingUser: raw.reservingUser,
+            durationInSeconds: raw.durationInSeconds,
+            videoURL: configuration.buildResourceURL(raw.videoPath).toString(),
+          );
+          controller.add(currentSong);
+        },
+      );
 
   @override
-  void seekDurationFromControl(int durationInSeconds) {
-    return socket.emitEvent(
-        SocketEvent.seekDurationFromControl, durationInSeconds);
+  StreamController<int> get durationUpdateInMillisecondsStreamController =>
+      socket.buildRoomEventStreamController(
+        SocketEvent.durationUpdate,
+        (milliseconds, controller) {
+          controller.add(milliseconds as int);
+        },
+      );
+
+  @override
+  StreamController<bool> get togglePlayPauseStreamController =>
+      socket.buildRoomEventStreamController(
+        SocketEvent.togglePlayPause,
+        (data, controller) {
+          controller.add(data as bool);
+        },
+      );
+
+  @override
+  StreamController<PlayerItem?> get selectedPlayerItemStreamController =>
+      socket.buildRoomEventStreamController(
+        SocketEvent.playerAssigned,
+        (data, controller) {
+          debugPrint('Selected player item: $data');
+          if (data == null) {
+            controller.add(null);
+            return;
+          }
+          final raw = APIPlayerItem.fromJson(data);
+          final playerItem = PlayerItem(
+            id: raw.id,
+            name: raw.name,
+            isIdle: raw.isIdle,
+          );
+          controller.add(playerItem);
+        },
+      );
+
+  @override
+  void seekDuration({required int durationInSeconds}) {
+    socket.emitRoomCommandEvent(RoomCommand.seekDurationFromControl(
+        durationInSeconds: durationInSeconds));
+    return socket.emitRoomEvent(SocketEvent.seekDuration, durationInSeconds);
   }
 
   @override
   void skipSong() {
-    return socket.emitEvent(SocketEvent.skipSong, null);
+    socket.emitRoomCommandEvent(RoomCommand.skipSong());
   }
 
   @override
   void togglePlayPause(bool isPlaying) {
     debugPrint('Toggling play/pause');
-    return socket.emitEvent(SocketEvent.togglePlayPause, isPlaying);
+    // return socket.emitEvent(SocketEvent.togglePlayPause, isPlaying);
+    socket.emitRoomCommandEvent(RoomCommand.togglePlayPause(isPlaying));
+  }
+
+  @override
+  void adjustVolumeFromControl(double volume) {
+    socket.emitRoomCommandEvent(RoomCommand.adjustVolume(volume));
   }
 }

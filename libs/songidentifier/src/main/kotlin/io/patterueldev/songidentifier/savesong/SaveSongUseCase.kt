@@ -38,7 +38,7 @@ internal open class SaveSongUseCase(
                 newSong = identifiedSongRepository.downloadSong(newSong, identifiedSong.source, filename)
                 if (parameters.thenReserve) {
                     identifiedSongRepository.reserveSong(user, newSong.id)
-                    songIdentifierCoordinator?.onReserveUpdate()
+                    songIdentifierCoordinator?.onReserveUpdate(user.roomId)
                 }
             }
         }

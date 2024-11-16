@@ -1,10 +1,12 @@
 package io.patterueldev.mongods.room
 
+import io.patterueldev.mongods.user.UserDocument
 import org.springframework.data.annotation.CreatedDate
 import org.springframework.data.annotation.Id
 import org.springframework.data.annotation.LastModifiedDate
 import org.springframework.data.mongodb.core.mapping.Document
 import java.time.LocalDateTime
+import org.springframework.data.mongodb.core.mapping.DBRef
 
 @Document(collection = "room")
 data class RoomDocument(
@@ -17,4 +19,6 @@ data class RoomDocument(
     @CreatedDate val createdAt: LocalDateTime = LocalDateTime.now(),
     @LastModifiedDate val updatedAt: LocalDateTime = LocalDateTime.now(),
     val archivedAt: LocalDateTime? = null,
+    val lastActiveAt: LocalDateTime = LocalDateTime.now(),
+    var assignedPlayerId: String? = null,
 )

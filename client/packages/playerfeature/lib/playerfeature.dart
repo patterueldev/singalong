@@ -9,7 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:fpdart/fpdart.dart' show TaskEither, Unit, unit;
 import 'package:provider/provider.dart';
 import 'package:qr_flutter/qr_flutter.dart';
-import 'package:shared/shared.dart';
+import 'package:core/core.dart';
 import 'package:video_player/video_player.dart'
     show VideoPlayerController, VideoPlayer;
 import "package:video_controls/video_controls.dart" show VideoController;
@@ -19,7 +19,6 @@ part 'player_scene/player_view.dart';
 part 'player_scene/player_viewmodel.dart';
 part 'player_scene/player_viewstate.dart';
 part 'player_scene/authorize_connection_usecase.dart';
-part 'current_song/currentsong.dart';
 part 'reserved_widget/reserved_widget.dart';
 part 'reserved_widget/reserved_viewmodel.dart';
 part 'reserved_widget/reservedsonglistsocketrepository.dart';
@@ -40,6 +39,7 @@ class PlayerFeatureUIBuilder {
             create: (context) => DefaultPlayerViewModel(
               connectRepository: context.read(),
               playerSocketRepository: context.read(),
+              persistenceRepository: context.read(),
               reservedViewModel: context.read(),
             ),
           ),

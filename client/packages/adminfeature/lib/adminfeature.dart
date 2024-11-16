@@ -7,40 +7,83 @@ import 'package:common/common.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:fpdart/fpdart.dart' show TaskEither, Unit, unit;
 import 'package:provider/provider.dart';
-import 'package:shared/shared.dart';
+import 'package:core/core.dart';
 
+part 'admincoordinator.dart';
+part 'adminlocalizations.dart';
 part 'common/sliderdata.dart';
-part 'signinscreen/signin_screen.dart';
-part 'signinscreen/signin_viewmodel.dart';
+part 'signin/signin_screen.dart';
+part 'signin/signin_viewmodel.dart';
+part 'signin/signin_usecase.dart';
+part 'sessionmanager/session_manager_screen.dart';
+part 'sessionmanager/session_manager_viewmodel.dart';
+part 'sessionmanager/load_rooms_usecase.dart';
+part 'sessionmanager/rooms_repository.dart';
+part 'sessionmanager/load_rooms_parameters.dart';
+part 'sessionmanager/connect_with_room_parameters.dart';
+part 'playermanager/playermanagerwidget.dart';
+part 'playermanager/playermanagerviewmodel.dart';
 part 'player_control_panel/player_control_panel_widget.dart';
 part 'player_control_panel/player_control_panel_viewmodel.dart';
 part 'player_control_panel/controlpanelsocketrepository.dart';
 part 'player_control_panel/authorize_connection_usecase.dart';
 part 'player_control_panel/player_control_panel_state.dart';
+part 'create_room/create_room_dialog.dart';
+part 'create_room/create_room_viewmodel.dart';
 
-class AdminFeatureProvider {
-  final ConnectRepository connectRepository;
-  final ControlPanelSocketRepository controlPanelRepository;
+class AdminFeatureUIProvider {
+  AdminFeatureUIProvider();
 
-  AdminFeatureProvider({
-    required this.connectRepository,
-    required this.controlPanelRepository,
-  });
+  Widget buildSignInScreen(
+    BuildContext context, {
+    String username = '',
+    String password = '',
+  }) =>
+      ChangeNotifierProvider<SignInViewModel>(
+        create: (context) => DefaultSignInViewModel(
+          connectRepository: context.read(),
+          persistenceRepository: context.read(),
+          singalongConfiguration: context.read(),
+          username: username,
+          password: password,
+        ),
+        child: SignInScreen(
+          coordinator: context.read(),
+          localizations: context.read(),
+        ),
+      );
 
-  late final AuthorizeConnectionUseCase _authorizeConnectionUseCase =
-      AuthorizeConnectionUseCase(
-    connectRepository: connectRepository,
-  );
+  Widget buildSessionManagerScreen(BuildContext context) =>
+      ChangeNotifierProvider<SessionManagerViewModel>(
+        create: (context) => DefaultSessionManagerViewModel(
+          roomsRepository: context.read(),
+          connectRepository: context.read(),
+          persistenceRepository: context.read(),
+        ),
+        child: SessionManagerScreen(
+          coordinator: context.read(),
+        ),
+      );
 
-  Widget buildPlayerControlPanel() =>
+  Widget buildPlayerControlPanel(Room room) =>
       ChangeNotifierProvider<PlayerControlPanelViewModel>(
-        create: (_) => DefaultPlayerControlPanelViewModel(
-          authorizeConnectionUseCase: _authorizeConnectionUseCase,
-          connectRepository: connectRepository,
-          controlPanelRepository: controlPanelRepository,
+        create: (context) => DefaultPlayerControlPanelViewModel(
+          connectRepository: context.read(),
+          controlPanelRepository: context.read(),
+          room: room,
         ),
         child: const PlayerControlPanelWidget(),
+      );
+
+  Widget buildPlayerManagerDialog(Room room) =>
+      ChangeNotifierProvider<PlayerSelectorViewModel>(
+        create: (context) => DefaultPlayerSelectorViewModel(
+          socketRepository: context.read(),
+          room: room,
+        ),
+        child: PlayerSelectorDialogWidget(),
       );
 }

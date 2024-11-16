@@ -35,11 +35,11 @@ class LoadSongsParameters {
   final int? nextPage;
 
   LoadSongsParameters._({
-    this.keyword = null,
-    this.limit = null,
-    this.nextOffset = null,
-    this.nextCursor = null,
-    this.nextPage = null,
+    this.keyword,
+    this.limit,
+    this.nextOffset,
+    this.nextCursor,
+    this.nextPage,
   });
 
   void validate() {
@@ -89,29 +89,3 @@ class LoadSongsParameters {
     }
   }
 }
-
-/*
-
-    fun nextPage(): Pagination? {
-        return if (offset != null) {
-            Pagination.OffsetPagination(offset)
-        } else if (cursor != null) {
-            Pagination.CursorPagination(cursor)
-        } else if (page != null) {
-            Pagination.PagePagination(page)
-        } else {
-            null
-        }
-    }
-
-sealed class Pagination {
-    data class OffsetPagination(val nextOffset: Int) : Pagination()
-
-    data class CursorPagination(val nextCursor: String) : Pagination()
-
-    data class PagePagination(val pageNumber: Int) : Pagination() // Limit can be set externally
-
-    object NoMorePages : Pagination()
-}
-
- */

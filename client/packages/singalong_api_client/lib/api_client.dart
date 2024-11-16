@@ -64,8 +64,8 @@ class APIClient {
       }
       final decodedBody = utf8.decode(response.bodyBytes);
       debugPrint("request response body: $decodedBody");
+      final result = GenericResponse.fromResponse(response);
       try {
-        final result = GenericResponse.fromResponse(response);
         debugPrint("request result: $result");
         if (result.status < 200 || result.status >= 300) {
           throw Exception(result.message ?? "Unknown error");
@@ -74,8 +74,12 @@ class APIClient {
       } catch (e, st) {
         debugPrint("request error: $e");
         debugPrint("request stacktrace: $st");
-        final message = "Response body: ${response.body}";
-        throw Exception(message);
+        final apiMessage = result.message;
+        if (apiMessage != null) {
+          throw GenericException.api(apiMessage);
+        } else {
+          throw GenericException.unhandled(e);
+        }
       }
     } catch (e, st) {
       debugPrint("request error: $e");

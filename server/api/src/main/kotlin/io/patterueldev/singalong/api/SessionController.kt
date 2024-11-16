@@ -1,8 +1,10 @@
 package io.patterueldev.singalong.api
 
+import io.patterueldev.common.GenericResponse
 import io.patterueldev.session.SessionService
 import io.patterueldev.session.connect.ConnectParameters
 import io.patterueldev.session.setuserpasscode.SetUserPasscodeParameters
+import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
@@ -22,4 +24,7 @@ class SessionController(
     suspend fun setUserPasscode(
         @RequestBody setPasscodeParameters: SetUserPasscodeParameters,
     ) = sessionService.setUserPasscode(setPasscodeParameters)
+
+    @GetMapping("/check")
+    suspend fun check() = GenericResponse.success("こんにちは")
 }

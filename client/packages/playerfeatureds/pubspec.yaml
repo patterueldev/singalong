@@ -11,7 +11,8 @@ dependencies:
   flutter:
     sdk: flutter
 
-  shared:
+  core:
+  common:
   playerfeature:
   singalong_api_client:
 

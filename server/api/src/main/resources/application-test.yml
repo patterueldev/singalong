@@ -30,6 +30,10 @@ singalong:
       id: "room"
       name: "The Room"
       passcode: "pass"
+    idle:
+      id: "r"
+      name: "The Idle"
+      passcode: "pass"
 socketio:
   hostname: localhost
   port: 9000

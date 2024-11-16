@@ -1,57 +1,85 @@
 part of '../playerfeature.dart';
 
 abstract class PlayerViewModel extends ChangeNotifier {
-  ValueNotifier<bool> get isConnected;
-  ValueNotifier<PlayerViewState> get playerViewStateNotifier;
-  void establishConnection();
+  ValueNotifier<bool> isConnected = ValueNotifier(false);
+  ValueNotifier<PlayerViewState> playerViewStateNotifier =
+      ValueNotifier(PlayerViewState.loading());
+  ValueNotifier<String?> roomIdNotifier = ValueNotifier(null);
+
+  void setup();
 }
 
 class DefaultPlayerViewModel extends PlayerViewModel {
   final ConnectRepository connectRepository;
   final PlayerSocketRepository playerSocketRepository;
+  final PersistenceRepository persistenceRepository;
   final ReservedViewModel reservedViewModel;
 
   DefaultPlayerViewModel({
     required this.connectRepository,
     required this.playerSocketRepository,
+    required this.persistenceRepository,
     required this.reservedViewModel,
-  });
+  }) {
+    setup();
+  }
 
   late final AuthorizeConnectionUseCase connectUseCase =
       AuthorizeConnectionUseCase(connectRepository: connectRepository);
 
   // StreamSubscription? _currentSongListener;
+  StreamController<String>? _roomAssignedStreamController;
   StreamController<CurrentSong?>? _currentSongController;
   StreamController<int>? _seekDurationFromControlStreamController;
   StreamController<bool>? _togglePlayPauseStreamController;
+  StreamController<double>? _volumeStreamController;
 
   final List<VideoController> _videoControllers = [];
   VideoController? _activeSongVideoController;
 
   @override
-  final ValueNotifier<bool> isConnected = ValueNotifier(false);
-
-  @override
-  final ValueNotifier<PlayerViewState> playerViewStateNotifier =
-      ValueNotifier(PlayerViewState.loading());
-
-  @override
-  void establishConnection() async {
+  void setup() async {
     isConnected.value = false;
     playerViewStateNotifier.value = PlayerViewState.loading();
 
-    // the process will be as follows:
-    // 1. Connect to the server with username and roomId
-    var canProceed = false;
-    // TODO: THESE will probably be managed by an admin device in the future; for now, we'll just hardcode it
+    // TODO: Handle unique name to be truly unique, like get it from the server instead of local generation
+    final username = await persistenceRepository.getUniqueName();
+    final deviceId = await persistenceRepository.getDeviceId();
+    await playerSocketRepository.registerIdlePlayer(username, deviceId);
+
     debugPrint("Player connecting to the server");
+    isConnected.value = true;
+    playerViewStateNotifier.value = PlayerViewState.disconnected();
+
+    _roomAssignedStreamController =
+        playerSocketRepository.roomAssignedStreamController;
+    _roomAssignedStreamController?.stream.listen((roomId) {
+      debugPrint("Room assigned: $roomId");
+      // re-establish connection
+      establishConnection(roomId);
+    });
+
+    playerSocketRepository.checkIfAssignedToRoom(username);
+  }
+
+  void establishConnection(String roomId) async {
+    debugPrint("Establishing connection to the room: $roomId");
+    isConnected.value = false;
+    playerViewStateNotifier.value = PlayerViewState.loading();
+
+    final username = await persistenceRepository.getUniqueName();
+
+    debugPrint("Room assigned: $roomId");
     final connectResult = await connectUseCase(
       ConnectParameters(
-        username: "player",
-        roomId: "569841",
-        clientType: "PLAYER",
+        username: username,
+        roomId: roomId,
+        clientType: ClientType.PLAYER,
       ),
     );
+
+    // 1. Connect to the server with username and roomId
+    var canProceed = false;
     connectResult.fold(
       (l) {
         debugPrint("Error: $l");
@@ -67,21 +95,25 @@ class DefaultPlayerViewModel extends PlayerViewModel {
           PlayerViewState.failure("Unable to connect to the server");
       return;
     }
-    isConnected.value = true;
 
-    playerViewStateNotifier.value = PlayerViewState.disconnected();
+    isConnected.value = true;
+    roomIdNotifier.value = roomId;
+    playerViewStateNotifier.value = PlayerViewState.connected();
+
+    await connectRepository.connectRoomSocket(roomId);
+
     setupListeners();
     reservedViewModel.setupListeners();
 
-    connectRepository.connectSocket();
+    playerSocketRepository.requestPlayerData();
   }
 
   void setupListeners() {
     // 2. Listen to the current song updates
     debugPrint("Listening to current song updates");
 
-    _currentSongController =
-        playerSocketRepository.currentSongStreamController();
+    // Listen to the current song stream
+    _currentSongController = playerSocketRepository.currentSongStreamController;
     _currentSongController?.stream.listen((currentSong) async {
       debugPrint("Current song: $currentSong");
       try {
@@ -90,12 +122,14 @@ class DefaultPlayerViewModel extends PlayerViewModel {
           playerViewStateNotifier.value = PlayerViewState.connected();
           return;
         }
+        final durationInSeconds = currentSong.durationInSeconds;
         final videoUrl = currentSong.videoURL;
         debugPrint("Playing video: $videoUrl");
         final controller = VideoController.network(videoUrl);
         _videoControllers.add(controller);
         await controller.initialize();
-        playerViewStateNotifier.value = PlayerViewState.playing(controller);
+        playerViewStateNotifier.value =
+            PlayerViewState.playing(controller, durationInSeconds.toDouble());
 
         await controller.play();
         _activeSongVideoController = controller;
@@ -109,15 +143,17 @@ class DefaultPlayerViewModel extends PlayerViewModel {
       }
     });
 
+    // Seek duration from the control stream
     _seekDurationFromControlStreamController =
-        playerSocketRepository.seekDurationFromControlStreamController();
+        playerSocketRepository.seekDurationFromControlStreamController;
     _seekDurationFromControlStreamController?.stream.listen((seekValue) {
       debugPrint("Seek value: $seekValue");
       _activeSongVideoController?.seekTo(Duration(seconds: seekValue));
     });
 
+    // Toggle play/pause stream
     _togglePlayPauseStreamController =
-        playerSocketRepository.togglePlayPauseStreamController();
+        playerSocketRepository.togglePlayPauseStreamController;
     _togglePlayPauseStreamController?.stream.listen((isPlaying) {
       debugPrint("Toggle play/pause: $isPlaying");
       if (isPlaying) {
@@ -125,6 +161,13 @@ class DefaultPlayerViewModel extends PlayerViewModel {
       } else {
         _activeSongVideoController?.pause();
       }
+    });
+
+    // Volume stream
+    _volumeStreamController = playerSocketRepository.volumeStreamController;
+    _volumeStreamController?.stream.listen((volume) {
+      debugPrint("Volume: $volume");
+      _activeSongVideoController?.setVolume(volume);
     });
   }
 
@@ -152,7 +195,13 @@ class DefaultPlayerViewModel extends PlayerViewModel {
       // TODO: Send command to the server to update the score and play the next song
     } else {
       // send the current position to the server
-      playerSocketRepository.seekDurationFromPlayer(position.inMilliseconds);
+      playerSocketRepository.durationUpdate(
+          durationInMilliseconds: position.inMilliseconds);
+
+      final state = playerViewStateNotifier.value;
+      if (state is PlayerViewPlaying) {
+        state.currentSeekValueNotifier.value = position.inSeconds.toDouble();
+      }
     }
   }
 
@@ -183,6 +232,7 @@ class DefaultPlayerViewModel extends PlayerViewModel {
     _currentSongController?.close();
     _seekDurationFromControlStreamController?.close();
     _togglePlayPauseStreamController?.close();
+    _volumeStreamController?.close();
     playerViewStateNotifier.value = PlayerViewState.disconnected();
 
     super.dispose();

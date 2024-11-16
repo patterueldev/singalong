@@ -1,28 +1,30 @@
 package io.patterueldev.singalong
 
+import io.patterueldev.admin.AdminCoordinator
 import io.patterueldev.reservation.ReservationCoordinator
 import io.patterueldev.singalong.realtime.OnEventListener
 import io.patterueldev.songidentifier.SongIdentifierCoordinator
 import org.springframework.stereotype.Component
 
 @Component
-class ServerCoordinator : ReservationCoordinator, SongIdentifierCoordinator {
-    private var onReserveUpdateListener: OnEventListener? = null
-    private var onCurrentSongUpdateListener: OnEventListener? = null
+class ServerCoordinator : ReservationCoordinator, SongIdentifierCoordinator, AdminCoordinator {
+    var onReserveUpdateListener: ((String) -> Unit)? = null
+    var onCurrentSongUpdateListener: ((String) -> Unit)? = null
+    var onAssignedPlayerToRoomListener: ((String, String) -> Unit)? = null
+    var onRoomUpdateListener: OnEventListener? = null
 
-    override fun onReserveUpdate() {
-        onReserveUpdateListener?.invoke()
+    override fun onReserveUpdate(roomId: String) {
+        onReserveUpdateListener?.invoke(roomId)
     }
 
-    override fun onCurrentSongUpdate() {
-        onCurrentSongUpdateListener?.invoke()
+    override fun onCurrentSongUpdate(roomId: String) {
+        onCurrentSongUpdateListener?.invoke(roomId)
     }
 
-    fun setOnReserveUpdateListener(listener: OnEventListener) {
-        onReserveUpdateListener = listener
-    }
-
-    fun setOnCurrentSongUpdateListener(listener: OnEventListener) {
-        onCurrentSongUpdateListener = listener
+    override fun onAssignedPlayerToRoom(
+        playerId: String,
+        roomId: String,
+    ) {
+        onAssignedPlayerToRoomListener?.invoke(playerId, roomId)
     }
 }

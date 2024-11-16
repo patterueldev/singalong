@@ -1,5 +1,6 @@
 package io.patterueldev.singalong
 
+import kotlinx.coroutines.runBlocking
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.CommandLineRunner
 import org.springframework.context.annotation.Profile
@@ -14,6 +15,6 @@ class ServerCommandLineRunner : CommandLineRunner {
     @Throws(Exception::class)
     override fun run(vararg args: String) {
         // TODO: This could potentially be done "not-automatically" by the admin
-        singalongService.start()
+        runBlocking { singalongService.start() }
     }
 }

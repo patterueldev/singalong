@@ -6,6 +6,25 @@ part of 'singalong_api_client.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
+RoomCommand _$RoomCommandFromJson(Map<String, dynamic> json) => RoomCommand(
+      $enumDecode(_$RoomCommandTypeEnumMap, json['type']),
+      json['data'],
+    );
+
+Map<String, dynamic> _$RoomCommandToJson(RoomCommand instance) =>
+    <String, dynamic>{
+      'type': _$RoomCommandTypeEnumMap[instance.type]!,
+      'data': instance.data,
+    };
+
+const _$RoomCommandTypeEnumMap = {
+  RoomCommandType.skipSong: 'skipSong',
+  RoomCommandType.togglePlayPause: 'togglePlayPause',
+  RoomCommandType.adjustVolume: 'adjustVolume',
+  RoomCommandType.durationUpdate: 'durationUpdate',
+  RoomCommandType.seekDuration: 'seekDuration',
+};
+
 GenericResponse _$GenericResponseFromJson(Map<String, dynamic> json) =>
     GenericResponse(
       success: json['success'] as bool,
@@ -30,6 +49,7 @@ APIConnectParameters _$APIConnectParametersFromJson(
       roomId: json['roomId'] as String,
       roomPasscode: json['roomPasscode'] as String?,
       clientType: json['clientType'] as String,
+      deviceId: json['deviceId'] as String,
     );
 
 Map<String, dynamic> _$APIConnectParametersToJson(
@@ -40,6 +60,7 @@ Map<String, dynamic> _$APIConnectParametersToJson(
       'roomId': instance.roomId,
       'roomPasscode': instance.roomPasscode,
       'clientType': instance.clientType,
+      'deviceId': instance.deviceId,
     };
 
 APIConnectResponseData _$APIConnectResponseDataFromJson(
@@ -48,6 +69,7 @@ APIConnectResponseData _$APIConnectResponseDataFromJson(
       requiresUserPasscode: json['requiresUserPasscode'] as bool?,
       requiresRoomPasscode: json['requiresRoomPasscode'] as bool?,
       accessToken: json['accessToken'] as String?,
+      refreshToken: json['refreshToken'] as String?,
     );
 
 Map<String, dynamic> _$APIConnectResponseDataToJson(
@@ -56,6 +78,7 @@ Map<String, dynamic> _$APIConnectResponseDataToJson(
       'requiresUserPasscode': instance.requiresUserPasscode,
       'requiresRoomPasscode': instance.requiresRoomPasscode,
       'accessToken': instance.accessToken,
+      'refreshToken': instance.refreshToken,
     };
 
 APIReservedSong _$APIReservedSongFromJson(Map<String, dynamic> json) =>
@@ -373,4 +396,119 @@ Map<String, dynamic> _$APIAvatarToJson(APIAvatar instance) => <String, dynamic>{
       'url': instance.url,
       'width': instance.width,
       'height': instance.height,
+    };
+
+APIPaginatedRoomList _$APIPaginatedRoomListFromJson(
+        Map<String, dynamic> json) =>
+    APIPaginatedRoomList(
+      items: (json['items'] as List<dynamic>)
+          .map((e) => APIRoomItem.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      nextOffset: (json['nextOffset'] as num?)?.toInt(),
+      nextCursor: json['nextCursor'] as String?,
+      nextPage: (json['nextPage'] as num?)?.toInt(),
+    );
+
+Map<String, dynamic> _$APIPaginatedRoomListToJson(
+        APIPaginatedRoomList instance) =>
+    <String, dynamic>{
+      'items': instance.items,
+      'nextOffset': instance.nextOffset,
+      'nextCursor': instance.nextCursor,
+      'nextPage': instance.nextPage,
+    };
+
+APIRoomItem _$APIRoomItemFromJson(Map<String, dynamic> json) => APIRoomItem(
+      id: json['id'] as String,
+      name: json['name'] as String,
+      isSecured: json['isSecured'] as bool,
+      isActive: json['isActive'] as bool,
+      lastActive: DateTime.parse(json['lastActive'] as String),
+    );
+
+Map<String, dynamic> _$APIRoomItemToJson(APIRoomItem instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'name': instance.name,
+      'isSecured': instance.isSecured,
+      'isActive': instance.isActive,
+      'lastActive': instance.lastActive.toIso8601String(),
+    };
+
+APILoadRoomListParameters _$APILoadRoomListParametersFromJson(
+        Map<String, dynamic> json) =>
+    APILoadRoomListParameters(
+      keyword: json['keyword'] as String?,
+      limit: (json['limit'] as num?)?.toInt(),
+      nextOffset: (json['nextOffset'] as num?)?.toInt(),
+      nextCursor: json['nextCursor'] as String?,
+      nextPage: (json['nextPage'] as num?)?.toInt(),
+    );
+
+Map<String, dynamic> _$APILoadRoomListParametersToJson(
+        APILoadRoomListParameters instance) =>
+    <String, dynamic>{
+      'keyword': instance.keyword,
+      'limit': instance.limit,
+      'nextOffset': instance.nextOffset,
+      'nextCursor': instance.nextCursor,
+      'nextPage': instance.nextPage,
+    };
+
+APIRoom _$APIRoomFromJson(Map<String, dynamic> json) => APIRoom(
+      id: json['id'] as String,
+      name: json['name'] as String,
+      passcode: json['passcode'] as String?,
+      isArchived: json['isArchived'] as bool,
+    );
+
+Map<String, dynamic> _$APIRoomToJson(APIRoom instance) => <String, dynamic>{
+      'id': instance.id,
+      'name': instance.name,
+      'passcode': instance.passcode,
+      'isArchived': instance.isArchived,
+    };
+
+APIConnectWithRoomResponseData _$APIConnectWithRoomResponseDataFromJson(
+        Map<String, dynamic> json) =>
+    APIConnectWithRoomResponseData(
+      accessToken: json['accessToken'] as String,
+      refreshToken: json['refreshToken'] as String,
+    );
+
+Map<String, dynamic> _$APIConnectWithRoomResponseDataToJson(
+        APIConnectWithRoomResponseData instance) =>
+    <String, dynamic>{
+      'accessToken': instance.accessToken,
+      'refreshToken': instance.refreshToken,
+    };
+
+APIPlayerItem _$APIPlayerItemFromJson(Map<String, dynamic> json) =>
+    APIPlayerItem(
+      id: json['id'] as String,
+      name: json['name'] as String,
+      isIdle: json['isIdle'] as bool? ?? false,
+    );
+
+Map<String, dynamic> _$APIPlayerItemToJson(APIPlayerItem instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'name': instance.name,
+      'isIdle': instance.isIdle,
+    };
+
+APICreateRoomParameters _$APICreateRoomParametersFromJson(
+        Map<String, dynamic> json) =>
+    APICreateRoomParameters(
+      roomId: json['roomId'] as String,
+      roomName: json['roomName'] as String,
+      roomPasscode: json['roomPasscode'] as String? ?? '',
+    );
+
+Map<String, dynamic> _$APICreateRoomParametersToJson(
+        APICreateRoomParameters instance) =>
+    <String, dynamic>{
+      'roomId': instance.roomId,
+      'roomName': instance.roomName,
+      'roomPasscode': instance.roomPasscode,
     };

@@ -36,6 +36,15 @@ class DataSeeder : CommandLineRunner {
     @Value("\${singalong.seeders.admin.passcode}")
     private lateinit var adminPasscode: String
 
+    @Value("\${singalong.seeders.idle.id}")
+    private lateinit var idleRoomId: String
+
+    @Value("\${singalong.seeders.idle.name}")
+    private lateinit var idleRoomName: String
+
+    @Value("\${singalong.seeders.idle.passcode}")
+    private lateinit var idleRoomPasscode: String
+
     override fun run(vararg args: String?) {
         val adminRoom = roomDocumentRepository.findRoomById(roomId)
 
@@ -67,6 +76,23 @@ class DataSeeder : CommandLineRunner {
             println("Admin user created")
         } else {
             println("Admin user already exists")
+        }
+
+        // create idle room
+        val idleRoom = roomDocumentRepository.findRoomById(idleRoomId)
+
+        if (idleRoom == null) {
+            val newIdleRoom =
+                RoomDocument(
+                    id = idleRoomId,
+                    name = idleRoomName,
+                    passcode = passwordEncoder.encode(idleRoomPasscode),
+                    archivedAt = null,
+                )
+            roomDocumentRepository.save(newIdleRoom)
+            println("Idle room created")
+        } else {
+            println("Idle room already exists")
         }
     }
 }

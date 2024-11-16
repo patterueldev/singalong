@@ -6,7 +6,7 @@ import 'package:controller/splash/splash_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:sessionfeature/sessionfeature.dart';
 import 'package:sessionfeatureds/sessionfeatureds.dart';
-import 'package:shared/shared.dart';
+import 'package:core/core.dart';
 import 'package:singalong_api_client/singalong_api_client.dart';
 import 'package:songbookfeature/songbookfeature.dart';
 import 'package:songbookfeatureds/songbookfeatureds.dart';

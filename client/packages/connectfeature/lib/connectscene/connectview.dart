@@ -114,6 +114,34 @@ class _ConnectViewState extends State<ConnectView> {
                 icon: const Icon(Icons.meeting_room),
               ),
             ),
+            // field for the server address
+            const SizedBox(height: 16),
+            ValueListenableBuilder(
+              valueListenable: viewModel.singalongConfigurationNotifier,
+              builder: (_, configuration, __) => InkWell(
+                customBorder: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                onTap: () => showDialog(
+                  context: context,
+                  builder: (context) =>
+                      _showEditCustomHostDialog(context, configuration),
+                ),
+                child: IgnorePointer(
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    child: Text(
+                      configuration.apiBaseUrl,
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            decoration: TextDecoration.underline,
+                          ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
             const SizedBox(height: 32),
             LayoutBuilder(
               builder: (context, constraints) {
@@ -154,4 +182,55 @@ class _ConnectViewState extends State<ConnectView> {
           ],
         ),
       );
+
+  Widget _showEditCustomHostDialog(
+      BuildContext context, SingalongConfiguration configuration) {
+    final hostController = TextEditingController(text: configuration.host);
+    final portController =
+        TextEditingController(text: configuration.apiPort.toString());
+
+    return AlertDialog(
+      title: Text(localizations.editServerHostDialogTitle.localizedOf(context)),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextField(
+            controller: hostController,
+            decoration: InputDecoration(
+              labelText:
+                  localizations.serverHostPlaceholderText.localizedOf(context),
+            ),
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: portController,
+            decoration: InputDecoration(
+              labelText: "Port",
+            ),
+            readOnly: true,
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(localizations.cancelButtonText.localizedOf(context)),
+        ),
+        TextButton(
+          onPressed: () {
+            viewModel.updateServerHost(hostController.text);
+            Navigator.of(context).pop();
+          },
+          child: Text(localizations.saveButtonText.localizedOf(context)),
+        ),
+        TextButton(
+          onPressed: () => {
+            viewModel.resetServerHost(),
+            Navigator.of(context).pop(),
+          },
+          child: Text(localizations.clearButtonText.localizedOf(context)),
+        ),
+      ],
+    );
+  }
 }

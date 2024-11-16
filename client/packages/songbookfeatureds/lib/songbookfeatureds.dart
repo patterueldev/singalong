@@ -2,7 +2,7 @@ library songbookfeatureds;
 
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
-import 'package:shared/shared.dart';
+import 'package:core/core.dart';
 import 'package:songbookfeature/songbookfeature.dart';
 import 'package:singalong_api_client/singalong_api_client.dart';
 

@@ -6,7 +6,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:provider/provider.dart';
-import 'package:shared/shared.dart';
+import 'package:core/core.dart';
 import 'package:common/common.dart';
 
 part 'sessionview/sessionview.dart';
@@ -29,6 +29,7 @@ class SessionFeatureUIBuilder {
         create: (context) => DefaultSessionViewModel(
           reservedSongListSocketRepository: context.read(),
           connectRepository: context.read(),
+          persistenceRepository: context.read(),
           localizations: context.read(),
         ),
         child: SessionView(

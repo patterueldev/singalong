@@ -3,16 +3,23 @@
 
 import 'package:common/common.dart';
 import 'package:controller/web/approute.dart';
+import 'package:core/core.dart';
 import 'package:flutter/material.dart';
 
 import 'dart:html' as html;
 import 'splash_viewmodel.dart';
 
 class WebSplashScreenViewModel extends SplashScreenViewModel {
+  final ConnectRepository connectRepository;
   final PersistenceRepository
       persistenceService; // Might need this when restoring authentication
+  final SingalongConfiguration configuration;
 
-  WebSplashScreenViewModel({required this.persistenceService});
+  WebSplashScreenViewModel({
+    required this.connectRepository,
+    required this.persistenceService,
+    required this.configuration,
+  });
 
   @override
   final ValueNotifier<SplashState> didFinishStateNotifier =
@@ -21,6 +28,11 @@ class WebSplashScreenViewModel extends SplashScreenViewModel {
   @override
   void load() async {
     try {
+      final customHost = await persistenceService.getCustomHost();
+      if (customHost != null) {
+        configuration.customHost = customHost;
+      }
+
       // check current address from browser
       final uri = html.window.location.href;
       final path = html.window.location.pathname;
@@ -31,10 +43,14 @@ class WebSplashScreenViewModel extends SplashScreenViewModel {
         // no need to check for authentication
         return;
       }
+      final isAuthenticated = await connectRepository.checkAuthentication();
+      if (isAuthenticated) {
+        didFinishStateNotifier.value = SplashState.authenticated(null);
+      } else {
+        didFinishStateNotifier.value = SplashState.unauthenticated();
+      }
     } catch (e) {
       debugPrint("Error while loading: $e");
     }
-    await Future.delayed(const Duration(seconds: 2));
-    didFinishStateNotifier.value = SplashState.unauthenticated();
   }
 }

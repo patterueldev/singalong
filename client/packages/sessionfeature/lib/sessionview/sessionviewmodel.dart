@@ -20,11 +20,13 @@ class DefaultSessionViewModel extends SessionViewModel {
   final ReservedSongListSocketRepository reservedSongListSocketRepository;
   final ConnectRepository connectRepository;
   final SessionLocalizations localizations;
+  final PersistenceRepository persistenceRepository;
 
   DefaultSessionViewModel({
     required this.reservedSongListSocketRepository,
     required this.connectRepository,
     required this.localizations,
+    required this.persistenceRepository,
     List<ReservedSongItem>? songList,
   }) {
     if (songList != null) {
@@ -36,16 +38,35 @@ class DefaultSessionViewModel extends SessionViewModel {
 
   @override
   void setupSession() async {
-    stateNotifier.value = SessionViewState.loading();
+    try {
+      debugPrint('Setting up session');
+      stateNotifier.value = SessionViewState.loading();
+      final roomId = await persistenceRepository.getRoomId();
+      if (roomId == null) {
+        stateNotifier.value = SessionViewState.failure('Room ID not found');
+        return;
+      }
+      await connectRepository.connectRoomSocket(roomId);
 
-    streamController =
-        reservedSongListSocketRepository.reservedSongListStreamController();
-    streamController?.stream.listen((songList) {
-      songListNotifier.value = songList;
-    });
+      debugPrint('Opening socket');
+      streamController =
+          reservedSongListSocketRepository.reservedSongListStreamController;
+      debugPrint('Listening to stream');
+      streamController?.stream.listen((songList) {
+        songListNotifier.value = songList;
+      });
 
-    connectRepository.connectSocket();
-    stateNotifier.value = SessionViewState.loaded();
+      debugPrint('Connecting to socket');
+      reservedSongListSocketRepository.requestReservedSongList();
+
+      stateNotifier.value = SessionViewState.loaded();
+
+      debugPrint('Session setup complete; State: ${stateNotifier.value}');
+    } catch (e, st) {
+      debugPrint('Error setting up session: $e');
+      debugPrintStack(stackTrace: st);
+      stateNotifier.value = SessionViewState.failure(e.toString());
+    }
   }
 
   @override
@@ -91,8 +112,8 @@ class DefaultSessionViewModel extends SessionViewModel {
   }
 
   @override
-  void disconnect() {
-    // dispose of the observer
+  void disconnect() async {
+    await connectRepository.disconnect();
     stateNotifier.value = SessionViewState.disconnected();
   }
 

@@ -1,7 +1,7 @@
 import 'package:controller/splash/splash_coordinator.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:shared/shared.dart';
+import 'package:core/core.dart';
 
 import 'mobile_splash_viewmodel.dart';
 import 'splash_screen.dart';

@@ -6,7 +6,10 @@ import 'package:sessionfeature/sessionfeature.dart';
 import 'package:songbookfeature/songbookfeature.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../splash/mobile_splash_viewmodel.dart';
 import '../splash/splash_coordinator.dart';
+import '../splash/splash_screen.dart';
+import '../splash/splash_viewmodel.dart';
 
 class MobileAppCoordinator
     implements
@@ -30,7 +33,14 @@ class MobileAppCoordinator
     BuildContext context, {
     String? redirectPath,
   }) {
-    // TODO: implement onAuthenticated
+    debugPrint(
+        "Is Authenticated, will redirect to $redirectPath or session view");
+    SessionFeatureUIBuilder sessionFeatureBuilder = context.read();
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(
+          builder: (context) =>
+              sessionFeatureBuilder.buildSessionView(context)),
+    );
   }
 
   @override
@@ -45,7 +55,19 @@ class MobileAppCoordinator
 
   @override
   void onDisconnected(BuildContext context) {
-    // TODO: implement onDisconnected
+    debugPrint("Disconnected, will redirect to splash screen");
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(
+        builder: (context) => ChangeNotifierProvider<SplashScreenViewModel>(
+          create: (_) => MobileSplashScreenViewModel(
+            connectRepository: context.read(),
+            persistenceService: context.read(),
+            configuration: context.read(),
+          ),
+          child: SplashScreen(flow: context.read()),
+        ),
+      ),
+    );
   }
 
   @override

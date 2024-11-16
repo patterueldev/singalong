@@ -1,5 +1,6 @@
 package io.patterueldev.mongods.session
 
+import io.patterueldev.client.ClientType
 import io.patterueldev.mongods.room.RoomDocument
 import io.patterueldev.mongods.user.UserDocument
 import org.springframework.data.annotation.CreatedDate
@@ -17,6 +18,9 @@ data class SessionDocument(
     @CreatedDate val createdAt: LocalDateTime = LocalDateTime.now(),
     @LastModifiedDate val updatedAt: LocalDateTime = LocalDateTime.now(),
     // for indexing
-    val isConnected: Boolean = true,
+    var deviceId: String = "",
+    var lastConnectedAt: LocalDateTime = LocalDateTime.now().minusDays(7),
+    var isConnected: Boolean = true,
+    var connectedOnClient: ClientType = ClientType.CONTROLLER,
     val lastCheckedDate: LocalDateTime = LocalDateTime.now(),
 )

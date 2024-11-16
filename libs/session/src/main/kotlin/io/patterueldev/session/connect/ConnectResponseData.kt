@@ -4,4 +4,5 @@ data class ConnectResponseData(
     val requiresUserPasscode: Boolean? = null,
     val requiresRoomPasscode: Boolean? = null,
     val accessToken: String? = null,
+    val refreshToken: String? = null,
 )

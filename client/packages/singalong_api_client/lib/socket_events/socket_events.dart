@@ -1,28 +1,46 @@
 part of '../singalong_api_client.dart';
 
 enum SocketEvent {
+  idleReconnectAttempt,
+  roomDataRequest,
   reservedSongs,
   currentSong,
-  seekDurationFromPlayer,
-  seekDurationFromControl,
+  roomPlayerCommand,
+  durationUpdate,
+  seekDuration,
   togglePlayPause,
-  skipSong,
+  adjustVolumeFromControl,
+  playersList,
+  roomAssigned,
+  playerAssigned,
   ;
 
   String get value {
     switch (this) {
-      case SocketEvent.reservedSongs:
+      case idleReconnectAttempt:
+        return 'idleReconnectAttempt';
+      case roomDataRequest:
+        return 'roomDataRequest';
+      case reservedSongs:
         return 'reservedSongs';
-      case SocketEvent.currentSong:
+      case currentSong:
         return 'currentSong';
-      case SocketEvent.seekDurationFromPlayer:
-        return 'seekDurationFromPlayer';
-      case SocketEvent.seekDurationFromControl:
-        return 'seekDurationFromControl';
-      case SocketEvent.togglePlayPause:
+      case roomPlayerCommand:
+        return 'roomPlayerCommand';
+      case durationUpdate:
+        return 'durationUpdate';
+      case seekDuration:
+        return 'seekDuration';
+      case togglePlayPause:
         return 'togglePlayPause';
-      case SocketEvent.skipSong:
-        return 'skipSong';
+      case adjustVolumeFromControl:
+        return 'adjustVolumeFromControl';
+      case playersList:
+        return 'playersList';
+      case roomAssigned:
+        return 'roomAssigned';
+      case playerAssigned:
+        return 'playerAssigned';
     }
   }
 }

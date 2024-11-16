@@ -30,6 +30,7 @@ class AuthorizeConnectionUseCase
             // store the access token somewhere
             debugPrint("Access token: $accessToken");
             connectRepository.provideAccessToken(accessToken);
+            await connectRepository.connectRoomSocket(parameters.roomId);
             return unit;
           }
           throw GenericException.unknown();
