@@ -77,7 +77,7 @@ class PlayerControlPanelWidget extends StatelessWidget {
             ValueListenableBuilder(
               valueListenable: viewModel.currentSeekValueNotifier,
               builder: (context, value, child) => Slider(
-                value: value,
+                value: min(value, state.maxSeekValue),
                 min: state.minSeekValue,
                 max: state.maxSeekValue,
                 onChanged: viewModel.updateSliderValue,

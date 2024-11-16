@@ -11,6 +11,11 @@ abstract class SearchDownloadableViewModel extends ChangeNotifier {
       ValueNotifier(IdentifySubmissionState.idle());
 
   void searchDownloadables();
+  void clearSearchQuery() {
+    searchController.clear();
+    updateSearchQuery('', debounceTime: Duration.zero);
+  }
+
   void updateSearchQuery(String query,
       {Duration debounceTime = const Duration(milliseconds: 500)});
   void identifyDownloadable(DownloadableItem downloadable);

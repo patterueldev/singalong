@@ -37,8 +37,11 @@ internal open class SaveSongUseCase(
                 newSong = identifiedSongRepository.downloadThumbnail(newSong, identifiedSong.imageUrl, filename)
                 newSong = identifiedSongRepository.downloadSong(newSong, identifiedSong.source, filename)
                 if (parameters.thenReserve) {
-                    identifiedSongRepository.reserveSong(user, newSong.id)
+                    val reservedSong = identifiedSongRepository.reserveSong(user, newSong.id)
                     songIdentifierCoordinator?.onReserveUpdate(user.roomId)
+                    if (reservedSong.currentPlaying) {
+                        songIdentifierCoordinator?.onCurrentSongUpdate(user.roomId)
+                    }
                 }
             }
         }

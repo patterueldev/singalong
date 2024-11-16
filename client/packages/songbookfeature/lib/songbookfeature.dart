@@ -39,13 +39,16 @@ class SongBookFeatureProvider {
   late final _reserveSongUseCase =
       DefaultReserveSongUseCase(songRepository: songRepository);
 
-  Widget buildSongBookView({required BuildContext context}) =>
+  Widget buildSongBookView({
+    required BuildContext context,
+    String? roomId,
+  }) =>
       ChangeNotifierProvider<SongBookViewModel>(
         create: (context) => DefaultSongBookViewModel(
-          fetchSongsUseCase: _fetchSongsUseCase,
-          reserveSongUseCase: _reserveSongUseCase,
-          localizations: localizations,
-        ),
+            fetchSongsUseCase: _fetchSongsUseCase,
+            reserveSongUseCase: _reserveSongUseCase,
+            localizations: localizations,
+            roomId: roomId),
         child: SongBookView(
           navigationCoordinator: coordinator,
           localizations: localizations,

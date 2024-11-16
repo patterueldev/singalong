@@ -2,13 +2,12 @@ package io.patterueldev.song
 
 import io.patterueldev.common.PaginatedData
 import io.patterueldev.common.Pagination
+import io.patterueldev.mongods.reservedsong.ReservedSongDocumentRepository
 import io.patterueldev.mongods.song.SongDocument
 import io.patterueldev.mongods.song.SongDocumentRepository
 import io.patterueldev.songbook.loadsongs.PaginatedSongs
 import io.patterueldev.songbook.loadsongs.SongListItem
 import io.patterueldev.songbook.song.SongRepository
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
@@ -18,10 +17,13 @@ import org.springframework.stereotype.Service
 class SongRepositoryDS : SongRepository {
     @Autowired private lateinit var songDocumentRepository: SongDocumentRepository
 
+    @Autowired private lateinit var reservedSongDocumentRepository: ReservedSongDocumentRepository
+
     override suspend fun loadSongs(
         limit: Int,
         keyword: String?,
         page: Pagination?,
+        filteringIds: List<String>,
     ): PaginatedSongs {
         // only support PagePagination
         return try {
@@ -39,17 +41,21 @@ class SongRepositoryDS : SongRepository {
                 }
             }
             val pageable: Pageable = Pageable.ofSize(limit).withPage(pageNumber - 1)
-            val pagedSongsResult: Page<SongDocument>
-            if (keyword == null) {
-                pagedSongsResult = songDocumentRepository.findAll(pageable)
-            } else {
-                pagedSongsResult =
-                    withContext(Dispatchers.IO) {
-                        songDocumentRepository.findByKeyword(
-                            keyword, pageable,
-                        )
+            println("Filtering with IDs: ${filteringIds.joinToString(",")}")
+            val pagedSongsResult: Page<SongDocument> =
+                if (keyword.isNullOrBlank()) {
+                    if (filteringIds.isEmpty()) {
+                        songDocumentRepository.findAll(pageable)
+                    } else {
+                        songDocumentRepository.findAllNotInIds(filteringIds, pageable)
                     }
-            }
+                } else {
+                    if (filteringIds.isEmpty()) {
+                        songDocumentRepository.findByKeyword(keyword, pageable)
+                    } else {
+                        songDocumentRepository.findByKeywordNotInIds(keyword, filteringIds, pageable)
+                    }
+                }
             val songs =
                 pagedSongsResult.content.map {
                     SongListItem(
@@ -73,7 +79,28 @@ class SongRepositoryDS : SongRepository {
             }
         } catch (e: Exception) {
             println("Error loading songs: $e")
+            println("Stacktrace: ${e.stackTraceToString()}")
             throw e
+        }
+    }
+
+    override suspend fun loadReservedSongs(roomId: String): List<SongListItem> {
+        val reservedSongs = reservedSongDocumentRepository.loadAllByRoomId(roomId)
+        println("Reserved songs found for room $roomId: ${reservedSongs.size}")
+        val songIds = reservedSongs.map { it.songId }
+        println("Attempting to load songs with IDs: ${songIds.joinToString(",")}")
+        val songs = songDocumentRepository.findAllById(songIds)
+        println("Songs found: ${songs.size}")
+        return songs.map {
+            SongListItem(
+                id = it.id!!,
+                thumbnailPath = it.thumbnailFile.path(),
+                title = it.title,
+                artist = it.artist,
+                language = it.language,
+                isOffVocal = it.isOffVocal,
+                lengthSeconds = it.lengthSeconds,
+            )
         }
     }
 }

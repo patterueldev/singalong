@@ -1,4 +1,4 @@
-package io.patterueldev.reservation.reservedsong
+package io.patterueldev.reservedsong
 
 interface ReservedSong {
     val id: String

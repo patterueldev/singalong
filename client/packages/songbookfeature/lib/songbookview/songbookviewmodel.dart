@@ -16,11 +16,13 @@ class DefaultSongBookViewModel extends SongBookViewModel {
   final FetchSongsUseCase fetchSongsUseCase;
   final ReserveSongUseCase reserveSongUseCase;
   final SongBookLocalizations localizations;
+  final String? roomId;
 
   DefaultSongBookViewModel({
     required this.fetchSongsUseCase,
     required this.reserveSongUseCase,
     required this.localizations,
+    this.roomId,
   }) {
     fetchSongs(false);
   }
@@ -57,6 +59,7 @@ class DefaultSongBookViewModel extends SongBookViewModel {
       keyword: _searchQuery,
       limit: 50,
       nextPage: loadsNext ? nextPage : null,
+      roomId: roomId,
     );
     final result = await fetchSongsUseCase(parameters).run();
     result.fold(

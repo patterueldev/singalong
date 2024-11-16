@@ -1,5 +1,6 @@
 package io.patterueldev.reservation.reservedsong
 
+import io.patterueldev.reservedsong.ReservedSong
 import io.patterueldev.roomuser.RoomUser
 import java.time.LocalDateTime
 

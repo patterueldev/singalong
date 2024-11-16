@@ -43,8 +43,8 @@ class WebAppCoordinator
   }
 
   @override
-  void onSongBook(BuildContext context) {
-    AppRoute.songBook.push(context);
+  void onSongBook(BuildContext context, {String? roomId}) {
+    AppRoute.songBook.push(context, arguments: roomId);
   }
 
   @override

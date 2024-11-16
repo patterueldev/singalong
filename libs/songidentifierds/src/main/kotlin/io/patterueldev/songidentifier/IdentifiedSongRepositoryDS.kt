@@ -13,6 +13,7 @@ import io.patterueldev.mongods.reservedsong.ReservedSongDocument
 import io.patterueldev.mongods.reservedsong.ReservedSongDocumentRepository
 import io.patterueldev.mongods.song.SongDocument
 import io.patterueldev.mongods.song.SongDocumentRepository
+import io.patterueldev.reservedsong.ReservedSong
 import io.patterueldev.roomuser.RoomUser
 import io.patterueldev.songidentifier.common.IdentifiedSong
 import io.patterueldev.songidentifier.common.IdentifiedSongRepository
@@ -240,8 +241,8 @@ internal class IdentifiedSongRepositoryDS : IdentifiedSongRepository {
     override suspend fun reserveSong(
         roomUser: RoomUser,
         songId: String,
-    ) {
-        mutex.withLock {
+    ): ReservedSong {
+        return mutex.withLock {
             // confirm existence of song
             val song =
                 withContext(Dispatchers.IO) {
@@ -273,8 +274,19 @@ internal class IdentifiedSongRepositoryDS : IdentifiedSongRepository {
                     reservedBy = roomUser.username,
                     startedPlayingAt = if (nothingIsPlaying) LocalDateTime.now() else null,
                 )
-            withContext(Dispatchers.IO) {
-                reservedSongDocumentRepository.save(reservedSong)
+            val newReservedSong =
+                withContext(Dispatchers.IO) {
+                    reservedSongDocumentRepository.save(reservedSong)
+                }
+            return object : ReservedSong {
+                override val id: String = newReservedSong.id ?: throw IllegalArgumentException("Reserved song id not found")
+                override val order: Int = newReservedSong.order
+                override val songId: String = newReservedSong.songId
+                override val title: String = song.title
+                override val artist: String = song.artist
+                override val thumbnailPath: String = song.thumbnailFile.path()
+                override val reservingUser: String = newReservedSong.reservedBy
+                override val currentPlaying: Boolean = newReservedSong.startedPlayingAt != null && newReservedSong.finishedPlayingAt == null
             }
         }
     }

@@ -71,12 +71,15 @@ class MobileAppCoordinator
   }
 
   @override
-  void onSongBook(BuildContext context) {
+  void onSongBook(BuildContext context, {String? roomId}) {
     SongBookFeatureProvider songBookFeatureProvider = context.read();
     Navigator.of(context).push(
       MaterialPageRoute(
-          builder: (context) =>
-              songBookFeatureProvider.buildSongBookView(context: context)),
+        builder: (context) => songBookFeatureProvider.buildSongBookView(
+          context: context,
+          roomId: roomId,
+        ),
+      ),
     );
   }
 

@@ -26,6 +26,12 @@ interface ReservedSongDocumentRepository : MongoRepository<ReservedSongDocument,
     )
     fun loadCurrentReservedSong(roomId: String): ReservedSongDocument?
 
+    @Query(
+        value = "{ 'roomId' : ?0 }",
+        sort = "{ 'order' : 1 }",
+    )
+    fun loadAllByRoomId(roomId: String): List<ReservedSongDocument>
+
     @Aggregation(
         pipeline = [
             "{ \$match: { 'roomId' : ?0 } }",

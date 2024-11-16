@@ -56,7 +56,8 @@ class _SessionViewState extends State<SessionView> {
               ),
               body: _buildBody(context, viewModel),
               floatingActionButton: FloatingActionButton(
-                onPressed: () => widget.flow.onSongBook(context),
+                onPressed: () =>
+                    widget.flow.onSongBook(context, roomId: viewModel.roomId),
                 child: const Icon(Icons.menu_book),
               ),
             ),

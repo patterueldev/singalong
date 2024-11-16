@@ -93,15 +93,32 @@ class _SongBookViewState extends State<SongBookView> {
             // cancel search
             ValueListenableBuilder<bool>(
               valueListenable: viewModel.isSearchActive,
-              builder: (context, isSearching, child) => IconButton(
-                icon: isSearching
-                    ? const Icon(Icons.close)
-                    : const Icon(Icons.search),
-                onPressed: () => {
-                  if (isSearching) _searchController.clear(),
-                  viewModel.toggleSearch(),
-                },
-              ),
+              builder: (context, isSearching, child) {
+                if (isSearching) {
+                  return IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () {
+                      viewModel.toggleSearch();
+                    },
+                  );
+                } else {
+                  return Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.search),
+                        onPressed: () {
+                          viewModel.toggleSearch();
+                        },
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.download),
+                        onPressed: () => widget.navigationCoordinator
+                            .openSearchDownloadablesScreen(context),
+                      ),
+                    ],
+                  );
+                }
+              },
             ),
           ],
         ),

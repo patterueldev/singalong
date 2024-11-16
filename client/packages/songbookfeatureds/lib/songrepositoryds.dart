@@ -21,6 +21,7 @@ class SongRepositoryDS implements SongRepository {
           nextOffset: parameters.nextOffset,
           nextCursor: parameters.nextCursor,
           nextPage: parameters.nextPage,
+          roomId: parameters.roomId,
         ),
       );
       final apiSongs = result.items;

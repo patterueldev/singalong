@@ -8,6 +8,8 @@ abstract class SessionViewModel extends ChangeNotifier {
   ValueNotifier<ReservedSongItem?> songDetailsNotifier = ValueNotifier(null);
   ValueNotifier<bool> isSongBookOpenNotifier = ValueNotifier(false);
 
+  String? roomId;
+
   void setupSession();
   void dismissSong(ReservedSongItem song);
   void reorderSongList(oldIndex, newIndex);
@@ -46,6 +48,7 @@ class DefaultSessionViewModel extends SessionViewModel {
         stateNotifier.value = SessionViewState.failure('Room ID not found');
         return;
       }
+      this.roomId = roomId;
       await connectRepository.connectRoomSocket(roomId);
 
       debugPrint('Opening socket');

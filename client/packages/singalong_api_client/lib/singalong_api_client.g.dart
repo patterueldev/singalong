@@ -174,6 +174,7 @@ APILoadSongsParameters _$APILoadSongsParametersFromJson(
       nextOffset: (json['nextOffset'] as num?)?.toInt(),
       nextCursor: json['nextCursor'] as String?,
       nextPage: (json['nextPage'] as num?)?.toInt(),
+      roomId: json['roomId'] as String?,
     );
 
 Map<String, dynamic> _$APILoadSongsParametersToJson(
@@ -184,6 +185,7 @@ Map<String, dynamic> _$APILoadSongsParametersToJson(
       'nextOffset': instance.nextOffset,
       'nextCursor': instance.nextCursor,
       'nextPage': instance.nextPage,
+      'roomId': instance.roomId,
     };
 
 APIReserveSongParameters _$APIReserveSongParametersFromJson(

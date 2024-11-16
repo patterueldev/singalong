@@ -47,6 +47,7 @@ class SongsController(
         @RequestParam nextOffset: Int?,
         @RequestParam nextCursor: String?,
         @RequestParam nextPage: Int?,
+        @RequestParam roomId: String?,
     ): LoadSongsResponse =
         songBookService.loadSongs(
             LoadSongsParameters(
@@ -55,6 +56,7 @@ class SongsController(
                 offset = nextOffset,
                 cursor = nextCursor,
                 page = nextPage,
+                roomId = roomId,
             ),
         )
 

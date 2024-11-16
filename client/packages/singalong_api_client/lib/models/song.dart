@@ -51,6 +51,7 @@ class APILoadSongsParameters {
   final int? nextOffset;
   final String? nextCursor;
   final int? nextPage;
+  final String? roomId;
 
   APILoadSongsParameters({
     this.keyword,
@@ -58,6 +59,7 @@ class APILoadSongsParameters {
     this.nextOffset,
     this.nextCursor,
     this.nextPage,
+    this.roomId,
   });
 
   factory APILoadSongsParameters.fromJson(Map<String, dynamic> json) =>

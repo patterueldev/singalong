@@ -11,7 +11,21 @@ internal class LoadSongsUseCase(
         return try {
             parameters.validate()
 
+            println("Parameters: $parameters")
+
             // if parameters, say, keyword is null, we will return recommendations
+            if (parameters.recommendation()) {
+                // move recommended to a separate use case because of the room ID
+                // recommendations
+                val reservedSongs = songRepository.loadReservedSongs(parameters.roomId!!)
+                // TODO: Logic to return recommendations; for now just gonna filter out by ID
+                val reservedSongIds = reservedSongs.map { it.id }
+                val songs = songRepository.loadSongs(parameters.limit, parameters.keyword, parameters.nextPage(), reservedSongIds)
+                // if songs are not empty, return the songs; otherwise, continue to the next block
+                if (songs.items.isNotEmpty()) {
+                    return GenericResponse.success(songs)
+                }
+            }
             val songs = songRepository.loadSongs(parameters.limit, parameters.keyword, parameters.nextPage())
             // TODO: in the future, we can add more logic here to handle the pagination
             // and return recommendations based on the keyword

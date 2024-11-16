@@ -31,6 +31,8 @@ class _SearchDownloadableViewState extends State<SearchDownloadableView> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       viewModel.searchDownloadables();
       viewModel.submissionStateNotifier.addListener(_submissionResultListener);
+
+      _searchFocusNode.requestFocus();
     });
   }
 
@@ -141,7 +143,7 @@ class _SearchDownloadableViewState extends State<SearchDownloadableView> {
             IconButton(
               icon: const Icon(Icons.close),
               onPressed: () => {
-                viewModel.updateSearchQuery('', debounceTime: Duration.zero),
+                viewModel.clearSearchQuery(),
                 _searchFocusNode.requestFocus(),
               },
             ),
@@ -276,6 +278,7 @@ class _SearchDownloadableViewState extends State<SearchDownloadableView> {
           SearchDownloadableViewModel viewModel, Widget child) =>
       PopupMenuButton<String>(
         onSelected: (value) {
+          _searchFocusNode.unfocus();
           switch (value) {
             case 'identify':
               viewModel.identifyDownloadable(item);
