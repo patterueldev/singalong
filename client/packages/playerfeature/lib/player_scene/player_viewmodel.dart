@@ -37,6 +37,8 @@ class DefaultPlayerViewModel extends PlayerViewModel {
   final List<VideoController> _videoControllers = [];
   VideoController? _activeSongVideoController;
 
+  bool isSkipping = false;
+
   @override
   void setup() async {
     isConnected.value = false;
@@ -137,6 +139,9 @@ class DefaultPlayerViewModel extends PlayerViewModel {
         controller.addListener(() {
           _videoPlayerListener(controller);
         });
+
+        isSkipping = false;
+        debugPrint("Playing video: $videoUrl");
       } catch (e, s) {
         debugPrint("Error: $e");
         playerViewStateNotifier.value = PlayerViewState.failure(e.toString());
@@ -184,15 +189,15 @@ class DefaultPlayerViewModel extends PlayerViewModel {
       await scoreVideoController.play();
       playerViewStateNotifier.value = PlayerViewState.score(PlayerViewScore(
         score: 100,
-        message: "You are a great singer!",
+        message: "You are a great singer! This is a fake score, btw =)",
         videoPlayerController: scoreVideoController,
       ));
 
+      isSkipping = false;
+      debugPrint("Playing score video: $url");
       scoreVideoController.addListener(() {
         _scoreVideoListener(scoreVideoController);
       });
-
-      // TODO: Send command to the server to update the score and play the next song
     } else {
       // send the current position to the server
       playerSocketRepository.durationUpdate(
@@ -206,14 +211,19 @@ class DefaultPlayerViewModel extends PlayerViewModel {
   }
 
   void _scoreVideoListener(VideoController controller) async {
-    final minSeconds = min(10, controller.value.duration.inSeconds);
+    final minSeconds = min(5, controller.value.duration.inSeconds);
     final duration = Duration(seconds: minSeconds);
     if (controller.value.position >= duration) {
       controller.pause();
       playerViewStateNotifier.value = PlayerViewState.connected();
       await _clearVideoControllers();
       // TODO: Send command to the server to update the score and play the next song
-      playerSocketRepository.skipSong();
+      debugPrint("Is Skipping: $isSkipping");
+      if (!isSkipping) {
+        debugPrint("Score video finished; playing next song");
+        playerSocketRepository.skipSong();
+        isSkipping = true;
+      }
     }
   }
 
