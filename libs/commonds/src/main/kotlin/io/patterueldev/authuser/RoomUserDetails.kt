@@ -9,6 +9,7 @@ import org.springframework.security.core.userdetails.UserDetails
 data class RoomUserDetails(
     val user: UserDocument,
     val roomId: String,
+    val deviceId: String,
     val role: Role,
     val clientType: ClientType,
     val rawAuthorities: Collection<GrantedAuthority>,

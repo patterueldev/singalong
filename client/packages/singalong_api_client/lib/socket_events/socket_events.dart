@@ -1,6 +1,7 @@
 part of '../singalong_api_client.dart';
 
 enum SocketEvent {
+  idleReconnectAttempt,
   roomDataRequest,
   reservedSongs,
   currentSong,
@@ -11,10 +12,13 @@ enum SocketEvent {
   adjustVolumeFromControl,
   playersList,
   roomAssigned,
+  playerAssigned,
   ;
 
   String get value {
     switch (this) {
+      case idleReconnectAttempt:
+        return 'idleReconnectAttempt';
       case roomDataRequest:
         return 'roomDataRequest';
       case reservedSongs:
@@ -35,6 +39,8 @@ enum SocketEvent {
         return 'playersList';
       case roomAssigned:
         return 'roomAssigned';
+      case playerAssigned:
+        return 'playerAssigned';
     }
   }
 }

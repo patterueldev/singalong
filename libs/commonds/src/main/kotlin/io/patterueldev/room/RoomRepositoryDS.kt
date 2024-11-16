@@ -44,7 +44,7 @@ open class RoomRepositoryDS : RoomRepository {
 
     override suspend fun findAssignedRoomForPlayer(playerId: String): Room? {
         println("Finding assigned room for player: $playerId")
-        val roomDocument = roomDocumentRepository.findAssignedRoomForPlayer(playerId) ?: return null
+        val roomDocument = roomDocumentRepository.findAssignedRoomsForPlayer(playerId).firstOrNull() ?: return null
         println("Found assigned room for player: $roomDocument")
         return roomDocument.toRoom()
     }

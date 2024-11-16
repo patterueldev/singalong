@@ -14,7 +14,7 @@ class PlayerSocketRepositoryDS implements PlayerSocketRepository {
   @override
   void requestPlayerList() {
     debugPrint("requestPlayerList");
-    socket.emitDataRequestEvent([RoomDataType.playerList]);
+    socket.emitRoomDataRequestEvent([RoomDataType.playerList]);
   }
 
   @override

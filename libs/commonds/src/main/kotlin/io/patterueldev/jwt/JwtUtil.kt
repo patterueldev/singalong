@@ -26,13 +26,15 @@ class JwtUtil(
 
     fun generateToken(
         username: String,
-        roomid: String,
+        roomId: String,
+        deviceId: String,
         clientType: ClientType,
         roles: List<String>,
     ): String {
         return Jwts.builder()
             .subject(username)
-            .claim("roomId", roomid)
+            .claim("roomId", roomId)
+            .claim("deviceId", deviceId)
             .claim("clientType", clientType)
             .claim("roles", roles)
             .issuedAt(Date())
@@ -43,13 +45,17 @@ class JwtUtil(
 
     fun generateRefreshToken(
         username: String,
-        roomid: String,
+        roomId: String,
+        deviceId: String,
         clientType: ClientType,
+        roles: List<String>,
     ): String {
         return Jwts.builder()
             .subject(username)
-            .claim("roomId", roomid)
+            .claim("roomId", roomId)
+            .claim("deviceId", deviceId)
             .claim("clientType", clientType)
+            .claim("roles", roles)
             .issuedAt(Date())
             .expiration(Date.from(Instant.now().plusSeconds(REFRESH_TOKEN_EXPIRATION_TIME)))
             .signWith(key)
@@ -60,6 +66,17 @@ class JwtUtil(
         try {
             val claims = extractAllClaims(token)
             return claims.subject
+        } catch (e: Exception) {
+            e.printStackTrace()
+            println("- - - - [MALFORMED TOKEN] - - - -")
+        }
+        return null
+    }
+
+    fun extractDeviceId(token: String): String? {
+        try {
+            val claims = extractAllClaims(token)
+            return claims["deviceId"] as String
         } catch (e: Exception) {
             e.printStackTrace()
             println("- - - - [MALFORMED TOKEN] - - - -")
@@ -135,6 +152,7 @@ class JwtUtil(
     fun getUserDetails(token: String): RoomUserDetails {
         val jwtSubject = extractSubject(token) ?: throw Exception("Subject not found")
         val jwtRoomId = extractRoomId(token) ?: throw Exception("Room ID not found")
+        val jwtDeviceId = extractDeviceId(token) ?: throw Exception("Device ID not found")
         val clientType = extractClientType(token) ?: throw Exception("Client Type not found")
 
         val user = userDocumentRepository.findByUsername(jwtSubject) ?: throw Exception("User not found")
@@ -146,6 +164,7 @@ class JwtUtil(
         return RoomUserDetails(
             user = user,
             roomId = jwtRoomId,
+            deviceId = jwtDeviceId,
             role = role,
             clientType = clientType,
             rawAuthorities = listOf(SimpleGrantedAuthority("ROLE_$role")),

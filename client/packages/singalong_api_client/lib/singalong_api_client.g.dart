@@ -487,12 +487,14 @@ APIPlayerItem _$APIPlayerItemFromJson(Map<String, dynamic> json) =>
     APIPlayerItem(
       id: json['id'] as String,
       name: json['name'] as String,
+      isIdle: json['isIdle'] as bool? ?? false,
     );
 
 Map<String, dynamic> _$APIPlayerItemToJson(APIPlayerItem instance) =>
     <String, dynamic>{
       'id': instance.id,
       'name': instance.name,
+      'isIdle': instance.isIdle,
     };
 
 APICreateRoomParameters _$APICreateRoomParametersFromJson(

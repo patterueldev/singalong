@@ -1,10 +1,11 @@
 part of '../adminfeature.dart';
 
 abstract class ControlPanelSocketRepository {
-  void requestCurrentSong();
+  void requestControlPanelData();
   StreamController<CurrentSong?> get currentSongStreamController;
   StreamController<int> get durationUpdateInMillisecondsStreamController;
   StreamController<bool> get togglePlayPauseStreamController;
+  StreamController<PlayerItem?> get selectedPlayerItemStreamController;
   void seekDuration({required int durationInSeconds});
   void adjustVolumeFromControl(double volume);
   void togglePlayPause(bool isPlaying);

@@ -1,6 +1,7 @@
 package io.patterueldev.singalong.realtime
 
 enum class SocketEvent(val value: String) {
+    IDLE_RECONNECT_ATTEMPT("idleReconnectAttempt"),
     ROOM_DATA_REQUEST("roomDataRequest"),
     RESERVED_SONGS("reservedSongs"),
     CURRENT_SONG("currentSong"),
@@ -11,4 +12,5 @@ enum class SocketEvent(val value: String) {
     ADJUST_VOLUME_FROM_CONTROL("adjustVolumeFromControl"),
     PLAYERS_LIST("playersList"),
     ROOM_ASSIGNED("roomAssigned"),
+    PLAYER_ASSIGNED("playerAssigned"),
 }

@@ -42,33 +42,14 @@ class DefaultPlayerViewModel extends PlayerViewModel {
     isConnected.value = false;
     playerViewStateNotifier.value = PlayerViewState.loading();
 
-    // initial connection
+    // TODO: Handle unique name to be truly unique, like get it from the server instead of local generation
     final username = await persistenceRepository.getUniqueName();
     final deviceId = await persistenceRepository.getDeviceId();
     await playerSocketRepository.registerIdlePlayer(username, deviceId);
-    // final connectResult = await connectUseCase(
-    //   ConnectParameters(
-    //     username: username,
-    //     roomId: "idle",
-    //     roomPasscode: "idle",
-    //     clientType: ClientType.PLAYER,
-    //   ),
-    // );
-
-    // TODO: Handle unique name to be truly unique, like get it from the server instead of local generation
 
     debugPrint("Player connecting to the server");
-    // connectResult.fold(
-    //   (l) {
-    //     debugPrint("Error: $l");
-    //     playerViewStateNotifier.value = PlayerViewState.failure(l.toString());
-    //   },
-    //   (r) {
-    //     connectRepository.connectSocket();
     isConnected.value = true;
     playerViewStateNotifier.value = PlayerViewState.disconnected();
-    //   },
-    // );
 
     _roomAssignedStreamController =
         playerSocketRepository.roomAssignedStreamController;
@@ -77,6 +58,8 @@ class DefaultPlayerViewModel extends PlayerViewModel {
       // re-establish connection
       establishConnection(roomId);
     });
+
+    playerSocketRepository.checkIfAssignedToRoom(username);
   }
 
   void establishConnection(String roomId) async {

@@ -27,11 +27,6 @@ class ConnectRepositoryDS implements ConnectRepository {
     sessionManager.setAccessToken(accessToken);
   }
 
-  // @override
-  // void connectSocket() {
-  //   socket.connectSocket();
-  // }
-
   @override
   Future<void> connectRoomSocket(String roomId) async {
     await socket.connectRoomSocket(roomId);
@@ -47,7 +42,6 @@ class ConnectRepositoryDS implements ConnectRepository {
 
     debugPrint('Access token found: $accessToken');
     sessionManager.setAccessToken(accessToken);
-    // socket.connectRoomSocket(roomId);
 
     try {
       final result = await api.check();

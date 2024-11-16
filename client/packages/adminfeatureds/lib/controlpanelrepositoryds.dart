@@ -10,9 +10,12 @@ class ControlPanelRepositoryDS implements ControlPanelSocketRepository {
   });
 
   @override
-  void requestCurrentSong() {
-    final dataTypes = [RoomDataType.currentSong];
-    socket.emitDataRequestEvent(dataTypes);
+  void requestControlPanelData() {
+    final dataTypes = [
+      RoomDataType.currentSong,
+      RoomDataType.assignedPlayerInRoom
+    ];
+    socket.emitRoomDataRequestEvent(dataTypes);
   }
 
   @override
@@ -58,26 +61,46 @@ class ControlPanelRepositoryDS implements ControlPanelSocketRepository {
       );
 
   @override
+  StreamController<PlayerItem?> get selectedPlayerItemStreamController =>
+      socket.buildRoomEventStreamController(
+        SocketEvent.playerAssigned,
+        (data, controller) {
+          debugPrint('Selected player item: $data');
+          if (data == null) {
+            controller.add(null);
+            return;
+          }
+          final raw = APIPlayerItem.fromJson(data);
+          final playerItem = PlayerItem(
+            id: raw.id,
+            name: raw.name,
+            isIdle: raw.isIdle,
+          );
+          controller.add(playerItem);
+        },
+      );
+
+  @override
   void seekDuration({required int durationInSeconds}) {
-    socket.emitCommandEvent(RoomCommand.seekDurationFromControl(
+    socket.emitRoomCommandEvent(RoomCommand.seekDurationFromControl(
         durationInSeconds: durationInSeconds));
-    return socket.emitEvent(SocketEvent.seekDuration, durationInSeconds);
+    return socket.emitRoomEvent(SocketEvent.seekDuration, durationInSeconds);
   }
 
   @override
   void skipSong() {
-    socket.emitCommandEvent(RoomCommand.skipSong());
+    socket.emitRoomCommandEvent(RoomCommand.skipSong());
   }
 
   @override
   void togglePlayPause(bool isPlaying) {
     debugPrint('Toggling play/pause');
     // return socket.emitEvent(SocketEvent.togglePlayPause, isPlaying);
-    socket.emitCommandEvent(RoomCommand.togglePlayPause(isPlaying));
+    socket.emitRoomCommandEvent(RoomCommand.togglePlayPause(isPlaying));
   }
 
   @override
   void adjustVolumeFromControl(double volume) {
-    socket.emitCommandEvent(RoomCommand.adjustVolume(volume));
+    socket.emitRoomCommandEvent(RoomCommand.adjustVolume(volume));
   }
 }

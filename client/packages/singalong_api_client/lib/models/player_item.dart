@@ -4,10 +4,12 @@ part of '../singalong_api_client.dart';
 class APIPlayerItem {
   final String id;
   final String name;
+  final bool isIdle;
 
   APIPlayerItem({
     required this.id,
     required this.name,
+    this.isIdle = false,
   });
 
   factory APIPlayerItem.fromJson(Map<String, dynamic> json) =>

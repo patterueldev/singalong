@@ -78,8 +78,8 @@ class AuthRepositoryDS : AuthRepository {
         val role = userDocument.role.name
 
         // Generate JWT token
-        val accessToken = jwtUtil.generateToken(authUser.username, room.id, clientType, listOf(role))
-        val refreshToken = jwtUtil.generateRefreshToken(authUser.username, room.id, clientType)
+        val accessToken = jwtUtil.generateToken(authUser.username, room.id, deviceId, clientType, listOf(role))
+        val refreshToken = jwtUtil.generateRefreshToken(authUser.username, room.id, deviceId, clientType, listOf(role))
         return object : AuthResponse {
             override val accessToken: String = accessToken
             override val refreshToken: String = refreshToken

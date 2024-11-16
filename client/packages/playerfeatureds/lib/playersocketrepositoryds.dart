@@ -15,8 +15,13 @@ class PlayerSocketRepositoryDS implements PlayerSocketRepository {
   }
 
   @override
+  void checkIfAssignedToRoom(String playerId) async {
+    socket.emitIdleEvent(SocketEvent.idleReconnectAttempt, playerId);
+  }
+
+  @override
   void requestPlayerData() {
-    socket.emitDataRequestEvent([
+    socket.emitRoomDataRequestEvent([
       RoomDataType.reservedSongs,
       RoomDataType.currentSong,
     ]);
@@ -48,7 +53,7 @@ class PlayerSocketRepositoryDS implements PlayerSocketRepository {
 
   @override
   void durationUpdate({required int durationInMilliseconds}) {
-    socket.emitCommandEvent(RoomCommand.durationUpdate(
+    socket.emitRoomCommandEvent(RoomCommand.durationUpdate(
         durationInMilliseconds: durationInMilliseconds));
   }
 
@@ -64,7 +69,7 @@ class PlayerSocketRepositoryDS implements PlayerSocketRepository {
 
   @override
   void skipSong() {
-    socket.emitCommandEvent(RoomCommand.skipSong());
+    socket.emitRoomCommandEvent(RoomCommand.skipSong());
   }
 
   @override

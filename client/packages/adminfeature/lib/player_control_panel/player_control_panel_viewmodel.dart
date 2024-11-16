@@ -11,11 +11,6 @@ abstract class PlayerControlPanelViewModel extends ChangeNotifier {
 
   Room get room;
 
-  void updateSelectedPlayerItem(PlayerItem? playerItem) {
-    debugPrint('Selected player item: $playerItem');
-    selectedPlayerItemNotifier.value = playerItem;
-  }
-
   void togglePlayPause(bool isPlaying);
   void nextSong();
   void updateSliderValue(double value) {
@@ -56,6 +51,7 @@ class DefaultPlayerControlPanelViewModel extends PlayerControlPanelViewModel {
   StreamController<int>? _seekDurationUpdatesStreamController;
   StreamController<CurrentSong?>? _currentSongStreamController;
   StreamController<bool>? _togglePlayPauseStreamController;
+  StreamController<PlayerItem?>? _selectedPlayerItemStreamController;
 
   void setup() async {
     _seekDurationUpdatesStreamController =
@@ -64,7 +60,7 @@ class DefaultPlayerControlPanelViewModel extends PlayerControlPanelViewModel {
       if (isSeeking) {
         return;
       }
-      debugPrint('Duration Update: $value milliseconds');
+      // debugPrint('Duration Update: $value milliseconds');
       double seconds = value / 1000;
       currentSeekValueNotifier.value = seconds;
     });
@@ -96,7 +92,14 @@ class DefaultPlayerControlPanelViewModel extends PlayerControlPanelViewModel {
       }
     });
 
-    controlPanelRepository.requestCurrentSong();
+    _selectedPlayerItemStreamController =
+        controlPanelRepository.selectedPlayerItemStreamController;
+    _selectedPlayerItemStreamController?.stream.listen((playerItem) {
+      debugPrint('Selected player item: $playerItem');
+      selectedPlayerItemNotifier.value = playerItem;
+    });
+
+    controlPanelRepository.requestControlPanelData();
   }
 
   @override
@@ -152,6 +155,8 @@ class DefaultPlayerControlPanelViewModel extends PlayerControlPanelViewModel {
   void dispose() {
     _seekDurationUpdatesStreamController?.close();
     _currentSongStreamController?.close();
+    _togglePlayPauseStreamController?.close();
+    _selectedPlayerItemStreamController?.close();
     super.dispose();
   }
 }

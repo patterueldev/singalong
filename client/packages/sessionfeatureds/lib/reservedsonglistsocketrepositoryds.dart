@@ -36,6 +36,6 @@ class ReservedSongListSocketRepositoryDS
 
   @override
   void requestReservedSongList() {
-    socket.emitDataRequestEvent([RoomDataType.reservedSongs]);
+    socket.emitRoomDataRequestEvent([RoomDataType.reservedSongs]);
   }
 }

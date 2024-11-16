@@ -118,65 +118,26 @@ class SingalongSocket {
         handler,
       );
 
-  // StreamController<List<APIReservedSong>>
-  //     buildReservedSongsStreamController() => buildRoomEventStreamController(
-  //           SocketEvent.reservedSongs,
-  //           (data, controller) {
-  //             final reservedSongs = APIReservedSong.fromList(data);
-  //             controller.add(reservedSongs);
-  //           },
-  //         );
-  //
-  // // listen to current song from server
-  // StreamController<APICurrentSong?> buildCurrentSongStreamController() =>
-  //     buildRoomEventStreamController(
-  //       SocketEvent.currentSong,
-  //       (data, controller) {
-  //         if (data == null) {
-  //           controller.add(null);
-  //           return;
-  //         }
-  //         final currentSong = APICurrentSong.fromJson(data);
-  //         controller.add(currentSong);
-  //       },
-  //     );
-  //
-  // // listen to seek duration from player
-  // StreamController<int> buildSeekDurationFromPlayerStreamController() =>
-  //     buildRoomEventStreamController(
-  //       SocketEvent.seekDurationFromPlayer,
-  //       (data, controller) {
-  //         final seekValue = data as int;
-  //         controller.add(seekValue);
-  //       },
-  //     );
-  //
-  // // listen to seek duration from control
-  // StreamController<int> buildSeekDurationFromControlStreamController() =>
-  //     buildRoomEventStreamController(
-  //       SocketEvent.seekDurationFromControl,
-  //       (data, controller) {
-  //         final seekValue = data as int;
-  //         controller.add(seekValue);
-  //       },
-  //     );
+  void emitIdleEvent(SocketEvent event, dynamic data) {
+    debugPrint('Emitting idle event: ${event.value} with data: $data');
+    _idleSocket?.emit(event.value, data);
+  }
 
-  // update seek duration to server
-  void emitEvent(SocketEvent event, dynamic data) {
+  void emitRoomEvent(SocketEvent event, dynamic data) {
     debugPrint('Emitting event: ${event.value} with data: $data');
     _roomSocket?.emit(event.value, data);
   }
 
-  void emitDataRequestEvent(List<RoomDataType> dataTypes) {
+  void emitRoomDataRequestEvent(List<RoomDataType> dataTypes) {
     final dataTypesRaw = dataTypes.map((t) => t.value).join(',');
     debugPrint(
         'Emitting event: ${SocketEvent.roomDataRequest.value} with data: $dataTypesRaw');
     _roomSocket?.emit(SocketEvent.roomDataRequest.value, dataTypesRaw);
   }
 
-  void emitCommandEvent(RoomCommand command) {
-    debugPrint(
-        'Emitting event: ${SocketEvent.roomPlayerCommand.value} with data: ${command.toJsonString()}');
+  void emitRoomCommandEvent(RoomCommand command) {
+    // debugPrint(
+    //     'Emitting event: ${SocketEvent.roomPlayerCommand.value} with data: ${command.toJsonString()}');
     _roomSocket?.emit(
         SocketEvent.roomPlayerCommand.value, command.toJsonString());
   }
@@ -186,6 +147,8 @@ enum RoomDataType {
   reservedSongs,
   currentSong,
   playerList,
+  assignedPlayerInRoom,
+  all,
   ;
 
   String get value {
@@ -196,6 +159,10 @@ enum RoomDataType {
         return 'currentSong';
       case playerList:
         return 'playerList';
+      case assignedPlayerInRoom:
+        return 'assignedPlayerInRoom';
+      case all:
+        return 'all';
     }
   }
 }

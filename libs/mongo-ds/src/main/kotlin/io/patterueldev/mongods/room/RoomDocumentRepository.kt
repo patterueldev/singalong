@@ -30,9 +30,9 @@ interface RoomDocumentRepository : MongoRepository<RoomDocument, String> {
         value = "{ 'archivedAt': null, 'assignedPlayerId': ?0 }",
         sort = "{ 'createdAt': -1 }",
     )
-    fun findAssignedRoomForPlayer(
+    fun findAssignedRoomsForPlayer(
         playerId: String,
-    ): RoomDocument?
+    ): List<RoomDocument>
 
     @Query(
         value = "{ '\$or': [ { 'name': { '\$regex': ?0, '\$options': 'i' } }, { '_id': { '\$regex': ?0, '\$options': 'i' } } ] }",

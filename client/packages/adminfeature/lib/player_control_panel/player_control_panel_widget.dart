@@ -187,10 +187,6 @@ class PlayerControlPanelWidget extends StatelessWidget {
       builder: (context) => context
           .read<AdminFeatureUIProvider>()
           .buildPlayerManagerDialog(viewModel.room),
-    ).then((value) {
-      if (value != null) {
-        viewModel.updateSelectedPlayerItem(value);
-      }
-    });
+    );
   }
 }

@@ -2,6 +2,7 @@ part of '../playerfeature.dart';
 
 abstract class PlayerSocketRepository {
   Future<void> registerIdlePlayer(String playerId, String deviceId);
+  void checkIfAssignedToRoom(String playerId);
   void requestPlayerData();
   StreamController<String> get roomAssignedStreamController;
   StreamController<int> get seekDurationFromControlStreamController;
