@@ -22,7 +22,6 @@ part 'player_scene/authorize_connection_usecase.dart';
 part 'reserved_widget/reserved_widget.dart';
 part 'reserved_widget/reserved_viewmodel.dart';
 part 'reserved_widget/reservedsonglistsocketrepository.dart';
-part 'reserved_widget/reservedsongitem.dart';
 part 'connectivity_panel_widget/connectivity_panel_widget.dart';
 
 class PlayerFeatureUIBuilder {

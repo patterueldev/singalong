@@ -1,4 +1,4 @@
-part of 'common.dart';
+part of '../common.dart';
 
 class CurrentSong {
   final String id;

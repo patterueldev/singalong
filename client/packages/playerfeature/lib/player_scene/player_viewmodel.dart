@@ -218,7 +218,9 @@ class DefaultPlayerViewModel extends PlayerViewModel {
   }
 
   Future<void> _clearVideoControllers() async {
-    for (final controller in _videoControllers) {
+    // reverse loop to avoid concurrent modification
+    for (var i = _videoControllers.length - 1; i >= 0; i--) {
+      final controller = _videoControllers[i];
       await controller.pause();
       await controller.dispose();
     }

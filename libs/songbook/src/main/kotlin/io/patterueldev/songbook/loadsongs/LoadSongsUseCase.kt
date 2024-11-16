@@ -10,6 +10,8 @@ internal class LoadSongsUseCase(
     override suspend fun execute(parameters: LoadSongsParameters): LoadSongsResponse {
         return try {
             parameters.validate()
+
+            // if parameters, say, keyword is null, we will return recommendations
             val songs = songRepository.loadSongs(parameters.limit, parameters.keyword, parameters.nextPage())
             // TODO: in the future, we can add more logic here to handle the pagination
             // and return recommendations based on the keyword

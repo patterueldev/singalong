@@ -87,7 +87,7 @@ class _ReservedWidgetState extends State<ReservedWidget> {
                       fit: BoxFit.cover,
                     ),
                   ),
-                  if (song.isPlaying)
+                  if (song.currentPlaying)
                     Container(
                       padding: const EdgeInsets.all(4),
                       height: height,
@@ -111,7 +111,7 @@ class _ReservedWidgetState extends State<ReservedWidget> {
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: height * 0.4,
-                    decoration: song.isPlaying
+                    decoration: song.currentPlaying
                         ? TextDecoration.underline
                         : TextDecoration.none,
                   ),
@@ -119,7 +119,7 @@ class _ReservedWidgetState extends State<ReservedWidget> {
                 ),
                 const SizedBox(width: 16),
                 Text(
-                  '${song.artist} | ${song.reservedBy}',
+                  '${song.artist} | ${song.reservingUser}',
                   style: TextStyle(color: Colors.white, fontSize: height * 0.3),
                 ),
               ],

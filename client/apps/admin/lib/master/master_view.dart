@@ -41,7 +41,7 @@ class MasterView extends StatelessWidget {
                   // Bottom left quarter
                   Expanded(
                     flex: 2,
-                    child: _buildBottomLeft(),
+                    child: _buildBottomLeft(context),
                   ),
                 ],
               ),
@@ -50,7 +50,7 @@ class MasterView extends StatelessWidget {
             // Right half
             Expanded(
               flex: 1,
-              child: _buildRightHalf(),
+              child: _buildRightHalf(context),
             ),
           ],
         ),
@@ -62,11 +62,10 @@ class MasterView extends StatelessWidget {
           .read<AdminFeatureUIProvider>()
           .buildPlayerControlPanel(viewModel.room);
 
-  Widget _buildBottomLeft() => Container(
-        child: Center(child: Text('Bottom Left Corner')),
-      );
+  Widget _buildBottomLeft(BuildContext context) =>
+      context.read<AdminFeatureUIProvider>().buildReservedPanel();
 
-  Widget _buildRightHalf() => Container(
+  Widget _buildRightHalf(BuildContext context) => Container(
         child: Center(child: Text('Right Half Edge')),
       );
 }

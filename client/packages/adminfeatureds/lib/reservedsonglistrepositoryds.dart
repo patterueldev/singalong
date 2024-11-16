@@ -1,4 +1,4 @@
-part of 'sessionfeatureds.dart';
+part of 'adminfeatureds.dart';
 
 class ReservedSongListSocketRepositoryDS
     implements ReservedSongListSocketRepository {
@@ -16,9 +16,11 @@ class ReservedSongListSocketRepositoryDS
           socket.buildRoomEventStreamController(
             SocketEvent.reservedSongs,
             (data, controller) {
-              final apiReservedSongs = APIReservedSong.fromList(data);
-              final reservedSongs = apiReservedSongs
-                  .map((apiSong) => apiSong.toReservedSongItem(configuration))
+              final raw = APIReservedSong.fromList(data);
+              final reservedSongs = raw
+                  .map(
+                    (e) => e.toReservedSongItem(configuration),
+                  )
                   .toList();
               controller.add(reservedSongs);
             },

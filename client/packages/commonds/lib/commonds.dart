@@ -11,6 +11,7 @@ import 'package:uuid/uuid.dart';
 
 part 'connect/connect_repositoryds.dart';
 part 'persistence/persistenceds.dart';
+part 'converters/reserved_song_item.dart';
 
 class CommonProvider {
   final providers = MultiProvider(providers: [

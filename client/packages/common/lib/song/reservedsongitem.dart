@@ -1,4 +1,4 @@
-part of '../sessionfeature.dart';
+part of '../common.dart';
 
 class ReservedSongItem {
   final String id;
@@ -8,8 +8,9 @@ class ReservedSongItem {
   final String thumbnailURL;
   final String reservingUser;
   final bool currentPlaying;
+  final bool finishedPlaying;
 
-  const ReservedSongItem({
+  ReservedSongItem({
     required this.id,
     required this.songId,
     required this.title,
@@ -17,5 +18,6 @@ class ReservedSongItem {
     required this.thumbnailURL,
     required this.reservingUser,
     required this.currentPlaying,
+    required this.finishedPlaying,
   });
 }

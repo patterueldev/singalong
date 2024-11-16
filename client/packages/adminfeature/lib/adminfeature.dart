@@ -8,6 +8,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:fpdart/fpdart.dart' show TaskEither, Unit, unit;
 import 'package:provider/provider.dart';
 import 'package:core/core.dart';
@@ -33,6 +34,8 @@ part 'player_control_panel/authorize_connection_usecase.dart';
 part 'player_control_panel/player_control_panel_state.dart';
 part 'create_room/create_room_dialog.dart';
 part 'create_room/create_room_viewmodel.dart';
+part 'reserved_panel/reserved_panel_widget.dart';
+part 'reserved_panel/reserved_panel_viewmodel.dart';
 
 class AdminFeatureUIProvider {
   AdminFeatureUIProvider();
@@ -85,5 +88,12 @@ class AdminFeatureUIProvider {
           room: room,
         ),
         child: PlayerSelectorDialogWidget(),
+      );
+
+  Widget buildReservedPanel() => ChangeNotifierProvider<ReservedPanelViewModel>(
+        create: (context) => DefaultReservedPanelViewModel(
+          reservedSongListSocketRepository: context.read(),
+        ),
+        child: const ReservedPanelWidget(),
       );
 }

@@ -10,7 +10,6 @@ import 'package:core/core.dart';
 import 'package:common/common.dart';
 
 part 'sessionview/sessionview.dart';
-part 'entities/reservedsongitem.dart';
 part 'sessionview/sessionviewmodel.dart';
 part 'sessionview/sessionviewstate.dart';
 part 'sessionview/listentosonglistupdatesusecase.dart';

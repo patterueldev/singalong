@@ -13,6 +13,7 @@ dependencies:
 
   core:
   common:
+  commonds:
   playerfeature:
   singalong_api_client:
 
