@@ -8,6 +8,7 @@ import 'package:fpdart/fpdart.dart' show TaskEither, Unit, unit;
 import 'package:provider/provider.dart';
 import 'package:core/core.dart';
 import 'package:skeletonizer/skeletonizer.dart';
+import 'package:textfield_tags/textfield_tags.dart';
 
 part 'downloadassets.dart';
 part 'downloadexception.dart';

@@ -57,14 +57,16 @@ export function identifySong(app) {
     let lengthSeconds = parseInt(lengthSecondsRaw)
     let description = videoDetails.description
 
+    console.log("Video Details: " + JSON.stringify(videoDetails))
+
     // Send a response
     const identified = new IdentifiedSong(
       info.videoDetails.videoId,
       info.videoDetails.video_url,
       info.videoDetails.thumbnails[0].url,
       info.videoDetails.media.song ?? info.videoDetails.title,
-      info.videoDetails.media.artist ?? "Unknown Artist",
-      "Unknown",
+      info.videoDetails.media.artist ?? "",
+      "",
       false,
       false,
       "",

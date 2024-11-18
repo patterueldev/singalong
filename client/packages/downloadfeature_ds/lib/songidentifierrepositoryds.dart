@@ -25,6 +25,8 @@ class DefaultSongIdentifierRepository implements SongIdentifierRepository {
         songLyrics: result.songLyrics,
         lengthSeconds: result.lengthSeconds,
         metadata: result.metadata,
+        genres: result.genres,
+        tags: result.tags,
         alreadyExists: result.alreadyExists,
       );
     } catch (e, st) {
@@ -49,6 +51,8 @@ class DefaultSongIdentifierRepository implements SongIdentifierRepository {
         songLyrics: details.songLyrics,
         lengthSeconds: details.lengthSeconds,
         metadata: details.metadata,
+        genres: details.genres,
+        tags: details.tags,
         alreadyExists: details.alreadyExists,
       );
       final parameters = APISaveSongParameters(

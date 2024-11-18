@@ -128,13 +128,14 @@ class DefaultPlayerViewModel extends PlayerViewModel {
         final videoUrl = currentSong.videoURL;
         debugPrint("Playing video: $videoUrl");
         final controller = VideoController.network(videoUrl);
+        controller.setVolume(currentSong.volume);
+        _activeSongVideoController = controller;
         _videoControllers.add(controller);
+
         await controller.initialize();
         playerViewStateNotifier.value =
             PlayerViewState.playing(controller, durationInSeconds.toDouble());
-
         await controller.play();
-        _activeSongVideoController = controller;
 
         controller.addListener(() {
           _videoPlayerListener(controller);

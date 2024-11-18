@@ -31,20 +31,15 @@ import kotlin.jvm.optionals.getOrNull
 @Service
 internal class IdentifiedSongRepositoryDS(
     @Value("\${openai.token}") val openAIToken: String,
+    @Value("\${openai.model}") val openAIModel: String,
 ) : IdentifiedSongRepository {
     @Autowired private lateinit var jsServiceWebClient: WebClient
-
-    @Autowired private var openAIModel: String? = null
 
     @Autowired private lateinit var songDocumentRepository: SongDocumentRepository
 
     @Autowired private lateinit var reservedSongDocumentRepository: ReservedSongDocumentRepository
 
     @Autowired private lateinit var minioClient: MinioClient
-
-//    @Value("\${openai.local}") local: Boolean,
-//    @Value("\${openai.token}") token: String,
-//    @Value("\${openai.host}") host: String,
 
     private val mutex = Mutex()
 
@@ -107,6 +102,8 @@ internal class IdentifiedSongRepositoryDS(
                 songLyrics = identifiedSong.songLyrics,
                 lengthSeconds = identifiedSong.lengthSeconds,
                 metadata = identifiedSong.metadata?.mapValues { it.value.toString() } ?: emptyMap(),
+                genres = identifiedSong.genres,
+                tags = identifiedSong.tags,
                 addedBy = userId,
                 addedAtSession = sessionId,
                 lastModifiedBy = userId,
@@ -320,17 +317,38 @@ internal class IdentifiedSongRepositoryDS(
                     jsServiceWebClient.post()
                         .uri("/enhance")
                         .header("openai-key", openAIToken)
+                        .header("openai-model", openAIModel)
                         .bodyValue(identifiedSong)
                         .retrieve()
                         .bodyToMono(EnhancedSong::class.java)
                         .block()
                 } ?: throw Exception("No response from server")
             println("Enhancing song")
-            identifiedSong.copy(
-                songTitle = enhancedSong.title,
-                songArtist = enhancedSong.artist,
-                songLanguage = enhancedSong.language,
-            )
+
+            val metadata: MutableMap<String, String> = mutableMapOf()
+            if (!enhancedSong.originalTitle.isNullOrBlank()) {
+                metadata["originalTitle"] = enhancedSong.originalTitle
+            }
+
+            if (!enhancedSong.englishTitle.isNullOrBlank()) {
+                metadata["englishTitle"] = enhancedSong.englishTitle
+            }
+
+            val finalCopy =
+                identifiedSong.copy(
+                    songTitle = enhancedSong.romanizedTitle.letOrElse(identifiedSong.songTitle),
+                    songArtist = enhancedSong.artist.letOrElse(identifiedSong.songArtist),
+                    songLanguage = enhancedSong.language.letOrElse(identifiedSong.songLanguage),
+                    isOffVocal = enhancedSong.isOffVocal.letOrElse(identifiedSong.isOffVocal),
+                    videoHasLyrics = enhancedSong.videoHasLyrics.letOrElse(identifiedSong.videoHasLyrics),
+                    genres = enhancedSong.genres.letOrElse(identifiedSong.genres),
+                    tags = enhancedSong.relevantTags.letOrElse(identifiedSong.tags),
+                    metadata = metadata,
+                )
+
+            println("Enhanced Identified Song: $finalCopy")
+
+            finalCopy
         } catch (e: Exception) {
             println("Error while enhancing: ${e.message}")
             // Fallback
@@ -339,8 +357,25 @@ internal class IdentifiedSongRepositoryDS(
     }
 }
 
+// This is a bit japanese-biased, so we can add more languages and genres
 data class EnhancedSong(
-    val title: String,
-    val artist: String,
-    val language: String,
+    val originalTitle: String?,
+    val artist: String?,
+    val language: String?,
+    val genres: List<String>?,
+    val romanizedTitle: String?,
+    val englishTitle: String?,
+    val relevantTags: List<String>?,
+    val isOffVocal: Boolean?,
+    val videoHasLyrics: Boolean?,
 )
+
+fun <T> T?.letOrElse(default: T): T {
+    if (this is String?) {
+        return this.let { if (it.isNullOrBlank()) default else it }
+    }
+    if (this is List<*>?) {
+        return this.let { if (it.isNullOrEmpty()) default else it }
+    }
+    return this ?: default
+}

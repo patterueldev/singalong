@@ -26,6 +26,8 @@ data class SongDocument(
     val songLyrics: String,
     val lengthSeconds: Int,
     val metadata: Map<String, String>,
+    val genres: List<String> = emptyList(),
+    val tags: List<String> = emptyList(),
     // this should be nullable, but, for simplicity, we will assume that the song is always added by someone
     val addedBy: String,
     // this will be the session id where the song was added; 'admin' if added by an admin somewhere else
@@ -49,6 +51,8 @@ data class SongDocument(
             songLyrics: String,
             lengthSeconds: Int,
             metadata: Map<String, String>,
+            genres: List<String>,
+            tags: List<String>,
             addedBy: String,
             addedAtSession: String,
             lastModifiedBy: String,
@@ -66,6 +70,8 @@ data class SongDocument(
             songLyrics = songLyrics,
             lengthSeconds = lengthSeconds,
             metadata = metadata,
+            genres = genres,
+            tags = tags,
             addedBy = addedBy,
             addedAtSession = addedAtSession,
             lastModifiedBy = lastModifiedBy,

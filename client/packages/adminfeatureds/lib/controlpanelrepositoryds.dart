@@ -37,6 +37,7 @@ class ControlPanelRepositoryDS implements ControlPanelSocketRepository {
             reservingUser: raw.reservingUser,
             durationInSeconds: raw.durationInSeconds,
             videoURL: configuration.buildResourceURL(raw.videoPath).toString(),
+            volume: raw.volume,
           );
           controller.add(currentSong);
         },

@@ -48,6 +48,7 @@ class PlayerSocketRepositoryDS implements PlayerSocketRepository {
           videoURL: configuration
               .buildResourceURL(apiCurrentSong.videoPath)
               .toString(),
+          volume: apiCurrentSong.volume,
         );
         controller.add(currentSong);
       });

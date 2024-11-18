@@ -114,6 +114,7 @@ APICurrentSong _$APICurrentSongFromJson(Map<String, dynamic> json) =>
       videoPath: json['videoPath'] as String,
       durationInSeconds: (json['durationInSeconds'] as num).toInt(),
       reservingUser: json['reservingUser'] as String,
+      volume: (json['volume'] as num?)?.toDouble() ?? 1.0,
     );
 
 Map<String, dynamic> _$APICurrentSongToJson(APICurrentSong instance) =>
@@ -125,6 +126,7 @@ Map<String, dynamic> _$APICurrentSongToJson(APICurrentSong instance) =>
       'videoPath': instance.videoPath,
       'durationInSeconds': instance.durationInSeconds,
       'reservingUser': instance.reservingUser,
+      'volume': instance.volume,
     };
 
 APIPaginatedSongs _$APIPaginatedSongsFromJson(Map<String, dynamic> json) =>
@@ -214,6 +216,9 @@ APIIdentifiedSongDetails _$APIIdentifiedSongDetailsFromJson(
       songLyrics: json['songLyrics'] as String,
       lengthSeconds: (json['lengthSeconds'] as num).toInt(),
       metadata: json['metadata'] as Map<String, dynamic>?,
+      genres:
+          (json['genres'] as List<dynamic>).map((e) => e as String).toList(),
+      tags: (json['tags'] as List<dynamic>).map((e) => e as String).toList(),
       alreadyExists: json['alreadyExists'] as bool,
     );
 
@@ -231,6 +236,8 @@ Map<String, dynamic> _$APIIdentifiedSongDetailsToJson(
       'songLyrics': instance.songLyrics,
       'lengthSeconds': instance.lengthSeconds,
       'metadata': instance.metadata,
+      'genres': instance.genres,
+      'tags': instance.tags,
       'alreadyExists': instance.alreadyExists,
     };
 

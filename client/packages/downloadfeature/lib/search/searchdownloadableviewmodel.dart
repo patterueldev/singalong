@@ -63,6 +63,8 @@ class DefaultSearchDownloadableViewModel extends SearchDownloadableViewModel {
     final url = downloadable.sourceUrl;
     final result = await identifySongUrlUseCase(url).run();
 
+    debugPrint("identifyDownloadable result: $result");
+
     result.fold(
       (exception) {
         submissionStateNotifier.value =

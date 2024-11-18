@@ -12,6 +12,8 @@ data class IdentifiedSong(
     val songLyrics: String,
     val lengthSeconds: Int,
     val metadata: Map<String, Any>?,
+    val genres: List<String> = emptyList(),
+    val tags: List<String> = emptyList(),
     val alreadyExists: Boolean = false,
 ) {
     fun copy(

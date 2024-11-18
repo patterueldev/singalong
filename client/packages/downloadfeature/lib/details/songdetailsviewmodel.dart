@@ -11,6 +11,8 @@ abstract class SongDetailsViewModel extends ChangeNotifier {
   bool get videoHasLyrics;
   String get songLyrics;
 
+  final songTagsController = StringTagController();
+
   void updateSongTitle(String text);
   void updateSongArtist(String text);
   void updateSongLanguage(String text);
@@ -36,6 +38,10 @@ class DefaultSongDetailsViewModel extends SongDetailsViewModel {
     isOffVocal = identifiedSongDetails.isOffVocal;
     videoHasLyrics = identifiedSongDetails.videoHasLyrics;
     songLyrics = identifiedSongDetails.songLyrics;
+
+    identifiedSongDetails.tags.forEach((tag) {
+      songTagsController.addTag(tag);
+    });
   }
 
   @override

@@ -8,6 +8,7 @@ class CurrentSong {
   final String videoURL;
   final int durationInSeconds;
   final String reservingUser; //TODO: This will be an actual user object
+  final double volume;
 
   CurrentSong({
     required this.id,
@@ -17,5 +18,6 @@ class CurrentSong {
     required this.videoURL,
     required this.durationInSeconds,
     required this.reservingUser,
+    required this.volume,
   });
 }

@@ -28,6 +28,8 @@ class SingalongSocketIOModule(
     private var idleNamespace: SocketIONamespace = server.addNamespace("/idle")
     private val roomNamespaces = mutableListOf<SocketIONamespace>()
 
+    private var volume: Double = 1.0
+
     init {
         setupIdleNamespace()
         updateRoomNamespaces()
@@ -287,6 +289,7 @@ class SingalongSocketIOModule(
                 RoomCommandType.ADJUST_VOLUME -> {
                     println("Client[${client.sessionId}] - Adjust volume event received.")
                     if (data is Double) {
+                        this.volume = data
                         broadcastEventInRoom(
                             SocketEvent.ADJUST_VOLUME_FROM_CONTROL,
                             data,
@@ -369,7 +372,10 @@ class SingalongSocketIOModule(
         val roomNamespace = namespace ?: roomNamespaces.find { it.name == "/room/$roomId" } ?: return
         println("Is null? ${currentSong == null}")
         if (clients != null) {
-            clients.forEach { it.sendEvent(SocketEvent.CURRENT_SONG.value, currentSong) }
+            clients.forEach {
+                currentSong?.volume = volume
+                it.sendEvent(SocketEvent.CURRENT_SONG.value, currentSong)
+            }
         } else {
             roomNamespace.broadcastOperations.sendEvent(SocketEvent.CURRENT_SONG.value, currentSong)
         }

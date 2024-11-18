@@ -9,6 +9,7 @@ class APICurrentSong {
   final String videoPath;
   final int durationInSeconds;
   final String reservingUser;
+  final double volume;
 
   APICurrentSong({
     required this.id,
@@ -18,6 +19,7 @@ class APICurrentSong {
     required this.videoPath,
     required this.durationInSeconds,
     required this.reservingUser,
+    this.volume = 1.0,
   });
 
   factory APICurrentSong.fromJson(Map<String, dynamic> json) =>

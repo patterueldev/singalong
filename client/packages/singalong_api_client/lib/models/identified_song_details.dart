@@ -13,6 +13,8 @@ class APIIdentifiedSongDetails {
   final String songLyrics;
   final int lengthSeconds;
   final Map<String, dynamic>? metadata;
+  final List<String> genres;
+  final List<String> tags;
   final bool alreadyExists;
 
   APIIdentifiedSongDetails({
@@ -27,6 +29,8 @@ class APIIdentifiedSongDetails {
     required this.songLyrics,
     required this.lengthSeconds,
     required this.metadata,
+    required this.genres,
+    required this.tags,
     required this.alreadyExists,
   });
 
@@ -39,7 +43,7 @@ class APIIdentifiedSongDetails {
 
   @override
   String toString() {
-    return 'IdentifiedSongDetails(id: $id, source: $source, imageUrl: $imageUrl, songTitle: $songTitle, songArtist: $songArtist, songLanguage: $songLanguage, isOffVocal: $isOffVocal, videoHasLyrics: $videoHasLyrics, songLyrics: $songLyrics, lengthSeconds: $lengthSeconds, metadata: $metadata, alreadyExists: $alreadyExists)';
+    return 'APIIdentifiedSongDetails(id: $id, source: $source, imageUrl: $imageUrl, songTitle: $songTitle, songArtist: $songArtist, songLanguage: $songLanguage, isOffVocal: $isOffVocal, videoHasLyrics: $videoHasLyrics, songLyrics: $songLyrics, lengthSeconds: $lengthSeconds, metadata: $metadata, alreadyExists: $alreadyExists)';
   }
 }
 
