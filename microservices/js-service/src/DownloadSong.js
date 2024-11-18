@@ -5,9 +5,7 @@ export function downloadSong(app) {
   app.post('/download', async (req, res) => {
       let url = req.body.url
       let filename = req.body.filename
-      let path = `/app/songs/${filename}`;
       let readable = ytdl(url, { filter: 'videoandaudio' })
-      console.log(`Downloading song from ${url} to ${path}`)
       try {
           res.setHeader('Content-Disposition', `attachment; filename=${filename}`)
           readable.pipe(res)
@@ -20,3 +18,4 @@ export function downloadSong(app) {
       }
   })
 }
+

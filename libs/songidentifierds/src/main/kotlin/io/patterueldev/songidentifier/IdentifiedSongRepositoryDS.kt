@@ -1,11 +1,5 @@
 package io.patterueldev.songidentifier
 
-import com.aallam.openai.api.chat.ChatCompletion
-import com.aallam.openai.api.chat.ChatCompletionRequest
-import com.aallam.openai.api.chat.ChatMessage
-import com.aallam.openai.api.core.Role
-import com.aallam.openai.api.model.ModelId
-import com.aallam.openai.client.OpenAI
 import io.minio.MinioClient
 import io.minio.PutObjectArgs
 import io.patterueldev.mongods.common.BucketFile
@@ -25,6 +19,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.client.WebClient
 import java.net.URI
@@ -34,18 +29,22 @@ import java.time.LocalDateTime
 import kotlin.jvm.optionals.getOrNull
 
 @Service
-internal class IdentifiedSongRepositoryDS : IdentifiedSongRepository {
-    @Autowired private lateinit var songDownloaderClient: WebClient
+internal class IdentifiedSongRepositoryDS(
+    @Value("\${openai.token}") val openAIToken: String,
+) : IdentifiedSongRepository {
+    @Autowired private lateinit var jsServiceWebClient: WebClient
 
-    @Autowired private lateinit var openAIClient: OpenAI
-
-    @Autowired private var openAIModel: ModelId? = null
+    @Autowired private var openAIModel: String? = null
 
     @Autowired private lateinit var songDocumentRepository: SongDocumentRepository
 
     @Autowired private lateinit var reservedSongDocumentRepository: ReservedSongDocumentRepository
 
     @Autowired private lateinit var minioClient: MinioClient
+
+//    @Value("\${openai.local}") local: Boolean,
+//    @Value("\${openai.token}") token: String,
+//    @Value("\${openai.host}") host: String,
 
     private val mutex = Mutex()
 
@@ -54,7 +53,7 @@ internal class IdentifiedSongRepositoryDS : IdentifiedSongRepository {
             println("Fetching info for song at $url")
             val parameters = IdentifySongParameters(url = url)
             withContext(Dispatchers.IO) {
-                songDownloaderClient.post()
+                jsServiceWebClient.post()
                     .uri("/identify")
                     .bodyValue(parameters)
                     .retrieve()
@@ -180,7 +179,7 @@ internal class IdentifiedSongRepositoryDS : IdentifiedSongRepository {
             val parameters = DownloadSongParameters(url = sourceUrl)
             val bytes: ByteArray =
                 withContext(Dispatchers.IO) {
-                    songDownloaderClient.post()
+                    jsServiceWebClient.post()
                         .uri("/download")
                         .bodyValue(parameters)
                         .retrieve()
@@ -301,7 +300,7 @@ internal class IdentifiedSongRepositoryDS : IdentifiedSongRepository {
                 val urlQueries = mapOf("keyword" to urlEncodedKeyword, "limit" to limit.toString())
                 val query = urlQueries.map { "${it.key}=${it.value}" }.joinToString("&")
                 val urlPath = "/search?$query"
-                songDownloaderClient.get()
+                jsServiceWebClient.get()
                     .uri(urlPath)
                     .retrieve()
                     .bodyToMono(Array<SearchResultItem>::class.java)
@@ -315,28 +314,22 @@ internal class IdentifiedSongRepositoryDS : IdentifiedSongRepository {
 
     override suspend fun enhanceSong(identifiedSong: IdentifiedSong): IdentifiedSong {
         return try {
-            // i wish there's a ping function; if there is, we can use it to check if the AI is up
-            // if not, we can use a fallback
-
-            // TODO: We'll be using AI to enhance the song
-            // let's try identifying the artist
-            println("Enhancing song using AI")
-            val openAIModel = openAIModel ?: throw Exception("OpenAI model not found")
-            val completionRequest =
-                ChatCompletionRequest(
-                    model = openAIModel,
-                    messages =
-                        listOf(
-                            ChatMessage(
-                                role = Role.System,
-                                content = "Attempt to identify the artist; return 'Unidentified' if unable: ${identifiedSong.songTitle}",
-                            ),
-                        ),
-                )
-            val completion: ChatCompletion = openAIClient.chatCompletion(completionRequest)
-            println("Successfully enhanced song using AI")
+            // js service /enhance, send header `openai-key`
+            val enhancedSong =
+                withContext(Dispatchers.IO) {
+                    jsServiceWebClient.post()
+                        .uri("/enhance")
+                        .header("openai-key", openAIToken)
+                        .bodyValue(identifiedSong)
+                        .retrieve()
+                        .bodyToMono(EnhancedSong::class.java)
+                        .block()
+                } ?: throw Exception("No response from server")
+            println("Enhancing song")
             identifiedSong.copy(
-                songArtist = completion.choices[0].message.content,
+                songTitle = enhancedSong.title,
+                songArtist = enhancedSong.artist,
+                songLanguage = enhancedSong.language,
             )
         } catch (e: Exception) {
             println("Error while enhancing: ${e.message}")
@@ -346,19 +339,8 @@ internal class IdentifiedSongRepositoryDS : IdentifiedSongRepository {
     }
 }
 
-fun SongDocument.toSavedSong(): SavedSong {
-    return object : SavedSong {
-        override val id: String = this@toSavedSong.id ?: throw Exception("Failed to save song")
-        override val source: String = this@toSavedSong.source
-        override val sourceId: String = this@toSavedSong.sourceId
-        override val thumbnailPath: String = this@toSavedSong.thumbnailFile.path()
-        override val videoPath: String? = this@toSavedSong.videoFile?.path()
-        override val songTitle: String = this@toSavedSong.title
-        override val songArtist: String = this@toSavedSong.artist
-        override val songLanguage: String = this@toSavedSong.language
-        override val isOffVocal: Boolean = this@toSavedSong.isOffVocal
-        override val videoHasLyrics: Boolean = this@toSavedSong.videoHasLyrics
-        override val songLyrics: String = this@toSavedSong.songLyrics
-        override val lengthSeconds: Int = this@toSavedSong.lengthSeconds
-    }
-}
+data class EnhancedSong(
+    val title: String,
+    val artist: String,
+    val language: String,
+)
