@@ -32,7 +32,7 @@ services:
       - "5005:5005" # Debug port
       - "9092:9092" # Socket port
     depends_on:
-      - songdownloader
+      - js-service
       - mongodb
     environment:
       - SERVER_PORT=8080
@@ -44,12 +44,12 @@ services:
     networks:
       - singalong-server
 
-  songdownloader:
-    image: song-downloader-service:1.0.0
+  js-service:
+    image: singalong-js:1.0.0
     build:
-      context: microservices/songdownloader
+      context: microservices/js-service
       dockerfile: Dockerfile
-    container_name: songdownloader-container
+    container_name: js-service-container
     networks:
       - singalong-server
     ports:

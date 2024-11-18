@@ -132,7 +132,6 @@ internal class IdentifiedSongRepositoryDS : IdentifiedSongRepository {
         // download image and save to minio
         try {
             val bucket = "thumbnails"
-            val videoId = song.sourceId
             val objectName = "$filename.jpg"
             val result =
                 withContext(Dispatchers.IO) {
@@ -278,7 +277,7 @@ internal class IdentifiedSongRepositoryDS : IdentifiedSongRepository {
                 withContext(Dispatchers.IO) {
                     reservedSongDocumentRepository.save(reservedSong)
                 }
-            return object : ReservedSong {
+            object : ReservedSong {
                 override val id: String = newReservedSong.id ?: throw IllegalArgumentException("Reserved song id not found")
                 override val order: Int = newReservedSong.order
                 override val songId: String = newReservedSong.songId
@@ -315,8 +314,6 @@ internal class IdentifiedSongRepositoryDS : IdentifiedSongRepository {
     }
 
     override suspend fun enhanceSong(identifiedSong: IdentifiedSong): IdentifiedSong {
-        return identifiedSong
-        // my local AI can't handle this
         return try {
             // i wish there's a ping function; if there is, we can use it to check if the AI is up
             // if not, we can use a fallback
