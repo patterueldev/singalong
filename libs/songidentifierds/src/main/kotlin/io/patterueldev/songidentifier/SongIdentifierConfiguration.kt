@@ -22,7 +22,7 @@ import org.springframework.web.reactive.function.client.WebClient
 open class SongIdentifierConfiguration {
     @Bean
     open fun songDownloaderClient(
-        @Value("\${baseurl.songdownloader}") songDownloaderUrl: String,
+        @Value("\${baseurl.js-service}") songDownloaderUrl: String,
     ): WebClient {
         val sizeInMB = 200
         val sizeInBytes = sizeInMB * 1024 * 1024

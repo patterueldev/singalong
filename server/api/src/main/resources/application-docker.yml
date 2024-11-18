@@ -1,5 +1,5 @@
 baseurl:
-  songdownloader: http://songdownloader:3000
+  js-service: http://js-service:3000
 openai:
   local: true
   host: http://host.docker.internal:1234/v1/
