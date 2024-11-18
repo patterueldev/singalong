@@ -111,7 +111,7 @@
   "isOffVocal": "Is Off Vocal",
   "isOffVocalDescription": "Text for the is off vocal checkbox",
 
-  "hasLyrics": "Has Lyrics",
+  "hasLyrics": "Video Has Lyrics",
   "hasLyricsDescription": "Text for the has lyrics checkbox",
 
   "lyricsPlaceholder": "Lyrics",

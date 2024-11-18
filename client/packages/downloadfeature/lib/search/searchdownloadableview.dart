@@ -284,7 +284,8 @@ class _SearchDownloadableViewState extends State<SearchDownloadableView> {
               viewModel.identifyDownloadable(item);
               break;
             case 'preview':
-              coordinator.previewDownloadable(context, item);
+              final url = Uri.parse(item.sourceUrl);
+              coordinator.openURL(context, url);
               break;
           }
         },
@@ -320,8 +321,8 @@ class _SearchDownloadableViewState extends State<SearchDownloadableView> {
             child: const Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.refresh),
-                const SizedBox(width: 8),
+                Icon(Icons.refresh),
+                SizedBox(width: 8),
                 Text("Retry"),
               ],
             ),

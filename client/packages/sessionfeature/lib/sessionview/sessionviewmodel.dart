@@ -8,6 +8,7 @@ abstract class SessionViewModel extends ChangeNotifier {
   ValueNotifier<ReservedSongItem?> songDetailsNotifier = ValueNotifier(null);
   ValueNotifier<bool> isSongBookOpenNotifier = ValueNotifier(false);
 
+  String get roomName;
   String? roomId;
 
   void setupSession();
@@ -36,6 +37,8 @@ class DefaultSessionViewModel extends SessionViewModel {
     }
   }
 
+  String roomName = '';
+
   StreamController<List<ReservedSongItem>>? streamController;
 
   @override
@@ -49,6 +52,7 @@ class DefaultSessionViewModel extends SessionViewModel {
         return;
       }
       this.roomId = roomId;
+      this.roomName = roomId;
       await connectRepository.connectRoomSocket(roomId);
 
       debugPrint('Opening socket');

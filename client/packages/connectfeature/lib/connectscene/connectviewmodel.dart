@@ -108,4 +108,11 @@ class DefaultConnectViewModel extends ConnectViewModel {
     singalongConfigurationNotifier.notifyListeners();
     stateNotifier.value = ConnectViewState.initial();
   }
+
+  @override
+  void dispose() {
+    nameController.dispose();
+    sessionIdController.dispose();
+    super.dispose();
+  }
 }

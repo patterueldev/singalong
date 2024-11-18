@@ -32,14 +32,6 @@ class _ConnectViewState extends State<ConnectView> {
     });
   }
 
-  @override
-  void dispose() {
-    viewModel.stateNotifier.removeListener(_stateListener);
-    viewModel.nameController.dispose();
-    viewModel.sessionIdController.dispose();
-    super.dispose();
-  }
-
   void _stateListener() {
     final state = viewModel.stateNotifier.value;
 

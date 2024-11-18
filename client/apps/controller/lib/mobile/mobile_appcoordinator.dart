@@ -135,10 +135,7 @@ class MobileAppCoordinator
   }
 
   @override
-  void previewDownloadable(
-      BuildContext context, DownloadableItem downloadable) {
-    final sourceUrl = downloadable.sourceUrl;
-    final url = Uri.parse(sourceUrl);
+  void openURL(BuildContext context, Uri url) {
     debugPrint("Launching URL: $url");
     canLaunchUrl(url).then((canLaunch) async {
       if (!canLaunch) {

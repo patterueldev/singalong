@@ -2,6 +2,7 @@ part of '../downloadfeature.dart';
 
 abstract class SongDetailsViewModel extends ChangeNotifier {
   ValueNotifier<SongDownloadState> get songDownloadStateNotifier;
+  IdentifiedSongDetails get identifiedSongDetails;
   String get imageUrl;
   String get songTitle;
   String get songArtist;
@@ -21,6 +22,7 @@ abstract class SongDetailsViewModel extends ChangeNotifier {
 
 class DefaultSongDetailsViewModel extends SongDetailsViewModel {
   final DownloadUseCase downloadUseCase;
+  @override
   final IdentifiedSongDetails identifiedSongDetails;
 
   DefaultSongDetailsViewModel({

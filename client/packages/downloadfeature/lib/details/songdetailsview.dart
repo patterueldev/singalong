@@ -56,6 +56,16 @@ class _SongDetailsViewState extends State<SongDetailsView> {
               appBar: AppBar(
                 title: localizations.songDetailsScreenTitleText
                     .localizedTextOf(context),
+                actions: [
+                  IconButton(
+                    icon: const Icon(Icons.preview),
+                    onPressed: () {
+                      final url =
+                          Uri.parse(viewModel.identifiedSongDetails.source);
+                      flow.openURL(context, url);
+                    },
+                  ),
+                ],
               ),
               body: _buildBody(context, viewModel),
             ),
@@ -128,11 +138,13 @@ class _SongDetailsViewState extends State<SongDetailsView> {
             ),
             const SizedBox(height: 16),
             _textField(
+                maxLines: 2,
                 value: viewModel.songTitle,
                 placeholder: localizations.songTitlePlaceholderText,
                 onChange: viewModel.updateSongTitle),
             const SizedBox(height: 16),
             _textField(
+                maxLines: 2,
                 value: viewModel.songArtist,
                 placeholder: localizations.songArtistPlaceholderText,
                 onChange: viewModel.updateSongArtist),
@@ -153,6 +165,31 @@ class _SongDetailsViewState extends State<SongDetailsView> {
               label: localizations.hasLyricsText,
             ),
             const SizedBox(height: 16),
+            // add a url here to search for the song lyrics externally
+            InkWell(
+              onTap: () {
+                // google search for the song lyrics
+                final url = Uri.https(
+                  'www.google.com',
+                  '/search',
+                  {
+                    'q': '${viewModel.songTitle} ${viewModel.songArtist} lyrics'
+                  },
+                );
+                flow.openURL(context, url);
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                child: Text(
+                  "Search for lyrics",
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.secondary,
+                    decoration: TextDecoration.underline,
+                  ),
+                ),
+              ),
+            ),
+
             _textField(
                 maxLines: 5,
                 value: viewModel.songLyrics,
@@ -176,10 +213,12 @@ class _SongDetailsViewState extends State<SongDetailsView> {
     required String value,
     required LocalizedString placeholder,
     required Function(String) onChange,
+    TextCapitalization textCapitalization = TextCapitalization.words,
     int maxLines = 1,
   }) =>
       TextField(
         maxLines: maxLines,
+        textCapitalization: textCapitalization,
         decoration: InputDecoration(
             labelText: placeholder.localizedOf(context),
             border: const OutlineInputBorder(),

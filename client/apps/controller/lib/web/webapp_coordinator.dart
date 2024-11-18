@@ -79,15 +79,14 @@ class WebAppCoordinator
   }
 
   @override
-  void previewDownloadable(
-      BuildContext context, DownloadableItem downloadable) {
-    final url = Uri.parse(downloadable.sourceUrl);
+  void openURL(BuildContext context, Uri url) {
+    debugPrint("Launching URL: $url");
     canLaunchUrl(url).then((canLaunch) async {
       if (!canLaunch) {
         debugPrint("Cannot launch URL: $url");
         return;
       }
-      await launchUrl(url);
+      await launchUrl(url, mode: LaunchMode.externalApplication);
     });
   }
 }
