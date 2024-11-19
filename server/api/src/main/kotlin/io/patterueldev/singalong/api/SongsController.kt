@@ -5,7 +5,6 @@ import io.patterueldev.reservation.next.NextSongResponse
 import io.patterueldev.reservation.reserve.ReserveParameters
 import io.patterueldev.reservation.reserve.ReserveResponse
 import io.patterueldev.songbook.SongBookService
-import io.patterueldev.songbook.UpdateSongParameters
 import io.patterueldev.songbook.loadsongs.LoadSongsParameters
 import io.patterueldev.songbook.loadsongs.LoadSongsResponse
 import io.patterueldev.songbook.songdetails.LoadSongDetailsParameters
@@ -94,9 +93,4 @@ class SongsController(
                 roomId = roomId,
             ),
         )
-
-    @PatchMapping("/details")
-    suspend fun updateSongDetails(
-        @RequestBody songDetails: UpdateSongParameters,
-    ): SongDetailsResponse = songBookService.updateSong(songDetails)
 }

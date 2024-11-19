@@ -1,6 +1,7 @@
 package io.patterueldev.song
 
-import io.patterueldev.auth.AuthRepository
+import io.minio.GetObjectArgs
+import io.minio.MinioClient
 import io.patterueldev.common.PaginatedData
 import io.patterueldev.common.Pagination
 import io.patterueldev.mongods.reservedsong.ReservedSongDocumentRepository
@@ -25,7 +26,7 @@ class SongRepositoryDS : SongRepository {
 
     @Autowired private lateinit var reservedSongDocumentRepository: ReservedSongDocumentRepository
 
-    @Autowired private lateinit var authUserRe: AuthRepository
+    @Autowired private lateinit var minioClient: MinioClient
 
     override suspend fun loadSongs(
         limit: Int,
@@ -117,14 +118,41 @@ class SongRepositoryDS : SongRepository {
         roomId: String?,
     ): SongDetails? {
         val song = songDocumentRepository.findByIdOrNull(id)
-        var currentlyPlaying = false
-        var wasReserved = false
-        if (roomId != null) {
-            val reservations = reservedSongDocumentRepository.loadReservationsByRoomIdAndSongId(roomId, id)
-            wasReserved = reservations.isNotEmpty()
-            currentlyPlaying = reservations.any { it.startedPlayingAt != null && it.finishedPlayingAt == null }
-        }
         return song?.let {
+            var currentlyPlaying = false
+            var wasReserved = false
+            if (roomId != null) {
+                val reservations = reservedSongDocumentRepository.loadReservationsByRoomIdAndSongId(roomId, it.id!!)
+                wasReserved = reservations.isNotEmpty()
+                currentlyPlaying = reservations.any { it.startedPlayingAt != null && it.finishedPlayingAt == null }
+            }
+            var isCorrupted = false
+            val videoFile = song.videoFile
+            if (videoFile != null) {
+                // validate if the video file exists
+                isCorrupted =
+                    withContext(Dispatchers.IO) {
+                        try {
+                            val video =
+                                minioClient.getObject(
+                                    GetObjectArgs.builder()
+                                        .bucket(videoFile.bucket)
+                                        .`object`(videoFile.objectName)
+                                        .build(),
+                                )
+                            println("Video file exists: $video")
+                            false
+                        } catch (e: Exception) {
+                            println("Error checking video file: $e")
+                            true
+                        }
+                    }
+            } else {
+                println("Video File is null")
+                isCorrupted = true
+            }
+
+            // check if the song data is corrupted e.g. video is missing, etc
             object : SongDetails {
                 override val id: String = it.id!!
                 override val source: String = it.source
@@ -144,6 +172,7 @@ class SongRepositoryDS : SongRepository {
                 override val addedBy: String = it.addedBy
                 override val addedAtSession: String = it.addedAtSession
                 override val lastUpdatedBy: String = it.lastModifiedBy
+                override val isCorrupted: Boolean = isCorrupted
             }
         }
     }
@@ -189,6 +218,7 @@ class SongRepositoryDS : SongRepository {
             override val addedBy = updatedSong.addedBy
             override val addedAtSession = updatedSong.addedAtSession
             override val lastUpdatedBy = updatedSong.lastModifiedBy
+            override val isCorrupted = false
         }
     }
 }

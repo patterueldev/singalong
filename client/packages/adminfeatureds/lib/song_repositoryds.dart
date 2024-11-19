@@ -32,6 +32,7 @@ class SongRepositoryDS implements SongRepository {
       addedBy: song.addedBy,
       addedAtSession: song.addedAtSession,
       lastUpdatedBy: song.lastUpdatedBy,
+      isCorrupted: song.isCorrupted,
     );
   }
 

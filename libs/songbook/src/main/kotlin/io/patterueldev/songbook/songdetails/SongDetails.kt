@@ -19,4 +19,5 @@ interface SongDetails {
     val addedBy: String
     val addedAtSession: String
     val lastUpdatedBy: String
+    val isCorrupted: Boolean
 }

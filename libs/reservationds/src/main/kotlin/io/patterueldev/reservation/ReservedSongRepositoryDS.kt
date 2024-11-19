@@ -1,5 +1,7 @@
 package io.patterueldev.reservation
 
+import io.minio.GetObjectArgs
+import io.minio.MinioClient
 import io.patterueldev.mongods.reservedsong.ReservedSongDocument
 import io.patterueldev.mongods.reservedsong.ReservedSongDocumentRepository
 import io.patterueldev.mongods.song.SongDocumentRepository
@@ -21,6 +23,8 @@ open class ReservedSongRepositoryDS : ReservedSongsRepository {
 
     @Autowired private lateinit var reservedSongDocumentRepository: ReservedSongDocumentRepository
 
+    @Autowired private lateinit var minioClient: MinioClient
+
     private val mutex = Mutex()
 
     override suspend fun reserveSong(
@@ -33,6 +37,30 @@ open class ReservedSongRepositoryDS : ReservedSongsRepository {
                 withContext(Dispatchers.IO) {
                     songDocumentRepository.findById(songId)
                 }.getOrNull() ?: throw IllegalArgumentException("Song not found")
+
+            // check if song is not corrupted
+            val videoFile = song.videoFile
+            if (videoFile != null) {
+                // validate if the video file exists
+                withContext(Dispatchers.IO) {
+                    try {
+                        val video =
+                            minioClient.getObject(
+                                GetObjectArgs.builder()
+                                    .bucket(videoFile.bucket)
+                                    .`object`(videoFile.objectName)
+                                    .build(),
+                            )
+                        println("Video file exists: $video")
+                    } catch (e: Exception) {
+                        println("Error checking video file: $e")
+                        throw e
+                    }
+                }
+            } else {
+                println("Video File is null")
+                throw Exception("Video file is null. Unable to reserve.")
+            }
 
             // get the last order number
             val lastOrderNumber: Int =

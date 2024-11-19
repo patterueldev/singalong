@@ -18,6 +18,7 @@ class SongDetails {
   final String addedBy;
   final String addedAtSession;
   final String lastUpdatedBy;
+  final bool isCorrupted;
 
   SongDetails({
     required this.id,
@@ -37,6 +38,7 @@ class SongDetails {
     required this.addedBy,
     required this.addedAtSession,
     required this.lastUpdatedBy,
+    required this.isCorrupted,
   });
 
   SongDetails copyWith({
@@ -57,6 +59,7 @@ class SongDetails {
     String? addedBy,
     String? addedAtSession,
     String? lastUpdatedBy,
+    bool? isCorrupted,
   }) {
     return SongDetails(
       id: id ?? this.id,
@@ -76,6 +79,7 @@ class SongDetails {
       addedBy: addedBy ?? this.addedBy,
       addedAtSession: addedAtSession ?? this.addedAtSession,
       lastUpdatedBy: lastUpdatedBy ?? this.lastUpdatedBy,
+      isCorrupted: isCorrupted ?? this.isCorrupted,
     );
   }
 

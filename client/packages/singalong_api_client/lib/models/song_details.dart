@@ -20,6 +20,7 @@ class APISongDetails {
   final String addedBy;
   final String addedAtSession;
   final String lastUpdatedBy;
+  final bool isCorrupted;
 
   APISongDetails({
     required this.id,
@@ -40,6 +41,7 @@ class APISongDetails {
     required this.addedBy,
     required this.addedAtSession,
     required this.lastUpdatedBy,
+    required this.isCorrupted,
   });
 
   factory APISongDetails.fromJson(Map<String, dynamic> json) =>

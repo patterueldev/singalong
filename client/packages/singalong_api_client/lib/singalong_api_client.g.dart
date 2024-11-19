@@ -543,6 +543,7 @@ APISongDetails _$APISongDetailsFromJson(Map<String, dynamic> json) =>
       addedBy: json['addedBy'] as String,
       addedAtSession: json['addedAtSession'] as String,
       lastUpdatedBy: json['lastUpdatedBy'] as String,
+      isCorrupted: json['isCorrupted'] as bool,
     );
 
 Map<String, dynamic> _$APISongDetailsToJson(APISongDetails instance) =>
@@ -565,6 +566,7 @@ Map<String, dynamic> _$APISongDetailsToJson(APISongDetails instance) =>
       'addedBy': instance.addedBy,
       'addedAtSession': instance.addedAtSession,
       'lastUpdatedBy': instance.lastUpdatedBy,
+      'isCorrupted': instance.isCorrupted,
     };
 
 APILoadSongDetailsParameters _$APILoadSongDetailsParametersFromJson(

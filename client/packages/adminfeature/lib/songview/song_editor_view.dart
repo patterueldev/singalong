@@ -107,18 +107,32 @@ class SongEditorView extends StatelessWidget {
                     coordinator.openURL(context, url);
                   },
                 ),
-                // Save Button
+                // Delete Button
                 TextButton(
                   onPressed: () {
-                    // coordinator.saveSong(context, song);
-                    final genres = state.genresController.getTags ?? [];
-                    final tags = state.tagsController.getTags ?? [];
-                    song.genres = genres;
-                    song.tags = tags;
-                    context.read<SongEditorViewModel>().saveDetails(song);
+                    debugPrint("Delete");
                   },
-                  child: Text("Save"),
+                  child: Text("Delete"),
                 ),
+
+                // Save Button
+                ValueListenableBuilder(
+                    valueListenable: state.songNotifier,
+                    builder: (context, song, child) {
+                      if (song.isCorrupted) {
+                        return SizedBox.shrink();
+                      }
+                      return TextButton(
+                        onPressed: () {
+                          final genres = state.genresController.getTags ?? [];
+                          final tags = state.tagsController.getTags ?? [];
+                          song.genres = genres;
+                          song.tags = tags;
+                          context.read<SongEditorViewModel>().saveDetails(song);
+                        },
+                        child: Text("Save"),
+                      );
+                    }),
               ],
             ),
             body: SingleChildScrollView(
