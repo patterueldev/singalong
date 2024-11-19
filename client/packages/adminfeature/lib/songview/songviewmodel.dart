@@ -9,6 +9,7 @@ abstract class SongEditorViewModel extends ChangeNotifier {
 
   void loadDetails();
   void saveDetails(SongDetails song);
+  void deleteSong(SongDetails song);
 }
 
 class DefaultSongViewModel extends SongEditorViewModel {
@@ -41,6 +42,25 @@ class DefaultSongViewModel extends SongEditorViewModel {
 
     try {
       await songRepository.saveSongDetails(song);
+      isLoadingNotifier.value = false;
+      finishedSavingNotifier.value = true;
+    } catch (e) {
+      isLoadingNotifier.value = false;
+      promptNotifier.value = PromptModel.quick(
+        title: 'Error',
+        message: e.toString(),
+        actionText: 'OK',
+      );
+    }
+  }
+
+  @override
+  void deleteSong(SongDetails song) {
+    debugPrint('Deleting song: $song');
+    isLoadingNotifier.value = true;
+
+    try {
+      songRepository.deleteSongDetails(song.id);
       isLoadingNotifier.value = false;
       finishedSavingNotifier.value = true;
     } catch (e) {

@@ -1,6 +1,6 @@
 package io.patterueldev.mongods.song
 
-import io.patterueldev.mongods.common.BucketFile
+import io.patterueldev.common.BucketFile
 import org.springframework.data.annotation.CreatedDate
 import org.springframework.data.annotation.Id
 import org.springframework.data.annotation.LastModifiedDate
@@ -35,6 +35,7 @@ data class SongDocument(
     val lastModifiedBy: String,
     @CreatedDate val createdAt: LocalDateTime = LocalDateTime.now(),
     @LastModifiedDate val updatedAt: LocalDateTime = LocalDateTime.now(),
+    val archivedAt: LocalDateTime? = null,
 ) {
     companion object {
         fun new(

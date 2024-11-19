@@ -1,4 +1,4 @@
-package io.patterueldev.mongods.common
+package io.patterueldev.common
 
 data class BucketFile(
     val bucket: String,

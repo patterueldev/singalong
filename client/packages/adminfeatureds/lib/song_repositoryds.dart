@@ -53,4 +53,9 @@ class SongRepositoryDS implements SongRepository {
     final result = await api.updateSongDetails(parameters);
     debugPrint('saveSongDetails: $result');
   }
+
+  @override
+  Future<void> deleteSongDetails(String songId) async {
+    await api.deleteSong(songId);
+  }
 }

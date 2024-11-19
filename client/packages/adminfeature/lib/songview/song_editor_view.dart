@@ -110,7 +110,7 @@ class SongEditorView extends StatelessWidget {
                 // Delete Button
                 TextButton(
                   onPressed: () {
-                    debugPrint("Delete");
+                    context.read<SongEditorViewModel>().deleteSong(song);
                   },
                   child: Text("Delete"),
                 ),

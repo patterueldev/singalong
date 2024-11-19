@@ -2,16 +2,19 @@ package io.patterueldev.song
 
 import io.minio.GetObjectArgs
 import io.minio.MinioClient
+import io.minio.RemoveObjectArgs
+import io.patterueldev.common.BucketFile
 import io.patterueldev.common.PaginatedData
 import io.patterueldev.common.Pagination
 import io.patterueldev.mongods.reservedsong.ReservedSongDocumentRepository
 import io.patterueldev.mongods.song.SongDocument
 import io.patterueldev.mongods.song.SongDocumentRepository
-import io.patterueldev.songbook.UpdateSongParameters
 import io.patterueldev.songbook.loadsongs.PaginatedSongs
 import io.patterueldev.songbook.loadsongs.SongbookItem
+import io.patterueldev.songbook.song.SongRecord
 import io.patterueldev.songbook.song.SongRepository
 import io.patterueldev.songbook.songdetails.SongDetails
+import io.patterueldev.songbook.updatesong.UpdateSongParameters
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.springframework.beans.factory.annotation.Autowired
@@ -19,6 +22,7 @@ import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
+import java.time.LocalDateTime
 
 @Service
 class SongRepositoryDS : SongRepository {
@@ -54,15 +58,15 @@ class SongRepositoryDS : SongRepository {
             val pagedSongsResult: Page<SongDocument> =
                 if (keyword.isNullOrBlank()) {
                     if (filteringIds.isEmpty()) {
-                        songDocumentRepository.findAll(pageable)
+                        songDocumentRepository.findAllUnarchived(pageable)
                     } else {
-                        songDocumentRepository.findAllNotInIds(filteringIds, pageable)
+                        songDocumentRepository.findAllUnarchivedNotInIds(filteringIds, pageable)
                     }
                 } else {
                     if (filteringIds.isEmpty()) {
-                        songDocumentRepository.findByKeyword(keyword, pageable)
+                        songDocumentRepository.findUnarchivedByKeyword(keyword, pageable)
                     } else {
-                        songDocumentRepository.findByKeywordNotInIds(keyword, filteringIds, pageable)
+                        songDocumentRepository.findUnarchivedByKeywordNotInIds(keyword, filteringIds, pageable)
                     }
                 }
             val songs =
@@ -219,6 +223,81 @@ class SongRepositoryDS : SongRepository {
             override val addedAtSession = updatedSong.addedAtSession
             override val lastUpdatedBy = updatedSong.lastModifiedBy
             override val isCorrupted = false
+        }
+    }
+
+    override suspend fun isReservedOrPlaying(songId: String): Boolean {
+        val reservations = reservedSongDocumentRepository.loadReservationsBySongId(songId)
+        return reservations.any { it.startedPlayingAt != null && it.finishedPlayingAt == null }
+    }
+
+    override suspend fun wasReserved(songId: String): Boolean {
+        return reservedSongDocumentRepository.loadReservationsBySongId(songId).isNotEmpty()
+    }
+
+    override suspend fun getSongRecord(songId: String): SongRecord? {
+        val song = songDocumentRepository.findByIdOrNull(songId)
+        return song?.let {
+            object : SongRecord {
+                override val id: String = it.id!!
+                override val sourceId: String = it.sourceId
+                override val thumbnailFile: BucketFile = it.thumbnailFile
+                override val videoFile: BucketFile? = it.videoFile
+            }
+        }
+    }
+
+    override suspend fun getSongsBySourceId(sourceId: String): List<SongRecord> {
+        val songs = songDocumentRepository.findAllBySourceId(sourceId)
+        return songs.map {
+            object : SongRecord {
+                override val id: String = it.id!!
+                override val sourceId: String = it.sourceId
+                override val thumbnailFile: BucketFile = it.thumbnailFile
+                override val videoFile: BucketFile? = it.videoFile
+            }
+        }
+    }
+
+    override suspend fun deleteSongFile(bucketFile: BucketFile?) {
+        if (bucketFile != null) {
+            withContext(Dispatchers.IO) {
+                try {
+                    minioClient.removeObject(
+                        RemoveObjectArgs.builder()
+                            .bucket(bucketFile.bucket)
+                            .`object`(bucketFile.objectName)
+                            .build(),
+                    )
+                } catch (e: Exception) {
+                    println("Error deleting file: $e")
+                }
+            }
+        }
+    }
+
+    override suspend fun deleteSong(songId: String) {
+        val song = songDocumentRepository.findByIdOrNull(songId) ?: throw Exception("Song doesn't exist")
+        withContext(Dispatchers.IO) {
+            try {
+                songDocumentRepository.deleteById(songId)
+                println("Deleted song with ID $songId")
+            } catch (e: Exception) {
+                println("Error deleting song: $e")
+            }
+        }
+    }
+
+    override suspend fun archiveSong(songId: String) {
+        val song = songDocumentRepository.findByIdOrNull(songId) ?: throw Exception("Song doesn't exist")
+        val updated = song.copy(archivedAt = LocalDateTime.now())
+        withContext(Dispatchers.IO) {
+            try {
+                songDocumentRepository.save(updated)
+                println("Archived song with ID $songId")
+            } catch (e: Exception) {
+                println("Error deleting song: $e")
+            }
         }
     }
 }

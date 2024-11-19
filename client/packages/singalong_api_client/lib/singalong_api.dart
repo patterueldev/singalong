@@ -56,11 +56,20 @@ class SingalongAPI {
   Future<APISongDetails> updateSongDetails(
       APIUpdateSongParameters parameters) async {
     final result = await apiClient.request(
-      path: APIPath.songDetails,
+      path: APIPath.adminUpdateSong,
       payload: parameters.toJson(),
       method: HttpMethod.PATCH,
     );
     return APISongDetails.fromJson(result.objectData());
+  }
+
+  Future<void> deleteSong(String songId) async {
+    final result = await apiClient.request(
+      path: APIPath.adminDeleteSong,
+      queryParameters: {"songId": songId},
+      method: HttpMethod.DELETE,
+    );
+    debugPrint("Delete result: $result");
   }
 
   Future<void> reserveSong(APIReserveSongParameters parameters) async {

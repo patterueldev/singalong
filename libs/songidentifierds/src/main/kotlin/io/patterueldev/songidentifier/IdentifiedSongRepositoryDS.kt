@@ -2,7 +2,7 @@ package io.patterueldev.songidentifier
 
 import io.minio.MinioClient
 import io.minio.PutObjectArgs
-import io.patterueldev.mongods.common.BucketFile
+import io.patterueldev.common.BucketFile
 import io.patterueldev.mongods.reservedsong.ReservedSongDocument
 import io.patterueldev.mongods.reservedsong.ReservedSongDocumentRepository
 import io.patterueldev.mongods.song.SongDocument

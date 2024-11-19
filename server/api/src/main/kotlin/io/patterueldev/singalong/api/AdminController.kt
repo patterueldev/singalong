@@ -6,8 +6,9 @@ import io.patterueldev.admin.connectwithroom.ConnectWithRoomParameters
 import io.patterueldev.admin.room.LoadRoomListParameters
 import io.patterueldev.room.CreateRoomParameters
 import io.patterueldev.songbook.SongBookService
-import io.patterueldev.songbook.UpdateSongParameters
 import io.patterueldev.songbook.songdetails.SongDetailsResponse
+import io.patterueldev.songbook.updatesong.UpdateSongParameters
+import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PostMapping
@@ -61,4 +62,9 @@ class AdminController(
     suspend fun updateSongDetails(
         @RequestBody songDetails: UpdateSongParameters,
     ): SongDetailsResponse = songBookService.updateSong(songDetails)
+
+    @DeleteMapping("/song/delete")
+    suspend fun deleteSong(
+        @RequestParam songId: String,
+    ) = songBookService.deleteSong(songId)
 }
