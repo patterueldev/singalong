@@ -9,7 +9,7 @@ abstract class SongBookViewModel extends ChangeNotifier {
   void fetchSongs(bool loadsNext);
   void toggleSearch();
   void updateSearchQuery(String query);
-  void reserveSong(SongItem song);
+  void reserveSong(SongbookItem song);
 }
 
 class DefaultSongBookViewModel extends SongBookViewModel {
@@ -100,7 +100,7 @@ class DefaultSongBookViewModel extends SongBookViewModel {
   }
 
   @override
-  void reserveSong(SongItem song) async {
+  void reserveSong(SongbookItem song) async {
     isLoadingNotifier.value = true;
     final result = await reserveSongUseCase(song).run();
     result.fold(

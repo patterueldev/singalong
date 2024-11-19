@@ -4,6 +4,7 @@ enum APIPath {
   sessionConnect,
   sessionCheck,
   songs,
+  songDetails,
   reserveSong,
   identifySong,
   downloadable,
@@ -22,6 +23,8 @@ enum APIPath {
         return '/session/check';
       case songs:
         return '/songs';
+      case songDetails:
+        return '/songs/details';
       case reserveSong:
         return '/songs/reserve';
       case identifySong:

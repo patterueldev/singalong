@@ -1,7 +1,7 @@
 part of '../songbookfeature.dart';
 
 class LoadSongsResult {
-  final List<SongItem> songs;
+  final List<SongbookItem> songs;
   final int? nextOffset;
   final String? nextCursor;
   final int? nextPage;
@@ -24,7 +24,7 @@ class LoadSongsResult {
 
 abstract class SongRepository {
   Future<LoadSongsResult> loadSongs(LoadSongsParameters parameters);
-  Future<void> reserveSong(SongItem song);
+  Future<void> reserveSong(SongbookItem song);
 }
 
 class LoadSongsParameters {

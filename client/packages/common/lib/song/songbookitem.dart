@@ -1,6 +1,6 @@
-part of '../songbookfeature.dart';
+part of '../common.dart';
 
-class SongItem {
+class SongbookItem {
   final String id;
   final String title;
   final String artist;
@@ -8,7 +8,7 @@ class SongItem {
   final bool
       alreadyPlayed; // doesn't mean it can't be played again, just for indication
 
-  const SongItem({
+  const SongbookItem({
     required this.id,
     required this.title,
     required this.artist,

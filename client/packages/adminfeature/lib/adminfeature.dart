@@ -13,6 +13,8 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:fpdart/fpdart.dart' show TaskEither, Unit, unit;
 import 'package:provider/provider.dart';
 import 'package:core/core.dart';
+import 'package:skeletonizer/skeletonizer.dart';
+import 'package:textfield_tags/textfield_tags.dart';
 
 part 'admincoordinator.dart';
 part 'adminlocalizations.dart';
@@ -37,6 +39,14 @@ part 'create_room/create_room_dialog.dart';
 part 'create_room/create_room_viewmodel.dart';
 part 'reserved_panel/reserved_panel_widget.dart';
 part 'reserved_panel/reserved_panel_viewmodel.dart';
+part 'songbook_manager_panel/songbook_manager_dialog.dart';
+part 'songbook_manager_panel/songbook_manager_viewmodel.dart';
+part 'songview/songviewmodel.dart';
+part 'songview/songviewstate.dart';
+part 'songview/songmodel.dart';
+part 'songview/song_editor_view.dart';
+part 'songview/songrepository.dart';
+part 'songview/tagsmanagerwidget.dart';
 
 class AdminFeatureUIProvider {
   AdminFeatureUIProvider();
@@ -96,5 +106,17 @@ class AdminFeatureUIProvider {
           reservedSongListSocketRepository: context.read(),
         ),
         child: const ReservedPanelWidget(),
+      );
+
+  Widget buildSongbookManagerPanel(BuildContext context, SongbookItem song) =>
+      ChangeNotifierProvider<SongEditorViewModel>(
+        create: (context) => DefaultSongViewModel(
+          songRepository: context.read(),
+          songId: song.id,
+        ),
+        child: SongEditorView(
+          localizations: context.read(),
+          coordinator: context.read(),
+        ),
       );
 }

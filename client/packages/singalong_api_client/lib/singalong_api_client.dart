@@ -32,3 +32,5 @@ part 'models/room.dart';
 part 'models/connect_withroom_response.dart';
 part 'models/player_item.dart';
 part 'models/create_room_parameters.dart';
+part 'models/song_details.dart';
+part 'models/update_song_parameters.dart';

@@ -13,6 +13,7 @@ dependencies:
   skeletonizer: ^1.4.2
 
   core:
+  common:
   provider: ^6.1.2
   fpdart: ^1.1.0
   cached_network_image: ^3.4.0

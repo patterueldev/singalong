@@ -521,3 +521,93 @@ Map<String, dynamic> _$APICreateRoomParametersToJson(
       'roomName': instance.roomName,
       'roomPasscode': instance.roomPasscode,
     };
+
+APISongDetails _$APISongDetailsFromJson(Map<String, dynamic> json) =>
+    APISongDetails(
+      id: json['id'] as String,
+      source: json['source'] as String,
+      title: json['title'] as String,
+      artist: json['artist'] as String,
+      language: json['language'] as String,
+      isOffVocal: json['isOffVocal'] as bool,
+      videoHasLyrics: json['videoHasLyrics'] as bool,
+      duration: (json['duration'] as num).toInt(),
+      genres:
+          (json['genres'] as List<dynamic>).map((e) => e as String).toList(),
+      tags: (json['tags'] as List<dynamic>).map((e) => e as String).toList(),
+      metadata: Map<String, String>.from(json['metadata'] as Map),
+      thumbnailPath: json['thumbnailPath'] as String,
+      wasReserved: json['wasReserved'] as bool,
+      currentPlaying: json['currentPlaying'] as bool,
+      lyrics: json['lyrics'] as String?,
+      addedBy: json['addedBy'] as String,
+      addedAtSession: json['addedAtSession'] as String,
+      lastUpdatedBy: json['lastUpdatedBy'] as String,
+    );
+
+Map<String, dynamic> _$APISongDetailsToJson(APISongDetails instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'source': instance.source,
+      'title': instance.title,
+      'artist': instance.artist,
+      'language': instance.language,
+      'isOffVocal': instance.isOffVocal,
+      'videoHasLyrics': instance.videoHasLyrics,
+      'duration': instance.duration,
+      'genres': instance.genres,
+      'tags': instance.tags,
+      'metadata': instance.metadata,
+      'thumbnailPath': instance.thumbnailPath,
+      'wasReserved': instance.wasReserved,
+      'currentPlaying': instance.currentPlaying,
+      'lyrics': instance.lyrics,
+      'addedBy': instance.addedBy,
+      'addedAtSession': instance.addedAtSession,
+      'lastUpdatedBy': instance.lastUpdatedBy,
+    };
+
+APILoadSongDetailsParameters _$APILoadSongDetailsParametersFromJson(
+        Map<String, dynamic> json) =>
+    APILoadSongDetailsParameters(
+      songId: json['songId'] as String,
+      roomId: json['roomId'] as String?,
+    );
+
+Map<String, dynamic> _$APILoadSongDetailsParametersToJson(
+        APILoadSongDetailsParameters instance) =>
+    <String, dynamic>{
+      'songId': instance.songId,
+      'roomId': instance.roomId,
+    };
+
+APIUpdateSongParameters _$APIUpdateSongParametersFromJson(
+        Map<String, dynamic> json) =>
+    APIUpdateSongParameters(
+      songId: json['songId'] as String,
+      title: json['title'] as String,
+      artist: json['artist'] as String,
+      language: json['language'] as String,
+      isOffVocal: json['isOffVocal'] as bool,
+      videoHasLyrics: json['videoHasLyrics'] as bool,
+      songLyrics: json['songLyrics'] as String,
+      metadata: Map<String, String>.from(json['metadata'] as Map),
+      genres:
+          (json['genres'] as List<dynamic>).map((e) => e as String).toList(),
+      tags: (json['tags'] as List<dynamic>).map((e) => e as String).toList(),
+    );
+
+Map<String, dynamic> _$APIUpdateSongParametersToJson(
+        APIUpdateSongParameters instance) =>
+    <String, dynamic>{
+      'songId': instance.songId,
+      'title': instance.title,
+      'artist': instance.artist,
+      'language': instance.language,
+      'isOffVocal': instance.isOffVocal,
+      'videoHasLyrics': instance.videoHasLyrics,
+      'songLyrics': instance.songLyrics,
+      'metadata': instance.metadata,
+      'genres': instance.genres,
+      'tags': instance.tags,
+    };

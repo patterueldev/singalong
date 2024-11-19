@@ -26,7 +26,7 @@ class SongRepositoryDS implements SongRepository {
       );
       final apiSongs = result.items;
       final songs = apiSongs
-          .map((apiSong) => SongItem(
+          .map((apiSong) => SongbookItem(
                 id: apiSong.id,
                 title: apiSong.title,
                 artist: apiSong.artist,
@@ -49,7 +49,7 @@ class SongRepositoryDS implements SongRepository {
   }
 
   @override
-  Future<void> reserveSong(SongItem song) async {
+  Future<void> reserveSong(SongbookItem song) async {
     try {
       debugPrint('SongRepositoryDS: Reserving song: $song');
       final parameters = APIReserveSongParameters(songId: song.id);

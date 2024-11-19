@@ -1,6 +1,6 @@
 package io.patterueldev.songbook.loadsongs
 
-data class SongListItem(
+data class SongbookItem(
     val id: String,
     val thumbnailPath: String,
     val title: String,

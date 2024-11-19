@@ -1,3 +1,4 @@
+import 'package:common/common.dart';
 import 'package:connectfeature/connectfeature.dart';
 import 'package:downloadfeature/downloadfeature.dart';
 import 'package:flutter/material.dart';
@@ -106,7 +107,8 @@ class MobileAppCoordinator
   }
 
   @override
-  void openSongDetailScreen(BuildContext context, SongItem song) {
+  Future<T?> openSongDetailScreen<T>(
+      BuildContext context, SongbookItem song) async {
     // TODO: implement openSongDetailScreen
   }
 

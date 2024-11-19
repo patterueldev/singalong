@@ -43,6 +43,26 @@ class SingalongAPI {
     return APIPaginatedSongs.fromJson(result.objectData());
   }
 
+  Future<APISongDetails> loadSongDetails(
+      APILoadSongDetailsParameters parameters) async {
+    final result = await apiClient.request(
+      path: APIPath.songDetails,
+      queryParameters: parameters.toJson(),
+      method: HttpMethod.GET,
+    );
+    return APISongDetails.fromJson(result.objectData());
+  }
+
+  Future<APISongDetails> updateSongDetails(
+      APIUpdateSongParameters parameters) async {
+    final result = await apiClient.request(
+      path: APIPath.songDetails,
+      payload: parameters.toJson(),
+      method: HttpMethod.PATCH,
+    );
+    return APISongDetails.fromJson(result.objectData());
+  }
+
   Future<void> reserveSong(APIReserveSongParameters parameters) async {
     await apiClient.request(
       path: APIPath.reserveSong,

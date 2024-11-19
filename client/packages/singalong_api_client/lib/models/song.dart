@@ -79,9 +79,3 @@ class APIReserveSongParameters {
       _$APIReserveSongParametersFromJson(json);
   Map<String, dynamic> toJson() => _$APIReserveSongParametersToJson(this);
 }
-
-/*
-{
-    "songId": "67092f560e02e456cb54813c"
-}
- */

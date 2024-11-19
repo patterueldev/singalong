@@ -123,7 +123,7 @@ class _SongBookViewState extends State<SongBookView> {
           ],
         ),
         body: Container(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.symmetric(horizontal: 20),
           child: ValueListenableBuilder<SongBookViewState>(
             valueListenable: viewModel.stateNotifier,
             builder: (context, state, child) {
@@ -132,7 +132,7 @@ class _SongBookViewState extends State<SongBookView> {
                 case SongBookViewStateType.initial:
                 case SongBookViewStateType.loading:
                 case SongBookViewStateType.loaded:
-                  List<SongItem> songList = [];
+                  List<SongbookItem> songList = [];
                   bool isLoading = false;
                   if (state is Loading) {
                     songList = state.songList;
@@ -235,8 +235,8 @@ class _SongBookViewState extends State<SongBookView> {
         ),
       );
 
-  Widget _buildSongList(
-          List<SongItem> songList, SongBookViewModel viewModel, bool isLoading,
+  Widget _buildSongList(List<SongbookItem> songList,
+          SongBookViewModel viewModel, bool isLoading,
           {double height = 50}) =>
       Skeletonizer(
         enabled: isLoading,
@@ -252,7 +252,7 @@ class _SongBookViewState extends State<SongBookView> {
       );
 
   Widget _buildItem(
-          SongItem song, SongBookViewModel viewModel, double height) =>
+          SongbookItem song, SongBookViewModel viewModel, double height) =>
       _popupButton(
         song,
         viewModel,
@@ -294,7 +294,7 @@ class _SongBookViewState extends State<SongBookView> {
       );
 
   Widget _popupButton(
-          SongItem song, SongBookViewModel viewModel, Widget child) =>
+          SongbookItem song, SongBookViewModel viewModel, Widget child) =>
       PopupMenuButton<String>(
         onSelected: (value) {
           switch (value) {
@@ -302,18 +302,24 @@ class _SongBookViewState extends State<SongBookView> {
               viewModel.reserveSong(song);
               break;
             case 'details':
-              navigationCoordinator.openSongDetailScreen(context, song);
+              navigationCoordinator
+                  .openSongDetailScreen(context, song)
+                  .then((value) {
+                if (value == true) {
+                  viewModel.fetchSongs(false);
+                }
+              });
               break;
           }
         },
         itemBuilder: (BuildContext context) => const [
           PopupMenuItem<String>(
             value: 'reserve',
-            child: Text("Reserve Song"),
+            child: Text("Reserve"),
           ),
           PopupMenuItem<String>(
             value: 'details',
-            child: Text("View Details"),
+            child: Text("Details"),
           ),
         ],
         child: child,

@@ -8,13 +8,10 @@ class ReservedPanelWidget extends StatelessWidget {
         builder: (context, viewModel, child) => Scaffold(
           appBar: AppBar(
             title: const Text("Reserved Songs"),
-            leading: IconButton(
-              icon: const Icon(Icons.history),
-              onPressed: () => {},
-            ),
+            automaticallyImplyLeading: false,
             actions: [
               IconButton(
-                icon: const Icon(Icons.menu_book),
+                icon: const Icon(Icons.history),
                 onPressed: () => {},
               ),
             ],

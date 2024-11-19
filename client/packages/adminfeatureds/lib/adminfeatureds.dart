@@ -14,6 +14,7 @@ part 'controlpanelrepositoryds.dart';
 part 'rooms_repositoryds.dart';
 part 'player_socket_repositoryds.dart';
 part 'reservedsonglistrepositoryds.dart';
+part 'song_repositoryds.dart';
 
 class AdminFeatureDSProvider {
   final providers = MultiProvider(providers: [
@@ -39,6 +40,12 @@ class AdminFeatureDSProvider {
     Provider<ReservedSongListSocketRepository>(
       create: (context) => ReservedSongListSocketRepositoryDS(
         socket: context.read(),
+        configuration: context.read(),
+      ),
+    ),
+    Provider<SongRepository>(
+      create: (context) => SongRepositoryDS(
+        api: context.read(),
         configuration: context.read(),
       ),
     ),

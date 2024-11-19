@@ -5,8 +5,11 @@ import io.patterueldev.reservation.next.NextSongResponse
 import io.patterueldev.reservation.reserve.ReserveParameters
 import io.patterueldev.reservation.reserve.ReserveResponse
 import io.patterueldev.songbook.SongBookService
+import io.patterueldev.songbook.UpdateSongParameters
 import io.patterueldev.songbook.loadsongs.LoadSongsParameters
 import io.patterueldev.songbook.loadsongs.LoadSongsResponse
+import io.patterueldev.songbook.songdetails.LoadSongDetailsParameters
+import io.patterueldev.songbook.songdetails.SongDetailsResponse
 import io.patterueldev.songidentifier.SongIdentifierService
 import io.patterueldev.songidentifier.common.IdentifySongResponse
 import io.patterueldev.songidentifier.common.SaveSongResponse
@@ -79,4 +82,21 @@ class SongsController(
 
     @PatchMapping("/next")
     suspend fun nextSong(): NextSongResponse = reservationService.nextSong()
+
+    @GetMapping("/details")
+    suspend fun songDetails(
+        @RequestParam songId: String,
+        @RequestParam roomId: String? = null,
+    ): SongDetailsResponse =
+        songBookService.loadSong(
+            LoadSongDetailsParameters(
+                songId = songId,
+                roomId = roomId,
+            ),
+        )
+
+    @PatchMapping("/details")
+    suspend fun updateSongDetails(
+        @RequestBody songDetails: UpdateSongParameters,
+    ): SongDetailsResponse = songBookService.updateSong(songDetails)
 }

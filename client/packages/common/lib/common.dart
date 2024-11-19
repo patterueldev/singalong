@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 
 part 'song/current_song.dart';
 part 'song/reservedsongitem.dart';
+part 'song/songbookitem.dart';
 part 'connect/connect_response.dart';
 part 'connect/connect_parameters.dart';
 part 'connect/connect_repository.dart';
