@@ -94,9 +94,11 @@ class MasterView extends StatelessWidget {
         ],
       );
 
-  Widget _buildTopRight(BuildContext context) => context
-      .read<SongBookFeatureProvider>()
-      .buildSongBookView(context: context);
+  Widget _buildTopRight(BuildContext context) =>
+      context.read<SongBookFeatureProvider>().buildSongBookView(
+          context: context,
+          canGoBack: false,
+          roomId: context.read<MasterViewModel>().room.id);
 
   Widget _buildBottomRight(BuildContext context) => Container(
         child: Center(child: Text('Bottom Right Panel')),

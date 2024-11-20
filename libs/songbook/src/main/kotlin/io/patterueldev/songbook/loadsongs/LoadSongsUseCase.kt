@@ -18,21 +18,23 @@ internal class LoadSongsUseCase(
                 // move recommended to a separate use case because of the room ID
                 // recommendations
                 val reservedSongs = songRepository.loadReservedSongs(parameters.roomId!!)
-                // TODO: Logic to return recommendations; for now just gonna filter out by ID
                 val reservedSongIds = reservedSongs.map { it.id }
                 val songs = songRepository.loadSongs(parameters.limit, parameters.keyword, parameters.nextPage(), reservedSongIds)
                 // if songs are not empty, return the songs; otherwise, continue to the next block
-                if (songs.items.isNotEmpty()) {
-                    return GenericResponse.success(songs)
+                if (songs.items.isNotEmpty() || parameters.nextPage() != null) {
+                    println("Returning recommended songs")
+                    return GenericResponse.success(songs.shuffled())
                 }
             }
             val songs = songRepository.loadSongs(parameters.limit, parameters.keyword, parameters.nextPage())
-            // TODO: in the future, we can add more logic here to handle the pagination
-            // and return recommendations based on the keyword
-            // or other business logic
-            // TODO: TODO: !Important!
-            // I feel like this is the most crucial part of the application
-            GenericResponse.success(songs)
+            if (parameters.keyword.isNullOrBlank()) {
+                println("Returning shuffled songs")
+                return GenericResponse.success(songs.shuffled())
+            } else {
+                println("Keyword: ${parameters.keyword}")
+                println("Returning songs")
+                return GenericResponse.success(songs)
+            }
         } catch (e: Exception) {
             GenericResponse.failure(e.message ?: "An error occurred while loading songs.")
         }

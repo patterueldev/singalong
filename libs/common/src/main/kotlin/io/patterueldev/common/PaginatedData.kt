@@ -7,6 +7,10 @@ open class PaginatedData<T>(
     val nextCursor: String?,
     val nextPage: Int?,
 ) {
+    fun shuffled(): PaginatedData<T> {
+        return PaginatedData(count, items.shuffled(), nextOffset, nextCursor, nextPage)
+    }
+
     companion object {
         fun <T> empty(): PaginatedData<T> {
             return PaginatedData(0, emptyList(), null, null, null)

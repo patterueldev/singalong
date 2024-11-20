@@ -1,7 +1,7 @@
 part of '../adminfeature.dart';
 
 class SongEditorView extends StatelessWidget {
-  SongEditorView({
+  const SongEditorView({
     super.key,
     required this.localizations,
     required this.coordinator,
@@ -49,7 +49,6 @@ class SongEditorView extends StatelessWidget {
               },
             ),
 
-            // Prompt (toast)
             ValueListenableBuilder(
               valueListenable: viewModel.promptNotifier,
               builder: (context, prompt, child) {
@@ -99,20 +98,28 @@ class SongEditorView extends StatelessWidget {
                 onPressed: () => Navigator.of(context).pop(),
               ),
               actions: [
+                // Enhance Details Button
+                IconButton(
+                  icon: const Icon(Icons.auto_fix_high),
+                  color: Colors.purple,
+                  onPressed: () =>
+                      context.read<SongEditorViewModel>().enhanceSong(song),
+                ),
                 // Preview Button
                 IconButton(
                   icon: const Icon(Icons.preview),
+                  color: Colors.blue,
                   onPressed: () {
                     final url = Uri.parse(song.source);
                     coordinator.openURL(context, url);
                   },
                 ),
                 // Delete Button
-                TextButton(
-                  onPressed: () {
-                    context.read<SongEditorViewModel>().deleteSong(song);
-                  },
-                  child: Text("Delete"),
+                IconButton(
+                  icon: const Icon(Icons.delete),
+                  color: Colors.red,
+                  onPressed: () =>
+                      deleteSong(context, state.songNotifier.value),
                 ),
 
                 // Save Button
@@ -122,7 +129,9 @@ class SongEditorView extends StatelessWidget {
                       if (song.isCorrupted) {
                         return SizedBox.shrink();
                       }
-                      return TextButton(
+                      return IconButton(
+                        icon: const Icon(Icons.save),
+                        color: Colors.green,
                         onPressed: () {
                           final genres = state.genresController.getTags ?? [];
                           final tags = state.tagsController.getTags ?? [];
@@ -130,7 +139,6 @@ class SongEditorView extends StatelessWidget {
                           song.tags = tags;
                           context.read<SongEditorViewModel>().saveDetails(song);
                         },
-                        child: Text("Save"),
                       );
                     }),
               ],
@@ -242,7 +250,7 @@ class SongEditorView extends StatelessWidget {
                     const SizedBox(height: 8),
 
                     _textField(context,
-                        maxLines: 10,
+                        maxLines: 20,
                         value: song.lyrics ?? "",
                         placeholder: localizations.lyricsPlaceholderText,
                         onChange: (value) => song.lyrics = value.trim()),
@@ -337,4 +345,28 @@ class SongEditorView extends StatelessWidget {
           label.localizedTextOf(context),
         ],
       );
+
+  void deleteSong(BuildContext context, SongDetails song) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(localizations.deleteSongTitleText.localizedOf(context)),
+        content: Text(localizations.deleteSongMessageText.localizedOf(context)),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+            child: Text(localizations.cancelText.localizedOf(context)),
+          ),
+          TextButton(
+            onPressed: () {
+              context.read<SongEditorViewModel>().deleteSong(song);
+            },
+            child: Text(localizations.deleteText.localizedOf(context)),
+          ),
+        ],
+      ),
+    );
+  }
 }

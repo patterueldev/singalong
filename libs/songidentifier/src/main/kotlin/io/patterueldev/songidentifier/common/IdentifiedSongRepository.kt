@@ -1,5 +1,6 @@
 package io.patterueldev.songidentifier.common
 
+import io.patterueldev.identifysong.IdentifiedSong
 import io.patterueldev.reservedsong.ReservedSong
 import io.patterueldev.roomuser.RoomUser
 import io.patterueldev.songidentifier.searchsong.SearchResultItem

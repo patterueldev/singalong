@@ -10,6 +10,7 @@ abstract class SongEditorViewModel extends ChangeNotifier {
   void loadDetails();
   void saveDetails(SongDetails song);
   void deleteSong(SongDetails song);
+  void enhanceSong(SongDetails song);
 }
 
 class DefaultSongViewModel extends SongEditorViewModel {
@@ -55,12 +56,12 @@ class DefaultSongViewModel extends SongEditorViewModel {
   }
 
   @override
-  void deleteSong(SongDetails song) {
+  void deleteSong(SongDetails song) async {
     debugPrint('Deleting song: $song');
     isLoadingNotifier.value = true;
 
     try {
-      songRepository.deleteSongDetails(song.id);
+      await songRepository.deleteSongDetails(song.id);
       isLoadingNotifier.value = false;
       finishedSavingNotifier.value = true;
     } catch (e) {
@@ -70,6 +71,18 @@ class DefaultSongViewModel extends SongEditorViewModel {
         message: e.toString(),
         actionText: 'OK',
       );
+    }
+  }
+
+  @override
+  void enhanceSong(SongDetails song) async {
+    stateNotifier.value = SongViewState.loading();
+
+    try {
+      final enhanced = await songRepository.enhanceSongDetails(song);
+      stateNotifier.value = SongViewState.loaded(enhanced);
+    } catch (e) {
+      stateNotifier.value = SongViewState.failure(e.toString());
     }
   }
 }

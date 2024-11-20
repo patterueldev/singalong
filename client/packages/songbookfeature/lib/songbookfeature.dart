@@ -41,6 +41,7 @@ class SongBookFeatureProvider {
 
   Widget buildSongBookView({
     required BuildContext context,
+    bool canGoBack = true,
     String? roomId,
   }) =>
       ChangeNotifierProvider<SongBookViewModel>(
@@ -53,6 +54,7 @@ class SongBookFeatureProvider {
           navigationCoordinator: coordinator,
           localizations: localizations,
           assets: assets,
+          canGoBack: canGoBack,
         ),
       );
 }

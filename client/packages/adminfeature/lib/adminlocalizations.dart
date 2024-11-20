@@ -40,4 +40,20 @@ abstract class AdminLocalizations extends GenericLocalizations {
   LocalizedString get lyricsPlaceholderText => LocalizedString(
         (context) => "Lyrics",
       );
+
+  LocalizedString get deleteSongTitleText => LocalizedString(
+        (context) => "Delete Song",
+      );
+
+  LocalizedString get deleteSongMessageText => LocalizedString(
+        (context) => "Are you sure you want to delete this song?",
+      );
+
+  LocalizedString get cancelText => LocalizedString(
+        (context) => "Cancel",
+      );
+
+  LocalizedString get deleteText => LocalizedString(
+        (context) => "Delete",
+      );
 }

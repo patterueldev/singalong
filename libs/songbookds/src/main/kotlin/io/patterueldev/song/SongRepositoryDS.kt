@@ -6,9 +6,14 @@ import io.minio.RemoveObjectArgs
 import io.patterueldev.common.BucketFile
 import io.patterueldev.common.PaginatedData
 import io.patterueldev.common.Pagination
+import io.patterueldev.common.letOrElse
+import io.patterueldev.identifysong.EnhancedSong
+import io.patterueldev.identifysong.IdentifiedSong
+import io.patterueldev.identifysong.IdentifySongParameters
 import io.patterueldev.mongods.reservedsong.ReservedSongDocumentRepository
 import io.patterueldev.mongods.song.SongDocument
 import io.patterueldev.mongods.song.SongDocumentRepository
+import io.patterueldev.roomuser.RoomUser
 import io.patterueldev.songbook.loadsongs.PaginatedSongs
 import io.patterueldev.songbook.loadsongs.SongbookItem
 import io.patterueldev.songbook.song.SongRecord
@@ -18,14 +23,21 @@ import io.patterueldev.songbook.updatesong.UpdateSongParameters
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
+import org.springframework.web.reactive.function.client.WebClient
 import java.time.LocalDateTime
 
 @Service
-class SongRepositoryDS : SongRepository {
+class SongRepositoryDS(
+    @Value("\${openai.token}") val openAIToken: String,
+    @Value("\${openai.model}") val openAIModel: String,
+) : SongRepository {
+    @Autowired private lateinit var jsServiceWebClient: WebClient
+
     @Autowired private lateinit var songDocumentRepository: SongDocumentRepository
 
     @Autowired private lateinit var reservedSongDocumentRepository: ReservedSongDocumentRepository
@@ -181,7 +193,10 @@ class SongRepositoryDS : SongRepository {
         }
     }
 
-    override suspend fun updateSongDetails(parameters: UpdateSongParameters): SongDetails {
+    override suspend fun updateSongDetails(
+        parameters: UpdateSongParameters,
+        by: RoomUser,
+    ): SongDetails {
         val songDocument =
             withContext(Dispatchers.IO) {
                 songDocumentRepository.findById(parameters.songId)
@@ -198,6 +213,7 @@ class SongRepositoryDS : SongRepository {
                 metadata = parameters.metadata,
                 genres = parameters.genres,
                 tags = parameters.tags,
+                lastModifiedBy = by.username,
             )
         val updatedSong =
             withContext(Dispatchers.IO) {
@@ -226,7 +242,7 @@ class SongRepositoryDS : SongRepository {
         }
     }
 
-    override suspend fun isReservedOrPlaying(songId: String): Boolean {
+    override suspend fun isPlayingOrAboutToPlay(songId: String): Boolean {
         val reservations = reservedSongDocumentRepository.loadReservationsBySongId(songId)
         return reservations.any { it.startedPlayingAt != null && it.finishedPlayingAt == null }
     }
@@ -298,6 +314,65 @@ class SongRepositoryDS : SongRepository {
             } catch (e: Exception) {
                 println("Error deleting song: $e")
             }
+        }
+    }
+
+    override suspend fun enhanceSong(songId: String): SongDetails {
+        val song = songDocumentRepository.findByIdOrNull(songId) ?: throw Exception("Song doesn't exist")
+        val parameters = IdentifySongParameters(url = song.source)
+        val identifiedSong =
+            jsServiceWebClient.post()
+                .uri("/identify")
+                .bodyValue(parameters)
+                .retrieve()
+                .bodyToMono(IdentifiedSong::class.java)
+                .block() ?: return loadSongDetails(songId, null) ?: throw Exception("No response from server")
+
+        val enhancedSong =
+            withContext(Dispatchers.IO) {
+                jsServiceWebClient.post()
+                    .uri("/enhance")
+                    .header("openai-key", openAIToken)
+                    .header("openai-model", openAIModel)
+                    .bodyValue(identifiedSong)
+                    .retrieve()
+                    .bodyToMono(EnhancedSong::class.java)
+                    .block()
+            } ?: throw Exception("No response from server")
+
+        val metadata: MutableMap<String, String> = mutableMapOf()
+        enhancedSong.originalTitle.let {
+            if (!it.isNullOrBlank()) {
+                metadata["originalTitle"] = it
+            }
+        }
+
+        enhancedSong.englishTitle.let {
+            if (!it.isNullOrBlank()) {
+                metadata["englishTitle"] = it
+            }
+        }
+
+        return object : SongDetails {
+            override val id: String = song.id!!
+            override val source: String = song.source
+            override val title: String = enhancedSong.romanizedTitle.letOrElse(identifiedSong.songTitle)
+            override val artist: String = enhancedSong.artist.letOrElse(identifiedSong.songArtist)
+            override val language: String = enhancedSong.language.letOrElse(identifiedSong.songLanguage)
+            override val isOffVocal: Boolean = enhancedSong.isOffVocal.letOrElse(song.isOffVocal)
+            override val videoHasLyrics: Boolean = enhancedSong.videoHasLyrics.letOrElse(song.videoHasLyrics)
+            override val duration: Int = song.lengthSeconds
+            override val genres: List<String> = enhancedSong.genres.letOrElse(song.genres)
+            override val tags: List<String> = enhancedSong.relevantTags.letOrElse(song.tags)
+            override val metadata: Map<String, String> = metadata
+            override val thumbnailPath: String = song.thumbnailFile.path()
+            override val wasReserved = false // TODO: Check if song was reserved
+            override val currentPlaying = false
+            override val lyrics = song.songLyrics
+            override val addedBy = song.addedBy
+            override val addedAtSession = song.addedAtSession
+            override val lastUpdatedBy = song.lastModifiedBy
+            override val isCorrupted = false
         }
     }
 }

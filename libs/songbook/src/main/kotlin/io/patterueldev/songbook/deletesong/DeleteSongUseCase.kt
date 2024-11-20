@@ -19,9 +19,17 @@ internal class DeleteSongUseCase(
 
             // second, check if the song is reserved or playing
             // if it is, throw an exception
-            val isReservedOrPlaying = songRepository.isReservedOrPlaying(parameters)
-            if (isReservedOrPlaying) {
+            val isPlayingOrAboutToPlay = songRepository.isPlayingOrAboutToPlay(parameters)
+            if (isPlayingOrAboutToPlay) {
                 throw IllegalArgumentException("Song is reserved or playing")
+            }
+
+            val wasReserved = songRepository.wasReserved(song.id)
+            if (wasReserved) {
+                println("Song was reserved: ${song.id}; will archive only")
+                songRepository.archiveSong(songId = song.id)
+
+                return GenericResponse.success(song, message = "Song was reserved, will archived only")
             }
 
             // next, check the sourceId if there's another song with the same sourceId
@@ -34,7 +42,7 @@ internal class DeleteSongUseCase(
             var canDeleteThumbnailFile = true
             var canDeleteVideoFile = true
             if (otherSongs.isNotEmpty()) {
-                val reservedOrPlaying = otherSongs.any { songRepository.isReservedOrPlaying(it.id) }
+                val reservedOrPlaying = otherSongs.any { songRepository.isPlayingOrAboutToPlay(it.id) }
                 if (reservedOrPlaying) {
                     throw IllegalArgumentException("Other songs with the same sourceId are reserved or playing")
                 }
@@ -64,14 +72,9 @@ internal class DeleteSongUseCase(
             if (canDeleteThumbnailFile) songRepository.deleteSongFile(song.thumbnailFile)
             if (canDeleteVideoFile) songRepository.deleteSongFile(song.videoFile)
 
-            val wasReserved = songRepository.wasReserved(song.id)
-            if (wasReserved) {
-                println("Song was reserved: ${song.id}; will archive only")
-                songRepository.archiveSong(songId = song.id)
-            } else {
-                println("Song was not reserved: ${song.id}; will delete")
-                songRepository.deleteSong(songId = song.id)
-            }
+            println("Song was not reserved: ${song.id}; will delete")
+            songRepository.deleteSong(songId = song.id)
+
             return GenericResponse.success(song)
         } catch (e: Exception) {
             println("Error: ${e.message}")

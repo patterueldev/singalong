@@ -6,11 +6,15 @@ class SongBookView extends StatefulWidget {
     required this.navigationCoordinator,
     required this.localizations,
     required this.assets,
+    required this.canGoBack,
   });
 
   final SongBookFlowCoordinator navigationCoordinator;
   final SongBookLocalizations localizations;
   final SongBookAssets assets;
+
+  final bool canGoBack;
+
   @override
   State<SongBookView> createState() => _SongBookViewState();
 }
@@ -60,6 +64,7 @@ class _SongBookViewState extends State<SongBookView> {
       Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         appBar: AppBar(
+          automaticallyImplyLeading: widget.canGoBack,
           title: ValueListenableBuilder<bool>(
             valueListenable: viewModel.isSearchActive,
             builder: (context, isSearching, child) {
@@ -90,6 +95,13 @@ class _SongBookViewState extends State<SongBookView> {
             },
           ),
           actions: [
+            // refresh
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              onPressed: () {
+                viewModel.fetchSongs(false);
+              },
+            ),
             // cancel search
             ValueListenableBuilder<bool>(
               valueListenable: viewModel.isSearchActive,

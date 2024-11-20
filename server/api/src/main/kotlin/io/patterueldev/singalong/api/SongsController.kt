@@ -1,5 +1,6 @@
 package io.patterueldev.singalong.api
 
+import io.patterueldev.identifysong.IdentifySongParameters
 import io.patterueldev.reservation.ReservationService
 import io.patterueldev.reservation.next.NextSongResponse
 import io.patterueldev.reservation.reserve.ReserveParameters
@@ -13,7 +14,6 @@ import io.patterueldev.songidentifier.SongIdentifierService
 import io.patterueldev.songidentifier.common.IdentifySongResponse
 import io.patterueldev.songidentifier.common.SaveSongResponse
 import io.patterueldev.songidentifier.common.SearchSongResponse
-import io.patterueldev.songidentifier.identifysong.IdentifySongParameters
 import io.patterueldev.songidentifier.savesong.SaveSongParameters
 import io.patterueldev.songidentifier.searchsong.SearchSongParameters
 import org.springframework.web.bind.annotation.GetMapping

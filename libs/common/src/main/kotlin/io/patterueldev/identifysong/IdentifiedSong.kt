@@ -1,4 +1,4 @@
-package io.patterueldev.songidentifier.common
+package io.patterueldev.identifysong
 
 data class IdentifiedSong(
     val id: String,

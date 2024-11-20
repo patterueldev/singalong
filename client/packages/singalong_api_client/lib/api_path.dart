@@ -15,6 +15,7 @@ enum APIPath {
   adminCreateRoom,
   adminUpdateSong,
   adminDeleteSong,
+  adminEnhanceSongDetails,
   ;
 
   String get value {
@@ -47,6 +48,8 @@ enum APIPath {
         return '/admin/song/update';
       case adminDeleteSong:
         return '/admin/song/delete';
+      case adminEnhanceSongDetails:
+        return '/admin/song/enhance';
     }
   }
 }

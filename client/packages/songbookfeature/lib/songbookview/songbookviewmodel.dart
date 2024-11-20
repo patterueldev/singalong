@@ -57,7 +57,7 @@ class DefaultSongBookViewModel extends SongBookViewModel {
     stateNotifier.value = SongBookViewState.loading();
     final parameters = LoadSongsParameters.next(
       keyword: _searchQuery,
-      limit: 50,
+      limit: 100,
       nextPage: loadsNext ? nextPage : null,
       roomId: roomId,
     );

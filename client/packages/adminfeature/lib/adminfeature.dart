@@ -41,7 +41,7 @@ part 'reserved_panel/reserved_panel_widget.dart';
 part 'reserved_panel/reserved_panel_viewmodel.dart';
 part 'songbook_manager_panel/songbook_manager_dialog.dart';
 part 'songbook_manager_panel/songbook_manager_viewmodel.dart';
-part 'songview/songviewmodel.dart';
+part 'songview/song_editor_viewmodel.dart';
 part 'songview/songviewstate.dart';
 part 'songview/songmodel.dart';
 part 'songview/song_editor_view.dart';

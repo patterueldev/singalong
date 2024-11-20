@@ -147,4 +147,13 @@ class SingalongAPI {
     );
     return APIRoom.fromJson(result.objectData());
   }
+
+  Future<APISongDetails> enhanceSongDetails(String songId) async {
+    final result = await apiClient.request(
+      path: APIPath.adminEnhanceSongDetails,
+      payload: {"songId": songId},
+      method: HttpMethod.POST,
+    );
+    return APISongDetails.fromJson(result.objectData());
+  }
 }

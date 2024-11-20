@@ -15,7 +15,7 @@ import kotlinx.coroutines.sync.withLock
 internal open class SaveSongUseCase(
     private val identifiedSongRepository: IdentifiedSongRepository,
     private val roomUserRepository: RoomUserRepository,
-    val songIdentifierCoordinator: SongIdentifierCoordinator?,
+    private val songIdentifierCoordinator: SongIdentifierCoordinator?,
 ) : ServiceUseCase<SaveSongParameters, SaveSongResponse> {
     private val mutex = Mutex()
 

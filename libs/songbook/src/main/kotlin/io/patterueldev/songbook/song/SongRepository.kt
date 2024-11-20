@@ -2,6 +2,7 @@ package io.patterueldev.songbook.song
 
 import io.patterueldev.common.BucketFile
 import io.patterueldev.common.Pagination
+import io.patterueldev.roomuser.RoomUser
 import io.patterueldev.songbook.loadsongs.PaginatedSongs
 import io.patterueldev.songbook.loadsongs.SongbookItem
 import io.patterueldev.songbook.songdetails.SongDetails
@@ -23,9 +24,12 @@ interface SongRepository {
         roomId: String?,
     ): SongDetails?
 
-    suspend fun updateSongDetails(parameters: UpdateSongParameters): SongDetails
+    suspend fun updateSongDetails(
+        parameters: UpdateSongParameters,
+        by: RoomUser,
+    ): SongDetails
 
-    suspend fun isReservedOrPlaying(songId: String): Boolean
+    suspend fun isPlayingOrAboutToPlay(songId: String): Boolean
 
     suspend fun wasReserved(songId: String): Boolean
 
@@ -38,6 +42,8 @@ interface SongRepository {
     suspend fun deleteSong(songId: String)
 
     suspend fun archiveSong(songId: String)
+
+    suspend fun enhanceSong(songId: String): SongDetails
 }
 
 interface SongRecord {

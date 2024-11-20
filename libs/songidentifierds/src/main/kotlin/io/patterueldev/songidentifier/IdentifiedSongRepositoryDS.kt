@@ -3,16 +3,18 @@ package io.patterueldev.songidentifier
 import io.minio.MinioClient
 import io.minio.PutObjectArgs
 import io.patterueldev.common.BucketFile
+import io.patterueldev.common.letOrElse
+import io.patterueldev.identifysong.EnhancedSong
+import io.patterueldev.identifysong.IdentifiedSong
+import io.patterueldev.identifysong.IdentifySongParameters
 import io.patterueldev.mongods.reservedsong.ReservedSongDocument
 import io.patterueldev.mongods.reservedsong.ReservedSongDocumentRepository
 import io.patterueldev.mongods.song.SongDocument
 import io.patterueldev.mongods.song.SongDocumentRepository
 import io.patterueldev.reservedsong.ReservedSong
 import io.patterueldev.roomuser.RoomUser
-import io.patterueldev.songidentifier.common.IdentifiedSong
 import io.patterueldev.songidentifier.common.IdentifiedSongRepository
 import io.patterueldev.songidentifier.common.SavedSong
-import io.patterueldev.songidentifier.identifysong.IdentifySongParameters
 import io.patterueldev.songidentifier.searchsong.SearchResultItem
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
@@ -326,12 +328,16 @@ internal class IdentifiedSongRepositoryDS(
             println("Enhancing song")
 
             val metadata: MutableMap<String, String> = mutableMapOf()
-            if (!enhancedSong.originalTitle.isNullOrBlank()) {
-                metadata["originalTitle"] = enhancedSong.originalTitle
+            enhancedSong.originalTitle.let {
+                if (!it.isNullOrBlank()) {
+                    metadata["originalTitle"] = it
+                }
             }
 
-            if (!enhancedSong.englishTitle.isNullOrBlank()) {
-                metadata["englishTitle"] = enhancedSong.englishTitle
+            enhancedSong.englishTitle.let {
+                if (!it.isNullOrBlank()) {
+                    metadata["englishTitle"] = it
+                }
             }
 
             val finalCopy =
@@ -355,27 +361,4 @@ internal class IdentifiedSongRepositoryDS(
             identifiedSong
         }
     }
-}
-
-// This is a bit japanese-biased, so we can add more languages and genres
-data class EnhancedSong(
-    val originalTitle: String?,
-    val artist: String?,
-    val language: String?,
-    val genres: List<String>?,
-    val romanizedTitle: String?,
-    val englishTitle: String?,
-    val relevantTags: List<String>?,
-    val isOffVocal: Boolean?,
-    val videoHasLyrics: Boolean?,
-)
-
-fun <T> T?.letOrElse(default: T): T {
-    if (this is String?) {
-        return this.let { if (it.isNullOrBlank()) default else it }
-    }
-    if (this is List<*>?) {
-        return this.let { if (it.isNullOrEmpty()) default else it }
-    }
-    return this ?: default
 }
