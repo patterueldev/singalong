@@ -274,19 +274,34 @@ class _SongBookViewState extends State<SongBookView> {
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(height / 2),
-              child: Container(
-                color: Colors.grey,
-                height: height,
-                width: height,
-                child: CachedNetworkImage(
-                  imageUrl: song.thumbnailURL.toString(),
-                  placeholder: (context, url) => const Center(
-                    child: CircularProgressIndicator(),
+              child: Stack(
+                children: [
+                  Container(
+                    color: Colors.grey,
+                    height: height,
+                    width: height,
+                    child: CachedNetworkImage(
+                      imageUrl: song.thumbnailURL.toString(),
+                      placeholder: (context, url) => const Center(
+                        child: CircularProgressIndicator(),
+                      ),
+                      errorWidget: (context, url, error) =>
+                          const Icon(Icons.music_note),
+                      fit: BoxFit.cover,
+                    ),
                   ),
-                  errorWidget: (context, url, error) =>
-                      const Icon(Icons.music_note),
-                  fit: BoxFit.cover,
-                ),
+                  if (song.alreadyPlayed)
+                    Container(
+                      padding: const EdgeInsets.all(4),
+                      height: height,
+                      width: height,
+                      color: Colors.grey.withAlpha(100),
+                      child: const Icon(
+                        Icons.check,
+                        color: Colors.white,
+                      ),
+                    ),
+                ],
               ),
             ),
             const SizedBox(width: 8),
@@ -308,6 +323,7 @@ class _SongBookViewState extends State<SongBookView> {
   Widget _popupButton(
           SongbookItem song, SongBookViewModel viewModel, Widget child) =>
       PopupMenuButton<String>(
+        tooltip: '',
         onSelected: (value) {
           switch (value) {
             case 'reserve':

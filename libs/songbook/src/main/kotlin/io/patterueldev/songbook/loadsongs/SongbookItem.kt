@@ -8,4 +8,9 @@ data class SongbookItem(
     val language: String,
     val isOffVocal: Boolean,
     val lengthSeconds: Int,
-)
+    var alreadyPlayedInRoom: Boolean = false,
+) {
+    fun copyWithAlreadyPlayedInRoom(alreadyPlayedInRoom: Boolean): SongbookItem {
+        return copy(alreadyPlayedInRoom = alreadyPlayedInRoom)
+    }
+}

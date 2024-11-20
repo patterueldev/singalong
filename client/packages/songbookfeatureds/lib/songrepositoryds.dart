@@ -33,7 +33,7 @@ class SongRepositoryDS implements SongRepository {
                 thumbnailURL: configuration
                     .buildResourceURL(apiSong.thumbnailPath)
                     .toString(),
-                alreadyPlayed: false,
+                alreadyPlayed: apiSong.alreadyPlayedInRoom,
               ))
           .toList();
       return LoadSongsResult(

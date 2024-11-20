@@ -155,6 +155,7 @@ APISongItem _$APISongItemFromJson(Map<String, dynamic> json) => APISongItem(
       language: json['language'] as String,
       isOffVocal: json['isOffVocal'] as bool,
       lengthSeconds: (json['lengthSeconds'] as num).toInt(),
+      alreadyPlayedInRoom: json['alreadyPlayedInRoom'] as bool,
     );
 
 Map<String, dynamic> _$APISongItemToJson(APISongItem instance) =>
@@ -166,6 +167,7 @@ Map<String, dynamic> _$APISongItemToJson(APISongItem instance) =>
       'language': instance.language,
       'isOffVocal': instance.isOffVocal,
       'lengthSeconds': instance.lengthSeconds,
+      'alreadyPlayedInRoom': instance.alreadyPlayedInRoom,
     };
 
 APILoadSongsParameters _$APILoadSongsParametersFromJson(

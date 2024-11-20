@@ -112,6 +112,8 @@ class DefaultSongBookViewModel extends SongBookViewModel {
         isLoadingNotifier.value = false;
         // maybe show a toast
         toastMessageNotifier.value = 'Song reserved';
+        // refresh
+        fetchSongs(false);
       },
     );
   }

@@ -28,6 +28,7 @@ class APISongItem {
   final String language;
   final bool isOffVocal;
   final int lengthSeconds;
+  final bool alreadyPlayedInRoom;
 
   APISongItem({
     required this.id,
@@ -37,6 +38,7 @@ class APISongItem {
     required this.language,
     required this.isOffVocal,
     required this.lengthSeconds,
+    required this.alreadyPlayedInRoom,
   });
 
   factory APISongItem.fromJson(Map<String, dynamic> json) =>
