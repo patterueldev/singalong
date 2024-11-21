@@ -3,6 +3,7 @@ part of '../common.dart';
 class UserParticipant {
   final String name;
   final int songsFinished;
+  final int songsUpcoming = 0;
 
   UserParticipant({
     required this.name,

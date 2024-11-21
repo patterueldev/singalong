@@ -6,6 +6,8 @@ abstract class PlayerViewModel extends ChangeNotifier {
       ValueNotifier(PlayerViewState.loading());
   ValueNotifier<String?> roomIdNotifier = ValueNotifier(null);
 
+  SingalongConfiguration get configuration;
+
   void setup();
 }
 
@@ -14,12 +16,14 @@ class DefaultPlayerViewModel extends PlayerViewModel {
   final PlayerSocketRepository playerSocketRepository;
   final PersistenceRepository persistenceRepository;
   final ReservedViewModel reservedViewModel;
+  final SingalongConfiguration configuration;
 
   DefaultPlayerViewModel({
     required this.connectRepository,
     required this.playerSocketRepository,
     required this.persistenceRepository,
     required this.reservedViewModel,
+    required this.configuration,
   }) {
     setup();
   }

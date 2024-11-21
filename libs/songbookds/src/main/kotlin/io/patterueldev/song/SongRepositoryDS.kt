@@ -75,11 +75,7 @@ class SongRepositoryDS(
                         songDocumentRepository.findAllUnarchivedNotInIds(filteringIds, pageable)
                     }
                 } else {
-                    if (filteringIds.isEmpty()) {
-                        songDocumentRepository.findUnarchivedByKeyword(keyword, pageable)
-                    } else {
-                        songDocumentRepository.findUnarchivedByKeywordNotInIds(keyword, filteringIds, pageable)
-                    }
+                    songDocumentRepository.findUnarchivedByKeyword(keyword, pageable)
                 }
             val songs =
                 pagedSongsResult.content.map {

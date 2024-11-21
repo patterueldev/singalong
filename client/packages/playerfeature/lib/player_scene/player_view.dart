@@ -37,7 +37,10 @@ class PlayerView extends StatelessWidget {
                             valueListenable: viewModel.roomIdNotifier,
                             builder: (_, roomId, __) {
                               return roomId != null
-                                  ? ConnectivityPanelWidget(roomId: roomId)
+                                  ? ConnectivityPanelWidget(
+                                      host: viewModel.configuration.host,
+                                      roomId: roomId,
+                                    )
                                   : SizedBox.shrink();
                             }),
                       ),
@@ -54,7 +57,14 @@ class PlayerView extends StatelessWidget {
                       // right panel
                       Expanded(
                         flex: 1,
-                        child: Container(),
+                        child: ValueListenableBuilder(
+                          valueListenable: viewModel.isConnected,
+                          builder: (context, isConnected, __) => isConnected
+                              ? context
+                                  .read<PlayerFeatureUIBuilder>()
+                                  .buildParticipantsPanelWidget(context)
+                              : const SizedBox.shrink(),
+                        ),
                       ),
                     ],
                   ),
@@ -101,7 +111,7 @@ class PlayerView extends StatelessWidget {
         ),
       );
 
-  Widget _buildLoading() => Center(
+  Widget _buildLoading() => const Center(
         child: CircularProgressIndicator(),
       );
 

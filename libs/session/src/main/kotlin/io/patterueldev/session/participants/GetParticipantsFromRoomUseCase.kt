@@ -33,7 +33,7 @@ internal class GetParticipantsFromRoomUseCase(
         return usersInRoom.map { user ->
             val reservationsForUser =
                 reservationsForUsersInRoom.filter {
-                    it.reservingUser == user.username
+                    it.reservingUser == user.username && it.completed
                 }
             object : UserParticipant(reservationsForUser.size) {
                 override val name: String = user.username

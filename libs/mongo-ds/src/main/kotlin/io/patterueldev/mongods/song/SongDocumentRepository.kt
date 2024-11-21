@@ -2,13 +2,13 @@ package io.patterueldev.mongods.song
 
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
+import org.springframework.data.mongodb.repository.Aggregation
 import org.springframework.data.mongodb.repository.MongoRepository
 import org.springframework.data.mongodb.repository.Query
 import org.springframework.stereotype.Repository
 
 @Repository
 interface SongDocumentRepository : MongoRepository<SongDocument, String> {
-
     @Query("{ 'archivedAt': null }")
     fun findAllUnarchived(pageable: Pageable): Page<SongDocument>
 
@@ -19,7 +19,19 @@ interface SongDocumentRepository : MongoRepository<SongDocument, String> {
         pageable: Pageable,
     ): Page<SongDocument>
 
-    @Query("{ '\$or': [ { 'title': { '\$regex': ?0, '\$options': 'i' } }, { 'artist': { '\$regex': ?0, '\$options': 'i' } } ], 'archivedAt': null }")
+    @Query(
+        """
+    { 
+        '${'$'}or': [ 
+            { 'title': { '${'$'}regex': ?0, '${'$'}options': 'i' } }, 
+            { 'artist': { '${'$'}regex': ?0, '${'$'}options': 'i' } }, 
+            { 'tags': { '${'$'}regex': ?0, '${'$'}options': 'i' } },
+            { 'genres': { '${'$'}regex': ?0, '${'$'}options': 'i' } }
+        ], 
+        'archivedAt': null 
+    }
+    """
+    )
     fun findUnarchivedByKeyword(
         keyword: String,
         pageable: Pageable,
@@ -31,7 +43,6 @@ interface SongDocumentRepository : MongoRepository<SongDocument, String> {
 
     @Query("{ 'sourceId': ?0 }")
     fun findAllBySourceId(sourceId: String): List<SongDocument>
-
 
     @Query(
         value = "{ 'id': { '\$nin': ?0 } }",

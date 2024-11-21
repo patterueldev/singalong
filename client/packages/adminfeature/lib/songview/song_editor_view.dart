@@ -118,8 +118,11 @@ class SongEditorView extends StatelessWidget {
                 IconButton(
                   icon: const Icon(Icons.delete),
                   color: Colors.red,
-                  onPressed: () =>
-                      deleteSong(context, state.songNotifier.value),
+                  onPressed: () => deleteSong(
+                    context,
+                    context.read(),
+                    state.songNotifier.value,
+                  ),
                 ),
 
                 // Save Button
@@ -346,7 +349,8 @@ class SongEditorView extends StatelessWidget {
         ],
       );
 
-  void deleteSong(BuildContext context, SongDetails song) {
+  void deleteSong(
+      BuildContext context, SongEditorViewModel viewModel, SongDetails song) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -361,7 +365,8 @@ class SongEditorView extends StatelessWidget {
           ),
           TextButton(
             onPressed: () {
-              context.read<SongEditorViewModel>().deleteSong(song);
+              viewModel.deleteSong(song);
+              Navigator.of(context).pop();
             },
             child: Text(localizations.deleteText.localizedOf(context)),
           ),
