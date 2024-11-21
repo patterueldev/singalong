@@ -4,7 +4,7 @@ import io.patterueldev.common.GenericResponse
 import io.patterueldev.common.ServiceUseCase
 import io.patterueldev.reservation.ReservationCoordinator
 import io.patterueldev.reservation.currentsong.CurrentSongRepository
-import io.patterueldev.reservation.reservedsong.ReservedSongsRepository
+import io.patterueldev.reservedsong.ReservedSongsRepository
 import io.patterueldev.reservedsong.ReservedSong
 import io.patterueldev.roomuser.RoomUser
 import io.patterueldev.roomuser.RoomUserRepository

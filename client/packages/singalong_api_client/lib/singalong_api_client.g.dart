@@ -615,3 +615,15 @@ Map<String, dynamic> _$APIUpdateSongParametersToJson(
       'genres': instance.genres,
       'tags': instance.tags,
     };
+
+APIRoomParticipant _$APIRoomParticipantFromJson(Map<String, dynamic> json) =>
+    APIRoomParticipant(
+      name: json['name'] as String,
+      songsFinished: (json['songsFinished'] as num).toInt(),
+    );
+
+Map<String, dynamic> _$APIRoomParticipantToJson(APIRoomParticipant instance) =>
+    <String, dynamic>{
+      'name': instance.name,
+      'songsFinished': instance.songsFinished,
+    };

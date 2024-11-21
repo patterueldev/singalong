@@ -16,6 +16,7 @@ dependencies {
     implementation(libs.spring.boot.web)
     implementation(libs.spring.boot.security)
     implementation(projects.mongoDs)
+    implementation(projects.common)
     implementation(projects.commonds)
     api(projects.session)
     testImplementation(kotlin("test"))

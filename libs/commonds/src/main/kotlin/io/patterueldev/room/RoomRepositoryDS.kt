@@ -4,19 +4,27 @@ import io.patterueldev.common.PaginatedData
 import io.patterueldev.common.Pagination
 import io.patterueldev.mongods.room.RoomDocument
 import io.patterueldev.mongods.room.RoomDocumentRepository
+import io.patterueldev.mongods.session.SessionDocumentRepository
+import io.patterueldev.mongods.user.UserDocumentRepository
+import io.patterueldev.role.Role
+import io.patterueldev.room.common.SixDigitIdGenerator
+import io.patterueldev.room.createroom.CreateRoomParameters
+import io.patterueldev.roomuser.RoomUser
+import io.patterueldev.roomuser.RoomUserRepository
+import java.time.LocalDateTime
+import java.time.ZoneOffset
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
-import org.springframework.stereotype.Component
 import org.springframework.stereotype.Repository
-import java.time.LocalDateTime
-import kotlin.random.Random
 
 @Repository
 open class RoomRepositoryDS : RoomRepository {
     @Autowired private lateinit var roomDocumentRepository: RoomDocumentRepository
+    @Autowired private lateinit var userDocumentRepository: UserDocumentRepository
+    @Autowired private lateinit var sessionDocumentRepository: SessionDocumentRepository
 
     @Autowired private lateinit var sixDigitIdGenerator: SixDigitIdGenerator
 
@@ -136,49 +144,21 @@ open class RoomRepositoryDS : RoomRepository {
 
         roomDocumentRepository.save(roomDocument)
     }
-}
 
-fun RoomDocument.toRoom(): Room {
-    return object : Room {
-        override val id: String = this@toRoom.id
-        override val name: String = this@toRoom.name
-        override val passcode: String? = this@toRoom.passcode
-        override val isArchived: Boolean = this@toRoom.archivedAt != null
-
-        override fun toString(): String {
-            return "Room(id=$id, name=$name, passcode=$passcode, isArchived=$isArchived)"
+    override suspend fun getUsersInRoom(roomId: String): List<RoomUser> {
+        val room = roomDocumentRepository.findRoomById(roomId) ?: throw IllegalArgumentException("Room not found")
+        val sessions = sessionDocumentRepository.findSessionsByRoom(room.id)
+        val userIds = sessions.map { it.userDocument.username }
+        val users = userDocumentRepository.findByUsernames(userIds)
+        return users.map {
+            val session = sessions.first { session -> session.userDocument.username == it.username }
+            object : RoomUser {
+                override val username: String = it.username
+                override val roomId: String = room.id
+                override val joinedAt: LocalDateTime = session.lastConnectedAt
+                override val role: Role = it.role
+            }
         }
     }
 }
 
-// TODO: Move this to a common module and enhance it
-@Component
-internal class SixDigitIdGenerator {
-    fun generate(): String {
-        return Random.nextInt(100000, 999999).toString()
-    }
-
-    fun generateUnique(existingIds: List<String>): String {
-        var id = generate()
-        val maxRetries = 100
-        var retries = 0
-        while (existingIds.contains(id) && retries < maxRetries) {
-            id = generate()
-            retries++
-        }
-        if (retries >= maxRetries) {
-            throw IllegalStateException("Failed to generate a unique id")
-        }
-        return id
-    }
-}
-
-fun RoomDocument.toRoomItem(): RoomItem {
-    return object : RoomItem {
-        override val id: String = this@toRoomItem.id
-        override val name: String = this@toRoomItem.name
-        override val isSecured: Boolean = this@toRoomItem.passcode != null
-        override val isActive: Boolean = this@toRoomItem.archivedAt == null
-        override val lastActive: LocalDateTime = this@toRoomItem.lastActiveAt
-    }
-}

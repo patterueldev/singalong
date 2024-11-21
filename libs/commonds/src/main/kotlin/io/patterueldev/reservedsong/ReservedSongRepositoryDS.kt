@@ -1,12 +1,10 @@
-package io.patterueldev.reservation
+package io.patterueldev.reservedsong
 
 import io.minio.GetObjectArgs
 import io.minio.MinioClient
 import io.patterueldev.mongods.reservedsong.ReservedSongDocument
 import io.patterueldev.mongods.reservedsong.ReservedSongDocumentRepository
 import io.patterueldev.mongods.song.SongDocumentRepository
-import io.patterueldev.reservation.reservedsong.ReservedSongsRepository
-import io.patterueldev.reservedsong.ReservedSong
 import io.patterueldev.roomuser.RoomUser
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
@@ -159,5 +157,32 @@ open class ReservedSongRepositoryDS : ReservedSongsRepository {
                 reservedSongDocumentRepository.findById(reservedSongId)
             }.getOrNull() ?: throw IllegalArgumentException("Reserved song not found")
         reservedSongDocumentRepository.markStartedPlaying(reservedSong.id!!, at)
+    }
+
+    override suspend fun loadReservedSongsForUserInRoom(userId: String, roomId: String): List<ReservedSong> {
+        TODO("Not yet implemented") //TODO: not now
+    }
+
+    override suspend fun loadReservedSongsForUsersInRoom(userIds: List<String>, roomId: String): List<ReservedSong> {
+        val reservedSongs = withContext(Dispatchers.IO) {
+            reservedSongDocumentRepository.loadReservationsByUserIdsFromRoom(userIds, roomId)
+        }
+        val songIds = reservedSongs.map { it.songId }
+        val songs = withContext(Dispatchers.IO) { songDocumentRepository.findAllById(songIds) }
+        return reservedSongs.map { reservedSong ->
+            val song =
+                songs.find { it.id == reservedSong.songId }
+                    ?: throw IllegalArgumentException("Song with id ${reservedSong.songId} not found")
+            object : ReservedSong {
+                override val id: String = reservedSong.id ?: throw IllegalArgumentException("Reserved song id not found")
+                override val order: Int = reservedSong.order
+                override val songId: String = reservedSong.songId
+                override val title: String = song.title
+                override val artist: String = song.artist
+                override val thumbnailPath: String = song.thumbnailFile.path()
+                override val reservingUser: String = reservedSong.reservedBy
+                override val currentPlaying: Boolean = reservedSong.startedPlayingAt != null && reservedSong.finishedPlayingAt == null
+            }
+        }
     }
 }

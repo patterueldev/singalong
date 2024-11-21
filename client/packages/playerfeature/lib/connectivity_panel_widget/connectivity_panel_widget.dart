@@ -8,7 +8,14 @@ class ConnectivityPanelWidget extends StatelessWidget {
     required this.roomId,
   });
 
-  String get qrData => "http://thursday.local/session/connect?roomId=$roomId";
+  String get encryptionType => "WPA2";
+  String get wifiName => "thursday";
+  String get wifiPassword => "aishiteru";
+
+  String get controllerQRData =>
+      "http://thursday.local/session/connect?roomId=$roomId";
+  String get wifiQRData =>
+      "WIFI:T:$encryptionType;S:$wifiName;P:$wifiPassword;;";
 
   @override
   Widget build(BuildContext context) => LayoutBuilder(
@@ -16,7 +23,20 @@ class ConnectivityPanelWidget extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
             QrImageView(
-              data: qrData,
+              data: wifiQRData,
+              version: QrVersions.auto,
+              size: constraints.maxHeight * 0.15,
+              eyeStyle: const QrEyeStyle(
+                eyeShape: QrEyeShape.square,
+                color: Colors.white,
+              ),
+              dataModuleStyle: const QrDataModuleStyle(
+                dataModuleShape: QrDataModuleShape.square,
+                color: Colors.white,
+              ),
+            ),
+            QrImageView(
+              data: controllerQRData,
               version: QrVersions.auto,
               size: constraints.maxHeight * 0.15,
               eyeStyle: const QrEyeStyle(

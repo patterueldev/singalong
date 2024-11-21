@@ -148,6 +148,7 @@ enum RoomDataType {
   currentSong,
   playerList,
   assignedPlayerInRoom,
+  participantsList,
   all,
   ;
 
@@ -161,6 +162,8 @@ enum RoomDataType {
         return 'playerList';
       case assignedPlayerInRoom:
         return 'assignedPlayerInRoom';
+      case participantsList:
+        return 'participantsList';
       case all:
         return 'all';
     }

@@ -100,7 +100,7 @@ class MasterView extends StatelessWidget {
           canGoBack: false,
           roomId: context.read<MasterViewModel>().room.id);
 
-  Widget _buildBottomRight(BuildContext context) => Container(
-        child: Center(child: Text('Bottom Right Panel')),
-      );
+  Widget _buildBottomRight(BuildContext context) => context
+      .read<AdminFeatureUIProvider>()
+      .buildParticipantsPanelWidget(context);
 }

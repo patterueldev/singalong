@@ -15,6 +15,7 @@ dependencies {
     implementation(libs.spring.boot.data.mongodb)
     implementation(libs.spring.boot.web)
     implementation(libs.spring.boot.security)
+    implementation(libs.minio)
     implementation(projects.mongoDs)
     implementation(libs.jackson.kotlin)
     implementation(libs.jsonwebtoken.api)

@@ -4,7 +4,7 @@ import io.patterueldev.admin.AdminService
 import io.patterueldev.admin.assignplayertoroom.AssignPlayerToRoomParameters
 import io.patterueldev.admin.connectwithroom.ConnectWithRoomParameters
 import io.patterueldev.admin.room.LoadRoomListParameters
-import io.patterueldev.room.CreateRoomParameters
+import io.patterueldev.room.createroom.CreateRoomParameters
 import io.patterueldev.songbook.SongBookService
 import io.patterueldev.songbook.enhancesong.EnhanceSongParameters
 import io.patterueldev.songbook.songdetails.SongDetailsResponse

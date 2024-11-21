@@ -47,6 +47,8 @@ part 'songview/songmodel.dart';
 part 'songview/song_editor_view.dart';
 part 'songview/songrepository.dart';
 part 'songview/tagsmanagerwidget.dart';
+part 'participants_panel/participants_panel_widget.dart';
+part 'participants_panel/participants_panel_viewmodel.dart';
 
 class AdminFeatureUIProvider {
   AdminFeatureUIProvider();
@@ -118,5 +120,13 @@ class AdminFeatureUIProvider {
           localizations: context.read(),
           coordinator: context.read(),
         ),
+      );
+
+  Widget buildParticipantsPanelWidget(BuildContext context) =>
+      ChangeNotifierProvider<ParticipantsPanelViewModel>(
+        create: (context) => DefaultParticipantsPanelViewModel(
+          userParticipantRepository: context.read(),
+        ),
+        child: const ParticipantsPanelWidget(),
       );
 }

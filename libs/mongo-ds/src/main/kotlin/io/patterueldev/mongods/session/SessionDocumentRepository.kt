@@ -13,4 +13,7 @@ interface SessionDocumentRepository : MongoRepository<SessionDocument, String> {
         roomId: String,
         clientType: ClientType,
     ): SessionDocument?
+
+    @Query("{ 'roomDocument.\$id' : ?0 }")
+    fun findSessionsByRoom(roomId: String): List<SessionDocument>
 }

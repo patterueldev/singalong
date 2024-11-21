@@ -64,4 +64,9 @@ class SingalongService {
                 parameters = SkipSongParameters(roomId),
             )
         }
+
+    fun getParticipantsInRoom(roomId: String) =
+        runBlocking {
+            sessionService.getParticipantsFromRoom(roomId)
+        }
 }

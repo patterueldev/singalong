@@ -13,4 +13,5 @@ enum class SocketEvent(val value: String) {
     PLAYERS_LIST("playersList"),
     ROOM_ASSIGNED("roomAssigned"),
     PLAYER_ASSIGNED("playerAssigned"),
+    PARTICIPANTS_LIST("participantsList"),
 }

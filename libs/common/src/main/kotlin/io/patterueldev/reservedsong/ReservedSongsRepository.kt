@@ -1,6 +1,5 @@
-package io.patterueldev.reservation.reservedsong
+package io.patterueldev.reservedsong
 
-import io.patterueldev.reservedsong.ReservedSong
 import io.patterueldev.roomuser.RoomUser
 import java.time.LocalDateTime
 
@@ -23,4 +22,14 @@ interface ReservedSongsRepository {
         reservedSongId: String,
         at: LocalDateTime,
     )
+
+    suspend fun loadReservedSongsForUserInRoom(
+        userId: String,
+        roomId: String,
+    ): List<ReservedSong>
+
+    suspend fun loadReservedSongsForUsersInRoom(
+        userIds: List<String>,
+        roomId: String,
+    ): List<ReservedSong>
 }

@@ -1,6 +1,8 @@
 package io.patterueldev.room
 
 import io.patterueldev.common.Pagination
+import io.patterueldev.room.createroom.CreateRoomParameters
+import io.patterueldev.roomuser.RoomUser
 
 interface RoomRepository {
     suspend fun newRoomId(): String
@@ -25,10 +27,7 @@ interface RoomRepository {
         playerId: String,
         roomId: String,
     )
+
+    suspend fun getUsersInRoom(roomId: String): List<RoomUser>
 }
 
-data class CreateRoomParameters(
-    val roomId: String,
-    val roomName: String,
-    val roomPasscode: String = "",
-)

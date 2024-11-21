@@ -13,6 +13,7 @@ enum SocketEvent {
   playersList,
   roomAssigned,
   playerAssigned,
+  participantsList,
   ;
 
   String get value {
@@ -41,6 +42,8 @@ enum SocketEvent {
         return 'roomAssigned';
       case playerAssigned:
         return 'playerAssigned';
+      case participantsList:
+        return 'participantsList';
     }
   }
 }

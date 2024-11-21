@@ -2,7 +2,7 @@ package io.patterueldev.reservation.list
 
 import io.patterueldev.common.GenericResponse
 import io.patterueldev.common.ServiceUseCase
-import io.patterueldev.reservation.reservedsong.ReservedSongsRepository
+import io.patterueldev.reservedsong.ReservedSongsRepository
 
 internal class LoadReservationListUseCase(
     private val reservedSongsRepository: ReservedSongsRepository,

@@ -10,7 +10,7 @@ import io.patterueldev.reservation.next.SkipSongParameters
 import io.patterueldev.reservation.next.SkipSongUseCase
 import io.patterueldev.reservation.reserve.ReserveParameters
 import io.patterueldev.reservation.reserve.ReserveUseCase
-import io.patterueldev.reservation.reservedsong.ReservedSongsRepository
+import io.patterueldev.reservedsong.ReservedSongsRepository
 import io.patterueldev.roomuser.RoomUser
 import io.patterueldev.roomuser.RoomUserRepository
 

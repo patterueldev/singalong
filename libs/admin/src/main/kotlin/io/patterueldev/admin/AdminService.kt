@@ -10,7 +10,7 @@ import io.patterueldev.auth.AuthRepository
 import io.patterueldev.authuser.AuthUserRepository
 import io.patterueldev.common.GenericResponse
 import io.patterueldev.common.ServiceUseCase
-import io.patterueldev.room.CreateRoomParameters
+import io.patterueldev.room.createroom.CreateRoomParameters
 import io.patterueldev.room.Room
 import io.patterueldev.room.RoomRepository
 

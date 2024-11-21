@@ -57,17 +57,15 @@ interface ReservedSongDocumentRepository : MongoRepository<ReservedSongDocument,
         at: LocalDateTime,
     )
 
-    /*
-    e.g.
-
-    @Query("{ 'lastname' : ?0 }")
-    @Update("{ '$inc' : { 'visits' : ?1 } }")
-
-     */
     @Query("{ '_id' : ?0 }")
     @Update("{ '\$set' : { 'startedPlayingAt' : ?1 } }")
     fun markStartedPlaying(
         reservedSongId: String,
         at: LocalDateTime,
     )
+
+    @Query(
+        value = "{ 'roomId' : ?1, 'reservedBy' : { '\$in' : ?0 } }",
+    )
+    fun loadReservationsByUserIdsFromRoom(userIds: List<String>, roomId: String): List<ReservedSongDocument>
 }

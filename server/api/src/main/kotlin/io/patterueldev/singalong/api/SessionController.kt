@@ -26,5 +26,8 @@ class SessionController(
     ) = sessionService.setUserPasscode(setPasscodeParameters)
 
     @GetMapping("/check")
-    suspend fun check() = GenericResponse.success("こんにちは")
+    suspend fun check(): GenericResponse<String> {
+        sessionService.reconnect()
+        return GenericResponse.success("こんにちは")
+    }
 }

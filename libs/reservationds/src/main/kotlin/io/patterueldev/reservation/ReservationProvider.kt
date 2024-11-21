@@ -1,7 +1,7 @@
 package io.patterueldev.reservation
 
 import io.patterueldev.reservation.currentsong.CurrentSongRepository
-import io.patterueldev.reservation.reservedsong.ReservedSongsRepository
+import io.patterueldev.reservedsong.ReservedSongsRepository
 import io.patterueldev.roomuser.RoomUserRepository
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Bean
