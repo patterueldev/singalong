@@ -98,6 +98,7 @@ open class ReservedSongRepositoryDS : ReservedSongsRepository {
                 override val thumbnailPath: String = song.thumbnailFile.path()
                 override val reservingUser: String = newReservedSong.reservedBy
                 override val currentPlaying: Boolean = newReservedSong.startedPlayingAt != null && newReservedSong.finishedPlayingAt == null
+                override val completed: Boolean = newReservedSong.completed
             }
         }
     }
@@ -123,6 +124,7 @@ open class ReservedSongRepositoryDS : ReservedSongsRepository {
                 override val thumbnailPath: String = song.thumbnailFile.path()
                 override val reservingUser: String = reservedSong.reservedBy
                 override val currentPlaying: Boolean = reservedSong.startedPlayingAt != null && reservedSong.finishedPlayingAt == null
+                override val completed: Boolean = reservedSong.completed
             }
         }
     }
@@ -138,13 +140,14 @@ open class ReservedSongRepositoryDS : ReservedSongsRepository {
     override suspend fun markFinishedPlaying(
         reservedSongId: String,
         at: LocalDateTime,
+        completed: Boolean,
     ) {
         // check if exists
         val reservedSong =
             withContext(Dispatchers.IO) {
                 reservedSongDocumentRepository.findById(reservedSongId)
             }.getOrNull() ?: throw IllegalArgumentException("Reserved song not found")
-        reservedSongDocumentRepository.markFinishedPlaying(reservedSong.id!!, at)
+        reservedSongDocumentRepository.markFinishedPlaying(reservedSong.id!!, at, completed)
     }
 
     override suspend fun markStartedPlaying(
@@ -159,14 +162,21 @@ open class ReservedSongRepositoryDS : ReservedSongsRepository {
         reservedSongDocumentRepository.markStartedPlaying(reservedSong.id!!, at)
     }
 
-    override suspend fun loadReservedSongsForUserInRoom(userId: String, roomId: String): List<ReservedSong> {
-        TODO("Not yet implemented") //TODO: not now
+    override suspend fun loadReservedSongsForUserInRoom(
+        userId: String,
+        roomId: String,
+    ): List<ReservedSong> {
+        TODO("Not yet implemented") // TODO: not now
     }
 
-    override suspend fun loadReservedSongsForUsersInRoom(userIds: List<String>, roomId: String): List<ReservedSong> {
-        val reservedSongs = withContext(Dispatchers.IO) {
-            reservedSongDocumentRepository.loadReservationsByUserIdsFromRoom(userIds, roomId)
-        }
+    override suspend fun loadReservedSongsForUsersInRoom(
+        userIds: List<String>,
+        roomId: String,
+    ): List<ReservedSong> {
+        val reservedSongs =
+            withContext(Dispatchers.IO) {
+                reservedSongDocumentRepository.loadReservationsByUserIdsFromRoom(userIds, roomId)
+            }
         val songIds = reservedSongs.map { it.songId }
         val songs = withContext(Dispatchers.IO) { songDocumentRepository.findAllById(songIds) }
         return reservedSongs.map { reservedSong ->
@@ -182,6 +192,7 @@ open class ReservedSongRepositoryDS : ReservedSongsRepository {
                 override val thumbnailPath: String = song.thumbnailFile.path()
                 override val reservingUser: String = reservedSong.reservedBy
                 override val currentPlaying: Boolean = reservedSong.startedPlayingAt != null && reservedSong.finishedPlayingAt == null
+                override val completed: Boolean = reservedSong.completed
             }
         }
     }

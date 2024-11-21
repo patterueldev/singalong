@@ -4,10 +4,10 @@ import io.patterueldev.authuser.RoomUserDetails
 import io.patterueldev.client.ClientType
 import io.patterueldev.mongods.user.UserDocumentRepository
 import io.patterueldev.role.Role
-import java.time.LocalDateTime
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Repository
+import java.time.LocalDateTime
 
 @Repository
 open class RoomUserRepositoryDS : RoomUserRepository {

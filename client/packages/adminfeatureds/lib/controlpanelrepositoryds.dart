@@ -89,8 +89,8 @@ class ControlPanelRepositoryDS implements ControlPanelSocketRepository {
   }
 
   @override
-  void skipSong() {
-    socket.emitRoomCommandEvent(RoomCommand.skipSong());
+  void skipSong({required bool completed}) {
+    socket.emitRoomCommandEvent(RoomCommand.skipSong(completed));
   }
 
   @override

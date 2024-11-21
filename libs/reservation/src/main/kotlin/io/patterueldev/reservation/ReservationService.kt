@@ -5,13 +5,11 @@ import io.patterueldev.reservation.currentsong.LoadCurrentSongParameters
 import io.patterueldev.reservation.currentsong.LoadCurrentSongUseCase
 import io.patterueldev.reservation.list.LoadReservationListParameters
 import io.patterueldev.reservation.list.LoadReservationListUseCase
-import io.patterueldev.reservation.next.NextSongUseCase
 import io.patterueldev.reservation.next.SkipSongParameters
 import io.patterueldev.reservation.next.SkipSongUseCase
 import io.patterueldev.reservation.reserve.ReserveParameters
 import io.patterueldev.reservation.reserve.ReserveUseCase
 import io.patterueldev.reservedsong.ReservedSongsRepository
-import io.patterueldev.roomuser.RoomUser
 import io.patterueldev.roomuser.RoomUserRepository
 
 class ReservationService(
@@ -32,17 +30,11 @@ class ReservationService(
         LoadCurrentSongUseCase(currentSongRepository)
     }
 
-    private val nextSongUseCase: NextSongUseCase by lazy {
-        NextSongUseCase(reservedSongsRepository, currentSongRepository, roomUserRepository, reservationCoordinator)
-    }
-
     private val skipSongUseCase: SkipSongUseCase by lazy {
         SkipSongUseCase(reservedSongsRepository, currentSongRepository, reservationCoordinator)
     }
 
     suspend fun reserveSong(parameters: ReserveParameters) = reserveUseCase(parameters)
-
-    suspend fun nextSong(user: RoomUser? = null) = nextSongUseCase(user)
 
     suspend fun skipSong(parameters: SkipSongParameters) = skipSongUseCase(parameters)
 

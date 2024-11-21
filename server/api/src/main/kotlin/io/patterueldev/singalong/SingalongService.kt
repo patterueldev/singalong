@@ -58,10 +58,10 @@ class SingalongService {
             ).data
         }
 
-    fun skipSong(roomId: String) =
+    fun skipSong(parameters: SkipSongParameters) =
         runBlocking {
             reservationService.skipSong(
-                parameters = SkipSongParameters(roomId),
+                parameters = parameters,
             )
         }
 

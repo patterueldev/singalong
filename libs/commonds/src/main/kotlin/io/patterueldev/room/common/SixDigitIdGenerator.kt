@@ -1,7 +1,7 @@
 package io.patterueldev.room.common
 
-import kotlin.random.Random
 import org.springframework.stereotype.Component
+import kotlin.random.Random
 
 // TODO: Move this to a common module and enhance it
 @Component

@@ -7,6 +7,7 @@ import com.corundumstudio.socketio.SocketIOServer
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import io.patterueldev.client.ClientType
 import io.patterueldev.jwt.JwtUtil
+import io.patterueldev.reservation.next.SkipSongParameters
 import io.patterueldev.room.Room
 import io.patterueldev.singalong.ServerCoordinator
 import io.patterueldev.singalong.SingalongService
@@ -188,21 +189,6 @@ class SingalongSocketIOModule(
                 return@addConnectListener
             }
 
-//            if (clientType == ClientType.PLAYER) {
-//                // check if the player is already assigned to a room
-//                // this makes sure that only one player is assigned to a room
-//                val assignedPlayerClient = playerInRoom(namespace)
-//                if (assignedPlayerClient != null) {
-//                    assignedPlayerClient.disconnect()
-// //                    client.sendEvent("error", "Player already assigned to room.")
-// //                    client.disconnect()
-// //                    println("Client[${client.sessionId}] - Connection rejected due to player already assigned to room.")
-// //                    return@addConnectListener
-//                } else {
-//                    // broadcast to admin
-//                }
-//            }
-
             println("Client[${client.sessionId}] - Connected to room $accessRoomID module as '$username' in room '$accessRoomID'")
 
             client.set("username", username)
@@ -210,7 +196,7 @@ class SingalongSocketIOModule(
             client.set("deviceId", deviceId)
             client.set("clientType", clientType.name)
 
-            when(clientType) {
+            when (clientType) {
                 ClientType.PLAYER -> {
                     // broadcast to admin
                     broadcastPlayerListToAdmin(namespace)
@@ -294,7 +280,13 @@ class SingalongSocketIOModule(
             when (commandType) {
                 RoomCommandType.SKIP_SONG -> {
                     println("Client[${client.sessionId}] - Skip song event received.")
-                    singalongService.skipSong(roomId = client.get("roomId"))
+                    var completed = false
+                    if (data is Boolean) {
+                        completed = data
+                    }
+                    val roomId: String = client.get("roomId")
+                    val parameters = SkipSongParameters(roomId, completed)
+                    singalongService.skipSong(parameters)
                 }
                 RoomCommandType.TOGGLE_PLAY_PAUSE -> {
                     println("Client[${client.sessionId}] - Toggle play/pause event received.")

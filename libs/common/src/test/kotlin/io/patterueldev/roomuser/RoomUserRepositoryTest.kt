@@ -1,8 +1,11 @@
 package io.patterueldev.roomuser
 
+import io.patterueldev.client.ClientType
+import io.patterueldev.role.Role
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
+import java.time.LocalDateTime
 
 class RoomUserRepositoryTest {
     class TestRoomUserRepository(private val roomUser: RoomUser) : RoomUserRepository {
@@ -16,6 +19,10 @@ class RoomUserRepositoryTest {
                 object : RoomUser {
                     override val username = "user1"
                     override val roomId = "room1"
+                    override val joinedAt: LocalDateTime = LocalDateTime.now()
+                    override val role: Role = Role.USER_GUEST
+                    override val clientType: ClientType = ClientType.CONTROLLER
+                    override val deviceId: String = "device1"
                 }
             val repository = TestRoomUserRepository(roomUser)
             val result = repository.currentUser()
@@ -30,6 +37,10 @@ class RoomUserRepositoryTest {
                 object : RoomUser {
                     override val username = ""
                     override val roomId = "room1"
+                    override val joinedAt: LocalDateTime = LocalDateTime.now()
+                    override val role: Role = Role.USER_GUEST
+                    override val clientType: ClientType = ClientType.CONTROLLER
+                    override val deviceId: String = "device1"
                 }
             val repository = TestRoomUserRepository(roomUser)
             val result = repository.currentUser()
@@ -44,6 +55,10 @@ class RoomUserRepositoryTest {
                 object : RoomUser {
                     override val username = "user1"
                     override val roomId = ""
+                    override val joinedAt: LocalDateTime = LocalDateTime.now()
+                    override val role: Role = Role.USER_GUEST
+                    override val clientType: ClientType = ClientType.CONTROLLER
+                    override val deviceId: String = "device1"
                 }
             val repository = TestRoomUserRepository(roomUser)
             val result = repository.currentUser()
@@ -58,6 +73,10 @@ class RoomUserRepositoryTest {
                 object : RoomUser {
                     override val username = ""
                     override val roomId = ""
+                    override val joinedAt: LocalDateTime = LocalDateTime.now()
+                    override val role: Role = Role.USER_GUEST
+                    override val clientType: ClientType = ClientType.CONTROLLER
+                    override val deviceId: String = "device1"
                 }
             val repository = TestRoomUserRepository(roomUser)
             val result = repository.currentUser()

@@ -1,5 +1,6 @@
 package io.patterueldev.room
 
+import io.patterueldev.client.ClientType
 import io.patterueldev.common.PaginatedData
 import io.patterueldev.common.Pagination
 import io.patterueldev.mongods.room.RoomDocument
@@ -10,20 +11,20 @@ import io.patterueldev.role.Role
 import io.patterueldev.room.common.SixDigitIdGenerator
 import io.patterueldev.room.createroom.CreateRoomParameters
 import io.patterueldev.roomuser.RoomUser
-import io.patterueldev.roomuser.RoomUserRepository
-import java.time.LocalDateTime
-import java.time.ZoneOffset
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Repository
+import java.time.LocalDateTime
 
 @Repository
 open class RoomRepositoryDS : RoomRepository {
     @Autowired private lateinit var roomDocumentRepository: RoomDocumentRepository
+
     @Autowired private lateinit var userDocumentRepository: UserDocumentRepository
+
     @Autowired private lateinit var sessionDocumentRepository: SessionDocumentRepository
 
     @Autowired private lateinit var sixDigitIdGenerator: SixDigitIdGenerator
@@ -157,8 +158,9 @@ open class RoomRepositoryDS : RoomRepository {
                 override val roomId: String = room.id
                 override val joinedAt: LocalDateTime = session.lastConnectedAt
                 override val role: Role = it.role
+                override val clientType: ClientType = session.connectedOnClient
+                override val deviceId: String = session.deviceId
             }
         }
     }
 }
-

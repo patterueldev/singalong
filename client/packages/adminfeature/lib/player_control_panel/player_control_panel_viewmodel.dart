@@ -116,7 +116,9 @@ class DefaultPlayerControlPanelViewModel extends PlayerControlPanelViewModel {
     if (stateNotifier.value is InactiveState) {
       return;
     }
-    controlPanelRepository.skipSong();
+    // Completed could be even if the user just barely finished the song; like 90% of the song
+    // TODO: Will need to handle this better
+    controlPanelRepository.skipSong(completed: false);
   }
 
   @override

@@ -30,4 +30,3 @@ interface RoomRepository {
 
     suspend fun getUsersInRoom(roomId: String): List<RoomUser>
 }
-

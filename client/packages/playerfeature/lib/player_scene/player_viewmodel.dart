@@ -222,7 +222,7 @@ class DefaultPlayerViewModel extends PlayerViewModel {
       debugPrint("Is Skipping: $isSkipping");
       if (!isSkipping) {
         debugPrint("Score video finished; playing next song");
-        playerSocketRepository.skipSong();
+        playerSocketRepository.skipSong(completed: true);
         isSkipping = true;
       }
     }

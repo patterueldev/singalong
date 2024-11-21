@@ -13,13 +13,14 @@ internal class LoadSongsUseCase(
 
             println("Parameters: $parameters")
 
-            val reservedSongs: List<SongbookItem> = parameters.roomId.let {
-                if (it == null) {
-                    emptyList()
-                } else {
-                    songRepository.loadReservedSongs(it)
+            val reservedSongs: List<SongbookItem> =
+                parameters.roomId.let {
+                    if (it == null) {
+                        emptyList()
+                    } else {
+                        songRepository.loadReservedSongs(it)
+                    }
                 }
-            }
 
             var paginatedResult: PaginatedSongs? = null
 

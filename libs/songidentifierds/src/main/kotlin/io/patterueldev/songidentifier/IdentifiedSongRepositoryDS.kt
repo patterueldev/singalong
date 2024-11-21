@@ -284,6 +284,7 @@ internal class IdentifiedSongRepositoryDS(
                 override val thumbnailPath: String = song.thumbnailFile.path()
                 override val reservingUser: String = newReservedSong.reservedBy
                 override val currentPlaying: Boolean = newReservedSong.startedPlayingAt != null && newReservedSong.finishedPlayingAt == null
+                override val completed: Boolean = newReservedSong.completed
             }
         }
     }

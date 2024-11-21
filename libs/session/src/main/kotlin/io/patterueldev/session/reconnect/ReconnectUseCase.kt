@@ -6,13 +6,12 @@ import io.patterueldev.common.NoParametersUseCase
 import io.patterueldev.room.RoomRepository
 import io.patterueldev.roomuser.RoomUserRepository
 
-internal class ReconnectUseCase (
+internal class ReconnectUseCase(
     val authUserRepository: AuthUserRepository,
     val roomUserRepository: RoomUserRepository,
     val authRepository: AuthRepository,
     val roomRepository: RoomRepository,
-
-    ) : NoParametersUseCase<Unit> {
+) : NoParametersUseCase<Unit> {
     override suspend fun execute() {
         val user = roomUserRepository.currentUser()
         val authUser = authUserRepository.currentUser()

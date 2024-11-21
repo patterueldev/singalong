@@ -20,13 +20,17 @@ class SessionService(
     val roomUserRepository: RoomUserRepository,
     val roomRepository: RoomRepository,
     val authRepository: AuthRepository,
-    val reservedSongRepository: ReservedSongsRepository
+    val reservedSongRepository: ReservedSongsRepository,
 ) {
     private val findOrCreateRoomUseCase: FindOrCreateRoomUseCase by lazy { FindOrCreateRoomUseCase(roomRepository) }
     private val connectUseCase: ConnectUseCase by lazy { ConnectUseCase(roomRepository, authUserRepository, authRepository) }
     private val setUserPasscodeUseCase: SetUserPasscodeUseCase by lazy { SetUserPasscodeUseCase(authRepository, authUserRepository) }
-    private val getParticipantsFromRoomUseCase: GetParticipantsFromRoomUseCase by lazy { GetParticipantsFromRoomUseCase(roomRepository, reservedSongRepository) }
-    private val reconnectUseCase: ReconnectUseCase by lazy { ReconnectUseCase(authUserRepository, roomUserRepository, authRepository, roomRepository) }
+    private val getParticipantsFromRoomUseCase: GetParticipantsFromRoomUseCase by lazy {
+        GetParticipantsFromRoomUseCase(roomRepository, reservedSongRepository)
+    }
+    private val reconnectUseCase: ReconnectUseCase by lazy {
+        ReconnectUseCase(authUserRepository, roomUserRepository, authRepository, roomRepository)
+    }
 
     suspend fun getActiveRooms() = roomRepository.findActiveRooms()
 
@@ -40,6 +44,5 @@ class SessionService(
 
     suspend fun reconnect() = reconnectUseCase()
 
-    suspend fun getParticipantsFromRoom(roomId: String): List<UserParticipant> = getParticipantsFromRoomUseCase.execute(roomId)
+    suspend fun getParticipantsFromRoom(roomId: String): List<UserParticipant> = getParticipantsFromRoomUseCase(roomId)
 }
-

@@ -51,10 +51,11 @@ interface ReservedSongDocumentRepository : MongoRepository<ReservedSongDocument,
     fun findMaxOrder(roomId: String): Int
 
     @Query("{ '_id' : ?0 }")
-    @Update("{ '\$set' : { 'finishedPlayingAt' : ?1 } }")
+    @Update("{ '\$set' : { 'finishedPlayingAt' : ?1, 'completed' : ?2 } }")
     fun markFinishedPlaying(
         reservedSongId: String,
         at: LocalDateTime,
+        completed: Boolean,
     )
 
     @Query("{ '_id' : ?0 }")

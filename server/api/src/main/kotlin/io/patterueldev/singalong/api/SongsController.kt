@@ -2,7 +2,6 @@ package io.patterueldev.singalong.api
 
 import io.patterueldev.identifysong.IdentifySongParameters
 import io.patterueldev.reservation.ReservationService
-import io.patterueldev.reservation.next.NextSongResponse
 import io.patterueldev.reservation.reserve.ReserveParameters
 import io.patterueldev.reservation.reserve.ReserveResponse
 import io.patterueldev.songbook.SongBookService
@@ -17,7 +16,6 @@ import io.patterueldev.songidentifier.common.SearchSongResponse
 import io.patterueldev.songidentifier.savesong.SaveSongParameters
 import io.patterueldev.songidentifier.searchsong.SearchSongParameters
 import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
@@ -78,9 +76,6 @@ class SongsController(
                 limit = limit,
             ),
         )
-
-    @PatchMapping("/next")
-    suspend fun nextSong(): NextSongResponse = reservationService.nextSong()
 
     @GetMapping("/details")
     suspend fun songDetails(

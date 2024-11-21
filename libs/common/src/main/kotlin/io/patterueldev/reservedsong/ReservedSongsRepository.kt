@@ -16,6 +16,7 @@ interface ReservedSongsRepository {
     suspend fun markFinishedPlaying(
         reservedSongId: String,
         at: LocalDateTime,
+        completed: Boolean,
     )
 
     suspend fun markStartedPlaying(

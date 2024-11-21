@@ -9,4 +9,5 @@ interface ReservedSong {
     val thumbnailPath: String
     val reservingUser: String
     val currentPlaying: Boolean
+    val completed: Boolean
 }

@@ -1,10 +1,20 @@
 package io.patterueldev.roomuser
 
+import io.patterueldev.client.ClientType
+import io.patterueldev.role.Role
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
+import java.time.LocalDateTime
 
 class RoomUserTest {
-    class TestRoomUser(override val username: String, override val roomId: String) : RoomUser
+    class TestRoomUser(
+        override val username: String,
+        override val roomId: String,
+        override val joinedAt: LocalDateTime = LocalDateTime.now(),
+        override val role: Role = Role.USER_GUEST,
+        override val clientType: ClientType = ClientType.CONTROLLER,
+        override val deviceId: String = "",
+    ) : RoomUser
 
     @Test
     fun roomUser_withValidUsernameAndRoomId_returnsCorrectValues() {
