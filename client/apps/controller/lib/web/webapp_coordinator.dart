@@ -49,6 +49,13 @@ class WebAppCoordinator
   }
 
   @override
+  void onReserved(BuildContext context) {
+    Navigator.of(context).popUntil((route) {
+      return route.settings.name == '/session/active';
+    });
+  }
+
+  @override
   void openSearchDownloadablesScreen(BuildContext context, {String? query}) {
     AppRoute.downloadables.push(context, arguments: query);
   }

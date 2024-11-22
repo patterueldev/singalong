@@ -85,6 +85,11 @@ class MobileAppCoordinator
   }
 
   @override
+  void onReserved(BuildContext context) {
+    Navigator.popUntil(context, (route) => route.isFirst);
+  }
+
+  @override
   void openSearchDownloadablesScreen(BuildContext context, {String? query}) {
     DownloadFeatureProvider downloadFeatureProvider = context.read();
     Navigator.of(context).push(

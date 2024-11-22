@@ -5,6 +5,7 @@ abstract class SongBookViewModel extends ChangeNotifier {
   ValueNotifier<bool> get isSearchActive;
   ValueNotifier<bool> get isLoadingNotifier; // for the HUD overlay
   ValueNotifier<String?> get toastMessageNotifier;
+  ValueNotifier<bool> reservedNotifier = ValueNotifier(false);
 
   void fetchSongs(bool loadsNext);
   void toggleSearch();
@@ -114,6 +115,8 @@ class DefaultSongBookViewModel extends SongBookViewModel {
         toastMessageNotifier.value = 'Song reserved';
         // refresh
         fetchSongs(false);
+
+        reservedNotifier.value = true;
       },
     );
   }

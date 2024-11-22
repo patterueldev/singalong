@@ -57,4 +57,10 @@ class AppCoordinator extends AdminCoordinator
           .buildSongEditorPanel(context, songId),
     );
   }
+
+  @override
+  void onReserved(BuildContext context) {
+    // TODO: implement onReserved
+    // nothing to do
+  }
 }

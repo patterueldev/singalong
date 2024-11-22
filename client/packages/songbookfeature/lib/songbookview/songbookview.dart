@@ -35,8 +35,16 @@ class _SongBookViewState extends State<SongBookView> {
     super.initState();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      viewModel.reservedNotifier.addListener(_reservedListener);
       viewModel.toastMessageNotifier.addListener(_toastListener);
     });
+  }
+
+  void _reservedListener() {
+    final isReserved = viewModel.reservedNotifier.value;
+    if (isReserved) {
+      navigationCoordinator.onReserved(context);
+    }
   }
 
   void _toastListener() {
