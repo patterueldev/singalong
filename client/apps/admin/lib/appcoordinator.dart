@@ -54,7 +54,7 @@ class AppCoordinator extends AdminCoordinator
       context: context,
       builder: (context) => context
           .read<AdminFeatureUIProvider>()
-          .buildSongbookManagerPanel(context, songId),
+          .buildSongEditorPanel(context, songId),
     );
   }
 }

@@ -39,8 +39,6 @@ part 'create_room/create_room_dialog.dart';
 part 'create_room/create_room_viewmodel.dart';
 part 'reserved_panel/reserved_panel_widget.dart';
 part 'reserved_panel/reserved_panel_viewmodel.dart';
-part 'songbook_manager_panel/songbook_manager_dialog.dart';
-part 'songbook_manager_panel/songbook_manager_viewmodel.dart';
 part 'songview/song_editor_viewmodel.dart';
 part 'songview/songviewstate.dart';
 part 'songview/song_editor_view.dart';
@@ -109,7 +107,7 @@ class AdminFeatureUIProvider {
         child: const ReservedPanelWidget(),
       );
 
-  Widget buildSongbookManagerPanel(BuildContext context, String songId) =>
+  Widget buildSongEditorPanel(BuildContext context, String songId) =>
       ChangeNotifierProvider<SongEditorViewModel>(
         create: (context) => DefaultSongViewModel(
           songRepository: context.read(),
