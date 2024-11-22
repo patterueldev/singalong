@@ -2,10 +2,10 @@ part of '../songbookfeature.dart';
 
 abstract class SongBookViewModel extends ChangeNotifier {
   ValueNotifier<SongBookViewState> get stateNotifier;
-  ValueNotifier<bool> get isSearchActive;
   ValueNotifier<bool> get isLoadingNotifier; // for the HUD overlay
   ValueNotifier<String?> get toastMessageNotifier;
   ValueNotifier<bool> reservedNotifier = ValueNotifier(false);
+  ValueNotifier<bool> isSearchingNotifier = ValueNotifier(false);
 
   void fetchSongs(bool loadsNext);
   void toggleSearch();
@@ -132,6 +132,7 @@ class DefaultSongBookViewModel extends SongBookViewModel {
 
   @override
   void updateSearchQuery(String query) {
+    isSearchingNotifier.value = query.isNotEmpty;
     if (_searchQuery == query) return;
     Duration debounceTime;
     if (query.isEmpty) {

@@ -73,34 +73,21 @@ class _SongBookViewState extends State<SongBookView> {
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         appBar: AppBar(
           automaticallyImplyLeading: widget.canGoBack,
-          title: ValueListenableBuilder<bool>(
-            valueListenable: viewModel.isSearchActive,
-            builder: (context, isSearching, child) {
-              if (isSearching) {
-                // Request focus when search is active
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  _searchFocusNode.requestFocus();
-                });
-              }
-              return isSearching
-                  ? TextField(
-                      autocorrect: false,
-                      controller: _searchController,
-                      focusNode: _searchFocusNode,
-                      onChanged: viewModel.updateSearchQuery,
-                      onSubmitted: (query) {
-                        viewModel.updateSearchQuery(query);
-                        viewModel.fetchSongs(false);
-                      },
-                      decoration: InputDecoration(
-                        hintText: localizations.searchHint.localizedOf(context),
-                        border: InputBorder.none,
-                        fillColor: Colors.grey,
-                      ),
-                    )
-                  : Text(
-                      localizations.songBookScreenTitle.localizedOf(context));
+          title: TextField(
+            autocorrect: false,
+            controller: _searchController,
+            focusNode: _searchFocusNode,
+            onChanged: viewModel.updateSearchQuery,
+            onSubmitted: (query) {
+              viewModel.updateSearchQuery(query);
+              viewModel.fetchSongs(false);
             },
+            decoration: InputDecoration(
+              hintText: localizations.searchHint.localizedOf(context),
+              border: InputBorder.none,
+              fillColor: Colors.grey,
+            ),
+            autofocus: true,
           ),
           actions: [
             // refresh
@@ -112,33 +99,24 @@ class _SongBookViewState extends State<SongBookView> {
             ),
             // cancel search
             ValueListenableBuilder<bool>(
-              valueListenable: viewModel.isSearchActive,
+              valueListenable: viewModel.isSearchingNotifier,
               builder: (context, isSearching, child) {
                 if (isSearching) {
                   return IconButton(
                     icon: const Icon(Icons.close),
                     onPressed: () {
-                      viewModel.toggleSearch();
+                      _searchController.clear();
+                      viewModel.updateSearchQuery('');
                     },
                   );
-                } else {
-                  return Row(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.search),
-                        onPressed: () {
-                          viewModel.toggleSearch();
-                        },
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.download),
-                        onPressed: () => widget.navigationCoordinator
-                            .openSearchDownloadablesScreen(context),
-                      ),
-                    ],
-                  );
                 }
+                return const SizedBox.shrink();
               },
+            ),
+            IconButton(
+              icon: const Icon(Icons.download),
+              onPressed: () => widget.navigationCoordinator
+                  .openSearchDownloadablesScreen(context),
             ),
           ],
         ),
