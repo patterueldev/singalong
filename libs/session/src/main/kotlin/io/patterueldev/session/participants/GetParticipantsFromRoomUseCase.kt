@@ -4,13 +4,12 @@ import io.patterueldev.common.ServiceUseCase
 import io.patterueldev.reservedsong.ReservedSongsRepository
 import io.patterueldev.role.Role
 import io.patterueldev.room.RoomRepository
-import io.patterueldev.roomuser.RoomUser
 import io.patterueldev.session.UserParticipant
-import java.time.LocalDateTime
-import java.time.ZoneOffset
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import java.time.LocalDateTime
+import java.time.ZoneOffset
 
 internal class GetParticipantsFromRoomUseCase(
     private val roomRepository: RoomRepository,
@@ -44,6 +43,7 @@ internal class GetParticipantsFromRoomUseCase(
     }
 }
 
-suspend fun <A, B> Iterable<A>.mapAsync(transform: suspend (A) -> B): List<B> = coroutineScope {
-    map { async { transform(it) } }.awaitAll()
-}
+suspend fun <A, B> Iterable<A>.mapAsync(transform: suspend (A) -> B): List<B> =
+    coroutineScope {
+        map { async { transform(it) } }.awaitAll()
+    }

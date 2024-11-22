@@ -162,13 +162,19 @@ open class ReservedSongRepositoryDS : ReservedSongsRepository {
         reservedSongDocumentRepository.markStartedPlaying(reservedSong.id!!, at)
     }
 
-    override suspend fun getCountForFinishedSongsByUserInRoom(userId: String, roomId: String): Int {
+    override suspend fun getCountForFinishedSongsByUserInRoom(
+        userId: String,
+        roomId: String,
+    ): Int {
         val result = reservedSongDocumentRepository.getCountForFinishedReservationsByUserInRoom(userId, roomId)
         println("getCountForFinishedReservationsByUserInRoom(user: $userId, room: $roomId): $result")
         return result
     }
 
-    override suspend fun getCountForUpcomingSongsByUserInRoom(userId: String, roomId: String): Int {
+    override suspend fun getCountForUpcomingSongsByUserInRoom(
+        userId: String,
+        roomId: String,
+    ): Int {
         return reservedSongDocumentRepository.getCountForUpcomingSongsByUserInRoom(userId, roomId)
     }
 }
