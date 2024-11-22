@@ -83,6 +83,12 @@ internal class IdentifiedSongRepositoryDS(
         }
     }
 
+    override suspend fun songAlreadyDownloaded(sourceId: String): Boolean {
+        return withContext(Dispatchers.IO) {
+            songDocumentRepository.findBySourceId(sourceId) != null
+        }
+    }
+
     override suspend fun saveSong(
         identifiedSong: IdentifiedSong,
         userId: String,

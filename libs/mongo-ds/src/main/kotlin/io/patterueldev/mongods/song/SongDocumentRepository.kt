@@ -67,5 +67,4 @@ interface SongDocumentRepository : MongoRepository<SongDocument, String> {
         sort = "{ 'title': 1 }"
     )
     fun findUnarchivedByKeywordNotInIds(keyword: String, ids: List<String>, pageable: Pageable): Page<SongDocument>
-
 }

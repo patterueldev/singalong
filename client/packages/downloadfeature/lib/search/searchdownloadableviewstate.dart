@@ -34,6 +34,7 @@ class Loading extends SearchDownloadableViewState {
       artist: 'Artist $index',
       thumbnailURL: 'https://example.com/thumbnail1.jpg',
       duration: '3:45',
+      alreadyDownloaded: false,
     ),
   );
 }

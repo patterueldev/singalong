@@ -12,6 +12,8 @@ interface IdentifiedSongRepository {
 
     suspend fun enhanceSong(identifiedSong: IdentifiedSong): IdentifiedSong
 
+    suspend fun songAlreadyDownloaded(sourceId: String): Boolean
+
     suspend fun saveSong(
         identifiedSong: IdentifiedSong,
         userId: String,

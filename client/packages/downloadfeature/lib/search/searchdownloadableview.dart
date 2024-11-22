@@ -243,19 +243,34 @@ class _SearchDownloadableViewState extends State<SearchDownloadableView> {
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(height / 2),
-              child: Container(
-                color: Colors.grey,
-                height: height,
-                width: height,
-                child: CachedNetworkImage(
-                  imageUrl: item.thumbnailURL.toString(),
-                  placeholder: (context, url) => const Center(
-                    child: CircularProgressIndicator(),
+              child: Stack(
+                children: [
+                  Container(
+                    color: Colors.grey,
+                    height: height,
+                    width: height,
+                    child: CachedNetworkImage(
+                      imageUrl: item.thumbnailURL.toString(),
+                      placeholder: (context, url) => const Center(
+                        child: CircularProgressIndicator(),
+                      ),
+                      errorWidget: (context, url, error) =>
+                          const Icon(Icons.music_note),
+                      fit: BoxFit.cover,
+                    ),
                   ),
-                  errorWidget: (context, url, error) =>
-                      const Icon(Icons.music_note),
-                  fit: BoxFit.cover,
-                ),
+                  if (item.alreadyDownloaded)
+                    Container(
+                      padding: const EdgeInsets.all(4),
+                      height: height,
+                      width: height,
+                      color: Colors.grey.withAlpha(100),
+                      child: const Icon(
+                        Icons.download_done,
+                        color: Colors.white,
+                      ),
+                    ),
+                ],
               ),
             ),
             const SizedBox(width: 8),

@@ -83,6 +83,7 @@ class DefaultSongIdentifierRepository implements SongIdentifierRepository {
               artist: e.author.name,
               thumbnailURL: configuration.buildProxyURL(e.thumbnail).toString(),
               duration: e.duration,
+              alreadyDownloaded: e.alreadyExists,
             ),
           )
           .toList();

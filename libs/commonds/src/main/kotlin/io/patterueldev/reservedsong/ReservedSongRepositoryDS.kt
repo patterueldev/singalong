@@ -167,7 +167,7 @@ open class ReservedSongRepositoryDS : ReservedSongsRepository {
         roomId: String,
     ): Int {
         val result = reservedSongDocumentRepository.getCountForFinishedReservationsByUserInRoom(userId, roomId)
-        println("getCountForFinishedReservationsByUserInRoom(user: $userId, room: $roomId): $result")
+//        println("getCountForFinishedReservationsByUserInRoom(user: $userId, room: $roomId): $result")
         return result
     }
 
