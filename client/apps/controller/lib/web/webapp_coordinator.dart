@@ -80,7 +80,9 @@ class WebAppCoordinator
 
   @override
   void onDownloadSuccess(BuildContext context) {
-    Navigator.popUntil(context, (route) => route.isFirst);
+    Navigator.popUntil(context, (route) {
+      return route.settings.name == '/session/active';
+    });
   }
 
   @override
