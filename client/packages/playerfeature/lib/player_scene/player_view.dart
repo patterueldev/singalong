@@ -46,12 +46,19 @@ class PlayerView extends StatelessWidget {
                       ),
                       Expanded(
                         flex: 9,
-                        child: Column(
-                          children: [
-                            Expanded(
-                              child: _buildBody(context, viewModel),
-                            ),
-                          ],
+                        child: Container(
+                          decoration: BoxDecoration(
+                            border:
+                                Border.all(color: Colors.grey.withAlpha(100)),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Column(
+                            children: [
+                              Expanded(
+                                child: _buildBody(context, viewModel),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                       // right panel
@@ -62,7 +69,10 @@ class PlayerView extends StatelessWidget {
                           builder: (context, isConnected, __) => isConnected
                               ? context
                                   .read<PlayerFeatureUIBuilder>()
-                                  .buildParticipantsPanelWidget(context)
+                                  .buildParticipantsPanelWidget(context,
+                                      host: viewModel.configuration.host,
+                                      roomId:
+                                          viewModel.roomIdNotifier.value ?? '')
                               : const SizedBox.shrink(),
                         ),
                       ),
@@ -157,6 +167,9 @@ class PlayerView extends StatelessWidget {
   Widget _buildScore(PlayerViewScore state) => Center(
         child: Stack(
           children: [
+            state.audioPlayerController != null
+                ? VideoPlayer(state.audioPlayerController!)
+                : SizedBox.shrink(),
             state.videoPlayerController != null
                 ? VideoPlayer(state.videoPlayerController!)
                 : SizedBox.shrink(),

@@ -189,19 +189,36 @@ class DefaultPlayerViewModel extends PlayerViewModel {
       final host = "thursday.local"; // TODO: this should be configurable
       final url = "http://$host:9000/assets/fireworks.mp4";
       final scoreVideoController = VideoController.network(url);
+
+      final audioUrl = "http://$host:9000/assets/fanfare-sound.mp3";
+      final audioController = VideoController.network(audioUrl);
+
       _videoControllers.add(scoreVideoController);
+      _videoControllers.add(audioController);
+
       await scoreVideoController.initialize();
+      await audioController.initialize();
+
+      scoreVideoController.setLooping(true);
+
       await scoreVideoController.play();
-      playerViewStateNotifier.value = PlayerViewState.score(PlayerViewScore(
-        score: 100,
-        message: "You are a great singer! This is a fake score, btw =)",
-        videoPlayerController: scoreVideoController,
-      ));
+      await audioController.play();
+
+      final score = generateRandomScore();
+      final message = messageForScore(score);
+      playerViewStateNotifier.value = PlayerViewState.score(
+        PlayerViewScore(
+          score: score,
+          message: message,
+          videoPlayerController: scoreVideoController,
+          audioPlayerController: audioController,
+        ),
+      );
 
       isSkipping = false;
       debugPrint("Playing score video: $url");
-      scoreVideoController.addListener(() {
-        _scoreVideoListener(scoreVideoController);
+      audioController.addListener(() {
+        _scoreAudioListener(audioController);
       });
     } else {
       // send the current position to the server
@@ -215,14 +232,36 @@ class DefaultPlayerViewModel extends PlayerViewModel {
     }
   }
 
-  void _scoreVideoListener(VideoController controller) async {
-    final minSeconds = min(5, controller.value.duration.inSeconds);
+  int generateRandomScore() {
+    final random = Random();
+    final randomValue = random.nextInt(100);
+
+    if (randomValue < 50) {
+      return 100;
+    } else if (randomValue < 90) {
+      return 90 + random.nextInt(10);
+    } else {
+      return 80 + random.nextInt(10);
+    }
+  }
+
+  String messageForScore(int score) {
+    if (score == 100) {
+      return "Fantastic!";
+    } else if (score >= 90) {
+      return "Amazing voice!";
+    } else {
+      return "Great singing!";
+    }
+  }
+
+  void _scoreAudioListener(VideoController controller) async {
+    final minSeconds = min(7, controller.value.duration.inSeconds);
     final duration = Duration(seconds: minSeconds);
     if (controller.value.position >= duration) {
       controller.pause();
       playerViewStateNotifier.value = PlayerViewState.connected();
       await _clearVideoControllers();
-      // TODO: Send command to the server to update the score and play the next song
       debugPrint("Is Skipping: $isSkipping");
       if (!isSkipping) {
         debugPrint("Score video finished; playing next song");

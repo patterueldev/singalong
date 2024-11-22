@@ -19,6 +19,7 @@ dependencies:
   flutter_slidable: ^3.1.1
   skeletonizer: ^1.4.2
   textfield_tags: ^3.0.1
+  qr_flutter: ^4.1.0
 
 dev_dependencies:
   flutter_test:

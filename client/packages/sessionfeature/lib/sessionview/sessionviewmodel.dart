@@ -52,7 +52,8 @@ class DefaultSessionViewModel extends SessionViewModel {
         return;
       }
       this.roomId = roomId;
-      this.roomName = roomId;
+      roomName = roomId;
+      notifyListeners();
       await connectRepository.connectRoomSocket(roomId);
 
       debugPrint('Opening socket');

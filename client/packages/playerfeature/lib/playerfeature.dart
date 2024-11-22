@@ -50,11 +50,18 @@ class PlayerFeatureUIBuilder {
         child: const PlayerView(),
       );
 
-  Widget buildParticipantsPanelWidget(BuildContext context) =>
+  Widget buildParticipantsPanelWidget(
+    BuildContext context, {
+    required String host,
+    required String roomId,
+  }) =>
       ChangeNotifierProvider<ParticipantsPanelViewModel>(
         create: (context) => DefaultParticipantsPanelViewModel(
           userParticipantRepository: context.read(),
         ),
-        child: const ParticipantsPanelWidget(),
+        child: ParticipantsPanelWidget(
+          host: host,
+          roomId: roomId,
+        ),
       );
 }
