@@ -1,4 +1,4 @@
-part of '../adminfeature.dart';
+part of '../common.dart';
 
 class SongDetails {
   final String id;

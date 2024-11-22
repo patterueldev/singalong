@@ -25,6 +25,7 @@ class LoadSongsResult {
 abstract class SongRepository {
   Future<LoadSongsResult> loadSongs(LoadSongsParameters parameters);
   Future<void> reserveSong(SongbookItem song);
+  Future<SongDetails> getSongDetails(String songId);
 }
 
 class LoadSongsParameters {

@@ -178,17 +178,7 @@ class _SessionViewState extends State<SessionView> {
                 trailing: song.currentPlaying
                     ? const Icon(Icons.play_arrow, color: Colors.green)
                     : null,
-                onTap: () => showModalBottomSheet(
-                  context: context,
-                  isScrollControlled: true,
-                  builder: (context) => SizedBox(
-                    height: MediaQuery.of(context).size.height * 0.90,
-                    child: SongView(
-                      viewModel: DefaultSongViewModel(songId: song.songId),
-                      localizations: localizations,
-                    ),
-                  ),
-                ),
+                onTap: () => flow.openSongDetailScreen(context, song.songId),
               ),
             );
           },

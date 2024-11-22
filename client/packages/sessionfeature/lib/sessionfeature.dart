@@ -13,10 +13,6 @@ part 'sessionview/sessionview.dart';
 part 'sessionview/sessionviewmodel.dart';
 part 'sessionview/sessionviewstate.dart';
 part 'sessionview/listentosonglistupdatesusecase.dart';
-part 'songview/songview.dart';
-part 'songview/songviewmodel.dart';
-part 'songview/songviewstate.dart';
-part 'songview/songmodel.dart';
 part 'sessionnavigationcoordinator.dart';
 part 'sessionlocalizations.dart';
 

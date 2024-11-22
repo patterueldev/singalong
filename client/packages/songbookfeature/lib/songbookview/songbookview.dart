@@ -331,7 +331,7 @@ class _SongBookViewState extends State<SongBookView> {
               break;
             case 'details':
               navigationCoordinator
-                  .openSongDetailScreen(context, song)
+                  .openSongDetailScreen(context, song.id)
                   .then((value) {
                 if (value == true) {
                   viewModel.fetchSongs(false);

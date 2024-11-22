@@ -49,12 +49,12 @@ class AppCoordinator extends AdminCoordinator
   }
 
   @override
-  Future<T?> openSongDetailScreen<T>(BuildContext context, SongbookItem song) {
+  Future<T?> openSongDetailScreen<T>(BuildContext context, String songId) {
     return showDialog(
       context: context,
       builder: (context) => context
           .read<AdminFeatureUIProvider>()
-          .buildSongbookManagerPanel(context, song),
+          .buildSongbookManagerPanel(context, songId),
     );
   }
 }

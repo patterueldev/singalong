@@ -19,6 +19,9 @@ part 'songbooknavigationcoordinator.dart';
 part 'songbookassets.dart';
 part 'songbookview/fetchsongsusecase.dart';
 part 'songbookview/reservesongusecase.dart';
+part 'songdetailsview/songview.dart';
+part 'songdetailsview/songviewmodel.dart';
+part 'songdetailsview/songviewstate.dart';
 
 class SongBookFeatureProvider {
   final SongBookFlowCoordinator coordinator;
@@ -55,6 +58,20 @@ class SongBookFeatureProvider {
           localizations: localizations,
           assets: assets,
           canGoBack: canGoBack,
+        ),
+      );
+
+  Widget buildSongDetailsView({
+    required BuildContext context,
+    required String songId,
+  }) =>
+      ChangeNotifierProvider<SongViewModel>(
+        create: (context) => DefaultSongViewModel(
+          songRepository: context.read(),
+          songId: songId,
+        ),
+        child: SongView(
+          localizations: context.read(),
         ),
       );
 }

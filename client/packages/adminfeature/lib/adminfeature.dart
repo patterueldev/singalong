@@ -43,7 +43,6 @@ part 'songbook_manager_panel/songbook_manager_dialog.dart';
 part 'songbook_manager_panel/songbook_manager_viewmodel.dart';
 part 'songview/song_editor_viewmodel.dart';
 part 'songview/songviewstate.dart';
-part 'songview/songmodel.dart';
 part 'songview/song_editor_view.dart';
 part 'songview/songrepository.dart';
 part 'songview/tagsmanagerwidget.dart';
@@ -110,11 +109,11 @@ class AdminFeatureUIProvider {
         child: const ReservedPanelWidget(),
       );
 
-  Widget buildSongbookManagerPanel(BuildContext context, SongbookItem song) =>
+  Widget buildSongbookManagerPanel(BuildContext context, String songId) =>
       ChangeNotifierProvider<SongEditorViewModel>(
         create: (context) => DefaultSongViewModel(
           songRepository: context.read(),
-          songId: song.id,
+          songId: songId,
         ),
         child: SongEditorView(
           localizations: context.read(),

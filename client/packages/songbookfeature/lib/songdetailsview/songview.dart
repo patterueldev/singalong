@@ -1,52 +1,36 @@
-part of '../sessionfeature.dart';
+part of '../songbookfeature.dart';
 
-class SongView extends StatefulWidget {
+class SongView extends StatelessWidget {
   const SongView({
     super.key,
-    required this.viewModel,
     required this.localizations,
   });
 
-  @override
-  State<SongView> createState() => _SongViewState();
-
-  final SongViewModel viewModel;
-  final SessionLocalizations localizations;
-}
-
-class _SongViewState extends State<SongView> {
-  SessionLocalizations get localizations => widget.localizations;
-  SongViewModel get viewModel => widget.viewModel;
+  final SongBookLocalizations localizations;
 
   @override
-  void initState() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      viewModel.loadDetails();
-    });
-    super.initState();
-  }
-
-  @override
-  Widget build(BuildContext context) => Scaffold(
-        body: ListenableBuilder(
-          listenable: widget.viewModel,
-          builder: (context, child) {
-            switch (viewModel.state.type) {
-              case SongViewStateType.initial:
-              case SongViewStateType.loading:
-                return const Center(child: CircularProgressIndicator());
-              case SongViewStateType.loaded:
-                final loaded = viewModel.state as Loaded;
-                return _buildLoaded(loaded.song);
-              case SongViewStateType.failure:
-                final failure = viewModel.state as Failure;
-                return Center(child: Text(failure.error));
-            }
-          },
+  Widget build(BuildContext context) => Consumer<SongViewModel>(
+        builder: (context, viewModel, child) => Scaffold(
+          body: ValueListenableBuilder(
+            valueListenable: viewModel.stateNotifier,
+            builder: (context, state, child) {
+              switch (state.type) {
+                case SongViewStateType.initial:
+                case SongViewStateType.loading:
+                  return const Center(child: CircularProgressIndicator());
+                case SongViewStateType.loaded:
+                  final loaded = state as SongDetailsLoaded;
+                  return _buildLoaded(context, loaded.song);
+                case SongViewStateType.failure:
+                  final failure = state as SongDetailsFailure;
+                  return Center(child: Text(failure.error));
+              }
+            },
+          ),
         ),
       );
 
-  Widget _buildLoaded(SongModel song) => Scaffold(
+  Widget _buildLoaded(BuildContext context, SongDetails song) => Scaffold(
         appBar: AppBar(
           leading: IconButton(
             icon: const Icon(Icons.close),
@@ -73,7 +57,7 @@ class _SongViewState extends State<SongView> {
                       borderRadius: BorderRadius.circular(
                           8.0), // Optional: Match border radius
                       child: CachedNetworkImage(
-                        imageUrl: song.imageURL.toString(),
+                        imageUrl: song.thumbnailURL.toString(),
                         placeholder: (context, url) => const Center(
                           child: CircularProgressIndicator(),
                         ),

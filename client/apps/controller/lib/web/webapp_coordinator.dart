@@ -59,10 +59,18 @@ class WebAppCoordinator
   }
 
   @override
-  Future<T?> openSongDetailScreen<T>(
-      BuildContext context, SongbookItem song) async {
-    // TODO: implement openSongDetailScreen
-  }
+  Future<T?> openSongDetailScreen<T>(BuildContext context, String songId) =>
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        builder: (context) => SizedBox(
+          height: MediaQuery.of(context).size.height * 0.90,
+          child: context.read<SongBookFeatureProvider>().buildSongDetailsView(
+                context: context,
+                songId: songId,
+              ),
+        ),
+      );
 
   @override
   void navigateToIdentifiedSongDetailsView(BuildContext context,

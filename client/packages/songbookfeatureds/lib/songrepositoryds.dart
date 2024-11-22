@@ -58,4 +58,11 @@ class SongRepositoryDS implements SongRepository {
       throw e;
     }
   }
+
+  @override
+  Future<SongDetails> getSongDetails(String songId) async {
+    final song =
+        await api.loadSongDetails(APILoadSongDetailsParameters(songId: songId));
+    return song.toSongDetails(configuration);
+  }
 }

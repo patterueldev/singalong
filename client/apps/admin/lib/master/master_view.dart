@@ -29,7 +29,7 @@ class MasterView extends StatelessWidget {
             },
             icon: const Icon(Icons.menu),
           ),
-          title: Text('Room: ${viewModel.room.name} (${viewModel.room.id})'),
+          title: Text('${viewModel.room.name} (${viewModel.room.id})'),
           bottom: const PreferredSize(
             preferredSize: Size.fromHeight(1.0),
             child: Divider(),

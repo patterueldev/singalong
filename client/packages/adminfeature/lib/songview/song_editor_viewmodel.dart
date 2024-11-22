@@ -15,14 +15,14 @@ abstract class SongEditorViewModel extends ChangeNotifier {
 
 class DefaultSongViewModel extends SongEditorViewModel {
   final SongRepository songRepository;
+  final String songId;
+
   DefaultSongViewModel({
     required this.songRepository,
     required this.songId,
   }) {
     loadDetails();
   }
-
-  final String songId;
 
   @override
   void loadDetails() async {
