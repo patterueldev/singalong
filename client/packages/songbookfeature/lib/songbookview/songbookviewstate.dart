@@ -32,7 +32,7 @@ class Loading extends SongBookViewState {
       id: index.toString(),
       title: 'Song $index',
       artist: 'Artist $index',
-      thumbnailURL: 'https://via.placeholder.com/150',
+      thumbnailURL: 'https://placehold.co/600x400',
       alreadyPlayed: false,
     ),
   );

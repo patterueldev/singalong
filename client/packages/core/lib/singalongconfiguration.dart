@@ -44,6 +44,12 @@ abstract class SingalongConfiguration {
     final filteredPath = path.removePrefix("/");
     return Uri.parse("$filterBaseUrl/$filteredPath");
   }
+
+  Uri buildProxyURL(String url) {
+    final filterBaseUrl = apiBaseUrl.removeSuffix("/");
+    final encodedUrl = Uri.encodeComponent(url);
+    return Uri.parse("$filterBaseUrl/source-image?url=$encodedUrl");
+  }
 }
 
 extension RemovePrefix on String {

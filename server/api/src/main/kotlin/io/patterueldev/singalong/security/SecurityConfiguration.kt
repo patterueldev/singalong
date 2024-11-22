@@ -40,6 +40,7 @@ class SecurityConfiguration(
                 "/v3/api-docs/**",
                 "/swagger-resources",
                 "/songs/thumbnail/**",
+                "/source-image/**",
             )
         return http.csrf { it.disable() }
             .cors { it.configurationSource(corsConfigurationSource()) }
