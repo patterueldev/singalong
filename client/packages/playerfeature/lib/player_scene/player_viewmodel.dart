@@ -256,7 +256,7 @@ class DefaultPlayerViewModel extends PlayerViewModel {
   }
 
   void _scoreAudioListener(VideoController controller) async {
-    final minSeconds = min(7, controller.value.duration.inSeconds);
+    final minSeconds = min(8, controller.value.duration.inSeconds);
     final duration = Duration(seconds: minSeconds);
     if (controller.value.position >= duration) {
       controller.pause();

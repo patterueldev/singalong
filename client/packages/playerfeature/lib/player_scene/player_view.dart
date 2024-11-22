@@ -45,12 +45,11 @@ class PlayerView extends StatelessWidget {
                             }),
                       ),
                       Expanded(
-                        flex: 9,
+                        flex: 8,
                         child: Container(
                           decoration: BoxDecoration(
                             border:
                                 Border.all(color: Colors.grey.withAlpha(100)),
-                            borderRadius: BorderRadius.circular(16),
                           ),
                           child: Column(
                             children: [
@@ -135,20 +134,21 @@ class PlayerView extends StatelessWidget {
         ),
       );
 
-  Widget _buildPlaying(PlayerViewPlaying state) => Column(
+  Widget _buildPlaying(PlayerViewPlaying state) => Stack(
         children: [
-          Expanded(
-            child: Center(
-              child: state.videoPlayerController.value.isInitialized
-                  ? VideoPlayer(state.videoPlayerController)
-                  : CircularProgressIndicator(),
-            ),
-          ),
+          state.videoPlayerController.value.isInitialized
+              ? VideoPlayer(state.videoPlayerController)
+              : CircularProgressIndicator(),
           // progress bar/seek bar
-          ValueListenableBuilder(
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: ValueListenableBuilder(
               valueListenable: state.currentSeekValueNotifier,
-              builder: (_, value, __) {
-                return Slider(
+              builder: (_, value, __) => Opacity(
+                opacity: 0.5,
+                child: Slider(
                   value: value,
                   min: 0,
                   max: state.maxSeekValue,
@@ -159,8 +159,10 @@ class PlayerView extends StatelessWidget {
                     state.videoPlayerController
                         .seekTo(Duration(seconds: value.toInt()));
                   },
-                );
-              }),
+                ),
+              ),
+            ),
+          ),
         ],
       );
 
