@@ -10,6 +10,7 @@ abstract class SessionViewModel extends ChangeNotifier {
 
   String get roomName;
   String? roomId;
+  String get userName;
 
   void setupSession();
   void dismissSong(ReservedSongItem song);
@@ -38,6 +39,7 @@ class DefaultSessionViewModel extends SessionViewModel {
   }
 
   String roomName = '';
+  String userName = '';
 
   StreamController<List<ReservedSongItem>>? streamController;
 
@@ -53,6 +55,15 @@ class DefaultSessionViewModel extends SessionViewModel {
       }
       this.roomId = roomId;
       roomName = roomId;
+
+      final userName = await persistenceRepository.getUsername();
+      if (userName == null) {
+        stateNotifier.value = SessionViewState.failure('Username not found');
+        return;
+      }
+
+      this.userName = userName;
+
       notifyListeners();
       await connectRepository.connectRoomSocket(roomId);
 

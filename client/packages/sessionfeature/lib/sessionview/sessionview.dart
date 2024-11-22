@@ -36,7 +36,7 @@ class _SessionViewState extends State<SessionView> {
           children: [
             Scaffold(
               appBar: AppBar(
-                title: Text(viewModel.roomName),
+                title: Text("${viewModel.userName} (${viewModel.roomName})"),
                 leading: PopupMenuButton<String>(
                   onSelected: (value) {
                     if (value == 'disconnect') {

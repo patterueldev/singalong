@@ -81,7 +81,7 @@ class DefaultSearchDownloadableViewModel extends SearchDownloadableViewModel {
   @override
   void updateSearchQuery(
     String query, {
-    Duration debounceTime = const Duration(milliseconds: 500),
+    Duration debounceTime = const Duration(milliseconds: 1000),
   }) {
     if (searchQuery == query) return;
     searchQuery = query;
