@@ -20,7 +20,7 @@ class ParticipantsPanelWidget extends StatelessWidget {
           return ListTile(
             title: Text(user.name),
             subtitle: Text(
-                'Sang: ${user.songsFinished}\nUpcoming: ${user.songsUpcoming}'),
+                'Done: ${user.songsFinished}\nNext: ${user.songsUpcoming}'),
           );
         },
       );

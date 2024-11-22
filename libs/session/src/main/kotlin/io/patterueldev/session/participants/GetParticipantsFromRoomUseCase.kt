@@ -4,9 +4,13 @@ import io.patterueldev.common.ServiceUseCase
 import io.patterueldev.reservedsong.ReservedSongsRepository
 import io.patterueldev.role.Role
 import io.patterueldev.room.RoomRepository
+import io.patterueldev.roomuser.RoomUser
 import io.patterueldev.session.UserParticipant
 import java.time.LocalDateTime
 import java.time.ZoneOffset
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 
 internal class GetParticipantsFromRoomUseCase(
     private val roomRepository: RoomRepository,
@@ -28,17 +32,18 @@ internal class GetParticipantsFromRoomUseCase(
             }
         println("Users: ${usersInRoom.size}")
         val userIds = usersInRoom.map { it.username }
-        val reservationsForUsersInRoom = reservedSongRepository.loadReservedSongsForUsersInRoom(userIds, room.id)
 
-        return usersInRoom.map { user ->
-            val reservationsForUser =
-                reservationsForUsersInRoom.filter {
-                    it.reservingUser == user.username && it.completed
-                }
-            object : UserParticipant(reservationsForUser.size) {
+        return usersInRoom.mapAsync { user ->
+            val finished = reservedSongRepository.getCountForFinishedSongsByUserInRoom(user.username, user.roomId)
+            val upcoming = reservedSongRepository.getCountForUpcomingSongsByUserInRoom(user.username, user.roomId)
+            object : UserParticipant(finished, upcoming) {
                 override val name: String = user.username
                 override val joinedAt = user.joinedAt.toEpochSecond(ZoneOffset.UTC)
             }
         }
     }
+}
+
+suspend fun <A, B> Iterable<A>.mapAsync(transform: suspend (A) -> B): List<B> = coroutineScope {
+    map { async { transform(it) } }.awaitAll()
 }

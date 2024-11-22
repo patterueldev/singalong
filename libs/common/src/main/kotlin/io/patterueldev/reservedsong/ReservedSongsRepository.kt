@@ -24,13 +24,13 @@ interface ReservedSongsRepository {
         at: LocalDateTime,
     )
 
-    suspend fun loadReservedSongsForUserInRoom(
+    suspend fun getCountForFinishedSongsByUserInRoom(
         userId: String,
         roomId: String,
-    ): List<ReservedSong>
+    ): Int
 
-    suspend fun loadReservedSongsForUsersInRoom(
-        userIds: List<String>,
+    suspend fun getCountForUpcomingSongsByUserInRoom(
+        userId: String,
         roomId: String,
-    ): List<ReservedSong>
+    ): Int
 }

@@ -20,6 +20,7 @@ class UserParticipantSocketRepositoryDS
                 (e) => UserParticipant(
                   name: e.name,
                   songsFinished: e.songsFinished,
+                  songsUpcoming: e.songsUpcoming,
                 ),
               )
               .toList();

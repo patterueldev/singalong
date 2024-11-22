@@ -601,12 +601,14 @@ APIRoomParticipant _$APIRoomParticipantFromJson(Map<String, dynamic> json) =>
     APIRoomParticipant(
       name: json['name'] as String,
       songsFinished: (json['songsFinished'] as num).toInt(),
+      songsUpcoming: (json['songsUpcoming'] as num).toInt(),
     );
 
 Map<String, dynamic> _$APIRoomParticipantToJson(APIRoomParticipant instance) =>
     <String, dynamic>{
       'name': instance.name,
       'songsFinished': instance.songsFinished,
+      'songsUpcoming': instance.songsUpcoming,
     };
 
 RoomCommand _$RoomCommandFromJson(Map<String, dynamic> json) => RoomCommand(

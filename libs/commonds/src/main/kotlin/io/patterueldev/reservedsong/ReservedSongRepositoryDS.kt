@@ -162,38 +162,13 @@ open class ReservedSongRepositoryDS : ReservedSongsRepository {
         reservedSongDocumentRepository.markStartedPlaying(reservedSong.id!!, at)
     }
 
-    override suspend fun loadReservedSongsForUserInRoom(
-        userId: String,
-        roomId: String,
-    ): List<ReservedSong> {
-        TODO("Not yet implemented") // TODO: not now
+    override suspend fun getCountForFinishedSongsByUserInRoom(userId: String, roomId: String): Int {
+        val result = reservedSongDocumentRepository.getCountForFinishedReservationsByUserInRoom(userId, roomId)
+        println("getCountForFinishedReservationsByUserInRoom(user: $userId, room: $roomId): $result")
+        return result
     }
 
-    override suspend fun loadReservedSongsForUsersInRoom(
-        userIds: List<String>,
-        roomId: String,
-    ): List<ReservedSong> {
-        val reservedSongs =
-            withContext(Dispatchers.IO) {
-                reservedSongDocumentRepository.loadReservationsByUserIdsFromRoom(userIds, roomId)
-            }
-        val songIds = reservedSongs.map { it.songId }
-        val songs = withContext(Dispatchers.IO) { songDocumentRepository.findAllById(songIds) }
-        return reservedSongs.map { reservedSong ->
-            val song =
-                songs.find { it.id == reservedSong.songId }
-                    ?: throw IllegalArgumentException("Song with id ${reservedSong.songId} not found")
-            object : ReservedSong {
-                override val id: String = reservedSong.id ?: throw IllegalArgumentException("Reserved song id not found")
-                override val order: Int = reservedSong.order
-                override val songId: String = reservedSong.songId
-                override val title: String = song.title
-                override val artist: String = song.artist
-                override val thumbnailPath: String = song.thumbnailFile.path()
-                override val reservingUser: String = reservedSong.reservedBy
-                override val currentPlaying: Boolean = reservedSong.startedPlayingAt != null && reservedSong.finishedPlayingAt == null
-                override val completed: Boolean = reservedSong.completed
-            }
-        }
+    override suspend fun getCountForUpcomingSongsByUserInRoom(userId: String, roomId: String): Int {
+        return reservedSongDocumentRepository.getCountForUpcomingSongsByUserInRoom(userId, roomId)
     }
 }

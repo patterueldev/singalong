@@ -6,6 +6,7 @@ import org.springframework.data.mongodb.repository.Query
 import org.springframework.data.mongodb.repository.Update
 import org.springframework.stereotype.Repository
 import java.time.LocalDateTime
+import org.springframework.data.mongodb.repository.CountQuery
 
 @Repository
 interface ReservedSongDocumentRepository : MongoRepository<ReservedSongDocument, String> {
@@ -65,8 +66,13 @@ interface ReservedSongDocumentRepository : MongoRepository<ReservedSongDocument,
         at: LocalDateTime,
     )
 
-    @Query(
-        value = "{ 'roomId' : ?1, 'reservedBy' : { '\$in' : ?0 } }",
+    @CountQuery(
+        value = "{ 'roomId' : ?1, 'reservedBy' : ?0, 'completed' : true }",
     )
-    fun loadReservationsByUserIdsFromRoom(userIds: List<String>, roomId: String): List<ReservedSongDocument>
+    fun getCountForFinishedReservationsByUserInRoom(userId: String, roomId: String): Int
+
+    @CountQuery(
+        value = "{ 'roomId' : ?1, 'reservedBy' : ?0, 'finishedPlayingAt' : null }",
+    )
+    fun getCountForUpcomingSongsByUserInRoom(userId: String, roomId: String): Int
 }
