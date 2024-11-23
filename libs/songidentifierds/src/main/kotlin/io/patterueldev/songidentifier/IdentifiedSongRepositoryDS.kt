@@ -299,22 +299,26 @@ internal class IdentifiedSongRepositoryDS(
         keyword: String,
         limit: Int,
     ): List<SearchResultItem> {
-        return try {
-            println("Searching for songs with keyword: $keyword")
-            withContext(Dispatchers.IO) {
-                val urlEncodedKeyword = URLEncoder.encode(keyword, StandardCharsets.UTF_8.toString())
-                val urlQueries = mapOf("keyword" to urlEncodedKeyword, "limit" to limit.toString())
-                val query = urlQueries.map { "${it.key}=${it.value}" }.joinToString("&")
-                val urlPath = "/search?$query"
-                jsServiceWebClient.get()
-                    .uri(urlPath)
-                    .retrieve()
-                    .bodyToMono(Array<SearchResultItem>::class.java)
-                    .block()
-            }?.toList() ?: emptyList()
-        } catch (e: Exception) {
-            println("Error occurred while attempting to identify: ${e.message}")
-            emptyList()
+        mutex.withLock {
+            return try {
+                println("Searching for songs with keyword: $keyword")
+                val result = withContext(Dispatchers.IO) {
+                    val urlEncodedKeyword = URLEncoder.encode(keyword, StandardCharsets.UTF_8.toString())
+                    val urlQueries = mapOf("keyword" to urlEncodedKeyword, "limit" to limit.toString())
+                    val query = urlQueries.map { "${it.key}=${it.value}" }.joinToString("&")
+                    val urlPath = "/search?$query"
+                    jsServiceWebClient.get()
+                        .uri(urlPath)
+                        .retrieve()
+                        .bodyToMono(Array<SearchResultItem>::class.java)
+                        .block()
+                }?.toList() ?: emptyList()
+                println("found ${result.size} songs for keyword: $keyword")
+                result
+            } catch (e: Exception) {
+                println("Error occurred while attempting to identify: ${e.message}")
+                emptyList()
+            }
         }
     }
 
