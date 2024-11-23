@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:commonds/commonds.dart';
 import 'package:flutter/material.dart';
 import 'package:playerfeature/playerfeature.dart';
@@ -39,9 +41,20 @@ class PlayerApp extends StatelessWidget {
       ),
       darkTheme: ThemeData.dark(),
       themeMode: ThemeMode.dark,
+      scrollBehavior: NoThumbScrollBehavior().copyWith(scrollbars: false),
       home: const PlayerWrapper(),
     );
   }
+}
+
+class NoThumbScrollBehavior extends ScrollBehavior {
+  @override
+  Set<PointerDeviceKind> get dragDevices => {
+        PointerDeviceKind.touch,
+        PointerDeviceKind.mouse,
+        PointerDeviceKind.stylus,
+        PointerDeviceKind.trackpad,
+      };
 }
 
 class PlayerWrapper extends StatefulWidget {

@@ -10,21 +10,21 @@ class ReservedWidget extends StatefulWidget {
 // this is just a horizontal widget on top of the screen
 class _ReservedWidgetState extends State<ReservedWidget> {
   final ScrollController _scrollController = ScrollController();
-  Timer? _timer;
+  Timer? _scrollTimer;
 
   // Adjustable variables
   final Duration scrollInterval =
       Duration(milliseconds: 50); // Reduced interval
   final double scrollAmount = 100.0;
   final Duration animationDuration =
-      Duration(milliseconds: 500); // Reduced duratio
+      Duration(milliseconds: 500); // Reduced duration
 
   @override
   void initState() {
     super.initState();
 
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-      _timer = Timer.periodic(scrollInterval, (timer) {
+      _scrollTimer = Timer.periodic(scrollInterval, (timer) {
         if (_scrollController.hasClients) {
           final maxScrollExtent = _scrollController.position.maxScrollExtent;
           final currentScrollPosition = _scrollController.position.pixels;
@@ -36,7 +36,7 @@ class _ReservedWidgetState extends State<ReservedWidget> {
             _scrollController.animateTo(
               newScrollPosition,
               duration: animationDuration,
-              curve: Curves.easeInOut,
+              curve: Curves.linear,
             );
           }
         }
@@ -131,7 +131,7 @@ class _ReservedWidgetState extends State<ReservedWidget> {
 
   @override
   void dispose() {
-    _timer?.cancel();
+    _scrollTimer?.cancel();
     super.dispose();
   }
 }
