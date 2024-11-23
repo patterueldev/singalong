@@ -29,13 +29,19 @@ internal open class SaveSongUseCase(
         val fileTitle = videoTitle.replace(Regex("[/\\\\?%*:|\"<>]"), "-").replace(Regex("\\s+"), "-").lowercase()
         val filename = "$fileTitle[$videoId]"
 
-        var newSong = identifiedSongRepository.saveSong(parameters.song, user.username, user.roomId)
-
         // execute on the background thread
         GlobalScope.launch {
             mutex.withLock {
-                newSong = identifiedSongRepository.downloadThumbnail(newSong, identifiedSong.imageUrl, filename)
-                newSong = identifiedSongRepository.downloadSong(newSong, identifiedSong.source, filename)
+                val downloadedVideo = identifiedSongRepository.downloadSongVideo(identifiedSong.source, filename)
+                val downloadedThumbnail = identifiedSongRepository.downloadSongThumbnail(identifiedSong.imageUrl, filename)
+                val newSong =
+                    identifiedSongRepository.saveSong(
+                        parameters.song,
+                        user.username,
+                        user.roomId,
+                        downloadedVideo,
+                        downloadedThumbnail,
+                    )
                 if (parameters.thenReserve) {
                     val reservedSong = identifiedSongRepository.reserveSong(user, newSong.id)
                     songIdentifierCoordinator?.onReserveUpdate(user.roomId)
@@ -45,6 +51,6 @@ internal open class SaveSongUseCase(
                 }
             }
         }
-        return GenericResponse.success(newSong)
+        return GenericResponse.success(true)
     }
 }

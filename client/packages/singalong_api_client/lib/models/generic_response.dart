@@ -26,6 +26,10 @@ class GenericResponse {
     return data as String;
   }
 
+  bool boolData() {
+    return data as bool;
+  }
+
   factory GenericResponse.fromJson(Map<String, dynamic> json) =>
       _$GenericResponseFromJson(json);
   factory GenericResponse.fromResponse(Response response) {

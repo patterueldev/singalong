@@ -69,15 +69,21 @@ internal class DeleteSongUseCase(
 
             // if there isn't, delete the song
             // delete associated files
-            if (canDeleteThumbnailFile) songRepository.deleteSongFile(song.thumbnailFile)
-            if (canDeleteVideoFile) songRepository.deleteSongFile(song.videoFile)
+            if (canDeleteThumbnailFile) {
+                println("deleting thumbnail file: ${song.thumbnailFile}")
+                songRepository.deleteSongFile(song.thumbnailFile)
+            }
+            if (canDeleteVideoFile) {
+                println("deleting video file: ${song.videoFile}")
+                songRepository.deleteSongFile(song.videoFile)
+            }
 
             println("Song was not reserved: ${song.id}; will delete")
             songRepository.deleteSong(songId = song.id)
 
             return GenericResponse.success(song)
         } catch (e: Exception) {
-            println("Error: ${e.message}")
+            println("DeleteSongUseCase Error: ${e.message}")
             return GenericResponse.failure(e.message ?: "An unknown error occurred while deleting song $parameters")
         }
     }

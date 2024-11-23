@@ -6,6 +6,14 @@ export function downloadSong(app) {
       let url = req.body.url
       let filename = req.body.filename
       let readable = ytdl(url, { filter: 'videoandaudio' })
+
+      readable.on('progress', (chunkLength, downloaded, total) => {
+        console.log(`downloading... ${downloaded/total}`)
+      });
+      readable.on('end', () => {
+        console.log('done...')
+        console.log("Filename: " + filename)
+      })
       try {
           res.setHeader('Content-Disposition', `attachment; filename=${filename}`)
           readable.pipe(res)

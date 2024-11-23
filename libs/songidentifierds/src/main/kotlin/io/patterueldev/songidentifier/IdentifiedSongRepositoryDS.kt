@@ -89,19 +89,93 @@ internal class IdentifiedSongRepositoryDS(
         }
     }
 
+    override suspend fun downloadSongVideo(
+        sourceUrl: String,
+        filename: String,
+    ): BucketFile {
+        return mutex.withLock {
+            try {
+                val parameters = DownloadSongParameters(url = sourceUrl, filename = filename)
+                val bytes =
+                    withContext(Dispatchers.IO) {
+                        jsServiceWebClient.post()
+                            .uri("/download")
+                            .bodyValue(parameters)
+                            .retrieve()
+                            .bodyToMono(ByteArray::class.java)
+                            .block()
+                    } ?: throw Exception("No response from server")
+
+                val bucket = "videos"
+                val objectName = "$filename.mp4"
+                withContext(Dispatchers.IO) {
+                    minioClient.putObject(
+                        PutObjectArgs.builder()
+                            .bucket(bucket)
+                            .`object`(objectName)
+                            .stream(bytes.inputStream(), bytes.size.toLong(), -1)
+                            .contentType("video/mp4")
+                            .build(),
+                    )
+                }
+                BucketFile(
+                    bucket = bucket,
+                    objectName = objectName,
+                )
+            } catch (e: Exception) {
+                println("Error while saving: ${e.message}")
+                throw e
+            }
+        }
+    }
+
+    override suspend fun downloadSongThumbnail(
+        imageUrl: String,
+        filename: String,
+    ): BucketFile {
+        val bucket = "thumbnails"
+        return try {
+            val url = URI(imageUrl).toURL()
+            url.readBytes()
+
+            val objectName = "$filename.jpg"
+
+            withContext(Dispatchers.IO) {
+                val bytes = url.readBytes()
+                println("Image bytes: ${bytes.size}")
+                minioClient.putObject(
+                    PutObjectArgs.builder()
+                        .bucket(bucket)
+                        .`object`(objectName)
+                        .stream(bytes.inputStream(), bytes.size.toLong(), -1)
+                        .contentType("image/jpeg")
+                        .build(),
+                )
+            }
+            BucketFile(
+                bucket = bucket,
+                objectName = objectName,
+            )
+        } catch (e: Exception) {
+            println("Error while saving: ${e.message}")
+            BucketFile.default(bucket)
+        }
+    }
+
     override suspend fun saveSong(
         identifiedSong: IdentifiedSong,
         userId: String,
         sessionId: String,
+        videoFile: BucketFile,
+        thumbnailFile: BucketFile,
     ): SavedSong {
         println("Saving song to database")
-        val bucket = "thumbnails"
-
         val song =
             SongDocument.new(
                 source = identifiedSong.source,
                 sourceId = identifiedSong.id,
-                thumbnailFile = BucketFile.default(bucket),
+                videoFile = videoFile,
+                thumbnailFile = thumbnailFile,
                 title = identifiedSong.songTitle,
                 artist = identifiedSong.songArtist,
                 language = identifiedSong.songLanguage,
@@ -121,109 +195,6 @@ internal class IdentifiedSongRepositoryDS(
                 songDocumentRepository.save(song)
             }
         return saved.toSavedSong()
-    }
-
-    override suspend fun downloadThumbnail(
-        song: SavedSong,
-        imageUrl: String,
-        filename: String,
-    ): SavedSong {
-        var thumbnailFile: BucketFile? = null
-        if (imageUrl.trim().isEmpty()) {
-            return song
-        }
-
-        // download image and save to minio
-        try {
-            val bucket = "thumbnails"
-            val objectName = "$filename.jpg"
-            val result =
-                withContext(Dispatchers.IO) {
-                    val url = URI(imageUrl).toURL()
-                    val bytes = url.readBytes()
-                    println("Image bytes: ${bytes.size}")
-                    // TODO: find a way to "extract" the file extension from the URL
-                    minioClient.putObject(
-                        PutObjectArgs.builder()
-                            .bucket(bucket)
-                            .`object`(objectName)
-                            .stream(bytes.inputStream(), bytes.size.toLong(), -1)
-                            .contentType("image/jpeg")
-                            .build(),
-                    )
-                }
-            // extract url
-            thumbnailFile =
-                BucketFile(
-                    bucket = bucket,
-                    objectName = objectName,
-                )
-            val current =
-                withContext(Dispatchers.IO) {
-                    songDocumentRepository.findById(song.id)
-                }.orElseThrow { Exception("Song not found") }
-            val updated = current.copy(thumbnailFile = thumbnailFile)
-            withContext(Dispatchers.IO) {
-                songDocumentRepository.save(updated)
-            }
-            return updated.toSavedSong()
-        } catch (e: Exception) {
-            println("Error while saving: ${e.message}")
-            throw e
-        }
-    }
-
-    override suspend fun downloadSong(
-        song: SavedSong,
-        sourceUrl: String,
-        filename: String,
-    ): SavedSong {
-        try {
-            val bucket = "videos"
-
-            val parameters = DownloadSongParameters(url = sourceUrl)
-            val bytes: ByteArray =
-                withContext(Dispatchers.IO) {
-                    jsServiceWebClient.post()
-                        .uri("/download")
-                        .bodyValue(parameters)
-                        .retrieve()
-                        .bodyToMono(ByteArray::class.java)
-                        .block()
-                } ?: throw Exception("No response from server")
-
-            val objectName = "$filename.mp4"
-            withContext(Dispatchers.IO) {
-                println("Image bytes: ${bytes.size}")
-                // TODO: find a way to "extract" the file extension from the URL
-                minioClient.putObject(
-                    PutObjectArgs.builder()
-                        .bucket(bucket)
-                        .`object`(objectName)
-                        .stream(bytes.inputStream(), bytes.size.toLong(), -1)
-                        .contentType("video/mp4")
-                        .build(),
-                )
-            }
-
-            val videoFile =
-                BucketFile(
-                    bucket = bucket,
-                    objectName = objectName,
-                )
-            val current =
-                withContext(Dispatchers.IO) {
-                    songDocumentRepository.findById(song.id)
-                }.orElseThrow { Exception("Song not found") }
-            val updated = current.copy(videoFile = videoFile)
-            withContext(Dispatchers.IO) {
-                songDocumentRepository.save(updated)
-            }
-            return updated.toSavedSong()
-        } catch (e: Exception) {
-            println("Error while saving: ${e.message}")
-            throw e
-        }
     }
 
     override suspend fun updateSong(

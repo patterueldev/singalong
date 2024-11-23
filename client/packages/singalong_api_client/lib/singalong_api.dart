@@ -90,14 +90,13 @@ class SingalongAPI {
     return APIIdentifiedSongDetails.fromJson(result.objectData());
   }
 
-  Future<APISaveSongResponseData> saveSong(
-      APISaveSongParameters parameters) async {
+  Future<bool> saveSong(APISaveSongParameters parameters) async {
     final result = await apiClient.request(
       path: APIPath.songs,
       method: HttpMethod.POST,
       payload: parameters.toJson(),
     );
-    return APISaveSongResponseData.fromJson(result.objectData());
+    return result.boolData();
   }
 
   Future<List<APIDownloadableData>> searchDownloadables(

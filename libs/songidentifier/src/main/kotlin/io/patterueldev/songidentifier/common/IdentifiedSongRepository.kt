@@ -1,5 +1,6 @@
 package io.patterueldev.songidentifier.common
 
+import io.patterueldev.common.BucketFile
 import io.patterueldev.identifysong.IdentifiedSong
 import io.patterueldev.reservedsong.ReservedSong
 import io.patterueldev.roomuser.RoomUser
@@ -14,26 +15,26 @@ interface IdentifiedSongRepository {
 
     suspend fun songAlreadyDownloaded(sourceId: String): Boolean
 
+    suspend fun downloadSongVideo(
+        sourceUrl: String,
+        filename: String,
+    ): BucketFile
+
+    suspend fun downloadSongThumbnail(
+        imageUrl: String,
+        filename: String,
+    ): BucketFile
+
     suspend fun saveSong(
         identifiedSong: IdentifiedSong,
         userId: String,
         sessionId: String,
-    ): SavedSong
-
-    suspend fun downloadThumbnail(
-        song: SavedSong,
-        imageUrl: String,
-        filename: String,
+        videoFile: BucketFile,
+        thumbnailFile: BucketFile,
     ): SavedSong
 
     suspend fun updateSong(
         songId: String,
-        filename: String,
-    ): SavedSong
-
-    suspend fun downloadSong(
-        song: SavedSong,
-        sourceUrl: String,
         filename: String,
     ): SavedSong
 

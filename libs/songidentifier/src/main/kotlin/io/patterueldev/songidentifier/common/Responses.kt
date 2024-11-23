@@ -5,5 +5,5 @@ import io.patterueldev.identifysong.IdentifiedSong
 import io.patterueldev.songidentifier.searchsong.SearchResultItem
 
 typealias IdentifySongResponse = GenericResponse<IdentifiedSong>
-typealias SaveSongResponse = GenericResponse<SavedSong>
+typealias SaveSongResponse = GenericResponse<Boolean>
 typealias SearchSongResponse = GenericResponse<List<SearchResultItem>>
