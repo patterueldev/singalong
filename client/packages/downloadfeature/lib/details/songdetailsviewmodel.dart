@@ -11,7 +11,11 @@ abstract class SongDetailsViewModel extends ChangeNotifier {
   bool get videoHasLyrics;
   String get songLyrics;
 
-  final songTagsController = StringTagController();
+  List<String> get genres;
+  List<String> get tags;
+
+  final genresController = StringTagController();
+  final tagsController = StringTagController();
 
   void updateSongTitle(String text);
   void updateSongArtist(String text);
@@ -39,9 +43,8 @@ class DefaultSongDetailsViewModel extends SongDetailsViewModel {
     videoHasLyrics = identifiedSongDetails.videoHasLyrics;
     songLyrics = identifiedSongDetails.songLyrics;
 
-    identifiedSongDetails.tags.forEach((tag) {
-      songTagsController.addTag(tag);
-    });
+    genres = identifiedSongDetails.genres;
+    tags = identifiedSongDetails.tags;
   }
 
   @override
@@ -68,6 +71,12 @@ class DefaultSongDetailsViewModel extends SongDetailsViewModel {
 
   @override
   String songLyrics = '';
+
+  @override
+  List<String> genres = [];
+
+  @override
+  List<String> tags = [];
 
   @override
   void updateSongTitle(String text) {
@@ -112,6 +121,8 @@ class DefaultSongDetailsViewModel extends SongDetailsViewModel {
       isOffVocal: isOffVocal,
       videoHasLyrics: videoHasLyrics,
       songLyrics: songLyrics,
+      tags: tagsController.getTags ?? [],
+      genres: genresController.getTags ?? [],
     );
     final result =
         await downloadUseCase.downloadSong(details, reserve: andReserve).run();

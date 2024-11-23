@@ -1,4 +1,4 @@
-part of '../adminfeature.dart';
+part of '../common.dart';
 
 class StringMultilineTags extends StatelessWidget {
   final StringTagController stringTagController;

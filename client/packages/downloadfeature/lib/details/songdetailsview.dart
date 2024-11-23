@@ -164,15 +164,39 @@ class _SongDetailsViewState extends State<SongDetailsView> {
               onChanged: viewModel.toggleVideoHasLyrics,
               label: localizations.hasLyricsText,
             ),
-            TextFieldTags(
-                textfieldTagsController: viewModel.songTagsController,
-                inputFieldBuilder: (context, inputFieldValues) {
-                  return TextField(
-                    controller: inputFieldValues.textEditingController,
-                    focusNode: inputFieldValues.focusNode,
-                    // style: const TextStyle(fontSize: 15, color: Colors.white),
-                  );
-                }),
+            // Genre
+            const SizedBox(height: 16),
+            Text(
+              "Genre",
+              style: Theme.of(context).textTheme.labelLarge,
+            ),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: StringMultilineTags(
+                    stringTagController: viewModel.genresController,
+                    initialTags: viewModel.genres,
+                  ),
+                ),
+              ],
+            ),
+            // Tags
+            Text(
+              "Tags",
+              style: Theme.of(context).textTheme.labelLarge,
+            ),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: StringMultilineTags(
+                    stringTagController: viewModel.tagsController,
+                    initialTags: viewModel.tags,
+                  ),
+                ),
+              ],
+            ),
             const SizedBox(height: 16),
             // add a url here to search for the song lyrics externally
             InkWell(

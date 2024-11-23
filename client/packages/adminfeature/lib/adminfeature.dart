@@ -43,7 +43,6 @@ part 'songview/song_editor_viewmodel.dart';
 part 'songview/songviewstate.dart';
 part 'songview/song_editor_view.dart';
 part 'songview/songrepository.dart';
-part 'songview/tagsmanagerwidget.dart';
 part 'participants_panel/participants_panel_widget.dart';
 part 'participants_panel/participants_panel_viewmodel.dart';
 
