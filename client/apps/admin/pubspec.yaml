@@ -39,6 +39,8 @@ dependencies:
   adminfeatureds:
   songbookfeature:
   songbookfeatureds:
+  downloadfeature:
+  downloadfeature_ds:
 
   cupertino_icons: ^1.0.6
   provider: ^6.1.2

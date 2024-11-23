@@ -1,6 +1,7 @@
 import 'package:adminfeature/adminfeature.dart';
 import 'package:common/common.dart';
 import 'package:core/core.dart';
+import 'package:downloadfeature/downloadfeature.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:songbookfeature/songbookfeature.dart';
@@ -17,7 +18,7 @@ part 'master/master_view.dart';
 part 'master/master_viewmodel.dart';
 
 class DefaultAppLocalizations extends AdminLocalizations
-    with SongBookLocalizationsMixin {}
+    with SongBookLocalizationsMixin, DownloadLocalizationsMixin {}
 
 LocalizedString _getLocalizedString(
         String Function(AppLocalizations) getString) =>
@@ -76,7 +77,7 @@ mixin SongBookLocalizationsMixin implements SongBookLocalizations {
   }
 }
 
-class DefaultAppAssets with SongBookAssetsMixin {}
+class DefaultAppAssets with SongBookAssetsMixin, DownloadAssetsMixin {}
 
 mixin SongBookAssetsMixin implements SongBookAssets {
   @override
@@ -88,4 +89,101 @@ mixin SongBookAssetsMixin implements SongBookAssets {
   final identifySongBannerImage = AssetSource(
     Assets.images.magnifier4Woman.path,
   );
+}
+
+mixin DownloadAssetsMixin implements DownloadAssets {
+  @override
+  final identifySongBannerImage = AssetSource(
+    Assets.images.magnifier4Woman.path,
+  );
+}
+
+mixin DownloadLocalizationsMixin implements DownloadLocalizations {
+  @override
+  final songDetailsScreenTitleText = _getLocalizedString(
+      (localizations) => localizations.songDetailsScreenTitle);
+
+  @override
+  final songTitlePlaceholderText = _getLocalizedString(
+      (localizations) => localizations.songTitlePlaceholder);
+
+  @override
+  final songArtistPlaceholderText = _getLocalizedString(
+      (localizations) => localizations.songArtistPlaceholder);
+
+  @override
+  final songLanguagePlaceholderText = _getLocalizedString(
+      (localizations) => localizations.songLanguagePlaceholder);
+
+  @override
+  final isOffVocalText =
+      _getLocalizedString((localizations) => localizations.isOffVocal);
+
+  @override
+  final hasLyricsText =
+      _getLocalizedString((localizations) => localizations.hasLyrics);
+
+  @override
+  final lyricsPlaceholderText =
+      _getLocalizedString((localizations) => localizations.lyricsPlaceholder);
+
+  @override
+  final downloadOnlyText = _getLocalizedString(
+      (localizations) => localizations.downloadOnlyButtonText);
+
+  @override
+  final downloadAndReserveText = _getLocalizedString(
+      (localizations) => localizations.downloadAndReserveButtonText);
+
+  @override
+  final identifySongScreenTitleText = _getLocalizedString(
+      (localizations) => localizations.identifySongScreenTitle);
+
+  @override
+  final identifySongUrlPlaceholderText = _getLocalizedString(
+      (localizations) => localizations.identifySongUrlPlaceholder);
+
+  @override
+  final identifySongSubmitButtonText = _getLocalizedString(
+      (localizations) => localizations.identifySongSubmitButtonText);
+
+  @override
+  final emptyUrl =
+      _getLocalizedString((localizations) => localizations.emptyUrl);
+
+  @override
+  final invalidUrl =
+      _getLocalizedString((localizations) => localizations.invalidUrl);
+
+  @override
+  final unableToIdentifySong = _getLocalizedString(
+      (localizations) => localizations.unableToIdentifySong);
+
+  @override
+  final alreadyExists =
+      _getLocalizedString((localizations) => localizations.alreadyExists);
+
+  @override
+  final emptySongTitle =
+      _getLocalizedString((localizations) => localizations.emptySongTitle);
+
+  @override
+  final emptySongArtist =
+      _getLocalizedString((localizations) => localizations.emptySongArtist);
+
+  @override
+  final emptySongLanguage =
+      _getLocalizedString((localizations) => localizations.emptySongLanguage);
+
+  @override
+  final searchByURL =
+      _getLocalizedString((localizations) => localizations.searchByURL);
+
+  @override
+  final enterSearchKeyword =
+      _getLocalizedString((localizations) => localizations.enterSearchKeyword);
+
+  @override
+  LocalizedString itemNotFound(String item) =>
+      _getLocalizedString((localizations) => localizations.itemNotFound(item));
 }

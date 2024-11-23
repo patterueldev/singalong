@@ -1,6 +1,8 @@
 import 'package:adminfeature/adminfeature.dart';
 import 'package:adminfeatureds/adminfeatureds.dart';
 import 'package:commonds/commonds.dart';
+import 'package:downloadfeature/downloadfeature.dart';
+import 'package:downloadfeature_ds/downloadfeature_ds.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:core/core.dart';
@@ -15,6 +17,7 @@ void main() {
   final commonProvider = CommonProvider();
   final adminFeatureDSProvider = AdminFeatureDSProvider();
   final songBookFeatureDSProvider = SongBookFeatureDSProvider();
+  final downloadFeatureDSProvider = DownloadFeatureDSProvider();
   final coordinator = AppCoordinator();
   final appLocalizations = DefaultAppLocalizations();
   final assets = DefaultAppAssets();
@@ -28,10 +31,14 @@ void main() {
       Provider<SongBookFlowCoordinator>.value(value: coordinator),
       Provider<SongBookLocalizations>.value(value: appLocalizations),
       Provider<SongBookAssets>.value(value: assets),
+      Provider<DownloadFlowCoordinator>.value(value: coordinator),
+      Provider<DownloadLocalizations>.value(value: appLocalizations),
+      Provider<DownloadAssets>.value(value: assets),
       singalongAPIClientProvider.providers,
       commonProvider.providers,
       adminFeatureDSProvider.providers,
       songBookFeatureDSProvider.providers,
+      downloadFeatureDSProvider.providers,
     ],
     child: ChangeNotifierProvider<AdminAppViewModel>(
       create: (context) => DefaultAdminAppViewModel(

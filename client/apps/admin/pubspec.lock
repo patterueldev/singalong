@@ -265,6 +265,20 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.2.0"
+  downloadfeature:
+    dependency: "direct main"
+    description:
+      path: "../../packages/downloadfeature"
+      relative: true
+    source: path
+    version: "0.0.1"
+  downloadfeature_ds:
+    dependency: "direct main"
+    description:
+      path: "../../packages/downloadfeature_ds"
+      relative: true
+    source: path
+    version: "0.0.1"
   encrypt:
     dependency: transitive
     description:

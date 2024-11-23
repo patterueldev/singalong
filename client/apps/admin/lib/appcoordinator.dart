@@ -1,7 +1,7 @@
 part of '_main.dart';
 
 class AppCoordinator extends AdminCoordinator
-    implements SongBookFlowCoordinator {
+    implements SongBookFlowCoordinator, DownloadFlowCoordinator {
   @override
   void onSignInSuccess(BuildContext context) {
     debugPrint('onSignInSuccess');
@@ -22,6 +22,7 @@ class AppCoordinator extends AdminCoordinator
           create: (context) => DefaultMasterViewModel(room: room),
           child: const MasterView(),
         ),
+        settings: RouteSettings(name: '/master'),
       ),
     );
   }
@@ -40,12 +41,24 @@ class AppCoordinator extends AdminCoordinator
 
   @override
   void openDownloadScreen(BuildContext context, {String? url}) {
-    // TODO: implement openDownloadScreen
+    DownloadFeatureProvider downloadFeatureProvider = context.read();
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => downloadFeatureProvider.buildIdentifyUrlView(
+            context: context, url: url),
+      ),
+    );
   }
 
   @override
   void openSearchDownloadablesScreen(BuildContext context, {String? query}) {
-    // TODO: implement openSearchDownloadablesScreen
+    DownloadFeatureProvider downloadFeatureProvider = context.read();
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) =>
+            downloadFeatureProvider.buildSearchDownloadableView(query: query),
+      ),
+    );
   }
 
   @override
@@ -61,6 +74,33 @@ class AppCoordinator extends AdminCoordinator
   @override
   void onReserved(BuildContext context) {
     // TODO: implement onReserved
-    // nothing to do
+    // nothing to do in admin
+  }
+
+  @override
+  void navigateToIdentifiedSongDetailsView(BuildContext context,
+      {required IdentifiedSongDetails details}) {
+    DownloadFeatureProvider downloadFeatureProvider = context.read();
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => downloadFeatureProvider.buildSongDetailsView(
+          context: context,
+          identifiedSongDetails: details,
+        ),
+      ),
+    );
+  }
+
+  @override
+  void navigateToURLIdentifierView(BuildContext context) {
+    openDownloadScreen(context);
+  }
+
+  @override
+  void onDownloadSuccess(BuildContext context) {
+    Navigator.popUntil(context, (route) {
+      debugPrint('Checking route: ${route.settings.name}');
+      return route.settings.name == '/master';
+    });
   }
 }
