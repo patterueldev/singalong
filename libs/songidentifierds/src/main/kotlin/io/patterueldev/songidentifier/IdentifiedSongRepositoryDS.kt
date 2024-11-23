@@ -351,10 +351,19 @@ internal class IdentifiedSongRepositoryDS(
                     metadata["englishTitle"] = it
                 }
             }
+            val language = enhancedSong.language
+            val songTitle: String
+            if (language == null) {
+                songTitle = identifiedSong.songTitle
+            } else if (language.contains("jap", true)) {
+                songTitle = enhancedSong.romanizedTitle.letOrElse(identifiedSong.songTitle)
+            } else {
+                songTitle = enhancedSong.originalTitle.letOrElse(identifiedSong.songTitle)
+            }
 
             val finalCopy =
                 identifiedSong.copy(
-                    songTitle = enhancedSong.romanizedTitle.letOrElse(identifiedSong.songTitle),
+                    songTitle = songTitle,
                     songArtist = enhancedSong.artist.letOrElse(identifiedSong.songArtist),
                     songLanguage = enhancedSong.language.letOrElse(identifiedSong.songLanguage),
                     isOffVocal = enhancedSong.isOffVocal.letOrElse(identifiedSong.isOffVocal),

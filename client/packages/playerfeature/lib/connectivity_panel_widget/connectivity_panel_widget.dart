@@ -17,7 +17,7 @@ class ConnectivityPanelWidget extends StatelessWidget {
   });
 
   String get encryptionType => "WPA2";
-  String get wifiName => "Pat\u2019s XR";
+  String get wifiName => "Pat\u2019s 16";
   String get wifiPassword => "aishiteru";
 
   String get wifiQRData =>
@@ -71,6 +71,7 @@ class ConnectivityPanelWidget extends StatelessWidget {
                   fontSize: constraints.maxHeight * 0.02,
                   fontWeight: FontWeight.bold),
             ),
+            const SizedBox(height: 30)
           ],
         ),
       );

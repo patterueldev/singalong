@@ -192,6 +192,7 @@ class DefaultPlayerViewModel extends PlayerViewModel {
 
       final audioUrl = "http://$host:9000/assets/fanfare-sound.mp3";
       final audioController = VideoController.network(audioUrl);
+      audioController.setVolume(0.5);
 
       _videoControllers.add(scoreVideoController);
       _videoControllers.add(audioController);

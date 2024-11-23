@@ -115,6 +115,7 @@ class _ParticipantsPanelWidgetState extends State<ParticipantsPanelWidget> {
               fontWeight: FontWeight.bold,
             ),
           ),
+          const SizedBox(height: 30)
         ],
       );
 }
