@@ -82,7 +82,7 @@ class _PlayerWrapperState extends State<PlayerWrapper> {
     _controller?.dispose();
 
     final configuration = context.read<SingalongConfiguration>();
-    final host = configuration.host;
+    final host = configuration.storageHost;
     // TODO: this will be customizable in the future
     final url = "http://$host:9000/assets/flames-loop.mp4";
     final uri = Uri.parse(url);

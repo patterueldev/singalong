@@ -34,7 +34,7 @@ void main() {
       Provider<SongBookFlowCoordinator>.value(value: appCoordinator),
       Provider<DownloadFlowCoordinator>.value(value: appCoordinator),
       Provider<SingalongConfiguration>.value(
-        value: APIConfiguration(defaultHost: host),
+        value: APIConfiguration(defaultApiHost: host),
       ),
       buildProviders(),
     ],

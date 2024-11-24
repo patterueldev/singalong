@@ -95,3 +95,4 @@ app.*.map.json
 
 ### Application Configuration ###
 application-secrets.yml
+ngrok-auth.yml

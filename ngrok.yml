@@ -1,0 +1,14 @@
+version: "3"
+tunnels:
+  controller:
+    addr: http://host.docker.internal:80
+    proto: http
+  api:
+    addr: http://host.docker.internal:8080
+    proto: http
+  storage:
+    addr: http://host.docker.internal:9000
+    proto: http
+  # TODO: Potentnially gonna remove storage and just proxy it through the api
+  # If this is the case, I can even proxy the api through the controller, and just use 1 tunnel
+  # But for now, isolation is also good

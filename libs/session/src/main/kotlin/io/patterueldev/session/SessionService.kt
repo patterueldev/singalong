@@ -45,4 +45,6 @@ class SessionService(
     suspend fun reconnect() = reconnectUseCase()
 
     suspend fun getParticipantsFromRoom(roomId: String): List<UserParticipant> = getParticipantsFromRoomUseCase(roomId)
+
+    suspend fun getRoomQRCode(roomId: String): String = roomRepository.getRoomQRCode(roomId)
 }

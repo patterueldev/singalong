@@ -96,12 +96,13 @@ class SongRepositoryDS(
                     }
                 val totalPages = pagedSongsResult.totalPages // e.g. 1
                 val currentPage = pagedSongsResult.pageable.pageNumber // e.g. 0
+                val totalItems = pagedSongsResult.totalElements.toInt() // e.g. 1
                 val nextPage = currentPage + 1 // e.g. 1
                 if (nextPage >= totalPages) { // gt or eq is a bit excessive since ideally it should be eq; but doesn't hurt to be safe
-                    PaginatedData.lastPage(songs)
+                    PaginatedData.lastPage(songs, totalItems = totalItems, totalPages = totalPages)
                 } else {
                     val nextPageBase1 = nextPage + 1
-                    PaginatedData.withNextPage(songs, nextPageBase1)
+                    PaginatedData.withNextPage(songs, nextPageBase1, totalItems = totalItems, totalPages = totalPages)
                 }
             } catch (e: Exception) {
                 println("Error loading songs: $e")
@@ -302,6 +303,7 @@ class SongRepositoryDS(
                 println("Deleted song with ID $songId")
             } catch (e: Exception) {
                 println("Error deleting song: $e")
+                throw e
             }
         }
     }

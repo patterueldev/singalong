@@ -40,7 +40,7 @@ class PlayerView extends StatelessWidget {
                               builder: (_, roomId, __) {
                                 return roomId != null
                                     ? ConnectivityPanelWidget(
-                                        host: viewModel.configuration.host,
+                                        host: viewModel.configuration.apiHost,
                                         roomId: roomId,
                                       )
                                     : SizedBox.shrink();
@@ -71,7 +71,7 @@ class PlayerView extends StatelessWidget {
                                 ? context
                                     .read<PlayerFeatureUIBuilder>()
                                     .buildParticipantsPanelWidget(context,
-                                        host: viewModel.configuration.host,
+                                        host: viewModel.configuration.apiHost,
                                         roomId:
                                             viewModel.roomIdNotifier.value ??
                                                 '')

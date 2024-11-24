@@ -2,6 +2,7 @@ library connectfeature;
 
 import 'package:common/common.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:fpdart/fpdart.dart' show Either, TaskEither, Unit, unit;
 import 'package:provider/provider.dart';
 import 'package:core/core.dart';

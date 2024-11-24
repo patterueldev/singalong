@@ -16,10 +16,10 @@ import 'mobile/mobile_appcoordinator.dart';
 
 class APIConfiguration extends SingalongConfiguration {
   @override
-  final String defaultHost;
+  final String defaultApiHost;
 
   APIConfiguration({
-    this.defaultHost = 'thursday.local',
+    this.defaultApiHost = 'thursday.local',
   });
 
   @override

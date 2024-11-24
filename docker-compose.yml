@@ -7,6 +7,8 @@ services:
     container_name: singalong-client-container
     ports:
       - "80:80"
+    depends_on:
+      - server
     networks:
       - singalong-server
 
@@ -18,6 +20,8 @@ services:
     container_name: singalong-admin-container
     ports:
       - "8081:80"
+    depends_on:
+      - server
     networks:
       - singalong-server
 
@@ -28,12 +32,13 @@ services:
       dockerfile: Dockerfile
     container_name: server-container
     ports:
-      - "8080:8080" # App port
+      - "8080:80" # App port
       - "5005:5005" # Debug port
-      - "9092:9092" # Socket port
     depends_on:
       - js-service
       - mongodb
+      - minio
+      - ngrok
     environment:
       - SERVER_PORT=8080
       - SPRING_PROFILES_ACTIVE=docker,secrets
@@ -90,6 +95,24 @@ services:
     networks:
       - singalong-server
 
+  ngrok:
+    image: ngrok/ngrok:latest
+    container_name: ngrok-container
+    ports:
+      - "4040:4040"
+    command:
+      - "start"
+      - "--all"
+      - "--config"
+      - "/etc/ngrok.yml"
+      - "--config"
+      - "/etc/ngrok-auth.yml"
+    volumes:
+      - ./ngrok.yml:/etc/ngrok.yml
+    configs:
+      - source: ngrok-auth.yml
+        target: /etc/ngrok-auth.yml
+
 networks:
   singalong-server:
     driver: bridge
@@ -97,3 +120,7 @@ networks:
 volumes:
   mongodb_data:
   mongodb_data_v6:
+
+configs:
+  ngrok-auth.yml:
+    file: ./ngrok-auth.yml

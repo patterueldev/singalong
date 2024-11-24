@@ -18,7 +18,7 @@ class PaginatedDataTest {
     @Test
     fun lastPage_returnsPaginatedDataWithNoNextPage() {
         val data = listOf("item1", "item2")
-        val result = PaginatedData.lastPage(data)
+        val result = PaginatedData.lastPage(data, 100, 10)
         assertEquals(data, result.items)
         assertNull(result.nextOffset)
         assertNull(result.nextCursor)
@@ -51,7 +51,7 @@ class PaginatedDataTest {
     fun withNextPage_returnsPaginatedDataWithNextPage() {
         val data = listOf("item1", "item2")
         val nextPage = 2
-        val result = PaginatedData.withNextPage(data, nextPage)
+        val result = PaginatedData.withNextPage(data, nextPage, 100, 10)
         assertEquals(data, result.items)
         assertNull(result.nextOffset)
         assertNull(result.nextCursor)

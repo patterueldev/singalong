@@ -63,8 +63,8 @@ class DefaultSignInViewModel extends SignInViewModel {
   @override
   void updateServerHost(String host) async {
     isLoading.value = true;
-    persistenceRepository.saveCustomHost(host);
-    singalongConfigurationNotifier.value.customHost = host;
+    await persistenceRepository.saveString(PersistenceKey.customApiHost, host);
+    singalongConfigurationNotifier.value.customApiHost = host;
     singalongConfigurationNotifier.notifyListeners();
     isLoading.value = false;
   }
@@ -72,8 +72,8 @@ class DefaultSignInViewModel extends SignInViewModel {
   @override
   void resetServerHost() async {
     isLoading.value = true;
-    await persistenceRepository.clearCustomHost();
-    singalongConfigurationNotifier.value.customHost = null;
+    await persistenceRepository.clear(PersistenceKey.customApiHost);
+    singalongConfigurationNotifier.value.customApiHost = null;
     singalongConfigurationNotifier.notifyListeners();
     isLoading.value = false;
   }

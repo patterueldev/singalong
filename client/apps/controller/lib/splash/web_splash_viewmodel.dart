@@ -28,10 +28,22 @@ class WebSplashScreenViewModel extends SplashScreenViewModel {
   @override
   void load() async {
     try {
-      final customHost = await persistenceService.getCustomHost();
-      if (customHost != null) {
-        configuration.customHost = customHost;
-      }
+      // will have to check if query contained custom configurations like these
+      configuration.customProtocol =
+          await persistenceService.getString(PersistenceKey.customApiProtocol);
+
+      configuration.customApiHost =
+          await persistenceService.getString(PersistenceKey.customApiHost);
+      configuration.customApiPort =
+          await persistenceService.getInt(PersistenceKey.customApiPort);
+      configuration.customSocketHost =
+          await persistenceService.getString(PersistenceKey.customSocketHost);
+      configuration.customSocketPort =
+          await persistenceService.getInt(PersistenceKey.customSocketPort);
+      configuration.customStorageHost =
+          await persistenceService.getString(PersistenceKey.customStorageHost);
+      configuration.customStoragePort =
+          await persistenceService.getInt(PersistenceKey.customStoragePort);
 
       // check current address from browser
       final uri = html.window.location.href;

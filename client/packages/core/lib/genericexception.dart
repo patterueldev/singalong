@@ -40,3 +40,11 @@ class UnhandledException extends GenericException {
   @override
   String toString() => exception.toString();
 }
+
+class CustomException extends GenericException {
+  final String message;
+  const CustomException(this.message) : super();
+
+  @override
+  String toString() => message;
+}

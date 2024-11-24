@@ -21,10 +21,21 @@ class MobileSplashScreenViewModel extends SplashScreenViewModel {
 
   @override
   void load() async {
-    final customHost = await persistenceService.getCustomHost();
-    if (customHost != null) {
-      configuration.customHost = customHost;
-    }
+    configuration.customProtocol =
+        await persistenceService.getString(PersistenceKey.customApiProtocol);
+
+    configuration.customApiHost =
+        await persistenceService.getString(PersistenceKey.customApiHost);
+    configuration.customApiPort =
+        await persistenceService.getInt(PersistenceKey.customApiPort);
+    configuration.customSocketHost =
+        await persistenceService.getString(PersistenceKey.customSocketHost);
+    configuration.customSocketPort =
+        await persistenceService.getInt(PersistenceKey.customSocketPort);
+    configuration.customStorageHost =
+        await persistenceService.getString(PersistenceKey.customStorageHost);
+    configuration.customStoragePort =
+        await persistenceService.getInt(PersistenceKey.customStoragePort);
 
     debugPrint('MobileSplashScreenViewModel.load()');
     final isAuthenticated = await connectRepository.checkAuthentication();

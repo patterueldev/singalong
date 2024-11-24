@@ -4,10 +4,14 @@ import io.patterueldev.common.GenericResponse
 import io.patterueldev.common.ServiceUseCase
 import io.patterueldev.songbook.song.SongRecord
 import io.patterueldev.songbook.song.SongRepository
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 
 internal class DeleteSongUseCase(
     private val songRepository: SongRepository,
 ) : ServiceUseCase<String, GenericResponse<SongRecord>> {
+    @OptIn(DelicateCoroutinesApi::class)
     override suspend fun execute(parameters: String): GenericResponse<SongRecord> {
         try {
             // first, get the song
@@ -24,10 +28,11 @@ internal class DeleteSongUseCase(
                 throw IllegalArgumentException("Song is reserved or playing")
             }
 
+            songRepository.archiveSong(songId = song.id)
+
             val wasReserved = songRepository.wasReserved(song.id)
             if (wasReserved) {
                 println("Song was reserved: ${song.id}; will archive only")
-                songRepository.archiveSong(songId = song.id)
 
                 return GenericResponse.success(song, message = "Song was reserved, will archived only")
             }
@@ -67,19 +72,25 @@ internal class DeleteSongUseCase(
             println("Can Delete Thumbnail File: $canDeleteThumbnailFile")
             println("Can Delete Video File: $canDeleteVideoFile")
 
-            // if there isn't, delete the song
-            // delete associated files
-            if (canDeleteThumbnailFile) {
-                println("deleting thumbnail file: ${song.thumbnailFile}")
-                songRepository.deleteSongFile(song.thumbnailFile)
-            }
-            if (canDeleteVideoFile) {
-                println("deleting video file: ${song.videoFile}")
-                songRepository.deleteSongFile(song.videoFile)
-            }
+            GlobalScope.launch {
+                try {
+                    // if there isn't, delete the song
+                    // delete associated files
+                    if (canDeleteThumbnailFile) {
+                        println("deleting thumbnail file: ${song.thumbnailFile}")
+                        songRepository.deleteSongFile(song.thumbnailFile)
+                    }
+                    if (canDeleteVideoFile) {
+                        println("deleting video file: ${song.videoFile}")
+                        songRepository.deleteSongFile(song.videoFile)
+                    }
 
-            println("Song was not reserved: ${song.id}; will delete")
-            songRepository.deleteSong(songId = song.id)
+                    println("Song was not reserved: ${song.id}; will delete")
+                    songRepository.deleteSong(songId = song.id)
+                } catch (e: Exception) {
+                    println("Error deleting song: ${e.message}")
+                }
+            }
 
             return GenericResponse.success(song)
         } catch (e: Exception) {

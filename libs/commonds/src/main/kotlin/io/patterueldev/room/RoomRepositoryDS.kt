@@ -121,11 +121,12 @@ open class RoomRepositoryDS : RoomRepository {
             val totalPages = pagedRoomsResult.totalPages // e.g. 1
             val currentPage = pagedRoomsResult.pageable.pageNumber // e.g. 0
             val nextPage = currentPage + 1 // e.g. 1
+            val totalItems = pagedRoomsResult.totalElements.toInt() // e.g. 1
             if (nextPage >= totalPages) { // gt or eq is a bit excessive since ideally it should be eq; but doesn't hurt to be safe
-                PaginatedData.lastPage(songs)
+                PaginatedData.lastPage(songs, totalItems, totalPages)
             } else {
                 val nextPageBase1 = nextPage + 1
-                PaginatedData.withNextPage(songs, nextPageBase1)
+                PaginatedData.withNextPage(songs, nextPageBase1, totalItems, totalPages)
             }
         } catch (e: Exception) {
             println("Error loading rooms: $e")
@@ -162,5 +163,13 @@ open class RoomRepositoryDS : RoomRepository {
                 override val deviceId: String = session.deviceId
             }
         }
+    }
+
+    override suspend fun getRoomQRCode(roomId: String): String {
+        // e.g. "https://some.url/room/$roomId"
+        val room = roomDocumentRepository.findRoomById(roomId) ?: throw IllegalArgumentException("Room not found")
+        // TODO: implement QR code generation
+        // http://localhost:4040/api/tunnels
+        return "https://some.url/room/$roomId"
     }
 }

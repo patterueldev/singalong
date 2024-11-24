@@ -12,8 +12,17 @@ abstract class ConnectViewModel extends ChangeNotifier {
   void connect();
   void clear();
 
-  void updateServerHost(String host);
-  void resetServerHost();
+  void resetConfigurations();
+  void update({
+    required String protocol,
+    required String apiHost,
+    required String apiPort,
+    required String socketHost,
+    required String socketPort,
+    required String storageHost,
+    required String storagePort,
+    required ValueNotifier<bool> successNotifier,
+  });
 }
 
 class DefaultConnectViewModel extends ConnectViewModel {
@@ -92,21 +101,98 @@ class DefaultConnectViewModel extends ConnectViewModel {
   }
 
   @override
-  void updateServerHost(String host) async {
+  void resetConfigurations() {
     stateNotifier.value = ConnectViewState.connecting();
-    persistenceRepository.saveCustomHost(host);
-    singalongConfigurationNotifier.value.customHost = host;
+    persistenceRepository.clear(PersistenceKey.customApiProtocol);
+    persistenceRepository.clear(PersistenceKey.customApiHost);
+    persistenceRepository.clear(PersistenceKey.customApiPort);
+    persistenceRepository.clear(PersistenceKey.customSocketHost);
+    persistenceRepository.clear(PersistenceKey.customSocketPort);
+    persistenceRepository.clear(PersistenceKey.customStorageHost);
+    persistenceRepository.clear(PersistenceKey.customStoragePort);
+    singalongConfigurationNotifier.value.customProtocol = null;
+    singalongConfigurationNotifier.value.customApiHost = null;
+    singalongConfigurationNotifier.value.customApiPort = null;
+    singalongConfigurationNotifier.value.customSocketHost = null;
+    singalongConfigurationNotifier.value.customSocketPort = null;
+    singalongConfigurationNotifier.value.customStorageHost = null;
+    singalongConfigurationNotifier.value.customStoragePort = null;
     singalongConfigurationNotifier.notifyListeners();
     stateNotifier.value = ConnectViewState.initial();
   }
 
-  @override
-  void resetServerHost() async {
+  Future<void> _updateConfiguration(Future<void> Function() setter) async {
     stateNotifier.value = ConnectViewState.connecting();
-    await persistenceRepository.clearCustomHost();
-    singalongConfigurationNotifier.value.customHost = null;
+    await setter();
     singalongConfigurationNotifier.notifyListeners();
     stateNotifier.value = ConnectViewState.initial();
+  }
+
+  Future<void> _updatePortConfiguration(
+      String port, Future<void> Function(int) setter) async {
+    stateNotifier.value = ConnectViewState.connecting();
+    int? portInt;
+    try {
+      portInt = int.parse(port);
+    } catch (e) {
+      stateNotifier.value = ConnectViewState.failure(
+        const CustomException("Invalid port number"),
+      );
+      return;
+    }
+    await setter(portInt);
+    singalongConfigurationNotifier.notifyListeners();
+    stateNotifier.value = ConnectViewState.initial();
+  }
+
+  void update({
+    required String protocol,
+    required String apiHost,
+    required String apiPort,
+    required String socketHost,
+    required String socketPort,
+    required String storageHost,
+    required String storagePort,
+    required ValueNotifier<bool> successNotifier,
+  }) async {
+    try {
+      await _updateConfiguration(() async {
+        await persistenceRepository.saveString(
+            PersistenceKey.customApiProtocol, protocol);
+        await persistenceRepository.saveString(
+            PersistenceKey.customApiHost, apiHost);
+        await persistenceRepository.saveString(
+            PersistenceKey.customSocketHost, socketHost);
+        await persistenceRepository.saveString(
+            PersistenceKey.customStorageHost, storageHost);
+        singalongConfigurationNotifier.value.customProtocol = protocol;
+        singalongConfigurationNotifier.value.customApiHost = apiHost;
+        singalongConfigurationNotifier.value.customSocketHost = socketHost;
+        singalongConfigurationNotifier.value.customStorageHost = storageHost;
+      });
+
+      await _updatePortConfiguration(apiPort, (int port) async {
+        await persistenceRepository.saveInt(PersistenceKey.customApiPort, port);
+        singalongConfigurationNotifier.value.customApiPort = port;
+      });
+
+      await _updatePortConfiguration(socketPort, (int port) async {
+        await persistenceRepository.saveInt(
+            PersistenceKey.customSocketPort, port);
+        singalongConfigurationNotifier.value.customSocketPort = port;
+      });
+
+      await _updatePortConfiguration(storagePort, (int port) async {
+        await persistenceRepository.saveInt(
+            PersistenceKey.customStoragePort, port);
+        singalongConfigurationNotifier.value.customStoragePort = port;
+      });
+
+      successNotifier.value = true;
+    } catch (e) {
+      debugPrint('error: $e');
+      successNotifier.value = false;
+    }
   }
 
   @override

@@ -29,4 +29,6 @@ interface RoomRepository {
     )
 
     suspend fun getUsersInRoom(roomId: String): List<RoomUser>
+
+    suspend fun getRoomQRCode(roomId: String): String
 }

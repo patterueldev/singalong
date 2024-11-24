@@ -26,8 +26,7 @@ internal open class SaveSongUseCase(
         val identifiedSong = parameters.song
         val videoId = identifiedSong.id
         val videoTitle = identifiedSong.songTitle
-        val fileTitle = videoTitle.replace(Regex("[/\\\\?%*:|\"<>]"), "-").replace(Regex("\\s+"), "-").lowercase()
-        val filename = "$fileTitle[$videoId]"
+        val filename = toFileTitle(videoTitle, videoId)
 
         // execute on the background thread
         GlobalScope.launch {
@@ -52,5 +51,19 @@ internal open class SaveSongUseCase(
             }
         }
         return GenericResponse.success(true)
+    }
+
+    private fun toFileTitle(
+        videoTitle: String,
+        videoId: String,
+    ): String {
+        // 1. extract only alphanumeric and dash characters
+        // 2. replace multiple dashes with a single dash
+        // 3. remove leading and trailing dashes
+        // 4. lowercase the string
+        val filter1 = videoTitle.replace(Regex("[^a-zA-Z0-9-]"), "")
+        val filter2 = filter1.replace(Regex("-+"), "-")
+        val filter3 = filter2.removePrefix("-").removeSuffix("-")
+        return "$filter3[$videoId]"
     }
 }

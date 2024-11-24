@@ -60,6 +60,8 @@ class SingalongSocket {
     final completer = Completer<bool>();
     _roomSocket?.disconnect();
     final uri = configuration.buildSocketURL("room/$roomId");
+    debugPrint(
+        "Attempting to connect to room socket via: $uri with room: $roomId");
     final option = IO.OptionBuilder()
         .setTransports(['websocket']) // for Flutter or Dart VM
         .setAuth({'token': sessionManager.getAccessToken()}).build();
@@ -76,10 +78,14 @@ class SingalongSocket {
     });
     _roomSocket?.connect();
 
+    debugPrint("Waiting...");
     final result = await completer.future;
     if (!result) {
+      debugPrint("Disconnected from the socket");
       throw Exception("Disconnected from the socket");
     }
+
+    debugPrint("Connected to room socket");
   }
 
   void disconnectRoomSocket() {

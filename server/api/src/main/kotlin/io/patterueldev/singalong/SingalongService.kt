@@ -69,4 +69,9 @@ class SingalongService {
         runBlocking {
             sessionService.getParticipantsFromRoom(roomId)
         }
+
+    fun getRoomQRCode(roomId: String) =
+        runBlocking {
+            sessionService.getRoomQRCode(roomId)
+        }
 }

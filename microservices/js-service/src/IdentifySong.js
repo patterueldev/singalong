@@ -50,33 +50,40 @@ export function identifySong(app) {
     const data = req.body;
     // Process the data here
     console.log('Received data:', data);
+    try {
+      let info = await ytdl.getInfo(data.url)
+      let videoDetails = info.videoDetails
+      let lengthSecondsRaw = videoDetails.lengthSeconds
+      let lengthSeconds = parseInt(lengthSecondsRaw)
+      let description = videoDetails.description
 
-    let info = await ytdl.getInfo(data.url)
-    let videoDetails = info.videoDetails
-    let lengthSecondsRaw = videoDetails.lengthSeconds
-    let lengthSeconds = parseInt(lengthSecondsRaw)
-    let description = videoDetails.description
+      console.log("Video Details: " + JSON.stringify(videoDetails))
 
-    console.log("Video Details: " + JSON.stringify(videoDetails))
+      // Send a response
+      const identified = new IdentifiedSong(
+        info.videoDetails.videoId,
+        info.videoDetails.video_url,
+        info.videoDetails.thumbnails[0].url,
+        info.videoDetails.media.song ?? info.videoDetails.title,
+        info.videoDetails.media.artist ?? "",
+        "",
+        false,
+        false,
+        "",
+        lengthSeconds,
+        {
+          description: description,
+          keywords: videoDetails.keywords ?? [],
+        }
+      );
 
-    // Send a response
-    const identified = new IdentifiedSong(
-      info.videoDetails.videoId,
-      info.videoDetails.video_url,
-      info.videoDetails.thumbnails[0].url,
-      info.videoDetails.media.song ?? info.videoDetails.title,
-      info.videoDetails.media.artist ?? "",
-      "",
-      false,
-      false,
-      "",
-      lengthSeconds,
-      {
-        description: description,
-        keywords: videoDetails.keywords ?? [],
-      }
-    );
-
-    res.status(200).json(identified);
+      res.status(200).json(identified);
+    } catch (error) {
+      console.error(error);
+      res.status(500).send({
+        success: false,
+        message: error,
+      });
+    }
   });
 }

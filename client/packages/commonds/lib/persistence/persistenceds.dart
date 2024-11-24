@@ -1,10 +1,11 @@
 part of '../commonds.dart';
 
-class PersistenceRepositoryDS implements PersistenceRepository {
+class PersistenceRepositoryDS extends PersistenceRepository {
   final String encryptionKey;
 
   PersistenceRepositoryDS({required this.encryptionKey});
 
+  // with these many keys, I think it's better to use an enum and object
   final roomKey = 'room';
   final usernameKey = 'username';
   final accessTokenKey = 'accessToken';
@@ -12,6 +13,8 @@ class PersistenceRepositoryDS implements PersistenceRepository {
   final deviceIdKey = 'deviceId';
   final uniqueNameKey = 'uniqueName';
   final customHostKey = 'customHost';
+  final customProtocolKey = 'customProtocol';
+  final customApiPortKey = 'customApiPort';
 
   EncryptedSharedPreferences? sharedPref;
   final uuid = Uuid();
@@ -21,6 +24,43 @@ class PersistenceRepositoryDS implements PersistenceRepository {
       await EncryptedSharedPreferences.initialize(encryptionKey);
       sharedPref = EncryptedSharedPreferences.getInstance();
     }
+  }
+
+  @override
+  Future<void> saveString(PersistenceKey key, String value) async {
+    await configureSharedPref();
+    debugPrint('Saving $key: $value');
+    sharedPref!.setString(key.value, value);
+  }
+
+  @override
+  Future<String?> getString(PersistenceKey key) async {
+    await configureSharedPref();
+    final value = sharedPref!.getString(key.value);
+    debugPrint('Retrieved $key: $value');
+    return value;
+  }
+
+  @override
+  Future<void> saveInt(PersistenceKey key, int value) async {
+    await configureSharedPref();
+    debugPrint('Saving $key: $value');
+    sharedPref!.setInt(key.value, value);
+  }
+
+  @override
+  Future<int?> getInt(PersistenceKey key) async {
+    await configureSharedPref();
+    final value = sharedPref!.getInt(key.value);
+    debugPrint('Retrieved $key: $value');
+    return value;
+  }
+
+  @override
+  Future<void> clear(PersistenceKey key) async {
+    await configureSharedPref();
+    debugPrint('Clearing $key');
+    sharedPref!.remove(key.value);
   }
 
   @override
@@ -53,63 +93,6 @@ class PersistenceRepositoryDS implements PersistenceRepository {
     final refreshToken = sharedPref!.getString(refreshTokenKey);
     debugPrint('Retrieved refresh token: $refreshToken');
     return refreshToken;
-  }
-
-  @override
-  Future<String?> getCustomHost() async {
-    await configureSharedPref();
-    final customHost = sharedPref!.getString(customHostKey);
-    debugPrint('Retrieved custom host: $customHost');
-    return customHost;
-  }
-
-  @override
-  Future<void> saveRoomId(String roomId) async {
-    await configureSharedPref();
-    debugPrint('Saving room id: $roomId');
-    sharedPref!.setString(roomKey, roomId);
-  }
-
-  @override
-  Future<void> saveUsername(String username) async {
-    await configureSharedPref();
-    debugPrint('Saving username: $username');
-    sharedPref!.setString(usernameKey, username);
-  }
-
-  @override
-  Future<void> saveAccessToken(String accessToken) async {
-    await configureSharedPref();
-    debugPrint('Saving access token: $accessToken');
-    sharedPref!.setString(accessTokenKey, accessToken);
-  }
-
-  @override
-  Future<void> saveRefreshToken(String? refreshToken) async {
-    await configureSharedPref();
-    debugPrint('Saving refresh token: $refreshToken');
-    sharedPref!.setString(refreshTokenKey, refreshToken!);
-  }
-
-  @override
-  Future<void> saveCustomHost(String customHost) async {
-    await configureSharedPref();
-    debugPrint('Saving custom host: $customHost');
-    sharedPref!.setString(customHostKey, customHost);
-  }
-
-  @override
-  Future<void> clearAccessToken() async {
-    await configureSharedPref();
-    debugPrint('Clearing access token');
-    sharedPref!.remove(accessTokenKey);
-  }
-
-  @override
-  Future<void> clearCustomHost() async {
-    await configureSharedPref();
-    debugPrint('Clearing custom host');
-    sharedPref!.remove(customHostKey);
   }
 
   @override

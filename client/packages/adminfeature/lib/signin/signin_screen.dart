@@ -155,7 +155,7 @@ class _SignInScreenState extends State<SignInScreen> {
 
   Widget _showEditCustomHostDialog(
       BuildContext context, SingalongConfiguration configuration) {
-    final hostController = TextEditingController(text: configuration.host);
+    final hostController = TextEditingController(text: configuration.apiHost);
     final portController =
         TextEditingController(text: configuration.apiPort.toString());
 
