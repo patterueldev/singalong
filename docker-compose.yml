@@ -1,4 +1,16 @@
 services:
+  nginx:
+    image: nginx:latest
+    container_name: nginx-container
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - server
+      - minio
+    networks:
+      - singalong-server
   client:
     image: singalong-client:1.0.0
     build:
@@ -32,7 +44,6 @@ services:
       dockerfile: Dockerfile
     container_name: server-container
     ports:
-      - "8080:80" # App port
       - "5005:5005" # Debug port
     depends_on:
       - js-service
@@ -55,10 +66,10 @@ services:
       context: microservices/js-service
       dockerfile: Dockerfile
     container_name: js-service-container
-    networks:
-      - singalong-server
     ports:
       - "3000:3000"
+    networks:
+      - singalong-server
     volumes:
       - $SONG_DOWNLOAD_PATH:/app/songs
 
@@ -84,7 +95,6 @@ services:
     image: minio/minio
     container_name: minio-container
     ports:
-      - "9000:9000"
       - "9001:9001"
     environment:
       MINIO_ACCESS_KEY: $MINIO_ACCESS_KEY
@@ -98,8 +108,6 @@ services:
   ngrok:
     image: ngrok/ngrok:latest
     container_name: ngrok-container
-    ports:
-      - "4040:4040"
     command:
       - "start"
       - "--all"
@@ -109,6 +117,8 @@ services:
       - "/etc/ngrok-auth.yml"
     volumes:
       - ./ngrok.yml:/etc/ngrok.yml
+    ports:
+      - "4040:4040"
     configs:
       - source: ngrok-auth.yml
         target: /etc/ngrok-auth.yml

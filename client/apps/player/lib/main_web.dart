@@ -78,7 +78,7 @@ class _PlayerWrapperState extends State<PlayerWrapper> {
     final configuration = context.read<SingalongConfiguration>();
     final host = configuration.storageHost;
     // TODO: this will be customizable in the future
-    final url = "http://$host:9000/assets/flames-loop.mp4";
+    final url = "http://$host:8080/storage/assets/flames-loop.mp4";
     final uri = Uri.parse(url);
     debugPrint("Loading video from $uri");
     final controller = VideoPlayerController.networkUrl(uri);

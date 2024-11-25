@@ -185,12 +185,12 @@ class DefaultPlayerViewModel extends PlayerViewModel {
     final position = controller.value.position;
     if (position >= controller.value.duration) {
       controller.pause();
-      // TODO: Maybe some video score calculation here
-      final host = "thursday.local"; // TODO: this should be configurable
-      final url = "http://$host:9000/assets/fireworks.mp4";
+      final url =
+          configuration.buildResourceURL("assets/fireworks.mp4").toString();
       final scoreVideoController = VideoController.network(url);
 
-      final audioUrl = "http://$host:9000/assets/fanfare-sound.mp3";
+      final audioUrl =
+          configuration.buildResourceURL("assets/fanfare-sound.mp3").toString();
       final audioController = VideoController.network(audioUrl);
       audioController.setVolume(0.5);
 

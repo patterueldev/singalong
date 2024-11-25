@@ -32,7 +32,7 @@ cd $root
 
 # Build the admin
 cd $flutteradminapp
-flutter build web --target=lib/main.dart
+flutter build web --target=lib/main_web.dart
 echo "Flutter admin build completed successfully."
 cd $root
 
