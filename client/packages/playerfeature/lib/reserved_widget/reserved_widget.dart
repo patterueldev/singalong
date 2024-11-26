@@ -106,10 +106,9 @@ class _ReservedWidgetState extends State<ReservedWidget> {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                strokedText(
                   song.title,
                   style: TextStyle(
-                    color: Colors.white,
                     fontSize: height * 0.4,
                     decoration: song.currentPlaying
                         ? TextDecoration.underline
@@ -118,15 +117,40 @@ class _ReservedWidgetState extends State<ReservedWidget> {
                   softWrap: false,
                 ),
                 const SizedBox(width: 16),
-                Text(
+                strokedText(
                   '${song.artist} | ${song.reservingUser}',
-                  style: TextStyle(color: Colors.white, fontSize: height * 0.3),
+                  style: TextStyle(fontSize: height * 0.3),
                 ),
               ],
             ),
             const SizedBox(width: 16),
           ],
         ),
+      );
+
+  Widget strokedText(
+    String text, {
+    TextStyle style = const TextStyle(),
+    bool? softWrap,
+  }) =>
+      Stack(
+        children: [
+          Text(
+            text,
+            style: style.copyWith(
+              foreground: Paint()
+                ..style = PaintingStyle.stroke
+                ..strokeWidth = 4
+                ..color = Colors.black45,
+            ),
+            softWrap: softWrap,
+          ),
+          Text(
+            text,
+            style: style.copyWith(color: Colors.white),
+            softWrap: softWrap,
+          ),
+        ],
       );
 
   @override
