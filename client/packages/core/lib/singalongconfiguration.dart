@@ -8,8 +8,8 @@ abstract class SingalongConfiguration {
   String get defaultProtocol => "http";
 
   int get defaultApiPort => 8080;
-  int get defaultSocketPort => 8080;
-  int get defaultStoragePort => 8080;
+  int get defaultSocketPort => 8005;
+  int get defaultStoragePort => 8005;
 
   String? customApiHost;
   String?

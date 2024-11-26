@@ -1,9 +1,6 @@
 part of '../playerfeature.dart';
 
 class ConnectivityPanelWidget extends StatelessWidget {
-  // final String encryptionType;
-  // final String wifiName;
-  // final String wifiPassword;
   final String host;
   final String roomId;
 
@@ -16,38 +13,16 @@ class ConnectivityPanelWidget extends StatelessWidget {
     required this.roomId,
   });
 
-  String get encryptionType => "WPA2";
-  String get wifiName => "Pat\u2019s 16";
-  String get wifiPassword => "aishiteru";
-
-  String get wifiQRData =>
-      "WIFI:T:$encryptionType;S:$wifiName;P:$wifiPassword;;";
-
-  String get instructions => """
-  Try scanning the QR codes to connect. If that doesn't work, follow these steps:
-  1. Connect to Wi-Fi "$wifiName" using password "$wifiPassword".
-  2. Open the browser, enter "http://$host and use $roomId".
-  """
-      .trim();
+  String get connectivityQRData =>
+      "https://great-midge-epic.ngrok-free.app/session/connect?roomId=$roomId";
 
   @override
   Widget build(BuildContext context) => LayoutBuilder(
         builder: (context, constraints) => Column(
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
-            // instructions
-            Expanded(
-              child: Text(
-                instructions,
-                style: TextStyle(
-                  fontSize: constraints.maxHeight * 0.015,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
-
             QrImageView(
-              data: wifiQRData,
+              data: connectivityQRData,
               version: QrVersions.auto,
               size: constraints.maxHeight * 0.15,
               eyeStyle: const QrEyeStyle(
@@ -60,13 +35,7 @@ class ConnectivityPanelWidget extends StatelessWidget {
               ),
             ),
             Text(
-              wifiName,
-              style: TextStyle(
-                  fontSize: constraints.maxHeight * 0.02,
-                  fontWeight: FontWeight.bold),
-            ),
-            Text(
-              wifiPassword,
+              roomId,
               style: TextStyle(
                   fontSize: constraints.maxHeight * 0.02,
                   fontWeight: FontWeight.bold),

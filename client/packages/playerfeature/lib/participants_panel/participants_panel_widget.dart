@@ -73,7 +73,7 @@ class _ParticipantsPanelWidgetState extends State<ParticipantsPanelWidget> {
             builder: (context, constraints) => Column(
               children: [
                 Expanded(child: _buildList(participants)),
-                _buildQR(constraints),
+                // _buildQR(constraints),
               ],
             ),
           ),
