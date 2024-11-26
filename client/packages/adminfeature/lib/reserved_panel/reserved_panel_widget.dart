@@ -1,7 +1,11 @@
 part of '../adminfeature.dart';
 
 class ReservedPanelWidget extends StatelessWidget {
-  const ReservedPanelWidget();
+  final AdminCoordinator coordinator;
+  const ReservedPanelWidget({
+    super.key,
+    required this.coordinator,
+  });
 
   @override
   Widget build(BuildContext context) => Consumer<ReservedPanelViewModel>(
@@ -98,7 +102,8 @@ class ReservedPanelWidget extends StatelessWidget {
                 trailing: song.currentPlaying
                     ? const Icon(Icons.play_arrow, color: Colors.green)
                     : null,
-                onTap: () => {},
+                onTap: () =>
+                    coordinator.openSongDetailScreen(context, song.songId),
               ),
             );
           },

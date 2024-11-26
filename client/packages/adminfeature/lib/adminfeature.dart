@@ -99,11 +99,14 @@ class AdminFeatureUIProvider {
         child: PlayerSelectorDialogWidget(),
       );
 
-  Widget buildReservedPanel() => ChangeNotifierProvider<ReservedPanelViewModel>(
+  Widget buildReservedPanel(BuildContext context) =>
+      ChangeNotifierProvider<ReservedPanelViewModel>(
         create: (context) => DefaultReservedPanelViewModel(
           reservedSongListSocketRepository: context.read(),
         ),
-        child: const ReservedPanelWidget(),
+        child: ReservedPanelWidget(
+          coordinator: context.read(),
+        ),
       );
 
   Widget buildSongEditorPanel(BuildContext context, String songId) =>

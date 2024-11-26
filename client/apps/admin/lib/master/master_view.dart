@@ -76,7 +76,7 @@ class MasterView extends StatelessWidget {
           .buildPlayerControlPanel(viewModel.room);
 
   Widget _buildBottomLeft(BuildContext context) =>
-      context.read<AdminFeatureUIProvider>().buildReservedPanel();
+      context.read<AdminFeatureUIProvider>().buildReservedPanel(context);
 
   Widget _buildRightHalf(BuildContext context) => Column(
         children: [
