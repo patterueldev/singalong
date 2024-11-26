@@ -11,6 +11,7 @@ class AdminApp extends StatelessWidget {
         themeMode: ThemeMode.dark,
         localizationsDelegates: const [AppLocalizations.delegate],
         supportedLocales: AppLocalizations.supportedLocales,
+        debugShowCheckedModeBanner: false,
         home: Consumer<AdminAppViewModel>(
           builder: (context, viewModel, child) {
             final adminFeatureUIProvider =

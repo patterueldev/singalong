@@ -40,6 +40,7 @@ class _ControllerWebAppState extends State<ControllerWebApp> {
         themeMode: ThemeMode.dark,
         localizationsDelegates: const [AppLocalizations.delegate],
         supportedLocales: AppLocalizations.supportedLocales,
+        debugShowCheckedModeBanner: false,
         routes: routes,
         onGenerateRoute: (settings) => onGenerateRoute(settings, context),
       );

@@ -21,6 +21,7 @@ class ControllerMobileApp extends StatelessWidget {
       themeMode: ThemeMode.dark,
       localizationsDelegates: const [AppLocalizations.delegate],
       supportedLocales: AppLocalizations.supportedLocales,
+      debugShowCheckedModeBanner: false,
       home: ChangeNotifierProvider<SplashScreenViewModel>(
         create: (_) => MobileSplashScreenViewModel(
           connectRepository: context.read(),

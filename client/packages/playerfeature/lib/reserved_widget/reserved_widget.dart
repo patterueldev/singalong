@@ -14,10 +14,10 @@ class _ReservedWidgetState extends State<ReservedWidget> {
 
   // Adjustable variables
   final Duration scrollInterval =
-      Duration(milliseconds: 50); // Reduced interval
-  final double scrollAmount = 100.0;
+      const Duration(milliseconds: 50); // Reduced interval
+  double get scrollAmount => 20.0;
   final Duration animationDuration =
-      Duration(milliseconds: 500); // Reduced duration
+      const Duration(milliseconds: 500); // Reduced duration
 
   @override
   void initState() {
@@ -31,7 +31,9 @@ class _ReservedWidgetState extends State<ReservedWidget> {
           final newScrollPosition = currentScrollPosition + scrollAmount;
 
           if (newScrollPosition >= maxScrollExtent) {
-            _scrollController.jumpTo(0);
+            Future.delayed(const Duration(seconds: 2), () {
+              _scrollController.jumpTo(0.0);
+            });
           } else {
             _scrollController.animateTo(
               newScrollPosition,
