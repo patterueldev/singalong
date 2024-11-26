@@ -13,14 +13,16 @@ internal class LoadSongsUseCase(
 
             println("Parameters: $parameters")
 
-            val reservedSongs: List<SongbookItem> =
+            val reservedSongsInRoom: List<SongbookItem> =
                 parameters.roomId.let {
                     if (it == null) {
                         emptyList()
                     } else {
-                        songRepository.loadReservedSongs(it)
+                        songRepository.loadReservedSongsInRoom(it)
                     }
                 }
+
+            println("Found ${reservedSongsInRoom.size} reserved songs in room")
 
             var paginatedResult: PaginatedSongs? = null
 
@@ -28,7 +30,7 @@ internal class LoadSongsUseCase(
             if (parameters.recommendation()) {
                 // move recommended to a separate use case because of the room ID
                 // recommendations
-                val reservedSongIds = reservedSongs.map { it.id }
+                val reservedSongIds = reservedSongsInRoom.map { it.id }
                 val songs = songRepository.loadSongs(parameters.limit, parameters.keyword, parameters.nextPage(), reservedSongIds)
                 // if songs are not empty, return the songs; otherwise, continue to the next block
                 if (songs.items.isNotEmpty() || parameters.nextPage() != null) {
@@ -40,9 +42,12 @@ internal class LoadSongsUseCase(
             paginatedResult = paginatedResult ?: songRepository.loadSongs(parameters.limit, parameters.keyword, parameters.nextPage())
 
             paginatedResult.items.forEach { song ->
-                val reservedSong = reservedSongs.find { it.id == song.id }
+                val reservedSong = reservedSongsInRoom.find { it.id == song.id }
                 if (reservedSong != null) {
+                    println("Song ${song.id} was reserved and already played in room")
                     song.alreadyPlayedInRoom = true
+                } else {
+                    println("Song ${song.id} was not reserved and not yet played in room")
                 }
             }
             if (parameters.keyword.isNullOrBlank()) {

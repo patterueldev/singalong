@@ -17,7 +17,7 @@ interface SongRepository {
     ): PaginatedSongs
 
     // makes sense to return songs instead of reservations; I can use the data for recommendations and stuff
-    suspend fun loadReservedSongs(roomId: String): List<SongbookItem>
+    suspend fun loadReservedSongsInRoom(roomId: String): List<SongbookItem>
 
     suspend fun loadSongDetails(
         id: String,

@@ -112,7 +112,7 @@ class SongRepositoryDS(
         }
     }
 
-    override suspend fun loadReservedSongs(roomId: String): List<SongbookItem> {
+    override suspend fun loadReservedSongsInRoom(roomId: String): List<SongbookItem> {
         val reservedSongs = reservedSongDocumentRepository.loadAllByRoomId(roomId)
         println("Reserved songs found for room $roomId: ${reservedSongs.size}")
         val songIds = reservedSongs.map { it.songId }
