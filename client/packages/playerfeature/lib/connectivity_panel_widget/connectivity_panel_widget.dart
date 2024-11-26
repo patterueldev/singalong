@@ -17,31 +17,34 @@ class ConnectivityPanelWidget extends StatelessWidget {
       "https://great-midge-epic.ngrok-free.app/session/connect?roomId=$roomId";
 
   @override
-  Widget build(BuildContext context) => LayoutBuilder(
-        builder: (context, constraints) => Column(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            QrImageView(
-              data: connectivityQRData,
-              version: QrVersions.auto,
-              size: constraints.maxHeight * 0.15,
-              eyeStyle: const QrEyeStyle(
-                eyeShape: QrEyeShape.square,
-                color: Colors.white,
+  Widget build(BuildContext context) => Opacity(
+        opacity: 0.69,
+        child: LayoutBuilder(
+          builder: (context, constraints) => Column(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              QrImageView(
+                data: connectivityQRData,
+                version: QrVersions.auto,
+                size: constraints.maxHeight * 0.15,
+                eyeStyle: const QrEyeStyle(
+                  eyeShape: QrEyeShape.square,
+                  color: Colors.white,
+                ),
+                dataModuleStyle: const QrDataModuleStyle(
+                  dataModuleShape: QrDataModuleShape.square,
+                  color: Colors.white,
+                ),
               ),
-              dataModuleStyle: const QrDataModuleStyle(
-                dataModuleShape: QrDataModuleShape.square,
-                color: Colors.white,
+              Text(
+                roomId,
+                style: TextStyle(
+                    fontSize: constraints.maxHeight * 0.02,
+                    fontWeight: FontWeight.bold),
               ),
-            ),
-            Text(
-              roomId,
-              style: TextStyle(
-                  fontSize: constraints.maxHeight * 0.02,
-                  fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 30)
-          ],
+              const SizedBox(height: 30)
+            ],
+          ),
         ),
       );
 }

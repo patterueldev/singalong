@@ -8,81 +8,73 @@ class PlayerView extends StatelessWidget {
         builder: (_, viewModel, __) => Scaffold(
           backgroundColor: Colors.transparent,
           body: SafeArea(
-            child: Container(
-              padding: const EdgeInsets.fromLTRB(35, 10, 20, 10),
-              child: Column(
-                children: [
-                  // vertical layout arrangement
-                  Expanded(
-                    flex: 1,
-                    child: Container(
-                      alignment: Alignment.topLeft,
-                      padding: const EdgeInsets.only(top: 16, bottom: 16),
-                      child: ValueListenableBuilder(
-                        valueListenable: viewModel.isConnected,
-                        builder: (_, isConnected, __) =>
-                            isConnected ? ReservedWidget() : SizedBox.shrink(),
-                      ),
-                    ),
-                  ),
-
-                  // horizontal layout arrangement
-                  Expanded(
-                    flex: 9,
-                    child: Row(
-                      children: [
-                        // connectivity panel and video player
-                        // left panel
-                        Expanded(
-                          flex: 1,
-                          child: ValueListenableBuilder(
-                              valueListenable: viewModel.roomIdNotifier,
-                              builder: (_, roomId, __) {
-                                return roomId != null
-                                    ? ConnectivityPanelWidget(
-                                        host: viewModel.configuration.apiHost,
-                                        roomId: roomId,
-                                      )
-                                    : SizedBox.shrink();
-                              }),
-                        ),
-                        Expanded(
-                          flex: 8,
-                          child: Container(
-                            decoration: BoxDecoration(
-                              border:
-                                  Border.all(color: Colors.grey.withAlpha(100)),
-                            ),
-                            child: Column(
-                              children: [
-                                Expanded(
-                                  child: _buildBody(context, viewModel),
+            child: Stack(
+              children: [
+                _buildBody(context, viewModel),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+                  child: Column(
+                    children: [
+                      // vertical layout arrangement
+                      Expanded(
+                        flex: 1,
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Container(
+                                alignment: Alignment.topLeft,
+                                padding:
+                                    const EdgeInsets.only(top: 16, bottom: 16),
+                                child: ValueListenableBuilder(
+                                  valueListenable: viewModel.isConnected,
+                                  builder: (_, isConnected, __) => isConnected
+                                      ? const ReservedWidget()
+                                      : const SizedBox.shrink(),
                                 ),
-                              ],
+                              ),
                             ),
-                          ),
+                          ],
                         ),
-                        // right panel
-                        Expanded(
-                          flex: 1,
-                          child: ValueListenableBuilder(
-                            valueListenable: viewModel.isConnected,
-                            builder: (context, isConnected, __) => isConnected
-                                ? context
-                                    .read<PlayerFeatureUIBuilder>()
-                                    .buildParticipantsPanelWidget(context,
-                                        host: viewModel.configuration.apiHost,
-                                        roomId:
-                                            viewModel.roomIdNotifier.value ??
-                                                '')
-                                : const SizedBox.shrink(),
-                          ),
+                      ),
+
+                      // horizontal layout arrangement
+                      Expanded(
+                        flex: 9,
+                        child: Row(
+                          children: [
+                            // connectivity panel and video player
+                            // left panel
+                            Expanded(
+                              flex: 1,
+                              child: ValueListenableBuilder(
+                                  valueListenable: viewModel.roomIdNotifier,
+                                  builder: (_, roomId, __) {
+                                    return roomId != null
+                                        ? ConnectivityPanelWidget(
+                                            host:
+                                                viewModel.configuration.apiHost,
+                                            roomId: roomId,
+                                          )
+                                        : const SizedBox.shrink();
+                                  }),
+                            ),
+                            Expanded(
+                              flex: 8,
+                              child: Container(),
+                            ),
+                            // right panel
+                            Expanded(
+                              flex: 1,
+                              child: Container(),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),
