@@ -1,16 +1,4 @@
 services:
-  nginx:
-    image: nginx:latest
-    container_name: nginx-container
-    ports:
-      - "8005:8005"
-    volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf
-    depends_on:
-      - server
-      - minio
-    networks:
-      - singalong-server
   client:
     image: singalong-client:1.0.0
     build:
@@ -45,12 +33,12 @@ services:
     container_name: server-container
     ports:
       - "8080:8080"
+      - "9092:9092"
       - "5005:5005" # Debug port
     depends_on:
       - js-service
       - mongodb
       - minio
-      - ngrok
     environment:
       - SERVER_PORT=8080
       - SPRING_PROFILES_ACTIVE=docker,secrets
@@ -58,6 +46,21 @@ services:
       - SPRING_DATA_MONGODB_AUTHENTICATION_DATABASE=$MONGO_DB
       - SPRING_DATA_MONGODB_AUTO_INDEX_CREATION=$MONGO_AUTO_INDEX_CREATION
       - JAVA_TOOL_OPTIONS=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
+    networks:
+      - singalong-server
+
+  minio:
+    image: minio/minio
+    container_name: minio-container
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ACCESS_KEY: $MINIO_ACCESS_KEY
+      MINIO_SECRET_KEY: $MINIO_SECRET_KEY
+    volumes:
+      - $MINIO_DATA_PATH:/data
+    command: server /data --console-address ":9001"
     networks:
       - singalong-server
 
@@ -92,38 +95,17 @@ services:
       - singalong-server
     command: ["--bind_ip", "0.0.0.0"]
 
-  minio:
-    image: minio/minio
-    container_name: minio-container
-    ports:
-#      - "9000:9000"
-      - "9001:9001"
-    environment:
-      MINIO_ACCESS_KEY: $MINIO_ACCESS_KEY
-      MINIO_SECRET_KEY: $MINIO_SECRET_KEY
-    volumes:
-      - $MINIO_DATA_PATH:/data
-    command: server /data --console-address ":9001"
-    networks:
-      - singalong-server
-
-  ngrok:
-    image: ngrok/ngrok:latest
-    container_name: ngrok-container
+  cloudflared:
+    image: cloudflare/cloudflared
+    container_name: cloudflared-container
     command:
-      - "start"
-      - "--all"
-      - "--config"
-      - "/etc/ngrok.yml"
-      - "--config"
-      - "/etc/ngrok-auth.yml"
+      - "tunnel"
+      - "run"
+      - "$CLOUDFLARED_TUNNEL_NAME"
     volumes:
-      - ./ngrok.yml:/etc/ngrok.yml
-    ports:
-      - "4040:4040"
-    configs:
-      - source: ngrok-auth.yml
-        target: /etc/ngrok-auth.yml
+      - ./cloudflared-config.yml:/etc/cloudflared/config.yml
+      - ~/.cloudflared/cert.pem:/etc/cloudflared/cert.pem
+      - ~/.cloudflared/$CLOUDFLARED_TUNNEL_NAME.json:/etc/cloudflared/credentials.json
     networks:
       - singalong-server
 
@@ -134,7 +116,3 @@ networks:
 volumes:
   mongodb_data:
   mongodb_data_v6:
-
-configs:
-  ngrok-auth.yml:
-    file: ./ngrok-auth.yml

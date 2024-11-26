@@ -13,8 +13,9 @@ class ConnectivityPanelWidget extends StatelessWidget {
     required this.roomId,
   });
 
+  String get websiteURL => "https://singalong.fun";
   String get connectivityQRData =>
-      "https://great-midge-epic.ngrok-free.app/session/connect?roomId=$roomId";
+      "https://singalong.fun/session/connect?roomId=$roomId";
 
   @override
   Widget build(BuildContext context) => Opacity(
@@ -40,6 +41,12 @@ class ConnectivityPanelWidget extends StatelessWidget {
                 roomId,
                 style: TextStyle(
                     fontSize: constraints.maxHeight * 0.02,
+                    fontWeight: FontWeight.bold),
+              ),
+              Text(
+                websiteURL,
+                style: TextStyle(
+                    fontSize: constraints.maxHeight * 0.015,
                     fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 30)

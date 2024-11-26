@@ -74,8 +74,8 @@ else
       nginx)
         echo "Nginx does not require a build."
         ;;
-      ngrok)
-        echo "Ngrok does not require a build."
+      cloudflared)
+        echo "Cloudflared does not require a build."
         ;;
       *)
         echo "Unknown component: $component"

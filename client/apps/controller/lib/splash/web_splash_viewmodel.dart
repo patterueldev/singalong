@@ -29,54 +29,52 @@ class WebSplashScreenViewModel extends SplashScreenViewModel {
 
   Future<void> setupFromTunnel() async {
     try {
-      // try to get json from `<defaultHost>/tunnel.json`
+      // check if custom configurations are set. if yes, don't do anything
+      final existing =
+          await persistenceService.getString(PersistenceKey.customApiProtocol);
+      if (existing != null) {
+        debugPrint("Custom configurations already set");
+        return;
+      }
       final location = html.window.location;
       final components = location.host.split('.');
-      // host contains a port number; we need to remove it
-      final protocol = location.protocol;
-      final host = location.hostname ?? components[0];
-      if (host.contains("local")) return;
-      final port = location.port.isNotEmpty ? ":${location.port}" : "";
-      final epoc = DateTime.now().millisecondsSinceEpoch;
-      final raw = "$protocol//$host$port/tunnel.json?q=$epoc";
-      debugPrint("Trying to load json from: $raw");
-      final response = await html.HttpRequest.request(raw);
-      final json = response.response;
-      debugPrint("Got json: $json"); // should be like
-      final data = jsonDecode(json);
-      final isTunnel = data['is_tunnel'];
-      if (isTunnel) {
-        debugPrint("Tunnel is enabled");
-        final apiTunnelUrl = data['api_tunnel_url'];
-        final socketStorageUrl = data['socket_storage_tunnel_url'];
+      final host = location.hostname ?? components.firstOrNull;
+      // if local, don't do anything
+      if (host?.contains("local") == true) return;
 
-        final apiUri = Uri.parse(apiTunnelUrl);
-        await persistenceService.saveString(
-            PersistenceKey.customApiProtocol, apiUri.scheme);
-        await persistenceService.saveString(
-            PersistenceKey.customApiHost, apiUri.host);
-        await persistenceService.saveInt(
-            PersistenceKey.customApiPort, apiUri.port);
+      debugPrint("Tunnel is enabled");
+      const apiTunnelUrl = "https://api.singalong.fun/";
+      const socketUrl = "https://socket.singalong.fun/";
+      const storageUrl = "https://storage.singalong.fun/";
 
-        final socketStorageUri = Uri.parse(socketStorageUrl);
-        await persistenceService.saveString(
-            PersistenceKey.customSocketProtocol, socketStorageUri.scheme);
-        await persistenceService.saveString(
-            PersistenceKey.customSocketHost, socketStorageUri.host);
-        await persistenceService.saveInt(
-            PersistenceKey.customSocketPort, socketStorageUri.port);
+      final apiUri = Uri.parse(apiTunnelUrl);
+      await persistenceService.saveString(
+          PersistenceKey.customApiProtocol, apiUri.scheme);
+      await persistenceService.saveString(
+          PersistenceKey.customApiHost, apiUri.host);
+      await persistenceService.saveInt(
+          PersistenceKey.customApiPort, apiUri.port);
 
-        await persistenceService.saveString(
-            PersistenceKey.customStorageProtocol, socketStorageUri.scheme);
-        await persistenceService.saveString(
-            PersistenceKey.customStorageHost, socketStorageUri.host);
-        await persistenceService.saveInt(
-            PersistenceKey.customStoragePort, socketStorageUri.port);
+      final socketUri = Uri.parse(socketUrl);
+      await persistenceService.saveString(
+          PersistenceKey.customSocketProtocol, socketUri.scheme);
+      await persistenceService.saveString(
+          PersistenceKey.customSocketHost, socketUri.host);
+      await persistenceService.saveInt(
+          PersistenceKey.customSocketPort, socketUri.port);
 
-        debugPrint("Saved tunnel configuration");
-        debugPrint("API: $apiUri");
-        debugPrint("Socket/Storage: $socketStorageUri");
-      }
+      final storageUri = Uri.parse(storageUrl);
+      await persistenceService.saveString(
+          PersistenceKey.customStorageProtocol, storageUri.scheme);
+      await persistenceService.saveString(
+          PersistenceKey.customStorageHost, storageUri.host);
+      await persistenceService.saveInt(
+          PersistenceKey.customStoragePort, storageUri.port);
+
+      debugPrint("Saved tunnel configuration");
+      debugPrint("API: $apiUri");
+      debugPrint("Socket: $socketUri");
+      debugPrint("Storage: $storageUri");
     } catch (e) {
       debugPrint("Error while loading json: $e");
     }

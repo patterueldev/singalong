@@ -8,8 +8,8 @@ abstract class SingalongConfiguration {
   String get defaultProtocol => "http";
 
   int get defaultApiPort => 8080;
-  int get defaultSocketPort => 8005;
-  int get defaultStoragePort => 8005;
+  int get defaultSocketPort => 9092;
+  int get defaultStoragePort => 9000;
 
   String? customApiHost;
   String?
@@ -46,7 +46,7 @@ abstract class SingalongConfiguration {
   String get apiBaseUrl => baseUrlBuilder(protocol, apiHost, apiPort);
   String get socketBaseUrl => baseUrlBuilder(protocol, socketHost, socketPort);
   String get storageBaseUrl =>
-      baseUrlBuilder(protocol, storageHost, storagePort, suffix: "/storage");
+      baseUrlBuilder(protocol, storageHost, storagePort);
 
   String get persistenceStorageKey;
 
