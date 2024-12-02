@@ -51,6 +51,7 @@ open class CurrentSongRepositoryDS : CurrentSongRepository {
                 override val thumbnailPath: String = song.thumbnailFile.path()
                 override val videoPath: String = videoPath
                 override val durationInSeconds: Int = song.lengthSeconds
+                override val lyrics: String = song.videoHasLyrics.let { if (it) song.songLyrics.trim() else "" }
                 override val reservingUser: String = currentReservedSong.reservedBy
             }
         }

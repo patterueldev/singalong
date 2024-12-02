@@ -8,6 +8,7 @@ class APICurrentSong {
   final String thumbnailPath;
   final String videoPath;
   final int durationInSeconds;
+  final String lyrics;
   final String reservingUser;
   final double volume;
 
@@ -18,6 +19,7 @@ class APICurrentSong {
     required this.thumbnailPath,
     required this.videoPath,
     required this.durationInSeconds,
+    required this.lyrics,
     required this.reservingUser,
     this.volume = 1.0,
   });

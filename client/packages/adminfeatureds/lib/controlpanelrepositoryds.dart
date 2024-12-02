@@ -34,6 +34,7 @@ class ControlPanelRepositoryDS implements ControlPanelSocketRepository {
             artist: raw.artist,
             thumbnailURL:
                 configuration.buildResourceURL(raw.thumbnailPath).toString(),
+            lyrics: raw.lyrics,
             reservingUser: raw.reservingUser,
             durationInSeconds: raw.durationInSeconds,
             videoURL: configuration.buildResourceURL(raw.videoPath).toString(),

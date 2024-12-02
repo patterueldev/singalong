@@ -9,24 +9,8 @@ import '../splash/splash_screen.dart';
 import '../splash/splash_viewmodel.dart';
 import 'on_generate_routes.dart';
 
-class ControllerWebApp extends StatefulWidget {
+class ControllerWebApp extends StatelessWidget {
   const ControllerWebApp({super.key});
-
-  @override
-  State<ControllerWebApp> createState() => _ControllerWebAppState();
-}
-
-class _ControllerWebAppState extends State<ControllerWebApp> {
-  // @override
-  // void initState() {
-  //   super.initState();
-  //
-  //   WidgetsBinding.instance.addPostFrameCallback((_) {
-  //     final viewModel = context.read<AppViewModel>();
-  //     viewModel.appState.addListener(_onAuthenticationChanged);
-  //     viewModel.checkAuthentication();
-  //   });
-  // }
 
   // This widget is the root of your application.
   @override
@@ -44,35 +28,4 @@ class _ControllerWebAppState extends State<ControllerWebApp> {
         routes: routes,
         onGenerateRoute: (settings) => onGenerateRoute(settings, context),
       );
-
-  // void _onAuthenticationChanged() {
-  //   final viewModel = context.read<AppViewModel>();
-  //   final isAuthenticated = viewModel.appState.value == AppState.authenticated;
-  //   debugPrint('isAuthenticated: $isAuthenticated');
-  //   if (!isAuthenticated) {
-  //     AppRoute.sessionConnect.pushReplacement(context);
-  //   } else {}
-  // }
 }
-
-// abstract class AppViewModel extends ChangeNotifier {
-//   ValueNotifier<AppState> appState = ValueNotifier(AppState.loading);
-//   void checkAuthentication();
-// }
-//
-// class AppViewModelImpl extends AppViewModel {
-//   AppViewModelImpl();
-//
-//   @override
-//   void checkAuthentication() async {
-//     debugPrint('Checking authentication...');
-//     await Future.delayed(const Duration(seconds: 2));
-//     appState.value = AppState.unauthenticated;
-//   }
-// }
-//
-// enum AppState {
-//   loading,
-//   unauthenticated,
-//   authenticated,
-// }

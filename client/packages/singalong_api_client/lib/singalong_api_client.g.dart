@@ -94,6 +94,7 @@ APICurrentSong _$APICurrentSongFromJson(Map<String, dynamic> json) =>
       thumbnailPath: json['thumbnailPath'] as String,
       videoPath: json['videoPath'] as String,
       durationInSeconds: (json['durationInSeconds'] as num).toInt(),
+      lyrics: json['lyrics'] as String,
       reservingUser: json['reservingUser'] as String,
       volume: (json['volume'] as num?)?.toDouble() ?? 1.0,
     );
@@ -106,6 +107,7 @@ Map<String, dynamic> _$APICurrentSongToJson(APICurrentSong instance) =>
       'thumbnailPath': instance.thumbnailPath,
       'videoPath': instance.videoPath,
       'durationInSeconds': instance.durationInSeconds,
+      'lyrics': instance.lyrics,
       'reservingUser': instance.reservingUser,
       'volume': instance.volume,
     };

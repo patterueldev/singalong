@@ -204,6 +204,7 @@ class DefaultPlayerViewModel extends PlayerViewModel {
 
       await scoreVideoController.play();
       await audioController.play();
+      audioController.setVolume(0.05);
 
       final score = generateRandomScore();
       final message = messageForScore(score);
@@ -257,7 +258,7 @@ class DefaultPlayerViewModel extends PlayerViewModel {
   }
 
   void _scoreAudioListener(VideoController controller) async {
-    final minSeconds = min(10, controller.value.duration.inSeconds);
+    final minSeconds = min(4, controller.value.duration.inSeconds);
     final duration = Duration(seconds: minSeconds);
     if (controller.value.position >= duration) {
       controller.pause();

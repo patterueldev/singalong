@@ -44,6 +44,7 @@ class PlayerSocketRepositoryDS implements PlayerSocketRepository {
               .buildResourceURL(apiCurrentSong.thumbnailPath)
               .toString(),
           durationInSeconds: apiCurrentSong.durationInSeconds,
+          lyrics: apiCurrentSong.lyrics,
           reservingUser: apiCurrentSong.reservingUser,
           videoURL: configuration
               .buildResourceURL(apiCurrentSong.videoPath)

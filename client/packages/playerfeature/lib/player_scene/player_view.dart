@@ -175,19 +175,20 @@ class PlayerView extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(
-                    state.score.toString(),
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 60,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    state.message,
-                    style: TextStyle(color: Colors.white, fontSize: 24),
-                  ),
+                  Text("Great Singing!!!"),
+                  // Text(
+                  //   state.score.toString(),
+                  //   style: const TextStyle(
+                  //     color: Colors.white,
+                  //     fontSize: 60,
+                  //     fontWeight: FontWeight.bold,
+                  //   ),
+                  // ),
+                  // const SizedBox(height: 16),
+                  // Text(
+                  //   state.message,
+                  //   style: TextStyle(color: Colors.white, fontSize: 24),
+                  // ),
                 ],
               ),
             ),

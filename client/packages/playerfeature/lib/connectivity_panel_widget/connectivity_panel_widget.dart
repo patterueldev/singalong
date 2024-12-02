@@ -13,7 +13,7 @@ class ConnectivityPanelWidget extends StatelessWidget {
     required this.roomId,
   });
 
-  String get websiteURL => "https://singalong.fun";
+  String get websiteURL => "singalong.fun";
   String get connectivityQRData =>
       "https://singalong.fun/session/connect?roomId=$roomId";
 
