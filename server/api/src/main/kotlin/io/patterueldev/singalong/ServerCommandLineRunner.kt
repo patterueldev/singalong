@@ -14,7 +14,6 @@ class ServerCommandLineRunner : CommandLineRunner {
 
     @Throws(Exception::class)
     override fun run(vararg args: String) {
-        // TODO: This could potentially be done "not-automatically" by the admin
         runBlocking { singalongService.start() }
     }
 }

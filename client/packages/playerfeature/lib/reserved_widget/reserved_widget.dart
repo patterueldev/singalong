@@ -10,33 +10,35 @@ class ReservedWidget extends StatefulWidget {
 // this is just a horizontal widget on top of the screen
 class _ReservedWidgetState extends State<ReservedWidget> {
   final ScrollController _scrollController = ScrollController();
-  Timer? _timer;
+  Timer? _scrollTimer;
 
   // Adjustable variables
   final Duration scrollInterval =
-      Duration(milliseconds: 50); // Reduced interval
-  final double scrollAmount = 100.0;
+      const Duration(milliseconds: 50); // Reduced interval
+  double get scrollAmount => 20.0;
   final Duration animationDuration =
-      Duration(milliseconds: 500); // Reduced duratio
+      const Duration(milliseconds: 500); // Reduced duration
 
   @override
   void initState() {
     super.initState();
 
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-      _timer = Timer.periodic(scrollInterval, (timer) {
+      _scrollTimer = Timer.periodic(scrollInterval, (timer) {
         if (_scrollController.hasClients) {
           final maxScrollExtent = _scrollController.position.maxScrollExtent;
           final currentScrollPosition = _scrollController.position.pixels;
           final newScrollPosition = currentScrollPosition + scrollAmount;
 
           if (newScrollPosition >= maxScrollExtent) {
-            _scrollController.jumpTo(0);
+            Future.delayed(const Duration(seconds: 2), () {
+              _scrollController.jumpTo(0.0);
+            });
           } else {
             _scrollController.animateTo(
               newScrollPosition,
               duration: animationDuration,
-              curve: Curves.easeInOut,
+              curve: Curves.linear,
             );
           }
         }
@@ -87,7 +89,7 @@ class _ReservedWidgetState extends State<ReservedWidget> {
                       fit: BoxFit.cover,
                     ),
                   ),
-                  if (song.isPlaying)
+                  if (song.currentPlaying)
                     Container(
                       padding: const EdgeInsets.all(4),
                       height: height,
@@ -106,21 +108,20 @@ class _ReservedWidgetState extends State<ReservedWidget> {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                strokedText(
                   song.title,
                   style: TextStyle(
-                    color: Colors.white,
                     fontSize: height * 0.4,
-                    decoration: song.isPlaying
+                    decoration: song.currentPlaying
                         ? TextDecoration.underline
                         : TextDecoration.none,
                   ),
                   softWrap: false,
                 ),
                 const SizedBox(width: 16),
-                Text(
-                  '${song.artist} | ${song.reservedBy}',
-                  style: TextStyle(color: Colors.white, fontSize: height * 0.3),
+                strokedText(
+                  '${song.artist} | ${song.reservingUser}',
+                  style: TextStyle(fontSize: height * 0.3),
                 ),
               ],
             ),
@@ -129,9 +130,34 @@ class _ReservedWidgetState extends State<ReservedWidget> {
         ),
       );
 
+  Widget strokedText(
+    String text, {
+    TextStyle style = const TextStyle(),
+    bool? softWrap,
+  }) =>
+      Stack(
+        children: [
+          Text(
+            text,
+            style: style.copyWith(
+              foreground: Paint()
+                ..style = PaintingStyle.stroke
+                ..strokeWidth = 4
+                ..color = Colors.black45,
+            ),
+            softWrap: softWrap,
+          ),
+          Text(
+            text,
+            style: style.copyWith(color: Colors.white),
+            softWrap: softWrap,
+          ),
+        ],
+      );
+
   @override
   void dispose() {
-    _timer?.cancel();
+    _scrollTimer?.cancel();
     super.dispose();
   }
 }

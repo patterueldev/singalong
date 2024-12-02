@@ -34,9 +34,11 @@ class ControlPanelRepositoryDS implements ControlPanelSocketRepository {
             artist: raw.artist,
             thumbnailURL:
                 configuration.buildResourceURL(raw.thumbnailPath).toString(),
+            lyrics: raw.lyrics,
             reservingUser: raw.reservingUser,
             durationInSeconds: raw.durationInSeconds,
             videoURL: configuration.buildResourceURL(raw.videoPath).toString(),
+            volume: raw.volume,
           );
           controller.add(currentSong);
         },
@@ -88,8 +90,8 @@ class ControlPanelRepositoryDS implements ControlPanelSocketRepository {
   }
 
   @override
-  void skipSong() {
-    socket.emitRoomCommandEvent(RoomCommand.skipSong());
+  void skipSong({required bool completed}) {
+    socket.emitRoomCommandEvent(RoomCommand.skipSong(completed));
   }
 
   @override

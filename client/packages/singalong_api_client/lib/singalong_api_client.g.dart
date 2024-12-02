@@ -6,25 +6,6 @@ part of 'singalong_api_client.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-RoomCommand _$RoomCommandFromJson(Map<String, dynamic> json) => RoomCommand(
-      $enumDecode(_$RoomCommandTypeEnumMap, json['type']),
-      json['data'],
-    );
-
-Map<String, dynamic> _$RoomCommandToJson(RoomCommand instance) =>
-    <String, dynamic>{
-      'type': _$RoomCommandTypeEnumMap[instance.type]!,
-      'data': instance.data,
-    };
-
-const _$RoomCommandTypeEnumMap = {
-  RoomCommandType.skipSong: 'skipSong',
-  RoomCommandType.togglePlayPause: 'togglePlayPause',
-  RoomCommandType.adjustVolume: 'adjustVolume',
-  RoomCommandType.durationUpdate: 'durationUpdate',
-  RoomCommandType.seekDuration: 'seekDuration',
-};
-
 GenericResponse _$GenericResponseFromJson(Map<String, dynamic> json) =>
     GenericResponse(
       success: json['success'] as bool,
@@ -113,7 +94,9 @@ APICurrentSong _$APICurrentSongFromJson(Map<String, dynamic> json) =>
       thumbnailPath: json['thumbnailPath'] as String,
       videoPath: json['videoPath'] as String,
       durationInSeconds: (json['durationInSeconds'] as num).toInt(),
+      lyrics: json['lyrics'] as String,
       reservingUser: json['reservingUser'] as String,
+      volume: (json['volume'] as num?)?.toDouble() ?? 1.0,
     );
 
 Map<String, dynamic> _$APICurrentSongToJson(APICurrentSong instance) =>
@@ -124,7 +107,9 @@ Map<String, dynamic> _$APICurrentSongToJson(APICurrentSong instance) =>
       'thumbnailPath': instance.thumbnailPath,
       'videoPath': instance.videoPath,
       'durationInSeconds': instance.durationInSeconds,
+      'lyrics': instance.lyrics,
       'reservingUser': instance.reservingUser,
+      'volume': instance.volume,
     };
 
 APIPaginatedSongs _$APIPaginatedSongsFromJson(Map<String, dynamic> json) =>
@@ -153,6 +138,7 @@ APISongItem _$APISongItemFromJson(Map<String, dynamic> json) => APISongItem(
       language: json['language'] as String,
       isOffVocal: json['isOffVocal'] as bool,
       lengthSeconds: (json['lengthSeconds'] as num).toInt(),
+      alreadyPlayedInRoom: json['alreadyPlayedInRoom'] as bool,
     );
 
 Map<String, dynamic> _$APISongItemToJson(APISongItem instance) =>
@@ -164,6 +150,7 @@ Map<String, dynamic> _$APISongItemToJson(APISongItem instance) =>
       'language': instance.language,
       'isOffVocal': instance.isOffVocal,
       'lengthSeconds': instance.lengthSeconds,
+      'alreadyPlayedInRoom': instance.alreadyPlayedInRoom,
     };
 
 APILoadSongsParameters _$APILoadSongsParametersFromJson(
@@ -174,6 +161,7 @@ APILoadSongsParameters _$APILoadSongsParametersFromJson(
       nextOffset: (json['nextOffset'] as num?)?.toInt(),
       nextCursor: json['nextCursor'] as String?,
       nextPage: (json['nextPage'] as num?)?.toInt(),
+      roomId: json['roomId'] as String?,
     );
 
 Map<String, dynamic> _$APILoadSongsParametersToJson(
@@ -184,6 +172,7 @@ Map<String, dynamic> _$APILoadSongsParametersToJson(
       'nextOffset': instance.nextOffset,
       'nextCursor': instance.nextCursor,
       'nextPage': instance.nextPage,
+      'roomId': instance.roomId,
     };
 
 APIReserveSongParameters _$APIReserveSongParametersFromJson(
@@ -212,6 +201,9 @@ APIIdentifiedSongDetails _$APIIdentifiedSongDetailsFromJson(
       songLyrics: json['songLyrics'] as String,
       lengthSeconds: (json['lengthSeconds'] as num).toInt(),
       metadata: json['metadata'] as Map<String, dynamic>?,
+      genres:
+          (json['genres'] as List<dynamic>).map((e) => e as String).toList(),
+      tags: (json['tags'] as List<dynamic>).map((e) => e as String).toList(),
       alreadyExists: json['alreadyExists'] as bool,
     );
 
@@ -229,6 +221,8 @@ Map<String, dynamic> _$APIIdentifiedSongDetailsToJson(
       'songLyrics': instance.songLyrics,
       'lengthSeconds': instance.lengthSeconds,
       'metadata': instance.metadata,
+      'genres': instance.genres,
+      'tags': instance.tags,
       'alreadyExists': instance.alreadyExists,
     };
 
@@ -512,3 +506,128 @@ Map<String, dynamic> _$APICreateRoomParametersToJson(
       'roomName': instance.roomName,
       'roomPasscode': instance.roomPasscode,
     };
+
+APISongDetails _$APISongDetailsFromJson(Map<String, dynamic> json) =>
+    APISongDetails(
+      id: json['id'] as String,
+      source: json['source'] as String,
+      title: json['title'] as String,
+      artist: json['artist'] as String,
+      language: json['language'] as String,
+      isOffVocal: json['isOffVocal'] as bool,
+      videoHasLyrics: json['videoHasLyrics'] as bool,
+      duration: (json['duration'] as num).toInt(),
+      genres:
+          (json['genres'] as List<dynamic>).map((e) => e as String).toList(),
+      tags: (json['tags'] as List<dynamic>).map((e) => e as String).toList(),
+      metadata: Map<String, String>.from(json['metadata'] as Map),
+      thumbnailPath: json['thumbnailPath'] as String,
+      wasReserved: json['wasReserved'] as bool,
+      currentPlaying: json['currentPlaying'] as bool,
+      lyrics: json['lyrics'] as String?,
+      addedBy: json['addedBy'] as String,
+      addedAtSession: json['addedAtSession'] as String,
+      lastUpdatedBy: json['lastUpdatedBy'] as String,
+      isCorrupted: json['isCorrupted'] as bool,
+    );
+
+Map<String, dynamic> _$APISongDetailsToJson(APISongDetails instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'source': instance.source,
+      'title': instance.title,
+      'artist': instance.artist,
+      'language': instance.language,
+      'isOffVocal': instance.isOffVocal,
+      'videoHasLyrics': instance.videoHasLyrics,
+      'duration': instance.duration,
+      'genres': instance.genres,
+      'tags': instance.tags,
+      'metadata': instance.metadata,
+      'thumbnailPath': instance.thumbnailPath,
+      'wasReserved': instance.wasReserved,
+      'currentPlaying': instance.currentPlaying,
+      'lyrics': instance.lyrics,
+      'addedBy': instance.addedBy,
+      'addedAtSession': instance.addedAtSession,
+      'lastUpdatedBy': instance.lastUpdatedBy,
+      'isCorrupted': instance.isCorrupted,
+    };
+
+APILoadSongDetailsParameters _$APILoadSongDetailsParametersFromJson(
+        Map<String, dynamic> json) =>
+    APILoadSongDetailsParameters(
+      songId: json['songId'] as String,
+      roomId: json['roomId'] as String?,
+    );
+
+Map<String, dynamic> _$APILoadSongDetailsParametersToJson(
+        APILoadSongDetailsParameters instance) =>
+    <String, dynamic>{
+      'songId': instance.songId,
+      'roomId': instance.roomId,
+    };
+
+APIUpdateSongParameters _$APIUpdateSongParametersFromJson(
+        Map<String, dynamic> json) =>
+    APIUpdateSongParameters(
+      songId: json['songId'] as String,
+      title: json['title'] as String,
+      artist: json['artist'] as String,
+      language: json['language'] as String,
+      isOffVocal: json['isOffVocal'] as bool,
+      videoHasLyrics: json['videoHasLyrics'] as bool,
+      songLyrics: json['songLyrics'] as String,
+      metadata: Map<String, String>.from(json['metadata'] as Map),
+      genres:
+          (json['genres'] as List<dynamic>).map((e) => e as String).toList(),
+      tags: (json['tags'] as List<dynamic>).map((e) => e as String).toList(),
+    );
+
+Map<String, dynamic> _$APIUpdateSongParametersToJson(
+        APIUpdateSongParameters instance) =>
+    <String, dynamic>{
+      'songId': instance.songId,
+      'title': instance.title,
+      'artist': instance.artist,
+      'language': instance.language,
+      'isOffVocal': instance.isOffVocal,
+      'videoHasLyrics': instance.videoHasLyrics,
+      'songLyrics': instance.songLyrics,
+      'metadata': instance.metadata,
+      'genres': instance.genres,
+      'tags': instance.tags,
+    };
+
+APIRoomParticipant _$APIRoomParticipantFromJson(Map<String, dynamic> json) =>
+    APIRoomParticipant(
+      name: json['name'] as String,
+      songsFinished: (json['songsFinished'] as num).toInt(),
+      songsUpcoming: (json['songsUpcoming'] as num).toInt(),
+    );
+
+Map<String, dynamic> _$APIRoomParticipantToJson(APIRoomParticipant instance) =>
+    <String, dynamic>{
+      'name': instance.name,
+      'songsFinished': instance.songsFinished,
+      'songsUpcoming': instance.songsUpcoming,
+    };
+
+RoomCommand _$RoomCommandFromJson(Map<String, dynamic> json) => RoomCommand(
+      $enumDecode(_$RoomCommandTypeEnumMap, json['type']),
+      json['data'],
+    );
+
+Map<String, dynamic> _$RoomCommandToJson(RoomCommand instance) =>
+    <String, dynamic>{
+      'type': _$RoomCommandTypeEnumMap[instance.type]!,
+      'data': instance.data,
+    };
+
+const _$RoomCommandTypeEnumMap = {
+  RoomCommandType.skipSong: 'skipSong',
+  RoomCommandType.togglePlayPause: 'togglePlayPause',
+  RoomCommandType.adjustVolume: 'adjustVolume',
+  RoomCommandType.durationUpdate: 'durationUpdate',
+  RoomCommandType.seekDuration: 'seekDuration',
+};

@@ -8,6 +8,10 @@ abstract class SessionViewModel extends ChangeNotifier {
   ValueNotifier<ReservedSongItem?> songDetailsNotifier = ValueNotifier(null);
   ValueNotifier<bool> isSongBookOpenNotifier = ValueNotifier(false);
 
+  String get roomName;
+  String? roomId;
+  String get userName;
+
   void setupSession();
   void dismissSong(ReservedSongItem song);
   void reorderSongList(oldIndex, newIndex);
@@ -34,6 +38,9 @@ class DefaultSessionViewModel extends SessionViewModel {
     }
   }
 
+  String roomName = '';
+  String userName = '';
+
   StreamController<List<ReservedSongItem>>? streamController;
 
   @override
@@ -46,6 +53,18 @@ class DefaultSessionViewModel extends SessionViewModel {
         stateNotifier.value = SessionViewState.failure('Room ID not found');
         return;
       }
+      this.roomId = roomId;
+      roomName = roomId;
+
+      final userName = await persistenceRepository.getUsername();
+      if (userName == null) {
+        stateNotifier.value = SessionViewState.failure('Username not found');
+        return;
+      }
+
+      this.userName = userName;
+
+      notifyListeners();
       await connectRepository.connectRoomSocket(roomId);
 
       debugPrint('Opening socket');

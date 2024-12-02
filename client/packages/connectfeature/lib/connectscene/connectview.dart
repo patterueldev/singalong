@@ -32,14 +32,6 @@ class _ConnectViewState extends State<ConnectView> {
     });
   }
 
-  @override
-  void dispose() {
-    viewModel.stateNotifier.removeListener(_stateListener);
-    viewModel.nameController.dispose();
-    viewModel.sessionIdController.dispose();
-    super.dispose();
-  }
-
   void _stateListener() {
     final state = viewModel.stateNotifier.value;
 
@@ -185,31 +177,118 @@ class _ConnectViewState extends State<ConnectView> {
 
   Widget _showEditCustomHostDialog(
       BuildContext context, SingalongConfiguration configuration) {
-    final hostController = TextEditingController(text: configuration.host);
-    final portController =
+    final ValueNotifier<String> selectedProtocolNotifier =
+        ValueNotifier(configuration.protocol);
+
+    // API host and port (also socket host and port)
+    final apiHostController =
+        TextEditingController(text: configuration.apiHost);
+    final apiPortController =
         TextEditingController(text: configuration.apiPort.toString());
+
+    // Storage host and port
+    final storageHostController =
+        TextEditingController(text: configuration.storageHost);
+    final storagePortController =
+        TextEditingController(text: configuration.storagePort.toString());
+
+    final successNotifier = ValueNotifier(false);
+    successNotifier.addListener(() {
+      if (successNotifier.value) {
+        Navigator.of(context).pop();
+      }
+    });
 
     return AlertDialog(
       title: Text(localizations.editServerHostDialogTitle.localizedOf(context)),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          TextField(
-            controller: hostController,
-            decoration: InputDecoration(
-              labelText:
-                  localizations.serverHostPlaceholderText.localizedOf(context),
-            ),
+      content: Container(
+        constraints:
+            BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.5),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 16),
+              ValueListenableBuilder(
+                  valueListenable: selectedProtocolNotifier,
+                  builder: (_, selectedProtocol, __) {
+                    return DropdownButton<String>(
+                      value: selectedProtocol,
+                      onChanged: (String? value) {
+                        selectedProtocolNotifier.value = value ?? 'http';
+                      },
+                      items: ['http', 'https']
+                          .map((protocol) => DropdownMenuItem<String>(
+                                value: protocol,
+                                child: Text(protocol),
+                              ))
+                          .toList(),
+                    );
+                  }),
+              // API host and port
+              TextField(
+                controller: apiHostController,
+                decoration: InputDecoration(
+                  labelText: localizations.serverHostPlaceholderText
+                      .localizedOf(context),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: apiPortController,
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                      decoration: const InputDecoration(labelText: "API Port"),
+                    ),
+                  ),
+                  // button to set the port to 80
+                  TextButton(
+                    onPressed: () {
+                      apiPortController.text = '80';
+                    },
+                    child: Text('80?'),
+                  ),
+                ],
+              ),
+
+              // Storage host and port
+              const SizedBox(height: 16),
+              TextField(
+                controller: storageHostController,
+                decoration: InputDecoration(
+                  labelText: "Storage Host",
+                ),
+              ),
+
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: storagePortController,
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                      decoration:
+                          const InputDecoration(labelText: "Storage Port"),
+                    ),
+                  ),
+                  // button to set the port to 80
+                  TextButton(
+                    onPressed: () {
+                      storagePortController.text = '80';
+                    },
+                    child: Text('80?'),
+                  ),
+                ],
+              ),
+            ],
           ),
-          const SizedBox(height: 16),
-          TextField(
-            controller: portController,
-            decoration: InputDecoration(
-              labelText: "Port",
-            ),
-            readOnly: true,
-          ),
-        ],
+        ),
       ),
       actions: [
         TextButton(
@@ -218,14 +297,22 @@ class _ConnectViewState extends State<ConnectView> {
         ),
         TextButton(
           onPressed: () {
-            viewModel.updateServerHost(hostController.text);
-            Navigator.of(context).pop();
+            viewModel.update(
+              protocol: selectedProtocolNotifier.value,
+              apiHost: apiHostController.text,
+              apiPort: apiPortController.text,
+              socketHost: apiHostController.text,
+              socketPort: apiPortController.text,
+              storageHost: storageHostController.text,
+              storagePort: storagePortController.text,
+              successNotifier: successNotifier,
+            );
           },
           child: Text(localizations.saveButtonText.localizedOf(context)),
         ),
         TextButton(
           onPressed: () => {
-            viewModel.resetServerHost(),
+            viewModel.resetConfigurations(),
             Navigator.of(context).pop(),
           },
           child: Text(localizations.clearButtonText.localizedOf(context)),

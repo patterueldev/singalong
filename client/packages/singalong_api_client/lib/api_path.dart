@@ -4,6 +4,7 @@ enum APIPath {
   sessionConnect,
   sessionCheck,
   songs,
+  songDetails,
   reserveSong,
   identifySong,
   downloadable,
@@ -12,6 +13,9 @@ enum APIPath {
   adminAssignRoom,
   adminGenerateRoomID,
   adminCreateRoom,
+  adminUpdateSong,
+  adminDeleteSong,
+  adminEnhanceSongDetails,
   ;
 
   String get value {
@@ -22,6 +26,8 @@ enum APIPath {
         return '/session/check';
       case songs:
         return '/songs';
+      case songDetails:
+        return '/songs/details';
       case reserveSong:
         return '/songs/reserve';
       case identifySong:
@@ -38,6 +44,12 @@ enum APIPath {
         return '/admin/rooms/generateid';
       case adminCreateRoom:
         return '/admin/rooms/create';
+      case adminUpdateSong:
+        return '/admin/song/update';
+      case adminDeleteSong:
+        return '/admin/song/delete';
+      case adminEnhanceSongDetails:
+        return '/admin/song/enhance';
     }
   }
 }

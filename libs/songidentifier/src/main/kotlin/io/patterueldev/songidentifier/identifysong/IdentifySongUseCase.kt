@@ -2,6 +2,7 @@ package io.patterueldev.songidentifier.identifysong
 
 import io.patterueldev.common.GenericResponse
 import io.patterueldev.common.ServiceUseCase
+import io.patterueldev.identifysong.IdentifySongParameters
 import io.patterueldev.songidentifier.common.IdentifiedSongRepository
 import io.patterueldev.songidentifier.common.IdentifySongResponse
 

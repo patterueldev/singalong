@@ -2,6 +2,7 @@ part of '../downloadfeature.dart';
 
 abstract class SongDetailsViewModel extends ChangeNotifier {
   ValueNotifier<SongDownloadState> get songDownloadStateNotifier;
+  IdentifiedSongDetails get identifiedSongDetails;
   String get imageUrl;
   String get songTitle;
   String get songArtist;
@@ -9,6 +10,12 @@ abstract class SongDetailsViewModel extends ChangeNotifier {
   bool get isOffVocal;
   bool get videoHasLyrics;
   String get songLyrics;
+
+  List<String> get genres;
+  List<String> get tags;
+
+  final genresController = StringTagController();
+  final tagsController = StringTagController();
 
   void updateSongTitle(String text);
   void updateSongArtist(String text);
@@ -21,6 +28,7 @@ abstract class SongDetailsViewModel extends ChangeNotifier {
 
 class DefaultSongDetailsViewModel extends SongDetailsViewModel {
   final DownloadUseCase downloadUseCase;
+  @override
   final IdentifiedSongDetails identifiedSongDetails;
 
   DefaultSongDetailsViewModel({
@@ -34,6 +42,9 @@ class DefaultSongDetailsViewModel extends SongDetailsViewModel {
     isOffVocal = identifiedSongDetails.isOffVocal;
     videoHasLyrics = identifiedSongDetails.videoHasLyrics;
     songLyrics = identifiedSongDetails.songLyrics;
+
+    genres = identifiedSongDetails.genres;
+    tags = identifiedSongDetails.tags;
   }
 
   @override
@@ -60,6 +71,12 @@ class DefaultSongDetailsViewModel extends SongDetailsViewModel {
 
   @override
   String songLyrics = '';
+
+  @override
+  List<String> genres = [];
+
+  @override
+  List<String> tags = [];
 
   @override
   void updateSongTitle(String text) {
@@ -104,6 +121,8 @@ class DefaultSongDetailsViewModel extends SongDetailsViewModel {
       isOffVocal: isOffVocal,
       videoHasLyrics: videoHasLyrics,
       songLyrics: songLyrics,
+      tags: tagsController.getTags ?? [],
+      genres: genresController.getTags ?? [],
     );
     final result =
         await downloadUseCase.downloadSong(details, reserve: andReserve).run();

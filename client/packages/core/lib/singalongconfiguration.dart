@@ -1,18 +1,52 @@
 part of 'core.dart';
 
 abstract class SingalongConfiguration {
-  String get defaultHost;
-  String? customHost;
+  String get defaultApiHost;
+  String get defaultSocketHost => defaultApiHost;
+  String get defaultStorageHost => defaultApiHost;
 
-  String protocol = "http";
-  String get host => customHost ?? defaultHost;
-  int apiPort = 8080;
-  int socketPort = 9092;
-  int storagePort = 9000;
+  String get defaultProtocol => "http";
 
-  String get apiBaseUrl => "http://$host:$apiPort";
-  String get socketBaseUrl => "http://$host:$socketPort";
-  String get storageBaseUrl => "http://$host:$storagePort";
+  int get defaultApiPort => 8080;
+  int get defaultSocketPort => 9092;
+  int get defaultStoragePort => 9000;
+
+  String? customApiHost;
+  String?
+      customSocketHost; // I think this will still work with API host because it lives in the same server
+  String? customStorageHost;
+
+  String?
+      customProtocol; // might want to also spread this to socket and storage
+
+  int? customApiPort;
+  int? customSocketPort;
+  int? customStoragePort;
+
+  String get protocol => customProtocol ?? defaultProtocol;
+
+  String get apiHost => customApiHost ?? defaultApiHost;
+  String get socketHost => customSocketHost ?? defaultSocketHost;
+  String get storageHost => customStorageHost ?? defaultStorageHost;
+
+  int get apiPort => customApiPort ?? defaultApiPort;
+  int get socketPort => customSocketPort ?? defaultSocketPort;
+  int get storagePort => customStoragePort ?? defaultStoragePort;
+
+  String baseUrlBuilder(String protocol, String host, int port,
+      {String suffix = ""}) {
+    String urlPort = "";
+    if (port != 80) {
+      urlPort = ":$port";
+    }
+    return "$protocol://$host$urlPort$suffix";
+  }
+
+  // String get apiBaseUrl => "$protocol://$apiHost:$apiPort";
+  String get apiBaseUrl => baseUrlBuilder(protocol, apiHost, apiPort);
+  String get socketBaseUrl => baseUrlBuilder(protocol, socketHost, socketPort);
+  String get storageBaseUrl =>
+      baseUrlBuilder(protocol, storageHost, storagePort);
 
   String get persistenceStorageKey;
 
@@ -43,6 +77,12 @@ abstract class SingalongConfiguration {
     final filterBaseUrl = storageBaseUrl.removeSuffix("/");
     final filteredPath = path.removePrefix("/");
     return Uri.parse("$filterBaseUrl/$filteredPath");
+  }
+
+  Uri buildProxyURL(String url) {
+    final filterBaseUrl = apiBaseUrl.removeSuffix("/");
+    final encodedUrl = Uri.encodeComponent(url);
+    return Uri.parse("$filterBaseUrl/source-image?url=$encodedUrl");
   }
 }
 

@@ -12,6 +12,8 @@ dependencies:
     sdk: flutter
 
   core:
+  common:
+  commonds:
   sessionfeature:
   singalong_api_client:
 

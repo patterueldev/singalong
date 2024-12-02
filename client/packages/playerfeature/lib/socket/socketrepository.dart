@@ -10,5 +10,5 @@ abstract class PlayerSocketRepository {
   StreamController<bool> get togglePlayPauseStreamController;
   StreamController<double> get volumeStreamController;
   void durationUpdate({required int durationInMilliseconds});
-  void skipSong();
+  void skipSong({required bool completed});
 }

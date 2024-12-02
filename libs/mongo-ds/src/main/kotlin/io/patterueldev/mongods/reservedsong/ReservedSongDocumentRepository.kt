@@ -6,6 +6,7 @@ import org.springframework.data.mongodb.repository.Query
 import org.springframework.data.mongodb.repository.Update
 import org.springframework.stereotype.Repository
 import java.time.LocalDateTime
+import org.springframework.data.mongodb.repository.CountQuery
 
 @Repository
 interface ReservedSongDocumentRepository : MongoRepository<ReservedSongDocument, String> {
@@ -26,6 +27,22 @@ interface ReservedSongDocumentRepository : MongoRepository<ReservedSongDocument,
     )
     fun loadCurrentReservedSong(roomId: String): ReservedSongDocument?
 
+    @Query(
+        value = "{ 'roomId' : ?0 }",
+        sort = "{ 'order' : 1 }",
+    )
+    fun loadAllByRoomId(roomId: String): List<ReservedSongDocument>
+
+    @Query(
+        value = "{ 'roomId' : ?0, 'songId' : ?1 }",
+    )
+    fun loadReservationsByRoomIdAndSongId(roomId: String, songId: String): List<ReservedSongDocument>
+
+    @Query(
+        value = "{ 'songId' : ?0 }",
+    )
+    fun loadReservationsBySongId(songId: String): List<ReservedSongDocument>
+
     @Aggregation(
         pipeline = [
             "{ \$match: { 'roomId' : ?0 } }",
@@ -35,23 +52,27 @@ interface ReservedSongDocumentRepository : MongoRepository<ReservedSongDocument,
     fun findMaxOrder(roomId: String): Int
 
     @Query("{ '_id' : ?0 }")
-    @Update("{ '\$set' : { 'finishedPlayingAt' : ?1 } }")
+    @Update("{ '\$set' : { 'finishedPlayingAt' : ?1, 'completed' : ?2 } }")
     fun markFinishedPlaying(
         reservedSongId: String,
         at: LocalDateTime,
+        completed: Boolean,
     )
 
-    /*
-    e.g.
-
-    @Query("{ 'lastname' : ?0 }")
-    @Update("{ '$inc' : { 'visits' : ?1 } }")
-
-     */
     @Query("{ '_id' : ?0 }")
     @Update("{ '\$set' : { 'startedPlayingAt' : ?1 } }")
     fun markStartedPlaying(
         reservedSongId: String,
         at: LocalDateTime,
     )
+
+    @CountQuery(
+        value = "{ 'roomId' : ?1, 'reservedBy' : ?0, 'completed' : true }",
+    )
+    fun getCountForFinishedReservationsByUserInRoom(userId: String, roomId: String): Int
+
+    @CountQuery(
+        value = "{ 'roomId' : ?1, 'reservedBy' : ?0, 'finishedPlayingAt' : null }",
+    )
+    fun getCountForUpcomingSongsByUserInRoom(userId: String, roomId: String): Int
 }

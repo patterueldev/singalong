@@ -18,17 +18,7 @@ class ReservedSongListSocketRepositoryDS
             (data, controller) {
               final apiReservedSongs = APIReservedSong.fromList(data);
               final reservedSongs = apiReservedSongs
-                  .map((apiSong) => ReservedSongItem(
-                        id: apiSong.id,
-                        songId: apiSong.songId,
-                        title: apiSong.title,
-                        artist: apiSong.artist,
-                        thumbnailURL: configuration
-                            .buildResourceURL(apiSong.thumbnailPath)
-                            .toString(),
-                        reservingUser: apiSong.reservingUser,
-                        currentPlaying: apiSong.currentPlaying,
-                      ))
+                  .map((apiSong) => apiSong.toReservedSongItem(configuration))
                   .toList();
               controller.add(reservedSongs);
             },

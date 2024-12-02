@@ -13,7 +13,7 @@ internal class LoadRoomListUseCase(
             val rooms = roomRepository.loadRoomList(parameters.limit, parameters.keyword, parameters.nextPage())
             GenericResponse.success(rooms)
         } catch (e: Exception) {
-            GenericResponse.failure(e.message ?: "An error occurred while loading songs.")
+            GenericResponse.failure(e.message ?: "An error occurred while loading rooms.")
         }
     }
 }

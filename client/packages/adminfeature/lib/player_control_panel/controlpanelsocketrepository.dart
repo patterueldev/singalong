@@ -9,5 +9,5 @@ abstract class ControlPanelSocketRepository {
   void seekDuration({required int durationInSeconds});
   void adjustVolumeFromControl(double volume);
   void togglePlayPause(bool isPlaying);
-  void skipSong();
+  void skipSong({required bool completed});
 }

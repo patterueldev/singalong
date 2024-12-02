@@ -12,7 +12,6 @@ repositories {
 
 dependencies {
     implementation(libs.kotlinx.coroutines.core)
-    implementation(libs.openai.client)
     implementation(libs.minio)
     implementation(libs.spring.boot.webflux)
     implementation(libs.spring.boot.data.mongodb)

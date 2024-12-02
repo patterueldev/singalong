@@ -1,6 +1,7 @@
 library adminfeature;
 
 import 'dart:async';
+import 'dart:math';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:common/common.dart';
@@ -8,9 +9,12 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:fpdart/fpdart.dart' show TaskEither, Unit, unit;
 import 'package:provider/provider.dart';
 import 'package:core/core.dart';
+import 'package:skeletonizer/skeletonizer.dart';
+import 'package:textfield_tags/textfield_tags.dart';
 
 part 'admincoordinator.dart';
 part 'adminlocalizations.dart';
@@ -33,6 +37,14 @@ part 'player_control_panel/authorize_connection_usecase.dart';
 part 'player_control_panel/player_control_panel_state.dart';
 part 'create_room/create_room_dialog.dart';
 part 'create_room/create_room_viewmodel.dart';
+part 'reserved_panel/reserved_panel_widget.dart';
+part 'reserved_panel/reserved_panel_viewmodel.dart';
+part 'songview/song_editor_viewmodel.dart';
+part 'songview/songviewstate.dart';
+part 'songview/song_editor_view.dart';
+part 'songview/songrepository.dart';
+part 'participants_panel/participants_panel_widget.dart';
+part 'participants_panel/participants_panel_viewmodel.dart';
 
 class AdminFeatureUIProvider {
   AdminFeatureUIProvider();
@@ -85,5 +97,35 @@ class AdminFeatureUIProvider {
           room: room,
         ),
         child: PlayerSelectorDialogWidget(),
+      );
+
+  Widget buildReservedPanel(BuildContext context) =>
+      ChangeNotifierProvider<ReservedPanelViewModel>(
+        create: (context) => DefaultReservedPanelViewModel(
+          reservedSongListSocketRepository: context.read(),
+        ),
+        child: ReservedPanelWidget(
+          coordinator: context.read(),
+        ),
+      );
+
+  Widget buildSongEditorPanel(BuildContext context, String songId) =>
+      ChangeNotifierProvider<SongEditorViewModel>(
+        create: (context) => DefaultSongViewModel(
+          songRepository: context.read(),
+          songId: songId,
+        ),
+        child: SongEditorView(
+          localizations: context.read(),
+          coordinator: context.read(),
+        ),
+      );
+
+  Widget buildParticipantsPanelWidget(BuildContext context) =>
+      ChangeNotifierProvider<ParticipantsPanelViewModel>(
+        create: (context) => DefaultParticipantsPanelViewModel(
+          userParticipantRepository: context.read(),
+        ),
+        child: const ParticipantsPanelWidget(),
       );
 }

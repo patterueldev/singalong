@@ -44,13 +44,14 @@ open class CurrentSongRepositoryDS : CurrentSongRepository {
 
             val videoPath = song.videoFile?.path() ?: throw IllegalArgumentException("Video file not found")
 
-            return object : CurrentSong {
+            return object : CurrentSong() {
                 override val id: String = currentReservedSong.id ?: throw IllegalArgumentException("Reserved song id not found")
                 override val title: String = song.title
                 override val artist: String = song.artist
                 override val thumbnailPath: String = song.thumbnailFile.path()
                 override val videoPath: String = videoPath
                 override val durationInSeconds: Int = song.lengthSeconds
+                override val lyrics: String = song.videoHasLyrics.let { if (it) song.songLyrics.trim() else "" }
                 override val reservingUser: String = currentReservedSong.reservedBy
             }
         }

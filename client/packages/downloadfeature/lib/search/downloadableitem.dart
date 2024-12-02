@@ -6,6 +6,7 @@ class DownloadableItem {
   final String artist;
   final String thumbnailURL;
   final String duration;
+  final bool alreadyDownloaded;
 
   DownloadableItem({
     required this.sourceUrl,
@@ -13,26 +14,6 @@ class DownloadableItem {
     required this.artist,
     required this.thumbnailURL,
     required this.duration,
+    required this.alreadyDownloaded,
   });
-}
-
-// Replace with your method to get songs
-List<DownloadableItem> getSongs() {
-  return [
-    DownloadableItem(
-      sourceUrl: 'https://example.com/song1.mp3',
-      title: 'Song 1',
-      artist: 'Artist 1',
-      thumbnailURL: 'https://example.com/thumbnail1.jpg',
-      duration: '3:45',
-    ),
-    DownloadableItem(
-      sourceUrl: 'https://example.com/song2.mp3',
-      title: 'Song 2',
-      artist: 'Artist 2',
-      thumbnailURL: 'https://example.com/thumbnail2.jpg',
-      duration: '4:20',
-    ),
-    // Add more songs here
-  ];
 }

@@ -1,7 +1,9 @@
-# melos_managed_dependency_overrides: sessionfeature,singalong_api_client,common,core
+# melos_managed_dependency_overrides: sessionfeature,singalong_api_client,common,core,commonds
 dependency_overrides:
   common:
     path: ../common
+  commonds:
+    path: ../commonds
   core:
     path: ../core
   sessionfeature:

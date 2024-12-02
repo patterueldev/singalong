@@ -3,11 +3,13 @@ library downloadfeature;
 import 'dart:async';
 
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:common/common.dart';
 import 'package:flutter/material.dart';
 import 'package:fpdart/fpdart.dart' show TaskEither, Unit, unit;
 import 'package:provider/provider.dart';
 import 'package:core/core.dart';
 import 'package:skeletonizer/skeletonizer.dart';
+import 'package:textfield_tags/textfield_tags.dart';
 
 part 'downloadassets.dart';
 part 'downloadexception.dart';

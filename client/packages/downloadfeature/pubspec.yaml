@@ -14,9 +14,11 @@ dependencies:
   cached_network_image: ^3.4.0
   
   core:
+  common:
   provider: ^6.1.2
   fpdart: ^1.1.0
   skeletonizer: ^1.4.2
+  textfield_tags: ^3.0.1
 
 dev_dependencies:
   flutter_test:

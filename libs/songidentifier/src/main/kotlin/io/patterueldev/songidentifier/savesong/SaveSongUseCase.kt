@@ -15,7 +15,7 @@ import kotlinx.coroutines.sync.withLock
 internal open class SaveSongUseCase(
     private val identifiedSongRepository: IdentifiedSongRepository,
     private val roomUserRepository: RoomUserRepository,
-    val songIdentifierCoordinator: SongIdentifierCoordinator?,
+    private val songIdentifierCoordinator: SongIdentifierCoordinator?,
 ) : ServiceUseCase<SaveSongParameters, SaveSongResponse> {
     private val mutex = Mutex()
 
@@ -26,22 +26,44 @@ internal open class SaveSongUseCase(
         val identifiedSong = parameters.song
         val videoId = identifiedSong.id
         val videoTitle = identifiedSong.songTitle
-        val fileTitle = videoTitle.replace(Regex("[/\\\\?%*:|\"<>]"), "-").replace(Regex("\\s+"), "-").lowercase()
-        val filename = "$fileTitle[$videoId]"
-
-        var newSong = identifiedSongRepository.saveSong(parameters.song, user.username, user.roomId)
+        val filename = toFileTitle(videoTitle, videoId)
 
         // execute on the background thread
         GlobalScope.launch {
             mutex.withLock {
-                newSong = identifiedSongRepository.downloadThumbnail(newSong, identifiedSong.imageUrl, filename)
-                newSong = identifiedSongRepository.downloadSong(newSong, identifiedSong.source, filename)
+                val downloadedVideo = identifiedSongRepository.downloadSongVideo(identifiedSong.source, filename)
+                val downloadedThumbnail = identifiedSongRepository.downloadSongThumbnail(identifiedSong.imageUrl, filename)
+                val newSong =
+                    identifiedSongRepository.saveSong(
+                        parameters.song,
+                        user.username,
+                        user.roomId,
+                        downloadedVideo,
+                        downloadedThumbnail,
+                    )
                 if (parameters.thenReserve) {
-                    identifiedSongRepository.reserveSong(user, newSong.id)
+                    val reservedSong = identifiedSongRepository.reserveSong(user, newSong.id)
                     songIdentifierCoordinator?.onReserveUpdate(user.roomId)
+                    if (reservedSong.currentPlaying) {
+                        songIdentifierCoordinator?.onCurrentSongUpdate(user.roomId)
+                    }
                 }
             }
         }
-        return GenericResponse.success(newSong)
+        return GenericResponse.success(true)
+    }
+
+    private fun toFileTitle(
+        videoTitle: String,
+        videoId: String,
+    ): String {
+        // 1. extract only alphanumeric and dash characters
+        // 2. replace multiple dashes with a single dash
+        // 3. remove leading and trailing dashes
+        // 4. lowercase the string
+        val filter1 = videoTitle.replace(Regex("[^a-zA-Z0-9-]"), "")
+        val filter2 = filter1.replace(Regex("-+"), "-")
+        val filter3 = filter2.removePrefix("-").removeSuffix("-")
+        return "$filter3[$videoId]"
     }
 }

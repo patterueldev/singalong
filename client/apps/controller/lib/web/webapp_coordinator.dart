@@ -1,3 +1,4 @@
+import 'package:common/common.dart';
 import 'package:connectfeature/connectfeature.dart';
 import 'package:controller/web/approute.dart';
 import 'package:controller/web/on_generate_routes.dart';
@@ -43,8 +44,15 @@ class WebAppCoordinator
   }
 
   @override
-  void onSongBook(BuildContext context) {
-    AppRoute.songBook.push(context);
+  void onSongBook(BuildContext context, {String? roomId}) {
+    AppRoute.songBook.push(context, arguments: roomId);
+  }
+
+  @override
+  void onReserved(BuildContext context) {
+    Navigator.of(context).popUntil((route) {
+      return route.settings.name == '/session/active';
+    });
   }
 
   @override
@@ -58,9 +66,18 @@ class WebAppCoordinator
   }
 
   @override
-  void openSongDetailScreen(BuildContext context, SongItem song) {
-    // TODO: implement openSongDetailScreen
-  }
+  Future<T?> openSongDetailScreen<T>(BuildContext context, String songId) =>
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        builder: (context) => SizedBox(
+          height: MediaQuery.of(context).size.height * 0.90,
+          child: context.read<SongBookFeatureProvider>().buildSongDetailsView(
+                context: context,
+                songId: songId,
+              ),
+        ),
+      );
 
   @override
   void navigateToIdentifiedSongDetailsView(BuildContext context,
@@ -70,7 +87,9 @@ class WebAppCoordinator
 
   @override
   void onDownloadSuccess(BuildContext context) {
-    Navigator.popUntil(context, (route) => route.isFirst);
+    Navigator.popUntil(context, (route) {
+      return route.settings.name == '/session/active';
+    });
   }
 
   @override
@@ -79,15 +98,14 @@ class WebAppCoordinator
   }
 
   @override
-  void previewDownloadable(
-      BuildContext context, DownloadableItem downloadable) {
-    final url = Uri.parse(downloadable.sourceUrl);
+  void openURL(BuildContext context, Uri url) {
+    debugPrint("Launching URL: $url");
     canLaunchUrl(url).then((canLaunch) async {
       if (!canLaunch) {
         debugPrint("Cannot launch URL: $url");
         return;
       }
-      await launchUrl(url);
+      await launchUrl(url, mode: LaunchMode.externalApplication);
     });
   }
 }

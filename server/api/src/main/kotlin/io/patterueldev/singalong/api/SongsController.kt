@@ -1,21 +1,21 @@
 package io.patterueldev.singalong.api
 
+import io.patterueldev.identifysong.IdentifySongParameters
 import io.patterueldev.reservation.ReservationService
-import io.patterueldev.reservation.next.NextSongResponse
 import io.patterueldev.reservation.reserve.ReserveParameters
 import io.patterueldev.reservation.reserve.ReserveResponse
 import io.patterueldev.songbook.SongBookService
 import io.patterueldev.songbook.loadsongs.LoadSongsParameters
 import io.patterueldev.songbook.loadsongs.LoadSongsResponse
+import io.patterueldev.songbook.songdetails.LoadSongDetailsParameters
+import io.patterueldev.songbook.songdetails.SongDetailsResponse
 import io.patterueldev.songidentifier.SongIdentifierService
 import io.patterueldev.songidentifier.common.IdentifySongResponse
 import io.patterueldev.songidentifier.common.SaveSongResponse
 import io.patterueldev.songidentifier.common.SearchSongResponse
-import io.patterueldev.songidentifier.identifysong.IdentifySongParameters
 import io.patterueldev.songidentifier.savesong.SaveSongParameters
 import io.patterueldev.songidentifier.searchsong.SearchSongParameters
 import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
@@ -47,6 +47,7 @@ class SongsController(
         @RequestParam nextOffset: Int?,
         @RequestParam nextCursor: String?,
         @RequestParam nextPage: Int?,
+        @RequestParam roomId: String?,
     ): LoadSongsResponse =
         songBookService.loadSongs(
             LoadSongsParameters(
@@ -55,6 +56,7 @@ class SongsController(
                 offset = nextOffset,
                 cursor = nextCursor,
                 page = nextPage,
+                roomId = roomId,
             ),
         )
 
@@ -75,6 +77,15 @@ class SongsController(
             ),
         )
 
-    @PatchMapping("/next")
-    suspend fun nextSong(): NextSongResponse = reservationService.nextSong()
+    @GetMapping("/details")
+    suspend fun songDetails(
+        @RequestParam songId: String,
+        @RequestParam roomId: String? = null,
+    ): SongDetailsResponse =
+        songBookService.loadSong(
+            LoadSongDetailsParameters(
+                songId = songId,
+                roomId = roomId,
+            ),
+        )
 }

@@ -6,6 +6,8 @@ abstract class PlayerViewModel extends ChangeNotifier {
       ValueNotifier(PlayerViewState.loading());
   ValueNotifier<String?> roomIdNotifier = ValueNotifier(null);
 
+  SingalongConfiguration get configuration;
+
   void setup();
 }
 
@@ -14,12 +16,14 @@ class DefaultPlayerViewModel extends PlayerViewModel {
   final PlayerSocketRepository playerSocketRepository;
   final PersistenceRepository persistenceRepository;
   final ReservedViewModel reservedViewModel;
+  final SingalongConfiguration configuration;
 
   DefaultPlayerViewModel({
     required this.connectRepository,
     required this.playerSocketRepository,
     required this.persistenceRepository,
     required this.reservedViewModel,
+    required this.configuration,
   }) {
     setup();
   }
@@ -36,6 +40,8 @@ class DefaultPlayerViewModel extends PlayerViewModel {
 
   final List<VideoController> _videoControllers = [];
   VideoController? _activeSongVideoController;
+
+  bool isSkipping = false;
 
   @override
   void setup() async {
@@ -126,17 +132,21 @@ class DefaultPlayerViewModel extends PlayerViewModel {
         final videoUrl = currentSong.videoURL;
         debugPrint("Playing video: $videoUrl");
         final controller = VideoController.network(videoUrl);
+        controller.setVolume(currentSong.volume);
+        _activeSongVideoController = controller;
         _videoControllers.add(controller);
+
         await controller.initialize();
         playerViewStateNotifier.value =
             PlayerViewState.playing(controller, durationInSeconds.toDouble());
-
         await controller.play();
-        _activeSongVideoController = controller;
 
         controller.addListener(() {
           _videoPlayerListener(controller);
         });
+
+        isSkipping = false;
+        debugPrint("Playing video: $videoUrl");
       } catch (e, s) {
         debugPrint("Error: $e");
         playerViewStateNotifier.value = PlayerViewState.failure(e.toString());
@@ -175,24 +185,43 @@ class DefaultPlayerViewModel extends PlayerViewModel {
     final position = controller.value.position;
     if (position >= controller.value.duration) {
       controller.pause();
-      // TODO: Maybe some video score calculation here
-      final host = "thursday.local"; // TODO: this should be configurable
-      final url = "http://$host:9000/assets/fireworks.mp4";
+      final url =
+          configuration.buildResourceURL("assets/fireworks.mp4").toString();
       final scoreVideoController = VideoController.network(url);
+
+      final audioUrl =
+          configuration.buildResourceURL("assets/fanfare-sound.mp3").toString();
+      final audioController = VideoController.network(audioUrl);
+      audioController.setVolume(0.5);
+
       _videoControllers.add(scoreVideoController);
+      _videoControllers.add(audioController);
+
       await scoreVideoController.initialize();
+      await audioController.initialize();
+
+      scoreVideoController.setLooping(true);
+
       await scoreVideoController.play();
-      playerViewStateNotifier.value = PlayerViewState.score(PlayerViewScore(
-        score: 100,
-        message: "You are a great singer!",
-        videoPlayerController: scoreVideoController,
-      ));
+      await audioController.play();
+      audioController.setVolume(0.05);
 
-      scoreVideoController.addListener(() {
-        _scoreVideoListener(scoreVideoController);
+      final score = generateRandomScore();
+      final message = messageForScore(score);
+      playerViewStateNotifier.value = PlayerViewState.score(
+        PlayerViewScore(
+          score: score,
+          message: message,
+          videoPlayerController: scoreVideoController,
+          audioPlayerController: audioController,
+        ),
+      );
+
+      isSkipping = false;
+      debugPrint("Playing score video: $url");
+      audioController.addListener(() {
+        _scoreAudioListener(audioController);
       });
-
-      // TODO: Send command to the server to update the score and play the next song
     } else {
       // send the current position to the server
       playerSocketRepository.durationUpdate(
@@ -205,20 +234,49 @@ class DefaultPlayerViewModel extends PlayerViewModel {
     }
   }
 
-  void _scoreVideoListener(VideoController controller) async {
-    final minSeconds = min(10, controller.value.duration.inSeconds);
+  int generateRandomScore() {
+    final random = Random();
+    final randomValue = random.nextInt(100);
+
+    if (randomValue < 50) {
+      return 100;
+    } else if (randomValue < 90) {
+      return 90 + random.nextInt(10);
+    } else {
+      return 80 + random.nextInt(10);
+    }
+  }
+
+  String messageForScore(int score) {
+    if (score == 100) {
+      return "Fantastic!";
+    } else if (score >= 90) {
+      return "Amazing voice!";
+    } else {
+      return "Great singing!";
+    }
+  }
+
+  void _scoreAudioListener(VideoController controller) async {
+    final minSeconds = min(4, controller.value.duration.inSeconds);
     final duration = Duration(seconds: minSeconds);
     if (controller.value.position >= duration) {
       controller.pause();
       playerViewStateNotifier.value = PlayerViewState.connected();
       await _clearVideoControllers();
-      // TODO: Send command to the server to update the score and play the next song
-      playerSocketRepository.skipSong();
+      debugPrint("Is Skipping: $isSkipping");
+      if (!isSkipping) {
+        debugPrint("Score video finished; playing next song");
+        playerSocketRepository.skipSong(completed: true);
+        isSkipping = true;
+      }
     }
   }
 
   Future<void> _clearVideoControllers() async {
-    for (final controller in _videoControllers) {
+    // reverse loop to avoid concurrent modification
+    for (var i = _videoControllers.length - 1; i >= 0; i--) {
+      final controller = _videoControllers[i];
       await controller.pause();
       await controller.dispose();
     }

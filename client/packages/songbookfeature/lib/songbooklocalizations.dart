@@ -15,4 +15,7 @@ abstract class SongBookLocalizations implements GenericLocalizations {
 
   LocalizedString songNotFound(String query);
   LocalizedString urlDetected(String url);
+
+  LocalizedString get lyricsLabelText;
+  LocalizedString get noLyricsText;
 }

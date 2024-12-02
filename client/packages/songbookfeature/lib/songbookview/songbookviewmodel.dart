@@ -2,25 +2,28 @@ part of '../songbookfeature.dart';
 
 abstract class SongBookViewModel extends ChangeNotifier {
   ValueNotifier<SongBookViewState> get stateNotifier;
-  ValueNotifier<bool> get isSearchActive;
   ValueNotifier<bool> get isLoadingNotifier; // for the HUD overlay
   ValueNotifier<String?> get toastMessageNotifier;
+  ValueNotifier<bool> reservedNotifier = ValueNotifier(false);
+  ValueNotifier<bool> isSearchingNotifier = ValueNotifier(false);
 
   void fetchSongs(bool loadsNext);
   void toggleSearch();
   void updateSearchQuery(String query);
-  void reserveSong(SongItem song);
+  void reserveSong(SongbookItem song);
 }
 
 class DefaultSongBookViewModel extends SongBookViewModel {
   final FetchSongsUseCase fetchSongsUseCase;
   final ReserveSongUseCase reserveSongUseCase;
   final SongBookLocalizations localizations;
+  final String? roomId;
 
   DefaultSongBookViewModel({
     required this.fetchSongsUseCase,
     required this.reserveSongUseCase,
     required this.localizations,
+    this.roomId,
   }) {
     fetchSongs(false);
   }
@@ -55,8 +58,9 @@ class DefaultSongBookViewModel extends SongBookViewModel {
     stateNotifier.value = SongBookViewState.loading();
     final parameters = LoadSongsParameters.next(
       keyword: _searchQuery,
-      limit: 50,
+      limit: 100,
       nextPage: loadsNext ? nextPage : null,
+      roomId: roomId,
     );
     final result = await fetchSongsUseCase(parameters).run();
     result.fold(
@@ -97,7 +101,7 @@ class DefaultSongBookViewModel extends SongBookViewModel {
   }
 
   @override
-  void reserveSong(SongItem song) async {
+  void reserveSong(SongbookItem song) async {
     isLoadingNotifier.value = true;
     final result = await reserveSongUseCase(song).run();
     result.fold(
@@ -109,6 +113,10 @@ class DefaultSongBookViewModel extends SongBookViewModel {
         isLoadingNotifier.value = false;
         // maybe show a toast
         toastMessageNotifier.value = 'Song reserved';
+        // refresh
+        fetchSongs(false);
+
+        reservedNotifier.value = true;
       },
     );
   }
@@ -124,6 +132,7 @@ class DefaultSongBookViewModel extends SongBookViewModel {
 
   @override
   void updateSearchQuery(String query) {
+    isSearchingNotifier.value = query.isNotEmpty;
     if (_searchQuery == query) return;
     Duration debounceTime;
     if (query.isEmpty) {

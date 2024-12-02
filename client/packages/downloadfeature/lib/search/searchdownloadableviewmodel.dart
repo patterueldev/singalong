@@ -11,6 +11,11 @@ abstract class SearchDownloadableViewModel extends ChangeNotifier {
       ValueNotifier(IdentifySubmissionState.idle());
 
   void searchDownloadables();
+  void clearSearchQuery() {
+    searchController.clear();
+    updateSearchQuery('', debounceTime: Duration.zero);
+  }
+
   void updateSearchQuery(String query,
       {Duration debounceTime = const Duration(milliseconds: 500)});
   void identifyDownloadable(DownloadableItem downloadable);
@@ -58,6 +63,8 @@ class DefaultSearchDownloadableViewModel extends SearchDownloadableViewModel {
     final url = downloadable.sourceUrl;
     final result = await identifySongUrlUseCase(url).run();
 
+    debugPrint("identifyDownloadable result: $result");
+
     result.fold(
       (exception) {
         submissionStateNotifier.value =
@@ -74,7 +81,7 @@ class DefaultSearchDownloadableViewModel extends SearchDownloadableViewModel {
   @override
   void updateSearchQuery(
     String query, {
-    Duration debounceTime = const Duration(milliseconds: 500),
+    Duration debounceTime = const Duration(milliseconds: 1000),
   }) {
     if (searchQuery == query) return;
     searchQuery = query;

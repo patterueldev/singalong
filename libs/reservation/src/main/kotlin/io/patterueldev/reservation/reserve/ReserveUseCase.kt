@@ -3,7 +3,7 @@ package io.patterueldev.reservation.reserve
 import io.patterueldev.common.GenericResponse
 import io.patterueldev.common.ServiceUseCase
 import io.patterueldev.reservation.ReservationCoordinator
-import io.patterueldev.reservation.reservedsong.ReservedSongsRepository
+import io.patterueldev.reservedsong.ReservedSongsRepository
 import io.patterueldev.roomuser.RoomUserRepository
 
 internal class ReserveUseCase(

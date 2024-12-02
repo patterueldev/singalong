@@ -40,6 +40,7 @@ class SecurityConfiguration(
                 "/v3/api-docs/**",
                 "/swagger-resources",
                 "/songs/thumbnail/**",
+                "/source-image/**",
             )
         return http.csrf { it.disable() }
             .cors { it.configurationSource(corsConfigurationSource()) }
@@ -61,8 +62,10 @@ class SecurityConfiguration(
         allowedHosts.split(",").forEach { host ->
             // add the plain 80
             allowedOrigins.add("http://$host")
+            allowedOrigins.add("https://$host")
             allowedPorts.split(",").forEach { port ->
                 allowedOrigins.add("http://$host:$port")
+                allowedOrigins.add("https://$host:$port")
             }
         }
         println("Allowed origins: \n${allowedOrigins.joinToString("\n    ")}")

@@ -16,15 +16,9 @@ class ReservedSongListRepositoryDS implements ReservedSongListSocketRepository {
         (data, controller) {
           final raw = APIReservedSong.fromList(data);
           final reservedSongs = raw
-              .map((e) => ReservedSongItem(
-                    title: e.title,
-                    artist: e.artist,
-                    reservedBy: e.reservingUser,
-                    thumbnailURL: configuration
-                        .buildResourceURL(e.thumbnailPath)
-                        .toString(),
-                    isPlaying: e.currentPlaying,
-                  ))
+              .map(
+                (e) => e.toReservedSongItem(configuration),
+              )
               .toList();
           controller.add(reservedSongs);
         },

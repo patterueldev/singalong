@@ -38,10 +38,12 @@ class PlayerViewScore extends PlayerViewState {
   final int score;
   final String message;
   final VideoPlayerController? videoPlayerController;
+  final VideoPlayerController? audioPlayerController;
   const PlayerViewScore({
     required this.score,
     required this.message,
     this.videoPlayerController,
+    this.audioPlayerController,
   }) : super(PlayerViewStatus.score);
 }
 

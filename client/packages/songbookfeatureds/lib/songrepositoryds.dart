@@ -21,18 +21,19 @@ class SongRepositoryDS implements SongRepository {
           nextOffset: parameters.nextOffset,
           nextCursor: parameters.nextCursor,
           nextPage: parameters.nextPage,
+          roomId: parameters.roomId,
         ),
       );
       final apiSongs = result.items;
       final songs = apiSongs
-          .map((apiSong) => SongItem(
+          .map((apiSong) => SongbookItem(
                 id: apiSong.id,
                 title: apiSong.title,
                 artist: apiSong.artist,
                 thumbnailURL: configuration
                     .buildResourceURL(apiSong.thumbnailPath)
                     .toString(),
-                alreadyPlayed: false,
+                alreadyPlayed: apiSong.alreadyPlayedInRoom,
               ))
           .toList();
       return LoadSongsResult(
@@ -48,7 +49,7 @@ class SongRepositoryDS implements SongRepository {
   }
 
   @override
-  Future<void> reserveSong(SongItem song) async {
+  Future<void> reserveSong(SongbookItem song) async {
     try {
       debugPrint('SongRepositoryDS: Reserving song: $song');
       final parameters = APIReserveSongParameters(songId: song.id);
@@ -56,5 +57,12 @@ class SongRepositoryDS implements SongRepository {
     } catch (e) {
       throw e;
     }
+  }
+
+  @override
+  Future<SongDetails> getSongDetails(String songId) async {
+    final song =
+        await api.loadSongDetails(APILoadSongDetailsParameters(songId: songId));
+    return song.toSongDetails(configuration);
   }
 }

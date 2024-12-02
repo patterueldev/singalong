@@ -1,5 +1,6 @@
 package io.patterueldev.songbook
 
+import io.patterueldev.roomuser.RoomUserRepository
 import io.patterueldev.songbook.song.SongRepository
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Bean
@@ -10,5 +11,7 @@ open class SongBookConfiguration {
     @Bean
     open fun songBookService(
         @Autowired songRepository: SongRepository,
-    ) = SongBookService(songRepository)
+        @Autowired roomUserRepository: RoomUserRepository,
+        @Autowired(required = false) songBookCoordinator: SongBookCoordinator? = null,
+    ) = SongBookService(songRepository, roomUserRepository, songBookCoordinator)
 }

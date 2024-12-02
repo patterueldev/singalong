@@ -1,0 +1,25 @@
+{
+  "name": "singalongjs",
+  "version": "1.0.0",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "type": "module",
+  "author": "patkundesu",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@distube/ytdl-core": "4.14.4",
+    "@distube/ytsr": "^2.0.4",
+    "express": "^4.21.0",
+    "jsonminify": "^0.4.2",
+    "openai": "^4.72.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.15"
+  }
+}

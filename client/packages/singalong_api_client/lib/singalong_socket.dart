@@ -60,6 +60,8 @@ class SingalongSocket {
     final completer = Completer<bool>();
     _roomSocket?.disconnect();
     final uri = configuration.buildSocketURL("room/$roomId");
+    debugPrint(
+        "Attempting to connect to room socket via: $uri with room: $roomId");
     final option = IO.OptionBuilder()
         .setTransports(['websocket']) // for Flutter or Dart VM
         .setAuth({'token': sessionManager.getAccessToken()}).build();
@@ -76,10 +78,14 @@ class SingalongSocket {
     });
     _roomSocket?.connect();
 
+    debugPrint("Waiting...");
     final result = await completer.future;
     if (!result) {
+      debugPrint("Disconnected from the socket");
       throw Exception("Disconnected from the socket");
     }
+
+    debugPrint("Connected to room socket");
   }
 
   void disconnectRoomSocket() {
@@ -140,78 +146,5 @@ class SingalongSocket {
     //     'Emitting event: ${SocketEvent.roomPlayerCommand.value} with data: ${command.toJsonString()}');
     _roomSocket?.emit(
         SocketEvent.roomPlayerCommand.value, command.toJsonString());
-  }
-}
-
-enum RoomDataType {
-  reservedSongs,
-  currentSong,
-  playerList,
-  assignedPlayerInRoom,
-  all,
-  ;
-
-  String get value {
-    switch (this) {
-      case reservedSongs:
-        return 'reservedSongs';
-      case currentSong:
-        return 'currentSong';
-      case playerList:
-        return 'playerList';
-      case assignedPlayerInRoom:
-        return 'assignedPlayerInRoom';
-      case all:
-        return 'all';
-    }
-  }
-}
-
-@JsonSerializable()
-class RoomCommand {
-  final RoomCommandType type;
-  final dynamic data;
-
-  RoomCommand(this.type, this.data);
-
-  factory RoomCommand.fromJson(Map<String, dynamic> json) =>
-      _$RoomCommandFromJson(json);
-  Map<String, dynamic> toJson() => _$RoomCommandToJson(this);
-
-  String toJsonString() => jsonEncode(toJson());
-
-  factory RoomCommand.skipSong() => RoomCommand(RoomCommandType.skipSong, null);
-  factory RoomCommand.togglePlayPause(bool isPlaying) =>
-      RoomCommand(RoomCommandType.togglePlayPause, isPlaying);
-  factory RoomCommand.adjustVolume(double volume) =>
-      RoomCommand(RoomCommandType.adjustVolume, volume);
-  factory RoomCommand.durationUpdate({required int durationInMilliseconds}) =>
-      RoomCommand(RoomCommandType.durationUpdate, durationInMilliseconds);
-  factory RoomCommand.seekDurationFromControl(
-          {required int durationInSeconds}) =>
-      RoomCommand(RoomCommandType.seekDuration, durationInSeconds);
-}
-
-enum RoomCommandType {
-  skipSong,
-  togglePlayPause,
-  adjustVolume,
-  durationUpdate,
-  seekDuration,
-  ;
-
-  String get value {
-    switch (this) {
-      case skipSong:
-        return 'skipSong';
-      case togglePlayPause:
-        return 'togglePlayPause';
-      case adjustVolume:
-        return 'adjustVolume';
-      case durationUpdate:
-        return 'durationUpdate';
-      case seekDuration:
-        return 'seekDuration';
-    }
   }
 }

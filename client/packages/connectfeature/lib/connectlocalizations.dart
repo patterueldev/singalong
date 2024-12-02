@@ -17,7 +17,7 @@ abstract class ConnectLocalizations implements GenericLocalizations {
         (context) => "Customize Server Host",
       );
   LocalizedString get serverHostPlaceholderText => LocalizedString(
-        (context) => "Enter the server host",
+        (context) => "API Host",
       );
   LocalizedString get saveButtonText => LocalizedString(
         (context) => "Save",

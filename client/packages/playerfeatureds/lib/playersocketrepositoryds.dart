@@ -44,10 +44,12 @@ class PlayerSocketRepositoryDS implements PlayerSocketRepository {
               .buildResourceURL(apiCurrentSong.thumbnailPath)
               .toString(),
           durationInSeconds: apiCurrentSong.durationInSeconds,
+          lyrics: apiCurrentSong.lyrics,
           reservingUser: apiCurrentSong.reservingUser,
           videoURL: configuration
               .buildResourceURL(apiCurrentSong.videoPath)
               .toString(),
+          volume: apiCurrentSong.volume,
         );
         controller.add(currentSong);
       });
@@ -69,8 +71,8 @@ class PlayerSocketRepositoryDS implements PlayerSocketRepository {
       );
 
   @override
-  void skipSong() {
-    socket.emitRoomCommandEvent(RoomCommand.skipSong());
+  void skipSong({required bool completed}) {
+    socket.emitRoomCommandEvent(RoomCommand.skipSong(completed));
   }
 
   @override

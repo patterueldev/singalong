@@ -1,29 +1,27 @@
 package io.patterueldev.songidentifier
 
-import com.aallam.openai.api.chat.ChatCompletion
-import com.aallam.openai.api.chat.ChatCompletionRequest
-import com.aallam.openai.api.chat.ChatMessage
-import com.aallam.openai.api.core.Role
-import com.aallam.openai.api.model.ModelId
-import com.aallam.openai.client.OpenAI
 import io.minio.MinioClient
 import io.minio.PutObjectArgs
-import io.patterueldev.mongods.common.BucketFile
+import io.patterueldev.common.BucketFile
+import io.patterueldev.common.letOrElse
+import io.patterueldev.identifysong.EnhancedSong
+import io.patterueldev.identifysong.IdentifiedSong
+import io.patterueldev.identifysong.IdentifySongParameters
 import io.patterueldev.mongods.reservedsong.ReservedSongDocument
 import io.patterueldev.mongods.reservedsong.ReservedSongDocumentRepository
 import io.patterueldev.mongods.song.SongDocument
 import io.patterueldev.mongods.song.SongDocumentRepository
+import io.patterueldev.reservedsong.ReservedSong
 import io.patterueldev.roomuser.RoomUser
-import io.patterueldev.songidentifier.common.IdentifiedSong
 import io.patterueldev.songidentifier.common.IdentifiedSongRepository
 import io.patterueldev.songidentifier.common.SavedSong
-import io.patterueldev.songidentifier.identifysong.IdentifySongParameters
 import io.patterueldev.songidentifier.searchsong.SearchResultItem
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.client.WebClient
 import java.net.URI
@@ -33,12 +31,11 @@ import java.time.LocalDateTime
 import kotlin.jvm.optionals.getOrNull
 
 @Service
-internal class IdentifiedSongRepositoryDS : IdentifiedSongRepository {
-    @Autowired private lateinit var songDownloaderClient: WebClient
-
-    @Autowired private lateinit var openAIClient: OpenAI
-
-    @Autowired private var openAIModel: ModelId? = null
+internal class IdentifiedSongRepositoryDS(
+    @Value("\${openai.token}") val openAIToken: String,
+    @Value("\${openai.model}") val openAIModel: String,
+) : IdentifiedSongRepository {
+    @Autowired private lateinit var jsServiceWebClient: WebClient
 
     @Autowired private lateinit var songDocumentRepository: SongDocumentRepository
 
@@ -53,7 +50,7 @@ internal class IdentifiedSongRepositoryDS : IdentifiedSongRepository {
             println("Fetching info for song at $url")
             val parameters = IdentifySongParameters(url = url)
             withContext(Dispatchers.IO) {
-                songDownloaderClient.post()
+                jsServiceWebClient.post()
                     .uri("/identify")
                     .bodyValue(parameters)
                     .retrieve()
@@ -86,19 +83,99 @@ internal class IdentifiedSongRepositoryDS : IdentifiedSongRepository {
         }
     }
 
+    override suspend fun songAlreadyDownloaded(sourceId: String): Boolean {
+        return withContext(Dispatchers.IO) {
+            songDocumentRepository.findBySourceId(sourceId) != null
+        }
+    }
+
+    override suspend fun downloadSongVideo(
+        sourceUrl: String,
+        filename: String,
+    ): BucketFile {
+        return mutex.withLock {
+            try {
+                val parameters = DownloadSongParameters(url = sourceUrl, filename = filename)
+                val bytes =
+                    withContext(Dispatchers.IO) {
+                        jsServiceWebClient.post()
+                            .uri("/download")
+                            .bodyValue(parameters)
+                            .retrieve()
+                            .bodyToMono(ByteArray::class.java)
+                            .block()
+                    } ?: throw Exception("No response from server")
+
+                val bucket = "videos"
+                val objectName = "$filename.mp4"
+                withContext(Dispatchers.IO) {
+                    minioClient.putObject(
+                        PutObjectArgs.builder()
+                            .bucket(bucket)
+                            .`object`(objectName)
+                            .stream(bytes.inputStream(), bytes.size.toLong(), -1)
+                            .contentType("video/mp4")
+                            .build(),
+                    )
+                }
+                BucketFile(
+                    bucket = bucket,
+                    objectName = objectName,
+                )
+            } catch (e: Exception) {
+                println("Error while saving: ${e.message}")
+                throw e
+            }
+        }
+    }
+
+    override suspend fun downloadSongThumbnail(
+        imageUrl: String,
+        filename: String,
+    ): BucketFile {
+        val bucket = "thumbnails"
+        return try {
+            val url = URI(imageUrl).toURL()
+            url.readBytes()
+
+            val objectName = "$filename.jpg"
+
+            withContext(Dispatchers.IO) {
+                val bytes = url.readBytes()
+                println("Image bytes: ${bytes.size}")
+                minioClient.putObject(
+                    PutObjectArgs.builder()
+                        .bucket(bucket)
+                        .`object`(objectName)
+                        .stream(bytes.inputStream(), bytes.size.toLong(), -1)
+                        .contentType("image/jpeg")
+                        .build(),
+                )
+            }
+            BucketFile(
+                bucket = bucket,
+                objectName = objectName,
+            )
+        } catch (e: Exception) {
+            println("Error while saving: ${e.message}")
+            BucketFile.default(bucket)
+        }
+    }
+
     override suspend fun saveSong(
         identifiedSong: IdentifiedSong,
         userId: String,
         sessionId: String,
+        videoFile: BucketFile,
+        thumbnailFile: BucketFile,
     ): SavedSong {
         println("Saving song to database")
-        val bucket = "thumbnails"
-
         val song =
             SongDocument.new(
                 source = identifiedSong.source,
                 sourceId = identifiedSong.id,
-                thumbnailFile = BucketFile.default(bucket),
+                videoFile = videoFile,
+                thumbnailFile = thumbnailFile,
                 title = identifiedSong.songTitle,
                 artist = identifiedSong.songArtist,
                 language = identifiedSong.songLanguage,
@@ -107,6 +184,8 @@ internal class IdentifiedSongRepositoryDS : IdentifiedSongRepository {
                 songLyrics = identifiedSong.songLyrics,
                 lengthSeconds = identifiedSong.lengthSeconds,
                 metadata = identifiedSong.metadata?.mapValues { it.value.toString() } ?: emptyMap(),
+                genres = identifiedSong.genres,
+                tags = identifiedSong.tags,
                 addedBy = userId,
                 addedAtSession = sessionId,
                 lastModifiedBy = userId,
@@ -116,110 +195,6 @@ internal class IdentifiedSongRepositoryDS : IdentifiedSongRepository {
                 songDocumentRepository.save(song)
             }
         return saved.toSavedSong()
-    }
-
-    override suspend fun downloadThumbnail(
-        song: SavedSong,
-        imageUrl: String,
-        filename: String,
-    ): SavedSong {
-        var thumbnailFile: BucketFile? = null
-        if (imageUrl.trim().isEmpty()) {
-            return song
-        }
-
-        // download image and save to minio
-        try {
-            val bucket = "thumbnails"
-            val videoId = song.sourceId
-            val objectName = "$filename.jpg"
-            val result =
-                withContext(Dispatchers.IO) {
-                    val url = URI(imageUrl).toURL()
-                    val bytes = url.readBytes()
-                    println("Image bytes: ${bytes.size}")
-                    // TODO: find a way to "extract" the file extension from the URL
-                    minioClient.putObject(
-                        PutObjectArgs.builder()
-                            .bucket(bucket)
-                            .`object`(objectName)
-                            .stream(bytes.inputStream(), bytes.size.toLong(), -1)
-                            .contentType("image/jpeg")
-                            .build(),
-                    )
-                }
-            // extract url
-            thumbnailFile =
-                BucketFile(
-                    bucket = bucket,
-                    objectName = objectName,
-                )
-            val current =
-                withContext(Dispatchers.IO) {
-                    songDocumentRepository.findById(song.id)
-                }.orElseThrow { Exception("Song not found") }
-            val updated = current.copy(thumbnailFile = thumbnailFile)
-            withContext(Dispatchers.IO) {
-                songDocumentRepository.save(updated)
-            }
-            return updated.toSavedSong()
-        } catch (e: Exception) {
-            println("Error while saving: ${e.message}")
-            throw e
-        }
-    }
-
-    override suspend fun downloadSong(
-        song: SavedSong,
-        sourceUrl: String,
-        filename: String,
-    ): SavedSong {
-        try {
-            val bucket = "videos"
-
-            val parameters = DownloadSongParameters(url = sourceUrl)
-            val bytes: ByteArray =
-                withContext(Dispatchers.IO) {
-                    songDownloaderClient.post()
-                        .uri("/download")
-                        .bodyValue(parameters)
-                        .retrieve()
-                        .bodyToMono(ByteArray::class.java)
-                        .block()
-                } ?: throw Exception("No response from server")
-
-            val objectName = "$filename.mp4"
-            withContext(Dispatchers.IO) {
-                println("Image bytes: ${bytes.size}")
-                // TODO: find a way to "extract" the file extension from the URL
-                minioClient.putObject(
-                    PutObjectArgs.builder()
-                        .bucket(bucket)
-                        .`object`(objectName)
-                        .stream(bytes.inputStream(), bytes.size.toLong(), -1)
-                        .contentType("video/mp4")
-                        .build(),
-                )
-            }
-
-            val videoFile =
-                BucketFile(
-                    bucket = bucket,
-                    objectName = objectName,
-                )
-            val current =
-                withContext(Dispatchers.IO) {
-                    songDocumentRepository.findById(song.id)
-                }.orElseThrow { Exception("Song not found") }
-            val updated = current.copy(videoFile = videoFile)
-            withContext(Dispatchers.IO) {
-                songDocumentRepository.save(updated)
-            }
-            return updated.toSavedSong()
-        } catch (e: Exception) {
-            println("Error while saving: ${e.message}")
-            throw e
-        }
     }
 
     override suspend fun updateSong(
@@ -240,8 +215,8 @@ internal class IdentifiedSongRepositoryDS : IdentifiedSongRepository {
     override suspend fun reserveSong(
         roomUser: RoomUser,
         songId: String,
-    ) {
-        mutex.withLock {
+    ): ReservedSong {
+        return mutex.withLock {
             // confirm existence of song
             val song =
                 withContext(Dispatchers.IO) {
@@ -273,8 +248,20 @@ internal class IdentifiedSongRepositoryDS : IdentifiedSongRepository {
                     reservedBy = roomUser.username,
                     startedPlayingAt = if (nothingIsPlaying) LocalDateTime.now() else null,
                 )
-            withContext(Dispatchers.IO) {
-                reservedSongDocumentRepository.save(reservedSong)
+            val newReservedSong =
+                withContext(Dispatchers.IO) {
+                    reservedSongDocumentRepository.save(reservedSong)
+                }
+            object : ReservedSong {
+                override val id: String = newReservedSong.id ?: throw IllegalArgumentException("Reserved song id not found")
+                override val order: Int = newReservedSong.order
+                override val songId: String = newReservedSong.songId
+                override val title: String = song.title
+                override val artist: String = song.artist
+                override val thumbnailPath: String = song.thumbnailFile.path()
+                override val reservingUser: String = newReservedSong.reservedBy
+                override val currentPlaying: Boolean = newReservedSong.startedPlayingAt != null && newReservedSong.finishedPlayingAt == null
+                override val completed: Boolean = newReservedSong.completed
             }
         }
     }
@@ -283,73 +270,87 @@ internal class IdentifiedSongRepositoryDS : IdentifiedSongRepository {
         keyword: String,
         limit: Int,
     ): List<SearchResultItem> {
-        return try {
-            println("Searching for songs with keyword: $keyword")
-            withContext(Dispatchers.IO) {
-                val urlEncodedKeyword = URLEncoder.encode(keyword, StandardCharsets.UTF_8.toString())
-                val urlQueries = mapOf("keyword" to urlEncodedKeyword, "limit" to limit.toString())
-                val query = urlQueries.map { "${it.key}=${it.value}" }.joinToString("&")
-                val urlPath = "/search?$query"
-                songDownloaderClient.get()
-                    .uri(urlPath)
-                    .retrieve()
-                    .bodyToMono(Array<SearchResultItem>::class.java)
-                    .block()
-            }?.toList() ?: emptyList()
-        } catch (e: Exception) {
-            println("Error occurred while attempting to identify: ${e.message}")
-            emptyList()
+        mutex.withLock {
+            return try {
+                println("Searching for songs with keyword: $keyword")
+                val result =
+                    withContext(Dispatchers.IO) {
+                        val urlEncodedKeyword = URLEncoder.encode(keyword, StandardCharsets.UTF_8.toString())
+                        val urlQueries = mapOf("keyword" to urlEncodedKeyword, "limit" to limit.toString())
+                        val query = urlQueries.map { "${it.key}=${it.value}" }.joinToString("&")
+                        val urlPath = "/search?$query"
+                        jsServiceWebClient.get()
+                            .uri(urlPath)
+                            .retrieve()
+                            .bodyToMono(Array<SearchResultItem>::class.java)
+                            .block()
+                    }?.toList() ?: emptyList()
+                println("found ${result.size} songs for keyword: $keyword")
+                result
+            } catch (e: Exception) {
+                println("Error occurred while attempting to identify: ${e.message}")
+                emptyList()
+            }
         }
     }
 
     override suspend fun enhanceSong(identifiedSong: IdentifiedSong): IdentifiedSong {
-        return identifiedSong
-        // my local AI can't handle this
         return try {
-            // i wish there's a ping function; if there is, we can use it to check if the AI is up
-            // if not, we can use a fallback
+            // js service /enhance, send header `openai-key`
+            val enhancedSong =
+                withContext(Dispatchers.IO) {
+                    jsServiceWebClient.post()
+                        .uri("/enhance")
+                        .header("openai-key", openAIToken)
+                        .header("openai-model", openAIModel)
+                        .bodyValue(identifiedSong)
+                        .retrieve()
+                        .bodyToMono(EnhancedSong::class.java)
+                        .block()
+                } ?: throw Exception("No response from server")
+            println("Enhancing song")
 
-            // TODO: We'll be using AI to enhance the song
-            // let's try identifying the artist
-            println("Enhancing song using AI")
-            val openAIModel = openAIModel ?: throw Exception("OpenAI model not found")
-            val completionRequest =
-                ChatCompletionRequest(
-                    model = openAIModel,
-                    messages =
-                        listOf(
-                            ChatMessage(
-                                role = Role.System,
-                                content = "Attempt to identify the artist; return 'Unidentified' if unable: ${identifiedSong.songTitle}",
-                            ),
-                        ),
+            val metadata: MutableMap<String, String> = mutableMapOf()
+            enhancedSong.originalTitle.let {
+                if (!it.isNullOrBlank()) {
+                    metadata["originalTitle"] = it
+                }
+            }
+
+            enhancedSong.englishTitle.let {
+                if (!it.isNullOrBlank()) {
+                    metadata["englishTitle"] = it
+                }
+            }
+            val language = enhancedSong.language
+            val songTitle: String
+            if (language == null) {
+                songTitle = identifiedSong.songTitle
+            } else if (language.contains("jap", true)) {
+                songTitle = enhancedSong.romanizedTitle.letOrElse(identifiedSong.songTitle)
+            } else {
+                songTitle = enhancedSong.originalTitle.letOrElse(identifiedSong.songTitle)
+            }
+
+            val finalCopy =
+                identifiedSong.copy(
+                    songTitle = songTitle,
+                    songArtist = enhancedSong.artist.letOrElse(identifiedSong.songArtist),
+                    songLanguage = enhancedSong.language.letOrElse(identifiedSong.songLanguage),
+                    isOffVocal = enhancedSong.isOffVocal.letOrElse(identifiedSong.isOffVocal),
+                    videoHasLyrics = enhancedSong.videoHasLyrics.letOrElse(identifiedSong.videoHasLyrics),
+                    genres = enhancedSong.genres.letOrElse(identifiedSong.genres),
+                    tags = enhancedSong.relevantTags.letOrElse(identifiedSong.tags),
+                    metadata = metadata,
                 )
-            val completion: ChatCompletion = openAIClient.chatCompletion(completionRequest)
-            println("Successfully enhanced song using AI")
-            identifiedSong.copy(
-                songArtist = completion.choices[0].message.content,
-            )
+
+            println("Enhanced Identified Song: $finalCopy")
+
+            finalCopy
         } catch (e: Exception) {
             println("Error while enhancing: ${e.message}")
             // Fallback
             identifiedSong
         }
-    }
-}
-
-fun SongDocument.toSavedSong(): SavedSong {
-    return object : SavedSong {
-        override val id: String = this@toSavedSong.id ?: throw Exception("Failed to save song")
-        override val source: String = this@toSavedSong.source
-        override val sourceId: String = this@toSavedSong.sourceId
-        override val thumbnailPath: String = this@toSavedSong.thumbnailFile.path()
-        override val videoPath: String? = this@toSavedSong.videoFile?.path()
-        override val songTitle: String = this@toSavedSong.title
-        override val songArtist: String = this@toSavedSong.artist
-        override val songLanguage: String = this@toSavedSong.language
-        override val isOffVocal: Boolean = this@toSavedSong.isOffVocal
-        override val videoHasLyrics: Boolean = this@toSavedSong.videoHasLyrics
-        override val songLyrics: String = this@toSavedSong.songLyrics
-        override val lengthSeconds: Int = this@toSavedSong.lengthSeconds
     }
 }

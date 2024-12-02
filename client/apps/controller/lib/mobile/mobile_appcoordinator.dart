@@ -1,3 +1,4 @@
+import 'package:common/common.dart';
 import 'package:connectfeature/connectfeature.dart';
 import 'package:downloadfeature/downloadfeature.dart';
 import 'package:flutter/material.dart';
@@ -71,13 +72,21 @@ class MobileAppCoordinator
   }
 
   @override
-  void onSongBook(BuildContext context) {
+  void onSongBook(BuildContext context, {String? roomId}) {
     SongBookFeatureProvider songBookFeatureProvider = context.read();
     Navigator.of(context).push(
       MaterialPageRoute(
-          builder: (context) =>
-              songBookFeatureProvider.buildSongBookView(context: context)),
+        builder: (context) => songBookFeatureProvider.buildSongBookView(
+          context: context,
+          roomId: roomId,
+        ),
+      ),
     );
+  }
+
+  @override
+  void onReserved(BuildContext context) {
+    Navigator.popUntil(context, (route) => route.isFirst);
   }
 
   @override
@@ -103,9 +112,18 @@ class MobileAppCoordinator
   }
 
   @override
-  void openSongDetailScreen(BuildContext context, SongItem song) {
-    // TODO: implement openSongDetailScreen
-  }
+  Future<T?> openSongDetailScreen<T>(BuildContext context, String songId) =>
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        builder: (context) => SizedBox(
+          height: MediaQuery.of(context).size.height * 0.90,
+          child: context.read<SongBookFeatureProvider>().buildSongDetailsView(
+                context: context,
+                songId: songId,
+              ),
+        ),
+      );
 
   @override
   void navigateToIdentifiedSongDetailsView(BuildContext context,
@@ -132,10 +150,7 @@ class MobileAppCoordinator
   }
 
   @override
-  void previewDownloadable(
-      BuildContext context, DownloadableItem downloadable) {
-    final sourceUrl = downloadable.sourceUrl;
-    final url = Uri.parse(sourceUrl);
+  void openURL(BuildContext context, Uri url) {
     debugPrint("Launching URL: $url");
     canLaunchUrl(url).then((canLaunch) async {
       if (!canLaunch) {

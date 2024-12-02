@@ -19,4 +19,5 @@ data class ReservedSongDocument(
     val startedPlayingAt: LocalDateTime? = null,
     // indicates that the song was played
     val finishedPlayingAt: LocalDateTime? = null,
+    val completed: Boolean = false, // indicates that the song was played to the end
 )

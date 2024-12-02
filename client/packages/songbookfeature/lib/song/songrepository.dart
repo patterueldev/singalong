@@ -1,7 +1,7 @@
 part of '../songbookfeature.dart';
 
 class LoadSongsResult {
-  final List<SongItem> songs;
+  final List<SongbookItem> songs;
   final int? nextOffset;
   final String? nextCursor;
   final int? nextPage;
@@ -24,7 +24,8 @@ class LoadSongsResult {
 
 abstract class SongRepository {
   Future<LoadSongsResult> loadSongs(LoadSongsParameters parameters);
-  Future<void> reserveSong(SongItem song);
+  Future<void> reserveSong(SongbookItem song);
+  Future<SongDetails> getSongDetails(String songId);
 }
 
 class LoadSongsParameters {
@@ -33,6 +34,7 @@ class LoadSongsParameters {
   final int? nextOffset;
   final String? nextCursor;
   final int? nextPage;
+  final String? roomId;
 
   LoadSongsParameters._({
     this.keyword,
@@ -40,6 +42,7 @@ class LoadSongsParameters {
     this.nextOffset,
     this.nextCursor,
     this.nextPage,
+    this.roomId,
   });
 
   void validate() {
@@ -58,24 +61,28 @@ class LoadSongsParameters {
     String? keyword,
     int? limit,
     Pagination? nextPage,
+    String? roomId,
   }) {
     if (nextPage is OffsetPagination) {
       return LoadSongsParameters._(
         keyword: keyword,
         limit: limit,
         nextOffset: nextPage.offset,
+        roomId: roomId,
       );
     } else if (nextPage is CursorPagination) {
       return LoadSongsParameters._(
         keyword: keyword,
         limit: limit,
         nextCursor: nextPage.cursor,
+        roomId: roomId,
       );
     } else if (nextPage is PagePagination) {
       return LoadSongsParameters._(
         keyword: keyword,
         limit: limit,
         nextPage: nextPage.page,
+        roomId: roomId,
       );
     } else {
       if (nextPage != null) {
@@ -84,6 +91,7 @@ class LoadSongsParameters {
         return LoadSongsParameters._(
           keyword: keyword,
           limit: limit,
+          roomId: roomId,
         );
       }
     }

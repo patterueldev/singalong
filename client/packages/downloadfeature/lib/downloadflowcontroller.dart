@@ -5,5 +5,5 @@ abstract class DownloadFlowCoordinator {
   void navigateToIdentifiedSongDetailsView(BuildContext context,
       {required IdentifiedSongDetails details});
   void onDownloadSuccess(BuildContext context);
-  void previewDownloadable(BuildContext context, DownloadableItem downloadable);
+  void openURL(BuildContext context, Uri url);
 }

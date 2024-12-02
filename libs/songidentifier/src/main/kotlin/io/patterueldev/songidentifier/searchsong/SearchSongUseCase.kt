@@ -3,6 +3,9 @@ package io.patterueldev.songidentifier.searchsong
 import io.patterueldev.common.ServiceUseCase
 import io.patterueldev.songidentifier.common.IdentifiedSongRepository
 import io.patterueldev.songidentifier.common.SearchSongResponse
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 
 internal open class SearchSongUseCase(
     private val identifiedSongRepository: IdentifiedSongRepository,
@@ -19,8 +22,11 @@ internal open class SearchSongUseCase(
             if (!keywords.any { keyword.contains(it, ignoreCase = true) }) {
                 keyword += " karaoke"
             }
-            val result = identifiedSongRepository.searchSongs(keyword, parameters.limit)
-            // TODO: Enhance response to identify also if a song is already saved
+            val result =
+                identifiedSongRepository.searchSongs(keyword, parameters.limit).mapAsync {
+                    val alreadyExists = identifiedSongRepository.songAlreadyDownloaded(it.id)
+                    it.copy(alreadyExists = alreadyExists)
+                }
             return SearchSongResponse.success(result)
         } catch (e: Exception) {
             println("Error in SearchSongUseCase: ${e.message}")
@@ -28,6 +34,11 @@ internal open class SearchSongUseCase(
         }
     }
 }
+
+suspend fun <A, B> Iterable<A>.mapAsync(transform: suspend (A) -> B): List<B> =
+    coroutineScope {
+        map { async { transform(it) } }.awaitAll()
+    }
 
 data class SearchSongParameters(
     val keyword: String,

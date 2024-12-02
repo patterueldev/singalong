@@ -1,5 +1,5 @@
 baseurl:
-  songdownloader: http://localhost:3000
+  js-service: http://localhost:3000
 openai:
   local: true
   host: http://localhost:1234/v1/
@@ -9,4 +9,4 @@ spring:
     mongodb:
       host: localhost
 minio:
-  endpoint: "http://localhost:9000"
+  endpoint: "http://localhost:8080/storage"

@@ -1,6 +1,7 @@
 library playerfeature;
 
 import 'dart:async';
+import 'dart:ffi';
 import 'dart:math';
 
 import 'package:cached_network_image/cached_network_image.dart';
@@ -22,8 +23,9 @@ part 'player_scene/authorize_connection_usecase.dart';
 part 'reserved_widget/reserved_widget.dart';
 part 'reserved_widget/reserved_viewmodel.dart';
 part 'reserved_widget/reservedsonglistsocketrepository.dart';
-part 'reserved_widget/reservedsongitem.dart';
 part 'connectivity_panel_widget/connectivity_panel_widget.dart';
+part 'participants_panel/participants_panel_widget.dart';
+part 'participants_panel/participants_panel_viewmodel.dart';
 
 class PlayerFeatureUIBuilder {
   PlayerFeatureUIBuilder();
@@ -41,9 +43,25 @@ class PlayerFeatureUIBuilder {
               playerSocketRepository: context.read(),
               persistenceRepository: context.read(),
               reservedViewModel: context.read(),
+              configuration: context.read(),
             ),
           ),
         ],
         child: const PlayerView(),
+      );
+
+  Widget buildParticipantsPanelWidget(
+    BuildContext context, {
+    required String host,
+    required String roomId,
+  }) =>
+      ChangeNotifierProvider<ParticipantsPanelViewModel>(
+        create: (context) => DefaultParticipantsPanelViewModel(
+          userParticipantRepository: context.read(),
+        ),
+        child: ParticipantsPanelWidget(
+          host: host,
+          roomId: roomId,
+        ),
       );
 }

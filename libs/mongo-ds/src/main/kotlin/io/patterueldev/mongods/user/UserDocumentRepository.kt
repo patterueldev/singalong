@@ -8,4 +8,7 @@ import org.springframework.stereotype.Repository
 interface UserDocumentRepository : MongoRepository<UserDocument, String> {
     @Query("{ 'username': ?0 }")
     fun findByUsername(username: String): UserDocument?
+
+    @Query("{ 'username': { \$in: ?0 } }")
+    fun findByUsernames(usernames: List<String>): List<UserDocument>
 }

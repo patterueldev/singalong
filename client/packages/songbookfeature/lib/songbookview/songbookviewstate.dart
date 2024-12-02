@@ -8,7 +8,8 @@ class SongBookViewState {
   factory SongBookViewState.initial() =>
       const SongBookViewState(SongBookViewStateType.initial);
   factory SongBookViewState.loading() => Loading();
-  factory SongBookViewState.loaded(List<SongItem> songList) => Loaded(songList);
+  factory SongBookViewState.loaded(List<SongbookItem> songList) =>
+      Loaded(songList);
   factory SongBookViewState.notFound({required String searchText}) =>
       NotFound(searchText);
   factory SongBookViewState.urlDetected(String url) => URLDetected(url);
@@ -25,13 +26,13 @@ class Loading extends SongBookViewState {
   Loading() : super(SongBookViewStateType.loading);
 
   // fake song list for skeleton loading
-  final List<SongItem> songList = List.generate(
+  final List<SongbookItem> songList = List.generate(
     10,
-    (index) => SongItem(
+    (index) => SongbookItem(
       id: index.toString(),
       title: 'Song $index',
       artist: 'Artist $index',
-      thumbnailURL: 'https://via.placeholder.com/150',
+      thumbnailURL: 'https://placehold.co/600x400',
       alreadyPlayed: false,
     ),
   );
@@ -39,7 +40,7 @@ class Loading extends SongBookViewState {
 
 class Loaded extends SongBookViewState {
   Loaded(this.songList) : super(SongBookViewStateType.loaded);
-  final List<SongItem> songList;
+  final List<SongbookItem> songList;
 }
 
 class NotFound extends SongBookViewState {

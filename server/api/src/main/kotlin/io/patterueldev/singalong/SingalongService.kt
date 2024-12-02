@@ -58,10 +58,20 @@ class SingalongService {
             ).data
         }
 
-    fun skipSong(roomId: String) =
+    fun skipSong(parameters: SkipSongParameters) =
         runBlocking {
             reservationService.skipSong(
-                parameters = SkipSongParameters(roomId),
+                parameters = parameters,
             )
+        }
+
+    fun getParticipantsInRoom(roomId: String) =
+        runBlocking {
+            sessionService.getParticipantsFromRoom(roomId)
+        }
+
+    fun getRoomQRCode(roomId: String) =
+        runBlocking {
+            sessionService.getRoomQRCode(roomId)
         }
 }

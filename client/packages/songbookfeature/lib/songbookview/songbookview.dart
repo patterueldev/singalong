@@ -6,11 +6,15 @@ class SongBookView extends StatefulWidget {
     required this.navigationCoordinator,
     required this.localizations,
     required this.assets,
+    required this.canGoBack,
   });
 
   final SongBookFlowCoordinator navigationCoordinator;
   final SongBookLocalizations localizations;
   final SongBookAssets assets;
+
+  final bool canGoBack;
+
   @override
   State<SongBookView> createState() => _SongBookViewState();
 }
@@ -31,8 +35,16 @@ class _SongBookViewState extends State<SongBookView> {
     super.initState();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      viewModel.reservedNotifier.addListener(_reservedListener);
       viewModel.toastMessageNotifier.addListener(_toastListener);
     });
+  }
+
+  void _reservedListener() {
+    final isReserved = viewModel.reservedNotifier.value;
+    if (isReserved) {
+      navigationCoordinator.onReserved(context);
+    }
   }
 
   void _toastListener() {
@@ -60,53 +72,56 @@ class _SongBookViewState extends State<SongBookView> {
       Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         appBar: AppBar(
-          title: ValueListenableBuilder<bool>(
-            valueListenable: viewModel.isSearchActive,
-            builder: (context, isSearching, child) {
-              if (isSearching) {
-                // Request focus when search is active
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  _searchFocusNode.requestFocus();
-                });
-              }
-              return isSearching
-                  ? TextField(
-                      autocorrect: false,
-                      controller: _searchController,
-                      focusNode: _searchFocusNode,
-                      onChanged: viewModel.updateSearchQuery,
-                      onSubmitted: (query) {
-                        viewModel.updateSearchQuery(query);
-                        viewModel.fetchSongs(false);
-                      },
-                      decoration: InputDecoration(
-                        hintText: localizations.searchHint.localizedOf(context),
-                        border: InputBorder.none,
-                        fillColor: Colors.grey,
-                      ),
-                    )
-                  : Text(
-                      localizations.songBookScreenTitle.localizedOf(context));
+          automaticallyImplyLeading: widget.canGoBack,
+          title: TextField(
+            autocorrect: false,
+            controller: _searchController,
+            focusNode: _searchFocusNode,
+            onChanged: viewModel.updateSearchQuery,
+            onSubmitted: (query) {
+              viewModel.updateSearchQuery(query);
+              viewModel.fetchSongs(false);
             },
+            decoration: InputDecoration(
+              hintText: localizations.searchHint.localizedOf(context),
+              border: InputBorder.none,
+              fillColor: Colors.grey,
+            ),
+            autofocus: true,
           ),
           actions: [
+            // refresh
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              onPressed: () {
+                viewModel.fetchSongs(false);
+              },
+            ),
             // cancel search
             ValueListenableBuilder<bool>(
-              valueListenable: viewModel.isSearchActive,
-              builder: (context, isSearching, child) => IconButton(
-                icon: isSearching
-                    ? const Icon(Icons.close)
-                    : const Icon(Icons.search),
-                onPressed: () => {
-                  if (isSearching) _searchController.clear(),
-                  viewModel.toggleSearch(),
-                },
-              ),
+              valueListenable: viewModel.isSearchingNotifier,
+              builder: (context, isSearching, child) {
+                if (isSearching) {
+                  return IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () {
+                      _searchController.clear();
+                      viewModel.updateSearchQuery('');
+                    },
+                  );
+                }
+                return const SizedBox.shrink();
+              },
+            ),
+            IconButton(
+              icon: const Icon(Icons.download),
+              onPressed: () => widget.navigationCoordinator
+                  .openSearchDownloadablesScreen(context),
             ),
           ],
         ),
         body: Container(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.symmetric(horizontal: 20),
           child: ValueListenableBuilder<SongBookViewState>(
             valueListenable: viewModel.stateNotifier,
             builder: (context, state, child) {
@@ -115,7 +130,7 @@ class _SongBookViewState extends State<SongBookView> {
                 case SongBookViewStateType.initial:
                 case SongBookViewStateType.loading:
                 case SongBookViewStateType.loaded:
-                  List<SongItem> songList = [];
+                  List<SongbookItem> songList = [];
                   bool isLoading = false;
                   if (state is Loading) {
                     songList = state.songList;
@@ -218,8 +233,8 @@ class _SongBookViewState extends State<SongBookView> {
         ),
       );
 
-  Widget _buildSongList(
-          List<SongItem> songList, SongBookViewModel viewModel, bool isLoading,
+  Widget _buildSongList(List<SongbookItem> songList,
+          SongBookViewModel viewModel, bool isLoading,
           {double height = 50}) =>
       Skeletonizer(
         enabled: isLoading,
@@ -235,7 +250,7 @@ class _SongBookViewState extends State<SongBookView> {
       );
 
   Widget _buildItem(
-          SongItem song, SongBookViewModel viewModel, double height) =>
+          SongbookItem song, SongBookViewModel viewModel, double height) =>
       _popupButton(
         song,
         viewModel,
@@ -245,19 +260,34 @@ class _SongBookViewState extends State<SongBookView> {
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(height / 2),
-              child: Container(
-                color: Colors.grey,
-                height: height,
-                width: height,
-                child: CachedNetworkImage(
-                  imageUrl: song.thumbnailURL.toString(),
-                  placeholder: (context, url) => const Center(
-                    child: CircularProgressIndicator(),
+              child: Stack(
+                children: [
+                  Container(
+                    color: Colors.grey,
+                    height: height,
+                    width: height,
+                    child: CachedNetworkImage(
+                      imageUrl: song.thumbnailURL.toString(),
+                      placeholder: (context, url) => const Center(
+                        child: CircularProgressIndicator(),
+                      ),
+                      errorWidget: (context, url, error) =>
+                          const Icon(Icons.music_note),
+                      fit: BoxFit.cover,
+                    ),
                   ),
-                  errorWidget: (context, url, error) =>
-                      const Icon(Icons.music_note),
-                  fit: BoxFit.cover,
-                ),
+                  if (song.alreadyPlayed)
+                    Container(
+                      padding: const EdgeInsets.all(4),
+                      height: height,
+                      width: height,
+                      color: Colors.grey.withAlpha(100),
+                      child: const Icon(
+                        Icons.check,
+                        color: Colors.white,
+                      ),
+                    ),
+                ],
               ),
             ),
             const SizedBox(width: 8),
@@ -277,26 +307,33 @@ class _SongBookViewState extends State<SongBookView> {
       );
 
   Widget _popupButton(
-          SongItem song, SongBookViewModel viewModel, Widget child) =>
+          SongbookItem song, SongBookViewModel viewModel, Widget child) =>
       PopupMenuButton<String>(
+        tooltip: '',
         onSelected: (value) {
           switch (value) {
             case 'reserve':
               viewModel.reserveSong(song);
               break;
             case 'details':
-              navigationCoordinator.openSongDetailScreen(context, song);
+              navigationCoordinator
+                  .openSongDetailScreen(context, song.id)
+                  .then((value) {
+                if (value == true) {
+                  viewModel.fetchSongs(false);
+                }
+              });
               break;
           }
         },
         itemBuilder: (BuildContext context) => const [
           PopupMenuItem<String>(
             value: 'reserve',
-            child: Text("Reserve Song"),
+            child: Text("Reserve"),
           ),
           PopupMenuItem<String>(
             value: 'details',
-            child: Text("View Details"),
+            child: Text("Details"),
           ),
         ],
         child: child,

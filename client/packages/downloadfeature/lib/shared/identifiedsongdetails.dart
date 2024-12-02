@@ -12,6 +12,8 @@ class IdentifiedSongDetails {
   final String songLyrics;
   final int lengthSeconds;
   final Map<String, dynamic>? metadata;
+  final List<String> genres;
+  final List<String> tags;
   final bool alreadyExists;
 
   IdentifiedSongDetails({
@@ -26,6 +28,8 @@ class IdentifiedSongDetails {
     required this.songLyrics,
     required this.lengthSeconds,
     required this.metadata,
+    required this.genres,
+    required this.tags,
     required this.alreadyExists,
   });
 
@@ -41,6 +45,8 @@ class IdentifiedSongDetails {
     String? songLyrics,
     int? lengthSeconds,
     Map<String, dynamic>? metadata,
+    List<String>? genres,
+    List<String>? tags,
     bool? alreadyExists,
   }) =>
       IdentifiedSongDetails(
@@ -55,6 +61,13 @@ class IdentifiedSongDetails {
         songLyrics: songLyrics ?? this.songLyrics,
         lengthSeconds: lengthSeconds ?? this.lengthSeconds,
         metadata: metadata ?? this.metadata,
+        genres: genres ?? this.genres,
+        tags: tags ?? this.tags,
         alreadyExists: alreadyExists ?? this.alreadyExists,
       );
+
+  @override
+  String toString() {
+    return 'IdentifiedSongDetails(id: $id, source: $source, imageUrl: $imageUrl, songTitle: $songTitle, songArtist: $songArtist, songLanguage: $songLanguage, isOffVocal: $isOffVocal, videoHasLyrics: $videoHasLyrics, songLyrics: $songLyrics, lengthSeconds: $lengthSeconds, metadata: $metadata, genres: $genres, tags: $tags, alreadyExists: $alreadyExists)';
+  }
 }

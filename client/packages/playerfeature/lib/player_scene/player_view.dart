@@ -8,53 +8,68 @@ class PlayerView extends StatelessWidget {
         builder: (_, viewModel, __) => Scaffold(
           backgroundColor: Colors.transparent,
           body: SafeArea(
-            child: Column(
+            child: Stack(
               children: [
-                // vertical layout arrangement
-                Expanded(
-                  flex: 1,
-                  child: Container(
-                    alignment: Alignment.topLeft,
-                    padding: const EdgeInsets.only(top: 16, bottom: 16),
-                    child: ValueListenableBuilder(
-                      valueListenable: viewModel.isConnected,
-                      builder: (_, isConnected, __) =>
-                          isConnected ? ReservedWidget() : SizedBox.shrink(),
-                    ),
-                  ),
-                ),
-
-                // horizontal layout arrangement
-                Expanded(
-                  flex: 9,
-                  child: Row(
+                _buildBody(context, viewModel),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+                  child: Column(
                     children: [
-                      // connectivity panel and video player
-                      // left panel
+                      // vertical layout arrangement
                       Expanded(
                         flex: 1,
-                        child: ValueListenableBuilder(
-                            valueListenable: viewModel.roomIdNotifier,
-                            builder: (_, roomId, __) {
-                              return roomId != null
-                                  ? ConnectivityPanelWidget(roomId: roomId)
-                                  : SizedBox.shrink();
-                            }),
-                      ),
-                      Expanded(
-                        flex: 9,
-                        child: Column(
+                        child: Row(
                           children: [
                             Expanded(
-                              child: _buildBody(context, viewModel),
+                              child: Container(
+                                alignment: Alignment.topLeft,
+                                padding:
+                                    const EdgeInsets.only(top: 16, bottom: 16),
+                                child: ValueListenableBuilder(
+                                  valueListenable: viewModel.isConnected,
+                                  builder: (_, isConnected, __) => isConnected
+                                      ? const ReservedWidget()
+                                      : const SizedBox.shrink(),
+                                ),
+                              ),
                             ),
                           ],
                         ),
                       ),
-                      // right panel
+
+                      // horizontal layout arrangement
                       Expanded(
-                        flex: 1,
-                        child: Container(),
+                        flex: 9,
+                        child: Row(
+                          children: [
+                            // connectivity panel and video player
+                            // left panel
+                            Expanded(
+                              flex: 1,
+                              child: ValueListenableBuilder(
+                                  valueListenable: viewModel.roomIdNotifier,
+                                  builder: (_, roomId, __) {
+                                    return roomId != null
+                                        ? ConnectivityPanelWidget(
+                                            host:
+                                                viewModel.configuration.apiHost,
+                                            roomId: roomId,
+                                          )
+                                        : const SizedBox.shrink();
+                                  }),
+                            ),
+                            Expanded(
+                              flex: 8,
+                              child: Container(),
+                            ),
+                            // right panel
+                            Expanded(
+                              flex: 1,
+                              child: Container(),
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
@@ -101,7 +116,7 @@ class PlayerView extends StatelessWidget {
         ),
       );
 
-  Widget _buildLoading() => Center(
+  Widget _buildLoading() => const Center(
         child: CircularProgressIndicator(),
       );
 
@@ -115,20 +130,21 @@ class PlayerView extends StatelessWidget {
         ),
       );
 
-  Widget _buildPlaying(PlayerViewPlaying state) => Column(
+  Widget _buildPlaying(PlayerViewPlaying state) => Stack(
         children: [
-          Expanded(
-            child: Center(
-              child: state.videoPlayerController.value.isInitialized
-                  ? VideoPlayer(state.videoPlayerController)
-                  : CircularProgressIndicator(),
-            ),
-          ),
+          state.videoPlayerController.value.isInitialized
+              ? VideoPlayer(state.videoPlayerController)
+              : CircularProgressIndicator(),
           // progress bar/seek bar
-          ValueListenableBuilder(
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: ValueListenableBuilder(
               valueListenable: state.currentSeekValueNotifier,
-              builder: (_, value, __) {
-                return Slider(
+              builder: (_, value, __) => Opacity(
+                opacity: 0.5,
+                child: Slider(
                   value: value,
                   min: 0,
                   max: state.maxSeekValue,
@@ -139,14 +155,19 @@ class PlayerView extends StatelessWidget {
                     state.videoPlayerController
                         .seekTo(Duration(seconds: value.toInt()));
                   },
-                );
-              }),
+                ),
+              ),
+            ),
+          ),
         ],
       );
 
   Widget _buildScore(PlayerViewScore state) => Center(
         child: Stack(
           children: [
+            state.audioPlayerController != null
+                ? VideoPlayer(state.audioPlayerController!)
+                : SizedBox.shrink(),
             state.videoPlayerController != null
                 ? VideoPlayer(state.videoPlayerController!)
                 : SizedBox.shrink(),
@@ -154,19 +175,20 @@ class PlayerView extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(
-                    state.score.toString(),
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 60,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    state.message,
-                    style: TextStyle(color: Colors.white, fontSize: 24),
-                  ),
+                  Text("Great Singing!!!"),
+                  // Text(
+                  //   state.score.toString(),
+                  //   style: const TextStyle(
+                  //     color: Colors.white,
+                  //     fontSize: 60,
+                  //     fontWeight: FontWeight.bold,
+                  //   ),
+                  // ),
+                  // const SizedBox(height: 16),
+                  // Text(
+                  //   state.message,
+                  //   style: TextStyle(color: Colors.white, fontSize: 24),
+                  // ),
                 ],
               ),
             ),

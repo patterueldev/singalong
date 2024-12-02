@@ -11,6 +11,7 @@ repositories {
 }
 
 dependencies {
+    implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.coroutines.reactor)
     implementation(projects.common)
     testImplementation(kotlin("test"))

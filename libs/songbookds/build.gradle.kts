@@ -13,6 +13,8 @@ repositories {
 dependencies {
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.spring.boot.data.mongodb)
+    implementation(libs.spring.boot.webflux)
+    implementation(libs.minio)
     implementation(projects.common)
     implementation(projects.mongoDs)
     api(projects.songbook)

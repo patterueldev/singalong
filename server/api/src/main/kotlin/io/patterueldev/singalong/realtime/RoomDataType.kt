@@ -5,6 +5,7 @@ enum class RoomDataType(val value: String) {
     CURRENT_SONG("currentSong"),
     PLAYER_LIST("playerList"),
     ASSIGNED_PLAYER_IN_ROOM("assignedPlayerInRoom"),
+    PARTICIPANTS_LIST("participantsList"),
     ALL("all"),
     ;
 

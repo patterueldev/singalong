@@ -12,6 +12,8 @@ dependencies:
     sdk: flutter
 
   core:
+  common:
+  commonds:
   singalong_api_client:
   adminfeature:
   provider: ^6.1.2

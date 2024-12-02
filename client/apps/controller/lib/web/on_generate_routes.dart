@@ -45,10 +45,11 @@ Route<dynamic>? onGenerateRoute(RouteSettings settings, BuildContext context) {
             context.read<SessionFeatureUIBuilder>().buildSessionView(context),
       );
     case AppRoute.songBook:
+      final String? roomId = settings.arguments as String?;
       return MaterialPageRoute(
         builder: (context) => context
             .read<SongBookFeatureProvider>()
-            .buildSongBookView(context: context),
+            .buildSongBookView(context: context, roomId: roomId),
       );
     case AppRoute.downloadables:
       final query = settings.arguments as String?;

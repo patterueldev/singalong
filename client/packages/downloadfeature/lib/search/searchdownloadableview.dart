@@ -31,6 +31,8 @@ class _SearchDownloadableViewState extends State<SearchDownloadableView> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       viewModel.searchDownloadables();
       viewModel.submissionStateNotifier.addListener(_submissionResultListener);
+
+      _searchFocusNode.requestFocus();
     });
   }
 
@@ -141,7 +143,7 @@ class _SearchDownloadableViewState extends State<SearchDownloadableView> {
             IconButton(
               icon: const Icon(Icons.close),
               onPressed: () => {
-                viewModel.updateSearchQuery('', debounceTime: Duration.zero),
+                viewModel.clearSearchQuery(),
                 _searchFocusNode.requestFocus(),
               },
             ),
@@ -241,19 +243,34 @@ class _SearchDownloadableViewState extends State<SearchDownloadableView> {
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(height / 2),
-              child: Container(
-                color: Colors.grey,
-                height: height,
-                width: height,
-                child: CachedNetworkImage(
-                  imageUrl: item.thumbnailURL.toString(),
-                  placeholder: (context, url) => const Center(
-                    child: CircularProgressIndicator(),
+              child: Stack(
+                children: [
+                  Container(
+                    color: Colors.grey,
+                    height: height,
+                    width: height,
+                    child: CachedNetworkImage(
+                      imageUrl: item.thumbnailURL.toString(),
+                      placeholder: (context, url) => const Center(
+                        child: CircularProgressIndicator(),
+                      ),
+                      errorWidget: (context, url, error) =>
+                          const Icon(Icons.music_note),
+                      fit: BoxFit.cover,
+                    ),
                   ),
-                  errorWidget: (context, url, error) =>
-                      const Icon(Icons.music_note),
-                  fit: BoxFit.cover,
-                ),
+                  if (item.alreadyDownloaded)
+                    Container(
+                      padding: const EdgeInsets.all(4),
+                      height: height,
+                      width: height,
+                      color: Colors.grey.withAlpha(100),
+                      child: const Icon(
+                        Icons.download_done,
+                        color: Colors.white,
+                      ),
+                    ),
+                ],
               ),
             ),
             const SizedBox(width: 8),
@@ -276,12 +293,14 @@ class _SearchDownloadableViewState extends State<SearchDownloadableView> {
           SearchDownloadableViewModel viewModel, Widget child) =>
       PopupMenuButton<String>(
         onSelected: (value) {
+          _searchFocusNode.unfocus();
           switch (value) {
             case 'identify':
               viewModel.identifyDownloadable(item);
               break;
             case 'preview':
-              coordinator.previewDownloadable(context, item);
+              final url = Uri.parse(item.sourceUrl);
+              coordinator.openURL(context, url);
               break;
           }
         },
@@ -317,8 +336,8 @@ class _SearchDownloadableViewState extends State<SearchDownloadableView> {
             child: const Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.refresh),
-                const SizedBox(width: 8),
+                Icon(Icons.refresh),
+                SizedBox(width: 8),
                 Text("Retry"),
               ],
             ),

@@ -36,6 +36,7 @@ class _SessionViewState extends State<SessionView> {
           children: [
             Scaffold(
               appBar: AppBar(
+                title: Text("${viewModel.userName} (${viewModel.roomName})"),
                 leading: PopupMenuButton<String>(
                   onSelected: (value) {
                     if (value == 'disconnect') {
@@ -56,7 +57,8 @@ class _SessionViewState extends State<SessionView> {
               ),
               body: _buildBody(context, viewModel),
               floatingActionButton: FloatingActionButton(
-                onPressed: () => widget.flow.onSongBook(context),
+                onPressed: () =>
+                    widget.flow.onSongBook(context, roomId: viewModel.roomId),
                 child: const Icon(Icons.menu_book),
               ),
             ),
@@ -176,17 +178,7 @@ class _SessionViewState extends State<SessionView> {
                 trailing: song.currentPlaying
                     ? const Icon(Icons.play_arrow, color: Colors.green)
                     : null,
-                onTap: () => showModalBottomSheet(
-                  context: context,
-                  isScrollControlled: true,
-                  builder: (context) => SizedBox(
-                    height: MediaQuery.of(context).size.height * 0.90,
-                    child: SongView(
-                      viewModel: DefaultSongViewModel(songId: song.songId),
-                      localizations: localizations,
-                    ),
-                  ),
-                ),
+                onTap: () => flow.openSongDetailScreen(context, song.songId),
               ),
             );
           },

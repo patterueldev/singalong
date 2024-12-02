@@ -2,6 +2,7 @@ library downloadfeature_ds;
 
 import 'dart:convert';
 
+import 'package:core/core.dart';
 import 'package:downloadfeature/downloadfeature.dart';
 import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
@@ -14,6 +15,7 @@ class DownloadFeatureDSProvider {
     Provider<SongIdentifierRepository>(
       create: (context) => DefaultSongIdentifierRepository(
         api: context.read(),
+        configuration: context.read(),
       ),
     ),
     Provider(

@@ -9,6 +9,9 @@ class AdminApp extends StatelessWidget {
         title: 'Singalong Admin',
         darkTheme: ThemeData.dark(),
         themeMode: ThemeMode.dark,
+        localizationsDelegates: const [AppLocalizations.delegate],
+        supportedLocales: AppLocalizations.supportedLocales,
+        debugShowCheckedModeBanner: false,
         home: Consumer<AdminAppViewModel>(
           builder: (context, viewModel, child) {
             final adminFeatureUIProvider =

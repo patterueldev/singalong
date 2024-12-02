@@ -13,13 +13,23 @@ class MasterView extends StatelessWidget {
   Widget _buildScaffold(BuildContext context, MasterViewModel viewModel) =>
       Scaffold(
         appBar: AppBar(
-          leading: IconButton(
-            icon: Icon(Icons.menu),
-            onPressed: () {
-              // Handle menu button press
+          leading: PopupMenuButton<String>(
+            onSelected: (value) {
+              if (value == 'select_room') {
+                Navigator.of(context).pop();
+              }
             },
+            itemBuilder: (BuildContext context) {
+              return [
+                PopupMenuItem<String>(
+                  value: 'select_room',
+                  child: Text("Select Room"),
+                ),
+              ];
+            },
+            icon: const Icon(Icons.menu),
           ),
-          title: Text('Room: ${viewModel.room.name} (${viewModel.room.id})'),
+          title: Text('${viewModel.room.name} (${viewModel.room.id})'),
           bottom: const PreferredSize(
             preferredSize: Size.fromHeight(1.0),
             child: Divider(),
@@ -30,30 +40,33 @@ class MasterView extends StatelessWidget {
             // Left half
             Expanded(
               flex: 1,
-              child: Column(
-                children: [
-                  // Top left quarter
-                  Expanded(
-                    flex: 1,
-                    child: _buildTopLeft(context, viewModel),
-                  ),
-                  const Divider(),
-                  // Bottom left quarter
-                  Expanded(
-                    flex: 2,
-                    child: _buildBottomLeft(),
-                  ),
-                ],
-              ),
+              child: _buildLeftHalf(context, viewModel),
             ),
             const VerticalDivider(),
             // Right half
             Expanded(
               flex: 1,
-              child: _buildRightHalf(),
+              child: _buildRightHalf(context),
             ),
           ],
         ),
+      );
+
+  Widget _buildLeftHalf(BuildContext context, MasterViewModel viewModel) =>
+      Column(
+        children: [
+          // Top left quarter
+          Expanded(
+            flex: 1,
+            child: _buildTopLeft(context, viewModel),
+          ),
+          const Divider(),
+          // Bottom left quarter
+          Expanded(
+            flex: 2,
+            child: _buildBottomLeft(context),
+          ),
+        ],
       );
 
   // Player Control Panel
@@ -62,11 +75,32 @@ class MasterView extends StatelessWidget {
           .read<AdminFeatureUIProvider>()
           .buildPlayerControlPanel(viewModel.room);
 
-  Widget _buildBottomLeft() => Container(
-        child: Center(child: Text('Bottom Left Corner')),
+  Widget _buildBottomLeft(BuildContext context) =>
+      context.read<AdminFeatureUIProvider>().buildReservedPanel(context);
+
+  Widget _buildRightHalf(BuildContext context) => Column(
+        children: [
+          // Top left quarter
+          Expanded(
+            flex: 3,
+            child: _buildTopRight(context),
+          ),
+          const Divider(),
+          // Bottom left quarter
+          Expanded(
+            flex: 2,
+            child: _buildBottomRight(context),
+          ),
+        ],
       );
 
-  Widget _buildRightHalf() => Container(
-        child: Center(child: Text('Right Half Edge')),
-      );
+  Widget _buildTopRight(BuildContext context) =>
+      context.read<SongBookFeatureProvider>().buildSongBookView(
+          context: context,
+          canGoBack: false,
+          roomId: context.read<MasterViewModel>().room.id);
+
+  Widget _buildBottomRight(BuildContext context) => context
+      .read<AdminFeatureUIProvider>()
+      .buildParticipantsPanelWidget(context);
 }

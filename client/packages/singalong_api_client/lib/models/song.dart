@@ -28,6 +28,7 @@ class APISongItem {
   final String language;
   final bool isOffVocal;
   final int lengthSeconds;
+  final bool alreadyPlayedInRoom;
 
   APISongItem({
     required this.id,
@@ -37,6 +38,7 @@ class APISongItem {
     required this.language,
     required this.isOffVocal,
     required this.lengthSeconds,
+    required this.alreadyPlayedInRoom,
   });
 
   factory APISongItem.fromJson(Map<String, dynamic> json) =>
@@ -51,6 +53,7 @@ class APILoadSongsParameters {
   final int? nextOffset;
   final String? nextCursor;
   final int? nextPage;
+  final String? roomId;
 
   APILoadSongsParameters({
     this.keyword,
@@ -58,6 +61,7 @@ class APILoadSongsParameters {
     this.nextOffset,
     this.nextCursor,
     this.nextPage,
+    this.roomId,
   });
 
   factory APILoadSongsParameters.fromJson(Map<String, dynamic> json) =>
@@ -77,9 +81,3 @@ class APIReserveSongParameters {
       _$APIReserveSongParametersFromJson(json);
   Map<String, dynamic> toJson() => _$APIReserveSongParametersToJson(this);
 }
-
-/*
-{
-    "songId": "67092f560e02e456cb54813c"
-}
- */

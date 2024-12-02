@@ -2,9 +2,11 @@ part of 'downloadfeature_ds.dart';
 
 class DefaultSongIdentifierRepository implements SongIdentifierRepository {
   final SingalongAPI api;
+  final SingalongConfiguration configuration;
 
   const DefaultSongIdentifierRepository({
     required this.api,
+    required this.configuration,
   });
 
   @override
@@ -16,7 +18,7 @@ class DefaultSongIdentifierRepository implements SongIdentifierRepository {
       return IdentifiedSongDetails(
         id: result.id,
         source: result.source,
-        imageUrl: result.imageUrl,
+        imageUrl: configuration.buildProxyURL(result.imageUrl).toString(),
         songTitle: result.songTitle,
         songArtist: result.songArtist,
         songLanguage: result.songLanguage,
@@ -25,6 +27,8 @@ class DefaultSongIdentifierRepository implements SongIdentifierRepository {
         songLyrics: result.songLyrics,
         lengthSeconds: result.lengthSeconds,
         metadata: result.metadata,
+        genres: result.genres,
+        tags: result.tags,
         alreadyExists: result.alreadyExists,
       );
     } catch (e, st) {
@@ -49,6 +53,8 @@ class DefaultSongIdentifierRepository implements SongIdentifierRepository {
         songLyrics: details.songLyrics,
         lengthSeconds: details.lengthSeconds,
         metadata: details.metadata,
+        genres: details.genres,
+        tags: details.tags,
         alreadyExists: details.alreadyExists,
       );
       final parameters = APISaveSongParameters(
@@ -70,13 +76,16 @@ class DefaultSongIdentifierRepository implements SongIdentifierRepository {
         APISearchDownloadablesParameters(keyword: query),
       );
       return result
-          .map((e) => DownloadableItem(
-                sourceUrl: e.url,
-                title: e.name,
-                artist: e.author.name,
-                thumbnailURL: e.thumbnail,
-                duration: e.duration,
-              ))
+          .map(
+            (e) => DownloadableItem(
+              sourceUrl: e.url,
+              title: e.name,
+              artist: e.author.name,
+              thumbnailURL: configuration.buildProxyURL(e.thumbnail).toString(),
+              duration: e.duration,
+              alreadyDownloaded: e.alreadyExists,
+            ),
+          )
           .toList();
     } catch (e, st) {
       debugPrint("Error: $e");

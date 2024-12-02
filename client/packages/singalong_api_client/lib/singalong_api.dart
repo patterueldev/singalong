@@ -43,6 +43,35 @@ class SingalongAPI {
     return APIPaginatedSongs.fromJson(result.objectData());
   }
 
+  Future<APISongDetails> loadSongDetails(
+      APILoadSongDetailsParameters parameters) async {
+    final result = await apiClient.request(
+      path: APIPath.songDetails,
+      queryParameters: parameters.toJson(),
+      method: HttpMethod.GET,
+    );
+    return APISongDetails.fromJson(result.objectData());
+  }
+
+  Future<APISongDetails> updateSongDetails(
+      APIUpdateSongParameters parameters) async {
+    final result = await apiClient.request(
+      path: APIPath.adminUpdateSong,
+      payload: parameters.toJson(),
+      method: HttpMethod.PATCH,
+    );
+    return APISongDetails.fromJson(result.objectData());
+  }
+
+  Future<void> deleteSong(String songId) async {
+    final result = await apiClient.request(
+      path: APIPath.adminDeleteSong,
+      queryParameters: {"songId": songId},
+      method: HttpMethod.DELETE,
+    );
+    debugPrint("Delete result: $result");
+  }
+
   Future<void> reserveSong(APIReserveSongParameters parameters) async {
     await apiClient.request(
       path: APIPath.reserveSong,
@@ -61,14 +90,13 @@ class SingalongAPI {
     return APIIdentifiedSongDetails.fromJson(result.objectData());
   }
 
-  Future<APISaveSongResponseData> saveSong(
-      APISaveSongParameters parameters) async {
+  Future<bool> saveSong(APISaveSongParameters parameters) async {
     final result = await apiClient.request(
       path: APIPath.songs,
       method: HttpMethod.POST,
       payload: parameters.toJson(),
     );
-    return APISaveSongResponseData.fromJson(result.objectData());
+    return result.boolData();
   }
 
   Future<List<APIDownloadableData>> searchDownloadables(
@@ -117,5 +145,14 @@ class SingalongAPI {
       payload: parameters.toJson(),
     );
     return APIRoom.fromJson(result.objectData());
+  }
+
+  Future<APISongDetails> enhanceSongDetails(String songId) async {
+    final result = await apiClient.request(
+      path: APIPath.adminEnhanceSongDetails,
+      payload: {"songId": songId},
+      method: HttpMethod.POST,
+    );
+    return APISongDetails.fromJson(result.objectData());
   }
 }
