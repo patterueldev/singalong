@@ -33,4 +33,15 @@ interface ReservedSongsRepository {
         userId: String,
         roomId: String,
     ): Int
+
+    suspend fun cancelReservation(
+        roomId: String,
+        reservedSongId: String,
+    )
+
+    suspend fun moveReservedSongOrder(
+        roomId: String,
+        reservedSongId: String,
+        newOrder: Int,
+    )
 }

@@ -630,4 +630,6 @@ const _$RoomCommandTypeEnumMap = {
   RoomCommandType.adjustVolume: 'adjustVolume',
   RoomCommandType.durationUpdate: 'durationUpdate',
   RoomCommandType.seekDuration: 'seekDuration',
+  RoomCommandType.cancelReservation: 'cancelReservation',
+  RoomCommandType.moveReservedSongOrder: 'moveReservedSongOrder',
 };

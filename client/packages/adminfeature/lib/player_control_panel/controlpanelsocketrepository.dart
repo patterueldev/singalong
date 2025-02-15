@@ -10,4 +10,6 @@ abstract class ControlPanelSocketRepository {
   void adjustVolumeFromControl(double volume);
   void togglePlayPause(bool isPlaying);
   void skipSong({required bool completed});
+  void cancelReservation(String reservedSongId);
+  void moveReservedSongOrder(String reservedSongId, int order);
 }

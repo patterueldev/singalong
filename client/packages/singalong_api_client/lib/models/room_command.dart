@@ -24,4 +24,11 @@ class RoomCommand {
   factory RoomCommand.seekDurationFromControl(
           {required int durationInSeconds}) =>
       RoomCommand(RoomCommandType.seekDuration, durationInSeconds);
+  factory RoomCommand.cancelReservation(String reservedSongId) =>
+      RoomCommand(RoomCommandType.cancelReservation, reservedSongId);
+  factory RoomCommand.moveReservedSongOrder(String reservedSongId, int order) =>
+      RoomCommand(RoomCommandType.moveReservedSongOrder, {
+        'reservedSongId': reservedSongId,
+        'order': order,
+      });
 }

@@ -2,10 +2,7 @@ part of '../adminfeature.dart';
 
 class ReservedPanelWidget extends StatelessWidget {
   final AdminCoordinator coordinator;
-  const ReservedPanelWidget({
-    super.key,
-    required this.coordinator,
-  });
+  const ReservedPanelWidget({super.key, required this.coordinator});
 
   @override
   Widget build(BuildContext context) => Consumer<ReservedPanelViewModel>(
@@ -32,41 +29,42 @@ class ReservedPanelWidget extends StatelessWidget {
           itemCount: songList.length,
           itemBuilder: (context, index) {
             final song = songList[index];
-            return Slidable(
-              key: Key(song.title),
-              startActionPane: ActionPane(
-                motion: const ScrollMotion(),
-                children: [
+            return PopupMenuButton<String>(
+              onSelected: (value) {
+                if (value == 'details') {
+                  coordinator.openSongDetailScreen(context, song.songId);
+                } else if (value == 'skip') {
+                  viewModel.nextSong();
+                } else if (value == 'cancel') {
+                  viewModel.cancelReservation(song.id);
+                } else if (value == 'play-next') {
+                  viewModel.moveUp(song.id);
+                }
+              },
+              itemBuilder: (BuildContext context) {
+                return [
+                  PopupMenuItem<String>(
+                    value: 'details',
+                    child: Text("Details"),
+                  ),
                   if (song.currentPlaying) ...[
-                    // Skip
-                    SlidableAction(
-                      onPressed: (context) => viewModel.dismissSong(song),
-                      backgroundColor: Colors.blue,
-                      foregroundColor: Colors.white,
-                      icon: Icons.skip_next,
-                      label: "Skip",
+                    PopupMenuItem<String>(
+                      value: 'skip',
+                      child: Text("Skip"),
                     ),
                   ],
                   if (!song.currentPlaying) ...[
-                    // Play Next
-                    SlidableAction(
-                      onPressed: (context) => {},
-                      backgroundColor: Colors.green,
-                      foregroundColor: Colors.white,
-                      icon: Icons.play_arrow,
-                      label: "Play Next",
+                    PopupMenuItem<String>(
+                      value: 'cancel',
+                      child: Text("Cancel"),
                     ),
-                    // Cancel
-                    SlidableAction(
-                      onPressed: (context) => viewModel.dismissSong(song),
-                      backgroundColor: Colors.red,
-                      foregroundColor: Colors.white,
-                      icon: Icons.cancel,
-                      label: "Cancel",
+                    PopupMenuItem<String>(
+                      value: 'move-up',
+                      child: Text("Move Up"),
                     ),
                   ],
-                ],
-              ),
+                ];
+              },
               child: ListTile(
                 leading: Container(
                   width: 50.0, // Set a fixed width for the image container
@@ -102,8 +100,6 @@ class ReservedPanelWidget extends StatelessWidget {
                 trailing: song.currentPlaying
                     ? const Icon(Icons.play_arrow, color: Colors.green)
                     : null,
-                onTap: () =>
-                    coordinator.openSongDetailScreen(context, song.songId),
               ),
             );
           },

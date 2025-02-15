@@ -6,6 +6,8 @@ enum class RoomCommandType(val value: String) {
     ADJUST_VOLUME("adjustVolume"),
     DURATION_UPDATE("durationUpdate"),
     SEEK_DURATION("seekDuration"),
+    CANCEL_RESERVATION("cancelReservation"),
+    MOVE_RESERVED_SONG_ORDER("moveReservedSongOrder"),
     ;
 
     companion object {

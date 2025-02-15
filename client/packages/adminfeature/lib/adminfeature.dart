@@ -103,6 +103,7 @@ class AdminFeatureUIProvider {
       ChangeNotifierProvider<ReservedPanelViewModel>(
         create: (context) => DefaultReservedPanelViewModel(
           reservedSongListSocketRepository: context.read(),
+          controlPanelRepository: context.read(),
         ),
         child: ReservedPanelWidget(
           coordinator: context.read(),

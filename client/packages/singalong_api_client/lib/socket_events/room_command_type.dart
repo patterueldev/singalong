@@ -6,6 +6,8 @@ enum RoomCommandType {
   adjustVolume,
   durationUpdate,
   seekDuration,
+  cancelReservation,
+  moveReservedSongOrder,
   ;
 
   String get value {
@@ -20,6 +22,10 @@ enum RoomCommandType {
         return 'durationUpdate';
       case seekDuration:
         return 'seekDuration';
+      case cancelReservation:
+        return 'cancelReservation';
+      case moveReservedSongOrder:
+        return 'moveReservedSongOrder';
     }
   }
 }

@@ -177,4 +177,25 @@ open class ReservedSongRepositoryDS : ReservedSongsRepository {
     ): Int {
         return reservedSongDocumentRepository.getCountForUpcomingSongsByUserInRoom(userId, roomId)
     }
+
+    override suspend fun cancelReservation(
+        roomId: String,
+        reservedSongId: String,
+    ) {
+        // check if exists
+        val reservedSong =
+            withContext(Dispatchers.IO) {
+                reservedSongDocumentRepository.findById(reservedSongId)
+            }.getOrNull() ?: throw IllegalArgumentException("Reserved song not found")
+        reservedSong.canceledAt = LocalDateTime.now()
+        reservedSongDocumentRepository.save(reservedSong)
+    }
+
+    override suspend fun moveReservedSongOrder(
+        roomId: String,
+        reservedSongId: String,
+        newOrder: Int,
+    ) {
+        TODO("Not yet implemented")
+    }
 }
