@@ -254,7 +254,7 @@ internal class IdentifiedSongRepositoryDS(
                 }
             object : ReservedSong {
                 override val id: String = newReservedSong.id ?: throw IllegalArgumentException("Reserved song id not found")
-                override val order: Int = newReservedSong.order
+                override var order: Int = newReservedSong.order
                 override val songId: String = newReservedSong.songId
                 override val title: String = song.title
                 override val artist: String = song.artist

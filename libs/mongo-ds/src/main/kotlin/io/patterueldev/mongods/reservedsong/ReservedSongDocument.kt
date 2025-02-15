@@ -11,7 +11,7 @@ data class ReservedSongDocument(
     @Id val id: String? = null,
     val songId: String,
     val roomId: String,
-    val order: Int,
+    var order: Int,
     val reservedBy: String,
     @CreatedDate val createdAt: LocalDateTime = LocalDateTime.now(),
     @LastModifiedDate val updatedAt: LocalDateTime = LocalDateTime.now(),

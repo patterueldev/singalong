@@ -91,7 +91,7 @@ open class ReservedSongRepositoryDS : ReservedSongsRepository {
                 }
             return object : ReservedSong {
                 override val id: String = newReservedSong.id ?: throw IllegalArgumentException("Reserved song id not found")
-                override val order: Int = newReservedSong.order
+                override var order: Int = newReservedSong.order
                 override val songId: String = newReservedSong.songId
                 override val title: String = song.title
                 override val artist: String = song.artist
@@ -117,7 +117,7 @@ open class ReservedSongRepositoryDS : ReservedSongsRepository {
                     ?: throw IllegalArgumentException("Song with id ${reservedSong.songId} not found")
             object : ReservedSong {
                 override val id: String = reservedSong.id ?: throw IllegalArgumentException("Reserved song id not found")
-                override val order: Int = reservedSong.order
+                override var order: Int = reservedSong.order
                 override val songId: String = reservedSong.songId
                 override val title: String = song.title
                 override val artist: String = song.artist
@@ -196,6 +196,29 @@ open class ReservedSongRepositoryDS : ReservedSongsRepository {
         reservedSongId: String,
         newOrder: Int,
     ) {
-        TODO("Not yet implemented")
+        val unplayedReservedSongs =
+            withContext(Dispatchers.IO) {
+                reservedSongDocumentRepository.loadUnplayedReservedSongs(roomId)
+            }
+        if (unplayedReservedSongs.size < 2) throw Exception("There are not enough reserved songs to move.")
+        val affectedReservedSong =
+            unplayedReservedSongs.find { it.id == reservedSongId }
+                ?: throw Exception("The reserved song to be moved was not found.")
+        val oldOrder = affectedReservedSong.order
+        // at this point, oldOrder -> newOrder will be affected
+        val unaffectedReservedSongs = unplayedReservedSongs.filter { it.order !in oldOrder..newOrder }
+        val affectedReservedSongs = unplayedReservedSongs.filter { it.order in oldOrder..newOrder }.toMutableList()
+        println("Old songs: $affectedReservedSongs")
+        val isMovingUp = oldOrder > newOrder // by moving up, we mean the order is decreasing
+        for (reservedSong in affectedReservedSongs) {
+            if (reservedSong.id == reservedSongId) {
+                reservedSong.order = newOrder
+                continue
+            }
+            val newAffectedOrder = if (isMovingUp) reservedSong.order + 1 else reservedSong.order - 1
+            reservedSong.order = newAffectedOrder
+        }
+        println("New songs: $affectedReservedSongs")
+//        reservedSongDocumentRepository.saveAll(affectedReservedSongs)
     }
 }

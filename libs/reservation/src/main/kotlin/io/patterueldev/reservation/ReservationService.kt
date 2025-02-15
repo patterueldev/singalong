@@ -1,6 +1,8 @@
 package io.patterueldev.reservation
 
 import io.patterueldev.common.ServiceUseCase
+import io.patterueldev.reservation.cancel.CancelReservationParameters
+import io.patterueldev.reservation.cancel.CancelReservationUseCase
 import io.patterueldev.reservation.currentsong.CurrentSongRepository
 import io.patterueldev.reservation.currentsong.LoadCurrentSongParameters
 import io.patterueldev.reservation.currentsong.LoadCurrentSongUseCase
@@ -10,6 +12,7 @@ import io.patterueldev.reservation.next.SkipSongParameters
 import io.patterueldev.reservation.next.SkipSongUseCase
 import io.patterueldev.reservation.reserve.ReserveParameters
 import io.patterueldev.reservation.reserve.ReserveUseCase
+import io.patterueldev.reservedsong.ReservedSong
 import io.patterueldev.reservedsong.ReservedSongsRepository
 import io.patterueldev.roomuser.RoomUserRepository
 
@@ -55,28 +58,6 @@ class ReservationService(
 
     suspend fun moveReservedSongOrder(parameters: MoveReservedSongOrderParameters) = moveReservedSongOrderUseCase(parameters)
 }
-
-internal class CancelReservationUseCase(
-    private val reservedSongsRepository: ReservedSongsRepository,
-    private val reservationCoordinator: ReservationCoordinator?,
-) : ServiceUseCase<CancelReservationParameters, Unit> {
-    override suspend fun execute(parameters: CancelReservationParameters) {
-        try {
-            reservedSongsRepository.cancelReservation(
-                roomId = parameters.roomId,
-                reservedSongId = parameters.reservedSongId,
-            )
-            reservationCoordinator?.onReserveUpdate(roomId = parameters.roomId)
-        } catch (e: Exception) {
-            throw Exception(e.message ?: "An error occurred while canceling the reservation.")
-        }
-    }
-}
-
-data class CancelReservationParameters(
-    val roomId: String,
-    val reservedSongId: String,
-)
 
 internal class MoveReservedSongOrderUseCase(
     private val reservedSongsRepository: ReservedSongsRepository,
