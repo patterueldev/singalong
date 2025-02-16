@@ -201,7 +201,7 @@ open class ReservedSongRepositoryDS : ReservedSongsRepository {
                 reservedSongDocumentRepository.loadReservedSongFromRoom(roomId, reservedSongId)
             } ?: throw IllegalArgumentException("Reserved song not found")
         val oldOrder = affectedReservedSong.order
-        if(oldOrder == newOrder) return // already in the same order
+        if (oldOrder == newOrder) return // already in the same order
 
         val fromOrder = if (oldOrder > newOrder) newOrder else oldOrder
         val toOrder = if (oldOrder > newOrder) oldOrder else newOrder

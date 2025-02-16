@@ -58,4 +58,3 @@ class ReservationService(
 
     suspend fun moveReservedSongOrder(parameters: MoveReservedSongOrderParameters) = moveReservedSongOrderUseCase(parameters)
 }
-
