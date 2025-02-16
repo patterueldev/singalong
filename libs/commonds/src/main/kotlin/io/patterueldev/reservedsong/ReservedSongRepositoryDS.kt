@@ -91,7 +91,7 @@ open class ReservedSongRepositoryDS : ReservedSongsRepository {
                 }
             return object : ReservedSong {
                 override val id: String = newReservedSong.id ?: throw IllegalArgumentException("Reserved song id not found")
-                override val order: Int = newReservedSong.order
+                override var order: Int = newReservedSong.order
                 override val songId: String = newReservedSong.songId
                 override val title: String = song.title
                 override val artist: String = song.artist
@@ -117,7 +117,7 @@ open class ReservedSongRepositoryDS : ReservedSongsRepository {
                     ?: throw IllegalArgumentException("Song with id ${reservedSong.songId} not found")
             object : ReservedSong {
                 override val id: String = reservedSong.id ?: throw IllegalArgumentException("Reserved song id not found")
-                override val order: Int = reservedSong.order
+                override var order: Int = reservedSong.order
                 override val songId: String = reservedSong.songId
                 override val title: String = song.title
                 override val artist: String = song.artist
@@ -176,5 +176,50 @@ open class ReservedSongRepositoryDS : ReservedSongsRepository {
         roomId: String,
     ): Int {
         return reservedSongDocumentRepository.getCountForUpcomingSongsByUserInRoom(userId, roomId)
+    }
+
+    override suspend fun cancelReservation(
+        roomId: String,
+        reservedSongId: String,
+    ) {
+        // check if exists
+        val reservedSong =
+            withContext(Dispatchers.IO) {
+                reservedSongDocumentRepository.findById(reservedSongId)
+            }.getOrNull() ?: throw IllegalArgumentException("Reserved song not found")
+        reservedSong.canceledAt = LocalDateTime.now()
+        reservedSongDocumentRepository.save(reservedSong)
+    }
+
+    override suspend fun moveReservedSongOrder(
+        roomId: String,
+        reservedSongId: String,
+        newOrder: Int,
+    ) {
+        val affectedReservedSong =
+            withContext(Dispatchers.IO) {
+                reservedSongDocumentRepository.loadReservedSongFromRoom(roomId, reservedSongId)
+            } ?: throw IllegalArgumentException("Reserved song not found")
+        val oldOrder = affectedReservedSong.order
+        if (oldOrder == newOrder) return // already in the same order
+
+        val fromOrder = if (oldOrder > newOrder) newOrder else oldOrder
+        val toOrder = if (oldOrder > newOrder) oldOrder else newOrder
+        val affectedReservedSongs =
+            withContext(Dispatchers.IO) {
+                reservedSongDocumentRepository.loadReservedSongsBetweenOrders(roomId, fromOrder, toOrder)
+            }
+
+        if (affectedReservedSongs.size < 2) throw Exception("There are not enough reserved songs to move.")
+        val isMovingUp = oldOrder > newOrder // by moving up, we mean the order is decreasing
+        for (reservedSong in affectedReservedSongs) {
+            reservedSong.oldOrder = reservedSong.order
+            if (reservedSong.id == reservedSongId) {
+                reservedSong.order = newOrder
+                continue
+            }
+            reservedSong.order = if (isMovingUp) reservedSong.order + 1 else reservedSong.order - 1
+        }
+        reservedSongDocumentRepository.saveAll(affectedReservedSongs)
     }
 }

@@ -332,6 +332,20 @@ class SingalongSocketIOModule(
                         )
                     }
                 }
+
+                RoomCommandType.CANCEL_RESERVATION -> {
+                    println("Client[${client.sessionId}] - Cancel reservation event received with data: $data")
+                    singalongService.cancelReservation(room.id, data as String)
+                }
+                RoomCommandType.MOVE_RESERVED_SONG_ORDER -> {
+                    println("Client[${client.sessionId}] - Move reserved song order event received with data: $data")
+                    // data should be a map with keys: reservedSongId, order
+                    val dataMap = data as Map<*, *>
+                    val reservedSongId = dataMap["reservedSongId"] as String
+                    val order = dataMap["order"] as Int
+                    println("Moving reserved song $reservedSongId to order $order")
+                    singalongService.moveReservedSongOrder(room.id, reservedSongId, order)
+                }
             }
         }
     }

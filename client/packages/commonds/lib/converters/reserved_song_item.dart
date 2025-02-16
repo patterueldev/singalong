@@ -9,6 +9,7 @@ extension APIReservedSongExtension on APIReservedSong {
         artist: artist,
         thumbnailURL: configuration.buildResourceURL(thumbnailPath).toString(),
         reservingUser: reservingUser,
+        order: order,
         currentPlaying: currentPlaying,
         finishedPlaying: false //TODO: Implement this
         );

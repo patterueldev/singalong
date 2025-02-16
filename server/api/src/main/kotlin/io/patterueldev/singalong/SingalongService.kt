@@ -2,8 +2,10 @@ package io.patterueldev.singalong
 
 import com.corundumstudio.socketio.SocketIOServer
 import io.patterueldev.reservation.ReservationService
+import io.patterueldev.reservation.cancel.CancelReservationParameters
 import io.patterueldev.reservation.currentsong.LoadCurrentSongParameters
 import io.patterueldev.reservation.list.LoadReservationListParameters
+import io.patterueldev.reservation.moveorder.MoveReservedSongOrderParameters
 import io.patterueldev.reservation.next.SkipSongParameters
 import io.patterueldev.session.SessionService
 import jakarta.annotation.PreDestroy
@@ -64,6 +66,32 @@ class SingalongService {
                 parameters = parameters,
             )
         }
+
+    fun cancelReservation(
+        roomId: String,
+        reservationId: String,
+    ) = runBlocking {
+        reservationService.cancelReservation(
+            CancelReservationParameters(
+                roomId = roomId,
+                reservedSongId = reservationId,
+            ),
+        )
+    }
+
+    fun moveReservedSongOrder(
+        roomId: String,
+        reservationId: String,
+        newOrder: Int,
+    ) = runBlocking {
+        reservationService.moveReservedSongOrder(
+            MoveReservedSongOrderParameters(
+                roomId = roomId,
+                reservedSongId = reservationId,
+                newOrder = newOrder,
+            ),
+        )
+    }
 
     fun getParticipantsInRoom(roomId: String) =
         runBlocking {

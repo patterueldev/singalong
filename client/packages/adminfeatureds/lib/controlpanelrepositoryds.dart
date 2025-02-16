@@ -105,4 +105,18 @@ class ControlPanelRepositoryDS implements ControlPanelSocketRepository {
   void adjustVolumeFromControl(double volume) {
     socket.emitRoomCommandEvent(RoomCommand.adjustVolume(volume));
   }
+
+  @override
+  void cancelReservation(String reservedSongId) {
+    socket.emitRoomCommandEvent(RoomCommand.cancelReservation(reservedSongId));
+  }
+
+  @override
+  void moveReservedSongOrder(String reservedSongId, int order) {
+    debugPrint('Moving reserved song order: $reservedSongId to $order');
+    socket.emitRoomCommandEvent(RoomCommand.moveReservedSongOrder(
+      reservedSongId,
+      order,
+    ));
+  }
 }

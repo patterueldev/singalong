@@ -7,6 +7,7 @@ class ReservedSongItem {
   final String artist;
   final String thumbnailURL;
   final String reservingUser;
+  final int order;
   final bool currentPlaying;
   final bool finishedPlaying;
 
@@ -17,6 +18,7 @@ class ReservedSongItem {
     required this.artist,
     required this.thumbnailURL,
     required this.reservingUser,
+    required this.order,
     required this.currentPlaying,
     required this.finishedPlaying,
   });

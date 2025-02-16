@@ -11,7 +11,8 @@ data class ReservedSongDocument(
     @Id val id: String? = null,
     val songId: String,
     val roomId: String,
-    val order: Int,
+    var order: Int,
+    var oldOrder: Int? = null, // used for moving songs; contingency measures if saving fails
     val reservedBy: String,
     @CreatedDate val createdAt: LocalDateTime = LocalDateTime.now(),
     @LastModifiedDate val updatedAt: LocalDateTime = LocalDateTime.now(),
@@ -20,4 +21,5 @@ data class ReservedSongDocument(
     // indicates that the song was played
     val finishedPlayingAt: LocalDateTime? = null,
     val completed: Boolean = false, // indicates that the song was played to the end
+    var canceledAt: LocalDateTime? = null,
 )
