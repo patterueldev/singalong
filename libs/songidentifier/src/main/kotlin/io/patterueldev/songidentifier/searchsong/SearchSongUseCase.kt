@@ -13,6 +13,7 @@ internal open class SearchSongUseCase(
     override suspend fun execute(parameters: SearchSongParameters): SearchSongResponse {
         try {
             // TODO: We can optimize results here
+            println("Searching for songs with keyword: ${parameters.keyword}")
             if (parameters.keyword.isBlank()) {
                 return SearchSongResponse.success(emptyList())
             }
@@ -22,6 +23,7 @@ internal open class SearchSongUseCase(
             if (!keywords.any { keyword.contains(it, ignoreCase = true) }) {
                 keyword += " karaoke"
             }
+            println("Modified keyword: $keyword")
             val result =
                 identifiedSongRepository.searchSongs(keyword, parameters.limit).mapAsync {
                     val alreadyExists = identifiedSongRepository.songAlreadyDownloaded(it.id)
