@@ -343,6 +343,7 @@ class SingalongSocketIOModule(
                     val dataMap = data as Map<*, *>
                     val reservedSongId = dataMap["reservedSongId"] as String
                     val order = dataMap["order"] as Int
+                    println("Moving reserved song $reservedSongId to order $order")
                     singalongService.moveReservedSongOrder(room.id, reservedSongId, order)
                 }
             }

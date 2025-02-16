@@ -196,29 +196,30 @@ open class ReservedSongRepositoryDS : ReservedSongsRepository {
         reservedSongId: String,
         newOrder: Int,
     ) {
-        val unplayedReservedSongs =
-            withContext(Dispatchers.IO) {
-                reservedSongDocumentRepository.loadUnplayedReservedSongs(roomId)
-            }
-        if (unplayedReservedSongs.size < 2) throw Exception("There are not enough reserved songs to move.")
         val affectedReservedSong =
-            unplayedReservedSongs.find { it.id == reservedSongId }
-                ?: throw Exception("The reserved song to be moved was not found.")
+            withContext(Dispatchers.IO) {
+                reservedSongDocumentRepository.loadReservedSongFromRoom(roomId, reservedSongId)
+            } ?: throw IllegalArgumentException("Reserved song not found")
         val oldOrder = affectedReservedSong.order
-        // at this point, oldOrder -> newOrder will be affected
-        val unaffectedReservedSongs = unplayedReservedSongs.filter { it.order !in oldOrder..newOrder }
-        val affectedReservedSongs = unplayedReservedSongs.filter { it.order in oldOrder..newOrder }.toMutableList()
-        println("Old songs: $affectedReservedSongs")
+        if(oldOrder == newOrder) return // already in the same order
+
+        val fromOrder = if (oldOrder > newOrder) newOrder else oldOrder
+        val toOrder = if (oldOrder > newOrder) oldOrder else newOrder
+        val affectedReservedSongs =
+            withContext(Dispatchers.IO) {
+                reservedSongDocumentRepository.loadReservedSongsBetweenOrders(roomId, fromOrder, toOrder)
+            }
+
+        if (affectedReservedSongs.size < 2) throw Exception("There are not enough reserved songs to move.")
         val isMovingUp = oldOrder > newOrder // by moving up, we mean the order is decreasing
         for (reservedSong in affectedReservedSongs) {
+            reservedSong.oldOrder = reservedSong.order
             if (reservedSong.id == reservedSongId) {
                 reservedSong.order = newOrder
                 continue
             }
-            val newAffectedOrder = if (isMovingUp) reservedSong.order + 1 else reservedSong.order - 1
-            reservedSong.order = newAffectedOrder
+            reservedSong.order = if (isMovingUp) reservedSong.order + 1 else reservedSong.order - 1
         }
-        println("New songs: $affectedReservedSongs")
-//        reservedSongDocumentRepository.saveAll(affectedReservedSongs)
+        reservedSongDocumentRepository.saveAll(affectedReservedSongs)
     }
 }

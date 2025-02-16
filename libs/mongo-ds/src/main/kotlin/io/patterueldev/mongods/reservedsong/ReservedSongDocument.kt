@@ -12,6 +12,7 @@ data class ReservedSongDocument(
     val songId: String,
     val roomId: String,
     var order: Int,
+    var oldOrder: Int? = null, // used for moving songs; contingency measures if saving fails
     val reservedBy: String,
     @CreatedDate val createdAt: LocalDateTime = LocalDateTime.now(),
     @LastModifiedDate val updatedAt: LocalDateTime = LocalDateTime.now(),

@@ -5,8 +5,8 @@ abstract class ReservedPanelViewModel extends ChangeNotifier {
       ValueNotifier([]);
 
   void nextSong();
-  void cancelReservation(String songId);
-  void moveUp(String songId);
+  void cancelReservation(String reservedSongId);
+  void moveUp(String reservedSongId);
 }
 
 class DefaultReservedPanelViewModel extends ReservedPanelViewModel {

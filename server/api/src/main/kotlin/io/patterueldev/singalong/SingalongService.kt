@@ -1,7 +1,7 @@
 package io.patterueldev.singalong
 
 import com.corundumstudio.socketio.SocketIOServer
-import io.patterueldev.reservation.MoveReservedSongOrderParameters
+import io.patterueldev.reservation.moveorder.MoveReservedSongOrderParameters
 import io.patterueldev.reservation.ReservationService
 import io.patterueldev.reservation.cancel.CancelReservationParameters
 import io.patterueldev.reservation.currentsong.LoadCurrentSongParameters

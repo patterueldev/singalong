@@ -37,7 +37,7 @@ class ReservedPanelWidget extends StatelessWidget {
                   viewModel.nextSong();
                 } else if (value == 'cancel') {
                   viewModel.cancelReservation(song.id);
-                } else if (value == 'play-next') {
+                } else if (value == 'move-up') {
                   viewModel.moveUp(song.id);
                 }
               },

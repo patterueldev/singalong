@@ -113,6 +113,7 @@ class ControlPanelRepositoryDS implements ControlPanelSocketRepository {
 
   @override
   void moveReservedSongOrder(String reservedSongId, int order) {
+    debugPrint('Moving reserved song order: $reservedSongId to $order');
     socket.emitRoomCommandEvent(RoomCommand.moveReservedSongOrder(
       reservedSongId,
       order,
