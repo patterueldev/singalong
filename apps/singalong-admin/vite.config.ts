@@ -9,9 +9,8 @@ export default defineConfig({
     strictPort: false,
     host: '0.0.0.0',
     hmr: {
-      protocol: 'https',
-      host: 'singalongadmin-dev.nicenature.space',
-      port: 443,
+      host: 'localhost',
+      port: 3001,
     },
     allowedHosts: [
       'localhost',
@@ -20,4 +19,5 @@ export default defineConfig({
     ],
   },
 })
+
 

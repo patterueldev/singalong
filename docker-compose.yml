@@ -46,8 +46,8 @@ services:
       context: .
       dockerfile: infrastructure/development/admin.dockerfile
     container_name: singalong-admin
-    # ports:
-    #   - "3001:3001"
+    ports:
+      - "3001:3001"
     volumes:
       - ./apps/singalong-admin:/app
       - /app/node_modules  # Exclude node_modules from volume mount
@@ -66,8 +66,8 @@ services:
       context: .
       dockerfile: infrastructure/development/controller.dockerfile
     container_name: singalong-controller
-    # ports:
-    #   - "3002:3002"
+    ports:
+      - "3002:3002"
     volumes:
       - ./apps/singalong-controller:/app
       - /app/node_modules  # Exclude node_modules from volume mount

@@ -16,13 +16,22 @@ export function SongBook() {
   }, [request]);
 
   if (loading) return <div><p>Loading songs...</p></div>;
-  if (error) return <div><p>Error loading songs. Please try again.</p></div>;
+  if (error) {
+    return (
+      <div>
+        <p>Error loading songs. Please try again.</p>
+        <p style={{ fontSize: '0.9em', color: '#666' }}>
+          {error.message}
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div>
       <h1>Song Book</h1>
       <p>Browse and explore our collection of songs.</p>
-      {songs && songs.length > 0 ? (
+      {Array.isArray(songs) && songs.length > 0 ? (
         <ul>
           {songs.map((song) => (
             <li key={song.id}>
@@ -39,3 +48,4 @@ export function SongBook() {
 }
 
 export default SongBook;
+
