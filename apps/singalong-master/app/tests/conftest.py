@@ -6,7 +6,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 # Set test environment variables before importing app
-os.environ["MASTER_API_KEY"] = "test-api-key-thirtytwocharactersonlyyyy"
+os.environ["MASTER_API_KEY"] = "test-key"
 os.environ["DEBUG"] = "True"
 
 

@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field
 class ExchangeTokenRequest(BaseModel):
     """Request to exchange API key for JWT tokens"""
 
-    api_key: str = Field(..., min_length=32, description="API key from environment")
+    api_key: str = Field(..., min_length=8, description="API key from environment (min 8 characters)")
 
 
 class TokenResponse(BaseModel):
