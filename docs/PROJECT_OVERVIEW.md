@@ -9,31 +9,47 @@ Build a distributed karaoke system where an admin can setup sessions for occasio
 ## High-Level Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                   MASTER SERVER                             │
+┌──────────────────────────────────────────────────────────────┐
+│                    MASTER SERVER (REST API)                 │
 │  • Central source of truth for all songs and metadata       │
-│  • Handles song download from YouTube                       │
+│  • Handles YouTube downloads via YT-DLP                    │
 │  • Database management and data persistence                 │
 │  • Provides APIs for Node(s) to fetch and sync              │
-└─────────────────────────────────────────────────────────────┘
-                          ▲
-                          │ (REST API)
-                          │
-┌─────────────────────────────────────────────────────────────┐
-│                   NODE (Middleware)                         │
+└────────────────────┬─────────────────────────────────────────┘
+                     │ (REST API)
+                     │
+    ┌────────────────▼──────────────────┐
+    │  MASTER-WS (WebSocket Service)    │
+    │  • Real-time notifications        │
+    │  • Download progress streaming    │
+    │  • Event broadcasting to Node(s)  │
+    └────────────────▲──────────────────┘
+                     │ (WebSocket)
+                     │
+┌──────────────────────────────────────────────────────────────┐
+│                    NODE SERVER (REST API)                   │
 │  • Intermediary between frontends and master                │
 │  • Downloads/caches songs from master for offline access    │
 │  • Searches YouTube via YT-DLP                              │
 │  • Manages active sessions and user connections             │
-│  • Syncs song data and metadata                             │
-└─────────────────────────────────────────────────────────────┘
-          ▲                               ▲
-          │ (REST API)                    │ (REST API)
-          │                               │
-    ┌─────────────────┐            ┌──────────────────┐
-    │   CONTROLLER    │            │      ADMIN       │
-    │  (Attendee UI)  │            │   (Admin UI)     │
-    └─────────────────┘            └──────────────────┘
+│  • Syncs song data and metadata with Master                 │
+└────────────────────┬─────────────────────────────────────────┘
+                     │ (WebSocket)
+                     │
+    ┌────────────────▼──────────────────┐
+    │   NODE-WS (WebSocket Service)     │
+    │  • Real-time session updates      │
+    │  • Queue change notifications     │
+    │  • User join/leave events         │
+    │  • Download progress              │
+    └────────────────▲──────────────────┘
+                     │ (WebSocket)
+          ┌──────────┴──────────┐
+          │                     │
+    ┌─────────────────┐    ┌──────────────────┐
+    │   CONTROLLER    │    │      ADMIN       │
+    │  (Attendee UI)  │    │   (Admin UI)     │
+    └─────────────────┘    └──────────────────┘
 ```
 
 **Key Principle**: Frontends ONLY communicate with Node. Master is accessed exclusively through Node. This allows offline-first operation and clean separation of concerns.
@@ -76,22 +92,40 @@ As an admin, I want to:
 The Node service is responsible for:
 
 1. **Frontend interaction** - expose REST APIs for both controller and admin apps
-2. **Master communication** - sync song data and metadata with master server
+2. **Master communication** - sync song data and metadata with master server via REST
 3. **Song search** - perform YouTube searches using YT-DLP to help attendees find new songs
 4. **Local caching** - download and cache songs from master for internet-less operation
 5. **Session management** - track active sessions, connections, reservations, and playback state
 6. **Song metadata handling** - receive, enhance, and forward song metadata to master for new downloads
-7. **Download coordination** - notify users when newly suggested songs have been downloaded
+7. **Download coordination** - listen to Master-WS for download completion notifications
+
+### Node-WS (WebSocket Service)
+
+A dedicated WebSocket service for Node-to-Frontend real-time communication:
+
+1. **Session updates** - broadcast queue changes, new reservations, song reorders
+2. **User events** - notify attendees when users join/leave session
+3. **Download progress** - stream download progress for songs being added to songbook
+4. **Connection management** - maintain persistent connections with controller and admin frontends
 
 ### Master (Central Backend)
 
 The Master server is responsible for:
 
-1. **Node communication** - provide APIs for nodes to query, download, and sync songs
+1. **Node communication** - provide REST APIs for nodes to query, download, and sync songs
 2. **Song storage** - maintain the canonical source of truth for all songs and metadata
-3. **YouTube integration** - download and process songs from YouTube as requested
+3. **YouTube integration** - download songs from YouTube using YT-DLP as primary download mechanism
 4. **Database management** - persist all song data, metadata, and system state
 5. **Data persistence** - handle all permanent data storage and retrieval
+
+### Master-WS (WebSocket Service)
+
+A dedicated WebSocket service for Master-to-Node real-time communication:
+
+1. **Download progress notifications** - stream download progress to Node(s)
+2. **Draft song promotions** - notify when a draft song has been successfully downloaded
+3. **Event broadcasting** - broadcast significant events to connected Node(s)
+4. **Connection management** - maintain persistent connections with Node(s)
 
 ---
 

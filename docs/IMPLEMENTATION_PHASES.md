@@ -8,38 +8,73 @@ Each phase builds on previous ones and delivers measurable functionality.
 
 ---
 
-## Phase 1: Project Setup & Infrastructure
+## Service Architecture
 
-**Goal**: Establish development environment and baseline project structure.
+The Singalong system consists of 6 services:
+
+**Backend Services** (REST + WebSocket):
+1. **singalong-master** (REST) - Central database, song storage, YouTube downloads via YT-DLP
+2. **master-ws** (WebSocket) - Real-time notifications for download progress, draft promotions
+3. **singalong-node** (REST) - Session management, middleware, song caching, YT-DLP searches
+4. **node-ws** (WebSocket) - Real-time updates to frontends (queue changes, user events, downloads)
+
+**Frontend Services** (REST + WebSocket Client):
+5. **singalong-controller** (React) - Attendee UI, connects to Node REST + Node-WS
+6. **singalong-admin** (React) - Admin UI, connects to Node REST + Node-WS
+
+**Communication Flow**:
+```
+Master-WS ←→ (Master WebSocket events)
+   ↑
+   │ (REST API)
+   │
+Master Server
+   ↑
+   │ (REST API)
+   │
+Node Server ←→ Node-WS (WebSocket broadcasts)
+   ↑                 ↑
+   │ (REST/WS)       │ (WebSocket)
+   │                 │
+Controller ←────────┘
+Admin ←─────────────┘
+```
+
+---
+
+**Goal**: Establish development environment and baseline project structure for all 6 services.
 
 **Deliverables**:
-- Docker Compose configuration for all 4 services
+- Docker Compose configuration for all 6 services (Master, Master-WS, Node, Node-WS, Controller, Admin)
 - Development environment with hot reload for all services
 - Health check endpoints for all services
 - Basic API documentation structure
+- Service-to-service communication network setup
 - CI/CD pipeline foundations (optional)
 
 **Dependencies**: None (first phase)
 
 **Acceptance Criteria**:
-- All 4 services can start with `docker-compose up`
+- All 6 services can start with `docker-compose up`
 - Each service responds to `/health` endpoint
 - Services can communicate across the docker network
+- WebSocket services can accept connections from their respective client services
 - Development environment supports hot reload for both Python and React
 
 ---
 
 ## Phase 2: Master Server - Song Management Foundation
 
-**Goal**: Build the Master server's core song management and storage capabilities.
+**Goal**: Build the Master server's core song management, storage, and YouTube download capabilities.
 
 **Deliverables**:
 - Database schema for songs, metadata, and draft songs
 - Song CRUD endpoints (Create, Read, Update, Delete)
 - Song listing/pagination endpoints
-- Draft song workflow (create → download → finalize)
-- YT-DLP integration for metadata extraction
+- Draft song workflow (create → download via YT-DLP → finalize)
+- YT-DLP integration for downloading videos from YouTube
 - Song file storage mechanism (filesystem or cloud)
+- Basic Master-WS WebSocket setup for future notifications
 
 **Dependencies**: Phase 1
 
@@ -47,14 +82,15 @@ Each phase builds on previous ones and delivers measurable functionality.
 - Can create, read, list, and delete songs
 - Can query songs with pagination and filtering
 - Draft songs can be created and promoted to published
-- YT-DLP successfully extracts video metadata (title, duration, etc.)
-- Songs can be stored and retrieved from disk
+- YT-DLP successfully downloads videos from YouTube
+- Downloaded files are stored and retrievable from disk
+- Master-WS service can accept WebSocket connections
 
 ---
 
 ## Phase 3: Node Server - Core Gateway & Session Management
 
-**Goal**: Implement Node as the middleware between frontends and Master, with session management.
+**Goal**: Implement Node as the middleware between frontends and Master, with session management. Setup Node-WS for real-time communication.
 
 **Deliverables**:
 - Node → Master communication layer (HTTP client with retry logic)
@@ -64,6 +100,8 @@ Each phase builds on previous ones and delivers measurable functionality.
 - Songbook listing endpoint (proxied from Master)
 - Health endpoint with Master connectivity status
 - Local song caching mechanism
+- Node-WS WebSocket service for frontend real-time updates
+- Connection between Node and Master-WS for download notifications
 
 **Dependencies**: Phase 2
 
@@ -74,6 +112,8 @@ Each phase builds on previous ones and delivers measurable functionality.
 - Node can fetch songbook from Master and cache locally
 - Reservations are stored per session with ordering capability
 - Admin can reorder the reservation queue
+- Node-WS can accept WebSocket connections from frontends
+- Node listens to Master-WS for download events
 
 ---
 
@@ -150,26 +190,28 @@ Each phase builds on previous ones and delivers measurable functionality.
 
 ---
 
-## Phase 7: Real-Time Features - WebSocket & Notifications
+## Phase 7: Real-Time Features - WebSocket Integration
 
-**Goal**: Implement real-time sync and notifications for better UX.
+**Goal**: Implement real-time sync and notifications across Master-WS, Node-WS, and frontends.
 
 **Deliverables**:
-- WebSocket connection setup between Node and frontends
+- Master-WS download progress streaming to Node-WS
+- Node-WS broadcasting of download completion to frontends
 - Real-time queue updates (when songs are added/reordered)
 - Real-time user join/leave notifications
 - Real-time download progress notifications
 - Fallback to polling for clients that don't support WebSocket
-- Event broadcasting system in Node
+- Event broadcasting system across Master-WS → Node-WS → Frontends
 
 **Dependencies**: Phase 4, Phase 5, Phase 6
 
 **Acceptance Criteria**:
-- Multiple users see queue updates instantly
+- Multiple users see queue updates instantly via Node-WS
 - Queue reorders are reflected immediately on all clients
 - Users see notifications when someone joins/leaves
-- Download progress is streamed to the user who suggested it
+- Download progress is streamed through Master-WS → Node-WS → Frontends
 - System gracefully degrades if WebSocket unavailable
+- Connection resilience and reconnection logic works
 
 ---
 
@@ -287,12 +329,14 @@ Phase 10 (Quality)
 
 1. **Authentication**: Not required for MVP. Sessions are join-code based. Admin setup is local/trusted.
 2. **Metadata Enhancement**: User enhancements are auto-saved as-is (no approval workflow). Source is attributed to user.
-3. **Download Queue**: Master processes downloads in FIFO order as requests arrive.
+3. **Download Queue**: Master processes downloads in FIFO order as requests arrive via YT-DLP.
 4. **Session Persistence**: Session data is stored for archives (who sang, when, metadata). Queryable via Admin after session ends.
 5. **Offline Mode**: Node caches full songbook + recently played songs. New downloads are queued for sync when online.
 6. **Song Storage**: Use local filesystem for MVP. Upgrade to cloud storage (S3, etc.) in future.
-7. **Real-Time**: WebSocket preferred, with polling fallback.
-8. **Playback**: Admin controls only. Actual audio playback is out of scope for MVP (UI tracks state only).
+7. **WebSocket Architecture**: Separate WebSocket services (Master-WS, Node-WS) for scalability and separation of concerns.
+8. **YT-DLP Primary**: Master uses YT-DLP for all YouTube downloads; Node uses YT-DLP for searches only.
+9. **Real-Time**: WebSocket preferred, with polling fallback.
+10. **Playback**: Admin controls only. Actual audio playback is out of scope for MVP (UI tracks state only).
 
 ---
 
