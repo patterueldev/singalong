@@ -10,8 +10,8 @@ services:
       context: .
       dockerfile: infrastructure/development/master.dockerfile
     container_name: singalong-master
-    ports:
-      - "5001:5001"
+    # ports:
+    #   - "5001:5001"
     volumes:
       - ./apps/singalong-master:/app
       - /app/__pycache__  # Exclude pycache from volume mount
@@ -26,8 +26,8 @@ services:
       context: .
       dockerfile: infrastructure/development/node.dockerfile
     container_name: singalong-node
-    ports:
-      - "5002:5002"
+    # ports:
+    #   - "5002:5002"
     volumes:
       - ./apps/singalong-node:/app
       - /app/__pycache__  # Exclude pycache from volume mount
@@ -46,13 +46,13 @@ services:
       context: .
       dockerfile: infrastructure/development/admin.dockerfile
     container_name: singalong-admin
-    ports:
-      - "3001:3001"
+    # ports:
+    #   - "3001:3001"
     volumes:
       - ./apps/singalong-admin:/app
       - /app/node_modules  # Exclude node_modules from volume mount
     environment:
-      - VITE_NODE_URL=http://localhost:5002
+      - VITE_NODE_URL=${VITE_NODE_URL:-http://localhost:5002}
       - ENVIRONMENT=development
     networks:
       - singalong-network
@@ -66,19 +66,32 @@ services:
       context: .
       dockerfile: infrastructure/development/controller.dockerfile
     container_name: singalong-controller
-    ports:
-      - "3002:3002"
+    # ports:
+    #   - "3002:3002"
     volumes:
       - ./apps/singalong-controller:/app
       - /app/node_modules  # Exclude node_modules from volume mount
     environment:
-      - VITE_API_BASE_URL=http://localhost:5002
+      - VITE_API_BASE_URL=${VITE_NODE_URL:-http://localhost:5002}
       - ENVIRONMENT=development
     networks:
       - singalong-network
     depends_on:
       - node
     restart: unless-stopped
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: singalong-cloudflared
+    command: 
+      - tunnel
+      - --no-autoupdate
+      - run
+      - --token
+      - ${CLOUDFLARED_TOKEN}
+    restart: unless-stopped
+    networks:
+      - singalong-network
 
 networks:
   singalong-network:
