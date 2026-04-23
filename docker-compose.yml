@@ -1,0 +1,85 @@
+version: '3.8'
+
+# Docker Compose configuration for Singalong development environment
+# Provides hot-reload development setup for all services
+
+services:
+  # Master Service - Central server for video storage and data management
+  master:
+    build:
+      context: .
+      dockerfile: infrastructure/development/master.dockerfile
+    container_name: singalong-master
+    ports:
+      - "5001:5001"
+    volumes:
+      - ./apps/singalong-master:/app
+      - /app/__pycache__  # Exclude pycache from volume mount
+    environment:
+      - ENVIRONMENT=development
+    networks:
+      - singalong-network
+
+  # Node Service - Local karaoke server
+  node:
+    build:
+      context: .
+      dockerfile: infrastructure/development/node.dockerfile
+    container_name: singalong-node
+    ports:
+      - "5002:5002"
+    volumes:
+      - ./apps/singalong-node:/app
+      - /app/__pycache__  # Exclude pycache from volume mount
+    environment:
+      - ENVIRONMENT=development
+      - MASTER_URL=http://master:5001
+    networks:
+      - singalong-network
+    depends_on:
+      - master
+    restart: unless-stopped
+
+  # Admin Dashboard - React/Vite frontend for administrators
+  admin:
+    build:
+      context: .
+      dockerfile: infrastructure/development/admin.dockerfile
+    container_name: singalong-admin
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./apps/singalong-admin:/app
+      - /app/node_modules  # Exclude node_modules from volume mount
+    environment:
+      - VITE_NODE_URL=http://localhost:5002
+      - ENVIRONMENT=development
+    networks:
+      - singalong-network
+    depends_on:
+      - node
+    restart: unless-stopped
+
+  # Controller - React/Vite frontend for karaoke control
+  controller:
+    build:
+      context: .
+      dockerfile: infrastructure/development/controller.dockerfile
+    container_name: singalong-controller
+    ports:
+      - "3002:3002"
+    volumes:
+      - ./apps/singalong-controller:/app
+      - /app/node_modules  # Exclude node_modules from volume mount
+    environment:
+      - VITE_API_BASE_URL=http://localhost:5002
+      - ENVIRONMENT=development
+    networks:
+      - singalong-network
+    depends_on:
+      - node
+    restart: unless-stopped
+
+networks:
+  singalong-network:
+    driver: bridge
