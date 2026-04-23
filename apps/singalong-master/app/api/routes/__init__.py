@@ -2,14 +2,19 @@
 
 from fastapi import APIRouter, Header, HTTPException, status
 
+from app.database import SessionLocal
 from app.middleware.auth import get_auth_service
+from app.models.db_models import User, UserRole
 from app.models.schemas import (
-    ErrorResponse,
+    AuthResponse,
     ExchangeTokenRequest,
     RefreshTokenRequest,
+    SuperadminAuthRequest,
     TokenResponse,
     TokenValidationResponse,
+    UserResponse,
 )
+from app.services.user_auth_service import UserAuthService
 
 router = APIRouter(prefix="/api/auth", tags=["Authentication"])
 
@@ -55,6 +60,68 @@ async def exchange_api_key(request: ExchangeTokenRequest) -> TokenResponse:
     )
 
 
+@router.post("/superadmin", response_model=AuthResponse)
+async def authenticate_superadmin(request: SuperadminAuthRequest) -> AuthResponse:
+    """
+    Authenticate as superadmin
+
+    Args:
+        request: Request with username and password
+
+    Returns:
+        AuthResponse with JWT tokens and user info
+
+    Raises:
+        HTTPException 401: If username or password is invalid
+    """
+    db = SessionLocal()
+    try:
+        # Find superadmin user
+        user = db.query(User).filter(User.username == request.username).first()
+        if not user or user.role != UserRole.SUPERADMIN:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid username or password",
+            )
+
+        # Verify password
+        user_auth = UserAuthService()
+        if not user_auth._verify_password(request.password, user.password_hash):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid username or password",
+            )
+
+        # Generate tokens
+        access_token = user_auth._generate_token(
+            user_id=str(user.id),
+            role=user.role.value,
+            token_type="access",
+            expires_in_seconds=user_auth.access_token_expire_seconds,
+        )
+        refresh_token = user_auth._generate_token(
+            user_id=str(user.id),
+            role=user.role.value,
+            token_type="refresh",
+            expires_in_seconds=user_auth.refresh_token_expire_seconds,
+        )
+
+        return AuthResponse(
+            token=access_token,
+            refresh_token=refresh_token,
+            expires_in=user_auth.access_token_expire_seconds,
+            refresh_expires_in=user_auth.refresh_token_expire_seconds,
+            user=UserResponse(
+                id=str(user.id),
+                username=user.username,
+                role=user.role.value,
+                nickname=None,
+            ),
+        )
+    finally:
+        db.close()
+
+
 @router.post("/refresh", response_model=TokenResponse)
 async def refresh_access_token(request: RefreshTokenRequest) -> TokenResponse:
     """
@@ -94,7 +161,7 @@ async def validate_token(
     authorization: str | None = Header(None),
 ) -> TokenValidationResponse:
     """
-    Validate an access token
+    Validate an access token (API key or user-level)
 
     Args:
         authorization: Authorization header (Bearer <token>)
@@ -105,6 +172,8 @@ async def validate_token(
     Raises:
         HTTPException 401: If token is missing, invalid, or expired
     """
+    from app.main import settings
+
     if not authorization:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -112,8 +181,28 @@ async def validate_token(
         )
 
     auth_service = get_auth_service()
+    token = authorization.replace("Bearer ", "")
+
+    # Try API key JWT secret first (for API key tokens)
     try:
-        payload = auth_service.validate_token(authorization.replace("Bearer ", ""))
+        payload = auth_service.validate_token(token)
+        return TokenValidationResponse(
+            status="valid",
+            sub=payload.get("sub"),
+            iat=payload.get("iat"),
+            exp=payload.get("exp"),
+            expires_in=payload.get("expires_in"),
+        )
+    except Exception:
+        pass
+
+    # Try user JWT secret (for user-level tokens like superadmin)
+    try:
+        import jwt
+
+        payload = jwt.decode(
+            token, settings.user_jwt_secret, algorithms=["HS256"]
+        )
         return TokenValidationResponse(
             status="valid",
             sub=payload.get("sub"),
