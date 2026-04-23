@@ -17,6 +17,7 @@ services:
       - /app/__pycache__  # Exclude pycache from volume mount
     environment:
       - ENVIRONMENT=development
+      - MASTER_API_KEY=${MASTER_API_KEY}
     networks:
       - singalong-network
 
@@ -34,6 +35,7 @@ services:
     environment:
       - ENVIRONMENT=development
       - MASTER_URL=http://master:5001
+      - MASTER_API_KEY=${MASTER_API_KEY}
     networks:
       - singalong-network
     depends_on:
