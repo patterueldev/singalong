@@ -6,6 +6,13 @@ This document provides comprehensive guidance for AI agents and developers worki
 > - **[PROJECT_OVERVIEW.md](docs/PROJECT_OVERVIEW.md)**: Project vision, user stories, system architecture, and detailed workflows
 > - **[IMPLEMENTATION_PHASES.md](docs/IMPLEMENTATION_PHASES.md)**: 10 implementation phases with dependencies, deliverables, and acceptance criteria
 > - **[BACKEND_PHASES.md](docs/BACKEND_PHASES.md)**: Backend API development phases (B1-B8) with detailed endpoint specifications and database schemas
+> - **[API_CONTRACT_AUTHENTICATION.md](docs/API_CONTRACT_AUTHENTICATION.md)**: Authentication contract between services (Node ↔ Master), JWT tokens, API key exchange
+> 
+> **👷 Per-App Documentation**:
+> - **[singalong-master/AGENTS.md](apps/singalong-master/AGENTS.md)**: Backend service - data source, downloads, storage
+> - **[singalong-node/AGENTS.md](apps/singalong-node/AGENTS.md)**: Backend service - gateway, middleware, search
+> - **[singalong-admin/AGENTS.md](apps/singalong-admin/AGENTS.md)**: Frontend - admin dashboard and session management
+> - **[singalong-controller/AGENTS.md](apps/singalong-controller/AGENTS.md)**: Frontend - user-facing karaoke interface
 
 ---
 
@@ -784,6 +791,332 @@ poetry run pytest
 # Backend: handled by Docker
 # Frontend: yarn build
 ```
+
+---
+
+## 11. Code Architecture & Design Patterns
+
+### 11.1 SOLID Principles
+
+All code in Singalong must adhere to SOLID principles for maintainability, testability, and scalability:
+
+#### Single Responsibility Principle (SRP)
+- **Each class/function does one thing well**
+- Routes handle HTTP concerns only (request/response)
+- Services handle business logic only
+- Models represent data structures only
+- Example violation: A route that also calculates business logic
+- Example correct: Route calls Service, Service contains logic
+
+#### Open/Closed Principle (OCP)
+- **Code should be open for extension, closed for modification**
+- Use abstract base classes and interfaces for extensibility
+- Avoid modifying existing code when adding features
+- Example: Add new search provider by implementing SearchProvider interface, not by modifying SearchService
+
+#### Liskov Substitution Principle (LSP)
+- **Subtypes must be substitutable for their base types**
+- All implementations of an interface must be interchangeable
+- Don't override behavior in unexpected ways
+- Example: All authentication strategies should work identically from caller perspective
+
+#### Interface Segregation Principle (ISP)
+- **Clients should depend on specific interfaces, not broad ones**
+- Create fine-grained interfaces
+- Services should require only what they use
+- Example: Don't require entire User object; require only name and id fields
+
+#### Dependency Inversion Principle (DIP)
+- **Depend on abstractions, not concrete implementations**
+- Inject dependencies rather than creating them internally
+- Use interfaces/abstract classes as contracts
+- Example: Services depend on BaseRepository interface, not PostgresRepository directly
+
+### 11.2 MVC Architecture for REST APIs
+
+Singalong follows **Model-View-Controller** adapted for REST APIs:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                      HTTP Request                            │
+└────────────────────────┬──────────────────────────────────────┘
+                         │
+                         ▼
+        ┌────────────────────────────────┐
+        │ Controllers/Routes Layer        │ (HTTP Concerns)
+        │ ─────────────────────────────   │
+        │ • Parse request parameters      │
+        │ • Call services                 │
+        │ • Format response               │
+        │ • Handle HTTP status codes      │
+        └────────────────┬─────────────────┘
+                         │
+                         ▼
+        ┌────────────────────────────────┐
+        │ Services Layer                  │ (Business Logic)
+        │ ─────────────────────────────   │
+        │ • Core business rules           │
+        │ • Data transformation           │
+        │ • Orchestration logic           │
+        │ • Call repositories             │
+        └────────────────┬─────────────────┘
+                         │
+                         ▼
+        ┌────────────────────────────────┐
+        │ Models Layer                    │ (Data Structure)
+        │ ─────────────────────────────   │
+        │ • Pydantic schemas              │
+        │ • Type definitions              │
+        │ • Validation rules              │
+        └────────────────┬─────────────────┘
+                         │
+                         ▼
+        ┌────────────────────────────────┐
+        │ Repository/Data Access Layer    │ (Persistence)
+        │ ─────────────────────────────   │
+        │ • Database queries              │
+        │ • File I/O                      │
+        │ • External API calls            │
+        └────────────────┬─────────────────┘
+                         │
+                         ▼
+        ┌────────────────────────────────┐
+        │ Database / External Services    │
+        └────────────────────────────────┘
+```
+
+#### 11.2.1 Controllers/Routes
+
+**Responsibility**: Handle HTTP protocol concerns
+
+**Rules**:
+- Extract parameters from request (path, query, body)
+- Validate parameters are present (dependency injection validates types)
+- Call appropriate service method
+- Format response data
+- Return proper HTTP status codes
+- Never contain business logic
+- Never directly access database
+
+**Location**: `app/api/routes/*.py`
+
+**Example**:
+```python
+@router.post("/songs")
+async def create_song(
+    song_request: CreateSongRequest,  # Pydantic model validates
+    song_service: SongService = Depends(),  # Injected dependency
+) -> SongResponse:
+    """Create a new song (route layer)"""
+    song = await song_service.create_song(song_request)
+    return SongResponse.from_domain(song)
+```
+
+#### 11.2.2 Services
+
+**Responsibility**: Implement business logic
+
+**Rules**:
+- Contain all business rules and decisions
+- Transform data between models and domain objects
+- Orchestrate multiple repository calls
+- Handle application errors
+- Never access HTTP concerns (request, response, status codes)
+- Depend on repository interfaces, not implementations
+- Testable without HTTP layer
+
+**Location**: `app/services/*.py`
+
+**Example**:
+```python
+class SongService:
+    def __init__(self, song_repo: SongRepository, master_client: MasterClient):
+        self.song_repo = song_repo
+        self.master_client = master_client
+    
+    async def create_song(self, request: CreateSongRequest) -> Song:
+        """Create song (business logic)"""
+        # Validation
+        if len(request.title) < 3:
+            raise ValueError("Title too short")
+        
+        # Business logic: if new song, request from master
+        existing = await self.song_repo.find_by_title(request.title)
+        if existing:
+            return existing
+        
+        # Call master service
+        download_request = await self.master_client.request_download(
+            request.youtube_url
+        )
+        
+        # Persist
+        song = Song(
+            title=request.title,
+            download_status=download_request.status
+        )
+        return await self.song_repo.save(song)
+```
+
+#### 11.2.3 Models
+
+**Responsibility**: Define data structures and validation
+
+**Rules**:
+- Use Pydantic for request/response validation
+- Define domain objects (separate from Pydantic models)
+- Include validation rules
+- No logic beyond data representation
+- Immutable when possible (use `frozen=True`)
+
+**Location**: `app/models/*.py`
+
+**Example**:
+```python
+# Pydantic request model (from API)
+class CreateSongRequest(BaseModel):
+    title: str = Field(..., min_length=3, max_length=200)
+    artist: str
+    youtube_url: str
+    
+    model_config = ConfigDict(from_attributes=True)
+
+# Pydantic response model (to API)
+class SongResponse(BaseModel):
+    id: str
+    title: str
+    status: str
+    
+    @classmethod
+    def from_domain(cls, song: Song) -> "SongResponse":
+        return cls(id=song.id, title=song.title, status=song.status)
+
+# Domain model (internal representation)
+class Song:
+    def __init__(self, id: str, title: str, artist: str, status: str):
+        self.id = id
+        self.title = title
+        self.artist = artist
+        self.status = status
+```
+
+#### 11.2.4 Repositories
+
+**Responsibility**: Handle data persistence
+
+**Rules**:
+- Abstracted behind interfaces
+- No business logic (queries only)
+- Handle database-specific concerns
+- Support testing with mocks
+- Compose queries consistently
+
+**Location**: `app/repositories/*.py`
+
+**Example**:
+```python
+class SongRepository(BaseRepository[Song]):
+    async def find_by_title(self, title: str) -> Optional[Song]:
+        """Query by title"""
+        query = select(SongModel).where(SongModel.title == title)
+        result = await self.session.execute(query)
+        return result.scalars().first()
+    
+    async def save(self, song: Song) -> Song:
+        """Persist song"""
+        model = SongModel.from_domain(song)
+        self.session.add(model)
+        await self.session.commit()
+        return Song.from_model(model)
+```
+
+### 11.3 Dependency Injection
+
+All services use **constructor-based dependency injection** via FastAPI's `Depends()`:
+
+**Pattern**:
+```python
+# Define service with dependencies
+class SongService:
+    def __init__(self, repo: SongRepository, master_client: MasterClient):
+        self.repo = repo
+        self.master_client = master_client
+
+# Inject in route
+@router.get("/songs/{id}")
+async def get_song(
+    song_id: str,
+    service: SongService = Depends()
+) -> SongResponse:
+    song = await service.get_song(song_id)
+    return SongResponse.from_domain(song)
+```
+
+**Benefits**:
+- Easy to test (inject mocks)
+- Decoupled from implementations
+- Follows dependency inversion principle
+- FastAPI manages lifecycle
+
+### 11.4 Error Handling
+
+All errors follow a consistent pattern:
+
+**Hierarchy**:
+```
+Exception
+├── DomainException (base for business logic errors)
+│   ├── SongNotFound (404)
+│   ├── SongAlreadyExists (409)
+│   ├── InvalidYouTubeURL (400)
+│   └── ...
+├── DatabaseException (database errors)
+├── ExternalServiceException (master/3rd party failures)
+└── ... (others)
+```
+
+**Response Format**:
+```json
+{
+  "status": "error",
+  "code": "SONG_NOT_FOUND",
+  "message": "Song with id '123' does not exist",
+  "details": {
+    "song_id": "123"
+  }
+}
+```
+
+**Route Handler Pattern**:
+```python
+@router.get("/songs/{id}")
+async def get_song(song_id: str, service: SongService = Depends()):
+    try:
+        song = await service.get_song(song_id)
+        return SongResponse.from_domain(song)
+    except SongNotFound as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        logger.error(f"Unexpected error: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Internal server error")
+```
+
+### 11.5 Testing Strategy
+
+**Unit Tests** (Services, Models):
+- Test business logic in isolation
+- Mock repositories and external services
+- High coverage (>90%)
+
+**Integration Tests** (Routes + Services + Repositories):
+- Test full request/response cycle
+- Use test database
+- Verify data flow
+
+**E2E Tests** (Services + HTTP):
+- Test actual HTTP endpoints
+- Use docker-compose for dependencies
+- Focus on critical paths
 
 ---
 
