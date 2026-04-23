@@ -20,7 +20,7 @@ async def exchange_api_key(request: ExchangeTokenRequest) -> TokenResponse:
     Exchange API key for JWT tokens
 
     This endpoint is called by Node services to authenticate with Master.
-    The API key must match the MASTER_API_KEY in environment variables.
+    The API key must match one of the MASTER_API_KEY entries (comma-separated).
 
     Args:
         request: Request with api_key field
@@ -33,8 +33,9 @@ async def exchange_api_key(request: ExchangeTokenRequest) -> TokenResponse:
     """
     from app.main import settings
 
-    # Validate API key
-    if request.api_key != settings.master_api_key:
+    # Validate API key - check against any of the configured keys
+    valid_keys = [key.strip() for key in settings.master_api_key.split(",")]
+    if request.api_key not in valid_keys:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid API key",

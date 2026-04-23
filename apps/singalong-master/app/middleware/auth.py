@@ -18,7 +18,7 @@ def get_auth_service() -> AuthService:
     global _auth_service
     if _auth_service is None:
         _auth_service = AuthService(
-            api_key=settings.master_api_key,
+            api_keys=settings.master_api_key,
             algorithm=settings.jwt_algorithm,
             access_token_expire_seconds=settings.jwt_access_token_expire_seconds,
             refresh_token_expire_seconds=settings.jwt_refresh_token_expire_seconds,

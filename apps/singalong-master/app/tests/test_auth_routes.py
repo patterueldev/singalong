@@ -155,7 +155,7 @@ class TestAuthRoutes:
         from app.services.auth_service import AuthService
 
         auth_service = AuthService(
-            api_key=settings.master_api_key,
+            api_keys=settings.master_api_key,
             access_token_expire_seconds=0,
         )
         expired_token, _, _, _ = auth_service.exchange_api_key()

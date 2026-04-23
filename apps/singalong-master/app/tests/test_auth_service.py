@@ -13,7 +13,7 @@ from app.services.auth_service import AuthService
 def auth_service():
     """Auth service instance for testing"""
     return AuthService(
-        api_key=settings.master_api_key,
+        api_keys=settings.master_api_key,
         algorithm=settings.jwt_algorithm,
         access_token_expire_seconds=3600,
         refresh_token_expire_seconds=604800,
@@ -78,13 +78,13 @@ class TestAuthService:
         """Test validation of expired token"""
         # Create a token that expires immediately
         short_lived_service = AuthService(
-            api_key=settings.master_api_key,
+            api_keys=settings.master_api_key,
             access_token_expire_seconds=0,  # Expires immediately
         )
         expired_token, _, _, _ = short_lived_service.exchange_api_key()
 
-        # Wait a moment to ensure expiry
-        time.sleep(0.1)
+        # Wait to ensure expiry (must be > 1 second since JWT uses second precision)
+        time.sleep(1.01)
 
         # Validation should fail
         with pytest.raises(jwt.ExpiredSignatureError):
@@ -118,13 +118,13 @@ class TestAuthService:
         """Test refreshing with expired refresh token"""
         # Create a token that expires immediately
         short_lived_service = AuthService(
-            api_key=settings.master_api_key,
+            api_keys=settings.master_api_key,
             refresh_token_expire_seconds=0,
         )
         _, expired_refresh, _, _ = short_lived_service.exchange_api_key()
 
-        # Wait for expiry
-        time.sleep(0.1)
+        # Wait to ensure expiry (must be > 1 second since JWT uses second precision)
+        time.sleep(1.01)
 
         # Refresh should fail
         with pytest.raises(jwt.ExpiredSignatureError):
@@ -144,7 +144,7 @@ class TestAuthService:
 
         # Create token with different service
         other_service = AuthService(
-            api_key=settings.master_api_key,
+            api_keys=settings.master_api_key,
         )
         other_service.service_name = "different-service"
         token, _, _, _ = other_service.exchange_api_key()

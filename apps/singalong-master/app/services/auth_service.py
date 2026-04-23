@@ -13,7 +13,7 @@ class AuthService:
 
     def __init__(
         self,
-        api_key: str,
+        api_keys: str,
         algorithm: str = "HS256",
         access_token_expire_seconds: int = 3600,
         refresh_token_expire_seconds: int = 604800,
@@ -22,12 +22,15 @@ class AuthService:
         Initialize auth service
 
         Args:
-            api_key: API key used as JWT secret
+            api_keys: Comma-separated API keys (e.g., "key1,key2,key3")
             algorithm: JWT algorithm (HS256 default)
             access_token_expire_seconds: Access token TTL in seconds (default 1 hour)
             refresh_token_expire_seconds: Refresh token TTL in seconds (default 7 days)
         """
-        self.api_key = api_key
+        # Parse comma-separated keys and strip whitespace
+        self.api_keys = [key.strip() for key in api_keys.split(",")]
+        # Use the first key as the primary secret for JWT operations
+        self.api_key = self.api_keys[0]
         self.algorithm = algorithm
         self.access_token_expire_seconds = access_token_expire_seconds
         self.refresh_token_expire_seconds = refresh_token_expire_seconds
@@ -67,10 +70,22 @@ class AuthService:
             jwt.ExpiredSignatureError: If refresh token is expired
             jwt.InvalidTokenError: If refresh token is invalid
         """
-        # Validate refresh token
-        payload = jwt.decode(
-            refresh_token, self.api_key, algorithms=[self.algorithm]
-        )
+        # Validate refresh token with any of the valid API keys
+        payload = None
+        for api_key in self.api_keys:
+            try:
+                payload = jwt.decode(
+                    refresh_token, api_key, algorithms=[self.algorithm]
+                )
+                break
+            except jwt.ExpiredSignatureError:
+                # If token is expired, raise immediately (don't try other keys)
+                raise
+            except jwt.InvalidTokenError:
+                continue
+
+        if payload is None:
+            raise jwt.InvalidTokenError("Invalid token")
 
         # Check token type
         if payload.get("token_type") != "refresh":
@@ -109,7 +124,22 @@ class AuthService:
             jwt.ExpiredSignatureError: If token is expired
             jwt.InvalidTokenError: If token is invalid
         """
-        payload = jwt.decode(token, self.api_key, algorithms=[self.algorithm])
+        # Validate token with any of the valid API keys
+        payload = None
+        last_error = None
+        for api_key in self.api_keys:
+            try:
+                payload = jwt.decode(token, api_key, algorithms=[self.algorithm])
+                break
+            except jwt.ExpiredSignatureError as e:
+                # If token is expired, raise immediately (don't try other keys)
+                raise
+            except jwt.InvalidTokenError as e:
+                last_error = e
+                continue
+
+        if payload is None:
+            raise jwt.InvalidTokenError("Invalid token")
 
         # Check service name
         if payload.get("service_name") != self.service_name:
