@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useApi } from '../hooks/useApi';
 
 interface Song {
@@ -10,7 +10,6 @@ interface Song {
 
 export function SearchSongs() {
   const [query, setQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<Song[]>([]);
   const { data: results, loading, error, request } = useApi<Song[]>();
 
   const handleSearch = async (e: React.FormEvent) => {
@@ -19,12 +18,6 @@ export function SearchSongs() {
       await request('get', `/songs/search?q=${encodeURIComponent(query)}`);
     }
   };
-
-  useEffect(() => {
-    if (results) {
-      setSearchResults(results);
-    }
-  }, [results]);
 
   return (
     <div>
@@ -47,11 +40,11 @@ export function SearchSongs() {
 
       {error && <p style={{ color: 'red' }}>✗ Error searching songs.</p>}
 
-      {searchResults.length > 0 ? (
+      {results && results.length > 0 ? (
         <div>
-          <p>Found {searchResults.length} song(s)</p>
+          <p>Found {results.length} song(s)</p>
           <ul>
-            {searchResults.map((song) => (
+            {results.map((song) => (
               <li key={song.id}>
                 <strong>{song.title}</strong> by {song.artist}
                 {song.genre && <span> - {song.genre}</span>}
