@@ -8,9 +8,14 @@ export default defineConfig({
     port: 3001,
     strictPort: false,
     host: '0.0.0.0',
+    watch: {
+      usePolling: true,
+      interval: 100,
+    },
     hmr: {
       host: 'localhost',
       port: 3001,
+      protocol: 'ws',
     },
     allowedHosts: [
       'localhost',
@@ -19,5 +24,6 @@ export default defineConfig({
     ],
   },
 })
+
 
 

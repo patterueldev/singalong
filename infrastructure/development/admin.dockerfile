@@ -14,11 +14,13 @@ RUN if [ -f yarn.lock ]; then \
     npm ci; \
     fi
 
-# Copy application code
-COPY apps/singalong-admin ./
+# Don't copy app code here - let volume mount handle it
+# Volume mount will override this path during development
 
 # Expose port
 EXPOSE 3001
 
 # Run with hot-reload
-CMD ["yarn", "dev", "--host", "0.0.0.0"]
+# Vite watches for changes on the mounted volume
+CMD ["yarn", "dev", "--host", "0.0.0.0", "--strictPort", "false"]
+

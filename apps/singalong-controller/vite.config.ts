@@ -7,9 +7,14 @@ export default defineConfig({
   server: {
     port: 3002,
     host: '0.0.0.0',
+    watch: {
+      usePolling: true,
+      interval: 100,
+    },
     hmr: {
       host: 'localhost',
       port: 3002,
+      protocol: 'ws',
     },
     allowedHosts: [
       'localhost',
