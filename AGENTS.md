@@ -2,6 +2,10 @@
 
 This document provides comprehensive guidance for AI agents and developers working on the Singalong codebase. It covers the architecture, service details, communication patterns, and development practices.
 
+> **📚 Related Documentation**:
+> - **[PROJECT_OVERVIEW.md](docs/PROJECT_OVERVIEW.md)**: Project vision, user stories, system architecture, and detailed workflows
+> - **[IMPLEMENTATION_PHASES.md](docs/IMPLEMENTATION_PHASES.md)**: 10 implementation phases with dependencies, deliverables, and acceptance criteria
+
 ---
 
 ## 1. Codebase Structure Overview
