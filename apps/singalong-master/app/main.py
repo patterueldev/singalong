@@ -29,6 +29,9 @@ class Settings(BaseSettings):
     jwt_refresh_token_expire_seconds: int = int(
         os.getenv("JWT_REFRESH_TOKEN_EXPIRE_SECONDS", 604800)
     )
+    
+    # User JWT Secret (for user tokens, separate from API key)
+    user_jwt_secret: str = os.getenv("USER_JWT_SECRET", "dev-user-secret")
 
     class Config:
         env_file = ".env"
@@ -42,6 +45,8 @@ async def lifespan(app: FastAPI):
     """Manage application lifecycle"""
     # Startup
     print(f"Starting {settings.app_name} v{settings.app_version}")
+    from app.database import init_db
+    init_db()
     yield
     # Shutdown
     print(f"Shutting down {settings.app_name}")
@@ -56,10 +61,22 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
     )
 
+    # Add middleware
+    from app.middleware.graphql_auth import GraphQLAuthMiddleware
+
+    app.add_middleware(GraphQLAuthMiddleware)
+
     # Register routes
     from app.api.routes import router as auth_router
 
     app.include_router(auth_router)
+
+    # GraphQL endpoint
+    from app.graphql.schema import schema
+    from ariadne.asgi import GraphQL
+
+    graphql_app = GraphQL(schema)
+    app.mount("/graphql", graphql_app)
 
     @app.get("/health", tags=["health"])
     async def health_check():
