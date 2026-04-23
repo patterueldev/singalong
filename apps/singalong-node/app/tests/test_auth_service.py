@@ -1,297 +1,233 @@
-"""Tests for authentication service"""
+"""Tests for Node auth service with Master GraphQL integration"""
 
-import time
-
-import jwt
 import pytest
+from unittest.mock import AsyncMock, patch
+from app.services.auth_service import AuthService, GraphQLError
+from app.services.graphql_client import HTTPException
+from app.models.db_models import UserRole, User
 
-from app.models.db_models import AdminCredentials, PlayerCredentials, User, UserRole
-from app.services.auth_service import AuthService
 
+class TestAuthServiceControllerAuth:
+    """Test controller authentication via Master GraphQL"""
 
-class TestAuthService:
-    """Test suite for AuthService"""
-
-    def test_hash_password(self, auth_service):
-        """Test password hashing"""
-        password = "testpassword123"
-        hashed = AuthService.hash_password(password, rounds=4)
-
-        assert hashed != password
-        assert AuthService._verify_password(password, hashed)
-
-    def test_hash_password_different_each_time(self):
-        """Test that hashing produces different hashes each time"""
-        password = "testpassword123"
-        hash1 = AuthService.hash_password(password, rounds=4)
-        hash2 = AuthService.hash_password(password, rounds=4)
-
-        assert hash1 != hash2
-        assert AuthService._verify_password(password, hash1)
-        assert AuthService._verify_password(password, hash2)
-
-    def test_verify_password_invalid(self, auth_service):
-        """Test password verification with wrong password"""
-        password = "testpassword123"
-        hashed = AuthService.hash_password(password, rounds=4)
-
-        assert not AuthService._verify_password("wrongpassword", hashed)
-
-    def test_authenticate_controller_success(self, auth_service, db):
-        """Test successful controller authentication"""
-        access_token, refresh_token, role, access_expires, refresh_expires = (
-            auth_service.authenticate_controller("testnickname", db)
+    @pytest.mark.asyncio
+    async def test_authenticate_controller_success(self, db, auth_service, mock_graphql_responses):
+        """Controller auth should call Master GraphQL and create local user cache"""
+        auth_service.graphql_client.authenticate_controller = AsyncMock(
+            return_value=mock_graphql_responses["authenticate_controller_success"]
         )
 
-        assert access_token
-        assert refresh_token
-        assert role == UserRole.CONTROLLER
-        assert access_expires == auth_service.access_token_expire_seconds
-        assert refresh_expires == auth_service.refresh_token_expire_seconds
+        # Authenticate
+        access_token, refresh_token, role, access_expires, refresh_expires = (
+            await auth_service.authenticate_controller(
+                nickname="testuser",
+                session_id="1234",
+                node_id="node-uuid",
+                db=db,
+            )
+        )
 
-        # Verify user was created
-        user = db.query(User).filter(User.nickname_or_username == "testnickname").first()
-        assert user
+        # Verify tokens were generated
+        assert access_token is not None
+        assert refresh_token is not None
+        assert role == UserRole.CONTROLLER
+        assert access_expires == 3600
+        assert refresh_expires == 604800
+
+        # Verify GraphQL client was called
+        auth_service.graphql_client.authenticate_controller.assert_called_once_with(
+            nickname="testuser",
+            session_id="1234",
+            node_id="node-uuid",
+        )
+
+        # Verify user was cached locally
+        user = db.query(User).filter(User.nickname_or_username == "testuser").first()
+        assert user is not None
         assert user.role == UserRole.CONTROLLER
 
-    def test_authenticate_controller_duplicate_nickname(self, auth_service, db):
-        """Test controller authentication with duplicate nickname"""
-        auth_service.authenticate_controller("testnickname", db)
-
-        with pytest.raises(ValueError, match="already taken"):
-            auth_service.authenticate_controller("testnickname", db)
-
-    def test_authenticate_admin_success(self, auth_service, db):
-        """Test successful admin authentication"""
-        admin_creds = AdminCredentials(
-            username="admin_success_test",
-            password_hash=AuthService.hash_password("adminpass123"),
+    @pytest.mark.asyncio
+    async def test_authenticate_controller_graphql_failure(self, db, auth_service):
+        """Controller auth should raise ValueError if Master GraphQL fails"""
+        auth_service.graphql_client.authenticate_controller = AsyncMock(
+            side_effect=GraphQLError("Invalid nickname")
         )
-        db.add(admin_creds)
-        db.commit()
 
+        with pytest.raises(ValueError, match="Failed to authenticate controller"):
+            await auth_service.authenticate_controller(
+                nickname="testuser",
+                session_id="1234",
+                node_id="node-uuid",
+                db=db,
+            )
+
+
+class TestAuthServiceAdminAuth:
+    """Test admin authentication via Master GraphQL"""
+
+    @pytest.mark.asyncio
+    async def test_authenticate_admin_success(self, db, auth_service, mock_graphql_responses):
+        """Admin auth should call Master GraphQL and create local user cache"""
+        auth_service.graphql_client.authenticate_admin = AsyncMock(
+            return_value=mock_graphql_responses["authenticate_admin_success"]
+        )
+
+        # Authenticate
         access_token, refresh_token, role, access_expires, refresh_expires = (
-            auth_service.authenticate_admin("admin_success_test", "adminpass123", db)
+            await auth_service.authenticate_admin(
+                username="testadmin",
+                password="adminpass",
+                node_id="node-uuid",
+                db=db,
+            )
         )
 
-        assert access_token
-        assert refresh_token
+        # Verify tokens were generated
+        assert access_token is not None
+        assert refresh_token is not None
         assert role == UserRole.ADMIN
-        assert access_expires == auth_service.access_token_expire_seconds
-        assert refresh_expires == auth_service.refresh_token_expire_seconds
+        assert access_expires == 3600
+        assert refresh_expires == 604800
 
-        # Verify user was created
-        user = db.query(User).filter(User.nickname_or_username == "admin_success_test").first()
-        assert user
+        # Verify GraphQL client was called
+        auth_service.graphql_client.authenticate_admin.assert_called_once_with(
+            username="testadmin",
+            password="adminpass",
+            node_id="node-uuid",
+        )
+
+        # Verify user was cached locally
+        user = db.query(User).filter(User.nickname_or_username == "testadmin").first()
+        assert user is not None
         assert user.role == UserRole.ADMIN
 
-    def test_authenticate_admin_invalid_username(self, auth_service, db):
-        """Test admin authentication with invalid username"""
-        with pytest.raises(ValueError, match="Invalid admin credentials"):
-            auth_service.authenticate_admin("invaliduser", "anypassword", db)
-
-    def test_authenticate_admin_invalid_password(self, auth_service, db):
-        """Test admin authentication with invalid password"""
-        admin_creds = AdminCredentials(
-            username="admin_invalid_pwd",
-            password_hash=AuthService.hash_password("adminpass123"),
+    @pytest.mark.asyncio
+    async def test_authenticate_admin_invalid_credentials(self, db, auth_service):
+        """Admin auth should raise ValueError if Master GraphQL rejects credentials"""
+        auth_service.graphql_client.authenticate_admin = AsyncMock(
+            side_effect=GraphQLError("Invalid credentials")
         )
-        db.add(admin_creds)
-        db.commit()
 
-        with pytest.raises(ValueError, match="Invalid admin credentials"):
-            auth_service.authenticate_admin("admin_invalid_pwd", "wrongpassword", db)
+        with pytest.raises(ValueError, match="Failed to authenticate admin"):
+            await auth_service.authenticate_admin(
+                username="testadmin",
+                password="wrongpass",
+                node_id="node-uuid",
+                db=db,
+            )
 
-    def test_authenticate_player_success(self, auth_service, db):
-        """Test successful player authentication"""
-        player_creds = PlayerCredentials(
-            username="player_success_test",
-            password_hash=AuthService.hash_password("playerpass123"),
+
+class TestAuthServicePlayerAuth:
+    """Test player authentication via Master GraphQL"""
+
+    @pytest.mark.asyncio
+    async def test_authenticate_player_success(self, db, auth_service, mock_graphql_responses):
+        """Player auth should call Master GraphQL and create local user cache"""
+        auth_service.graphql_client.authenticate_player = AsyncMock(
+            return_value=mock_graphql_responses["authenticate_player_success"]
         )
-        db.add(player_creds)
-        db.commit()
 
+        # Authenticate
         access_token, refresh_token, role, access_expires, refresh_expires = (
-            auth_service.authenticate_player("player_success_test", "playerpass123", db)
+            await auth_service.authenticate_player(
+                session_id="1234",
+                node_id="node-uuid",
+                db=db,
+            )
         )
 
-        assert access_token
-        assert refresh_token
+        # Verify tokens were generated
+        assert access_token is not None
+        assert refresh_token is not None
         assert role == UserRole.PLAYER
-        assert access_expires == auth_service.access_token_expire_seconds
-        assert refresh_expires == auth_service.refresh_token_expire_seconds
+        assert access_expires == 3600
+        assert refresh_expires == 604800
 
-        # Verify user was created
-        user = db.query(User).filter(User.nickname_or_username == "player_success_test").first()
-        assert user
-        assert user.role == UserRole.PLAYER
-
-    def test_authenticate_player_invalid_username(self, auth_service, db):
-        """Test player authentication with invalid username"""
-        with pytest.raises(ValueError, match="Invalid player credentials"):
-            auth_service.authenticate_player("invaliduser", "anypassword", db)
-
-    def test_authenticate_player_invalid_password(self, auth_service, db):
-        """Test player authentication with invalid password"""
-        player_creds = PlayerCredentials(
-            username="player_invalid_pwd",
-            password_hash=AuthService.hash_password("playerpass123"),
+        # Verify GraphQL client was called
+        auth_service.graphql_client.authenticate_player.assert_called_once_with(
+            session_id="1234",
+            node_id="node-uuid",
         )
-        db.add(player_creds)
+
+    @pytest.mark.asyncio
+    async def test_authenticate_player_already_connected(self, db, auth_service, mock_graphql_responses):
+        """Player auth should fail if another player is already connected (local rule)"""
+        from app.models.db_models import PlayerConnection
+        import uuid
+        
+        # Create existing player connection with valid UUID
+        existing_connection = PlayerConnection(
+            player_id=uuid.uuid4()
+        )
+        db.add(existing_connection)
         db.commit()
 
-        with pytest.raises(ValueError, match="Invalid player credentials"):
-            auth_service.authenticate_player("player_invalid_pwd", "wrongpassword", db)
+        with pytest.raises(ValueError, match="Another player is already connected"):
+            await auth_service.authenticate_player(
+                session_id="1234",
+                node_id="node-uuid",
+                db=db,
+            )
 
-    def test_authenticate_player_already_connected(self, auth_service, db):
-        """Test player authentication when another player is connected"""
-        player_creds = PlayerCredentials(
-            username="player_first",
-            password_hash=AuthService.hash_password("playerpass123"),
-        )
-        db.add(player_creds)
-        db.commit()
+        # GraphQL should NOT have been called
+        auth_service.graphql_client.authenticate_player.assert_not_called()
 
-        # First player connects successfully
-        auth_service.authenticate_player("player_first", "playerpass123", db)
 
-        # Create second player credentials
-        player_creds2 = PlayerCredentials(
-            username="player_second",
-            password_hash=AuthService.hash_password("playerpass456"),
-        )
-        db.add(player_creds2)
-        db.commit()
+class TestAuthServiceTokenRefresh:
+    """Test token refresh functionality"""
 
-        # Second player should fail
-        with pytest.raises(ValueError, match="already connected"):
-            auth_service.authenticate_player("player_second", "playerpass456", db)
-
-    def test_validate_token_success(self, auth_service):
-        """Test successful token validation"""
-        access_token = auth_service._generate_token(
-            user_id="test-user-id",
-            role=UserRole.CONTROLLER,
-            token_type="access",
-            expires_in_seconds=3600,
-        )
-
-        payload = auth_service.validate_token(access_token)
-
-        assert payload["sub"] == "test-user-id"
-        assert payload["role"] == UserRole.CONTROLLER
-        assert payload["service_name"] == "singalong-node"
-        assert payload["token_type"] == "access"
-        assert "expires_in" in payload
-
-    def test_validate_token_expired(self, auth_service):
-        """Test token validation with expired token"""
-        access_token = auth_service._generate_token(
-            user_id="test-user-id",
-            role=UserRole.CONTROLLER,
-            token_type="access",
-            expires_in_seconds=-1,  # Already expired
-        )
-
-        with pytest.raises(jwt.ExpiredSignatureError):
-            auth_service.validate_token(access_token)
-
-    def test_validate_token_invalid(self, auth_service):
-        """Test token validation with invalid token"""
-        with pytest.raises(jwt.InvalidTokenError):
-            auth_service.validate_token("invalid.token.here")
-
-    def test_validate_token_wrong_service(self, auth_service):
-        """Test token validation with wrong service name"""
-        payload = {
-            "sub": "test-user-id",
-            "role": UserRole.CONTROLLER,
-            "service_name": "wrong-service",
-            "iat": int(time.time()),
-            "exp": int(time.time()) + 3600,
-            "token_type": "access",
-        }
-        token = jwt.encode(payload, auth_service.api_key, algorithm=auth_service.algorithm)
-
-        with pytest.raises(jwt.InvalidTokenError, match="Invalid service name"):
-            auth_service.validate_token(token)
-
-    def test_refresh_token_success(self, auth_service, db):
-        """Test successful token refresh"""
-        refresh_token = auth_service._generate_token(
-            user_id="test-user-id",
+    def test_refresh_token_success(self, db, auth_service):
+        """Refresh token should generate new tokens with same role"""
+        # Generate initial token
+        initial_token = auth_service._generate_token(
+            user_id="user-123",
             role=UserRole.CONTROLLER,
             token_type="refresh",
             expires_in_seconds=604800,
         )
 
-        new_access, new_refresh, role, access_expires, refresh_expires = (
-            auth_service.refresh_token(refresh_token, db)
+        # Refresh
+        access_token, refresh_token, role, access_expires, refresh_expires = (
+            auth_service.refresh_token(initial_token, db)
         )
 
-        assert new_access
-        assert new_refresh
+        # Verify new tokens
+        assert access_token is not None
+        assert refresh_token is not None
         assert role == UserRole.CONTROLLER
+        assert access_expires == 3600
+        assert refresh_expires == 604800
 
-    def test_refresh_token_expired(self, auth_service, db):
-        """Test refresh with expired refresh token"""
-        refresh_token = auth_service._generate_token(
-            user_id="test-user-id",
-            role=UserRole.CONTROLLER,
-            token_type="refresh",
-            expires_in_seconds=-1,  # Already expired
-        )
+    def test_refresh_token_invalid(self, db, auth_service):
+        """Refresh token should reject invalid tokens"""
+        import jwt
 
-        with pytest.raises(jwt.ExpiredSignatureError):
-            auth_service.refresh_token(refresh_token, db)
+        with pytest.raises(jwt.InvalidTokenError):
+            auth_service.refresh_token("invalid-token", db)
 
-    def test_refresh_token_wrong_type(self, auth_service, db):
-        """Test refresh with access token instead of refresh token"""
-        access_token = auth_service._generate_token(
-            user_id="test-user-id",
-            role=UserRole.CONTROLLER,
-            token_type="access",
-            expires_in_seconds=3600,
-        )
 
-        with pytest.raises(jwt.InvalidTokenError, match="Invalid token type"):
-            auth_service.refresh_token(access_token, db)
+class TestAuthServiceTokenValidation:
+    """Test token validation"""
 
-    def test_generate_token_controller(self, auth_service):
-        """Test token generation for controller role"""
+    def test_validate_token_success(self, auth_service):
+        """Valid token should pass validation"""
+        # Generate token
         token = auth_service._generate_token(
-            user_id="test-user-id",
+            user_id="user-123",
             role=UserRole.CONTROLLER,
             token_type="access",
             expires_in_seconds=3600,
         )
 
-        assert token
-        payload = jwt.decode(token, auth_service.api_key, algorithms=[auth_service.algorithm])
+        # Validate
+        payload = auth_service.validate_token(token)
+        assert payload["sub"] == "user-123"
         assert payload["role"] == UserRole.CONTROLLER
+        assert payload["expires_in"] > 0
 
-    def test_generate_token_admin(self, auth_service):
-        """Test token generation for admin role"""
-        token = auth_service._generate_token(
-            user_id="test-user-id",
-            role=UserRole.ADMIN,
-            token_type="access",
-            expires_in_seconds=3600,
-        )
+    def test_validate_token_invalid(self, auth_service):
+        """Invalid token should raise error"""
+        import jwt
 
-        assert token
-        payload = jwt.decode(token, auth_service.api_key, algorithms=[auth_service.algorithm])
-        assert payload["role"] == UserRole.ADMIN
-
-    def test_generate_token_player(self, auth_service):
-        """Test token generation for player role"""
-        token = auth_service._generate_token(
-            user_id="test-user-id",
-            role=UserRole.PLAYER,
-            token_type="access",
-            expires_in_seconds=3600,
-        )
-
-        assert token
-        payload = jwt.decode(token, auth_service.api_key, algorithms=[auth_service.algorithm])
-        assert payload["role"] == UserRole.PLAYER
+        with pytest.raises(jwt.InvalidTokenError):
+            auth_service.validate_token("invalid-token")

@@ -4,15 +4,12 @@ import pytest
 import tempfile
 import os
 from pathlib import Path
+from unittest.mock import AsyncMock, patch
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 # Import models BEFORE creating engine
-from app.models.db_models import (
-    AdminCredentials,
-    PlayerCredentials,
-)
 from app.database import Base, get_db
 from app.main import app
 from app.services.auth_service import AuthService
@@ -68,19 +65,6 @@ def db(test_db_path):
 
     db = TestingSessionLocal()
 
-    # Create test admin and player credentials
-    admin_creds = AdminCredentials(
-        username="testadmin",
-        password_hash=AuthService.hash_password("adminpass123"),
-    )
-    player_creds = PlayerCredentials(
-        username="testplayer",
-        password_hash=AuthService.hash_password("playerpass123"),
-    )
-    db.add(admin_creds)
-    db.add(player_creds)
-    db.commit()
-
     yield db
 
     db.close()
@@ -100,17 +84,62 @@ def client(db):
 
 @pytest.fixture
 def auth_service():
-    """Auth service with test configuration"""
-    return AuthService(
-        api_key="test-secret-key",
-        algorithm="HS256",
-        access_token_expire_seconds=3600,
-        refresh_token_expire_seconds=604800,
-    )
+    """Auth service with test configuration and mocked GraphQL client"""
+    with patch("app.services.auth_service.MasterGraphQLClient") as mock_client_class:
+        mock_graphql_client = AsyncMock()
+        mock_client_class.return_value = mock_graphql_client
+        
+        service = AuthService(
+            api_key="test-secret-key",
+            algorithm="HS256",
+            access_token_expire_seconds=3600,
+            refresh_token_expire_seconds=604800,
+        )
+        service.graphql_client = mock_graphql_client
+        return service
 
 
-
-
+@pytest.fixture
+def mock_graphql_responses():
+    """Mock GraphQL responses for different auth scenarios"""
+    return {
+        "authenticate_controller_success": {
+            "authenticateController": {
+                "token": "mock-user-token",
+                "refreshToken": "mock-refresh-token",
+                "user": {
+                    "id": "550e8400-e29b-41d4-a716-446655440000",
+                    "username": None,
+                    "role": "controller",
+                    "nickname": "testuser"
+                }
+            }
+        },
+        "authenticate_admin_success": {
+            "authenticateAdmin": {
+                "token": "mock-admin-token",
+                "refreshToken": "mock-refresh-token",
+                "user": {
+                    "id": "550e8400-e29b-41d4-a716-446655440001",
+                    "username": "testadmin",
+                    "role": "admin",
+                    "nickname": None
+                }
+            }
+        },
+        "authenticate_player_success": {
+            "authenticatePlayer": {
+                "token": "mock-player-token",
+                "refreshToken": "mock-refresh-token",
+                "user": {
+                    "id": "550e8400-e29b-41d4-a716-446655440002",
+                    "username": None,
+                    "role": "player",
+                    "nickname": None
+                }
+            }
+        }
+    }
 
 
 

@@ -79,10 +79,16 @@ class AuthService:
                 raise ValueError("Failed to authenticate controller: invalid response")
 
             # Create or update local user cache
-            user = db.query(User).filter(User.id == user_id).first()
+            import uuid as uuid_module
+            try:
+                user_uuid = uuid_module.UUID(user_id)
+            except (ValueError, TypeError):
+                user_uuid = uuid_module.uuid4()
+            
+            user = db.query(User).filter(User.id == user_uuid).first()
             if not user:
                 user = User(
-                    id=user_id,
+                    id=user_uuid,
                     nickname_or_username=nickname,
                     role=UserRole.CONTROLLER,
                 )
@@ -92,7 +98,7 @@ class AuthService:
 
             # Generate Node-specific JWT tokens
             access_token = self._generate_token(
-                user_id=user_id,
+                user_id=str(user_uuid),
                 role=UserRole.CONTROLLER,
                 token_type="access",
                 expires_in_seconds=self.access_token_expire_seconds,
@@ -151,10 +157,16 @@ class AuthService:
                 raise ValueError("Failed to authenticate admin: invalid response")
 
             # Create or update local user cache
-            user = db.query(User).filter(User.id == user_id).first()
+            import uuid as uuid_module
+            try:
+                user_uuid = uuid_module.UUID(user_id)
+            except (ValueError, TypeError):
+                user_uuid = uuid_module.uuid4()
+
+            user = db.query(User).filter(User.id == user_uuid).first()
             if not user:
                 user = User(
-                    id=user_id,
+                    id=user_uuid,
                     nickname_or_username=username,
                     role=UserRole.ADMIN,
                 )
@@ -164,7 +176,7 @@ class AuthService:
 
             # Generate Node-specific JWT tokens
             access_token = self._generate_token(
-                user_id=user_id,
+                user_id=str(user_uuid),
                 role=UserRole.ADMIN,
                 token_type="access",
                 expires_in_seconds=self.access_token_expire_seconds,
@@ -226,11 +238,17 @@ class AuthService:
                 raise ValueError("Failed to authenticate player: invalid response")
 
             # Create or update local user cache
-            user = db.query(User).filter(User.id == user_id).first()
+            import uuid as uuid_module
+            try:
+                user_uuid = uuid_module.UUID(user_id)
+            except (ValueError, TypeError):
+                user_uuid = uuid_module.uuid4()
+
+            user = db.query(User).filter(User.id == user_uuid).first()
             if not user:
                 user = User(
-                    id=user_id,
-                    nickname_or_username=f"player-{user_id[:8]}",
+                    id=user_uuid,
+                    nickname_or_username=f"player-{str(user_uuid)[:8]}",
                     role=UserRole.PLAYER,
                 )
                 db.add(user)
@@ -238,13 +256,13 @@ class AuthService:
                 db.refresh(user)
 
             # Create player connection
-            connection = PlayerConnection(player_id=user_id)
+            connection = PlayerConnection(player_id=user_uuid)
             db.add(connection)
             db.commit()
 
             # Generate Node-specific JWT tokens
             access_token = self._generate_token(
-                user_id=user_id,
+                user_id=str(user_uuid),
                 role=UserRole.PLAYER,
                 token_type="access",
                 expires_in_seconds=self.access_token_expire_seconds,
