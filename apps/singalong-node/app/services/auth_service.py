@@ -1,17 +1,21 @@
 """Authentication service - JWT token generation and validation"""
 
+import logging
 import time
 from datetime import datetime, timedelta, timezone
 
-import bcrypt
 import jwt
 from sqlalchemy.orm import Session
 
-from app.models.db_models import AdminCredentials, PlayerConnection, PlayerCredentials, User, UserRole
+from app.config import settings
+from app.models.db_models import PlayerConnection, User, UserRole
+from app.services.graphql_client import MasterGraphQLClient, GraphQLError, HTTPException
+
+logger = logging.getLogger(__name__)
 
 
 class AuthService:
-    """Handles JWT token generation, validation, and role-based authentication"""
+    """Handles JWT token generation and validates users via Master GraphQL"""
 
     def __init__(
         self,
@@ -19,218 +23,250 @@ class AuthService:
         algorithm: str = "HS256",
         access_token_expire_seconds: int = 10800,
         refresh_token_expire_seconds: int = 604800,
-        bcrypt_rounds: int = 12,
     ):
         """
         Initialize auth service
 
         Args:
-            api_key: Secret key for JWT signing
+            api_key: Secret key for JWT signing (Node-specific)
             algorithm: JWT algorithm (HS256 default)
             access_token_expire_seconds: Access token TTL in seconds (default 3 hours)
             refresh_token_expire_seconds: Refresh token TTL in seconds (default 7 days)
-            bcrypt_rounds: Number of bcrypt hashing rounds (default 12)
         """
         self.api_key = api_key
         self.algorithm = algorithm
         self.access_token_expire_seconds = access_token_expire_seconds
         self.refresh_token_expire_seconds = refresh_token_expire_seconds
-        self.bcrypt_rounds = bcrypt_rounds
         self.service_name = "singalong-node"
+        self.graphql_client = MasterGraphQLClient(
+            graphql_url=settings.master_graphql_url,
+            api_key=settings.master_api_key,
+            timeout=settings.master_timeout,
+        )
 
-    def authenticate_controller(self, nickname: str, db: Session) -> tuple[str, str, str, int, int]:
+    async def authenticate_controller(
+        self, nickname: str, session_id: str, node_id: str, db: Session
+    ) -> tuple[str, str, str, int, int]:
         """
-        Authenticate a controller (attendee) user
+        Authenticate a controller (attendee) user via Master GraphQL
 
         Args:
-            nickname: Unique nickname for the session
+            nickname: Controller nickname
+            session_id: 4-digit session ID
+            node_id: Node UUID
             db: Database session
 
         Returns:
             Tuple of (access_token, refresh_token, role, access_expires_in, refresh_expires_in)
 
         Raises:
-            ValueError: If nickname is already taken
+            ValueError: If Master GraphQL authentication fails
         """
-        # Check if nickname already exists
-        existing_user = db.query(User).filter(
-            User.nickname_or_username == nickname,
-            User.role == UserRole.CONTROLLER,
-        ).first()
+        try:
+            # Call Master GraphQL to authenticate controller
+            response = await self.graphql_client.authenticate_controller(
+                nickname=nickname,
+                session_id=session_id,
+                node_id=node_id,
+            )
 
-        if existing_user:
-            raise ValueError(f"Nickname '{nickname}' is already taken")
+            # Extract user info from GraphQL response
+            mutation_data = response.get("authenticateController", {})
+            user_data = mutation_data.get("user", {})
+            user_id = user_data.get("id")
 
-        # Create new user
-        user = User(
-            nickname_or_username=nickname,
-            role=UserRole.CONTROLLER,
-        )
-        db.add(user)
-        db.commit()
-        db.refresh(user)
+            if not user_id:
+                raise ValueError("Failed to authenticate controller: invalid response")
 
-        # Generate tokens
-        access_token = self._generate_token(
-            user_id=str(user.id),
-            role=UserRole.CONTROLLER,
-            token_type="access",
-            expires_in_seconds=self.access_token_expire_seconds,
-        )
-        refresh_token = self._generate_token(
-            user_id=str(user.id),
-            role=UserRole.CONTROLLER,
-            token_type="refresh",
-            expires_in_seconds=self.refresh_token_expire_seconds,
-        )
+            # Create or update local user cache
+            user = db.query(User).filter(User.id == user_id).first()
+            if not user:
+                user = User(
+                    id=user_id,
+                    nickname_or_username=nickname,
+                    role=UserRole.CONTROLLER,
+                )
+                db.add(user)
+                db.commit()
+                db.refresh(user)
 
-        return (
-            access_token,
-            refresh_token,
-            UserRole.CONTROLLER,
-            self.access_token_expire_seconds,
-            self.refresh_token_expire_seconds,
-        )
+            # Generate Node-specific JWT tokens
+            access_token = self._generate_token(
+                user_id=user_id,
+                role=UserRole.CONTROLLER,
+                token_type="access",
+                expires_in_seconds=self.access_token_expire_seconds,
+            )
+            refresh_token = self._generate_token(
+                user_id=user_id,
+                role=UserRole.CONTROLLER,
+                token_type="refresh",
+                expires_in_seconds=self.refresh_token_expire_seconds,
+            )
 
-    def authenticate_admin(self, username: str, password: str, db: Session) -> tuple[str, str, str, int, int]:
+            return (
+                access_token,
+                refresh_token,
+                UserRole.CONTROLLER,
+                self.access_token_expire_seconds,
+                self.refresh_token_expire_seconds,
+            )
+
+        except (GraphQLError, HTTPException) as e:
+            logger.error(f"Master GraphQL error: {str(e)}")
+            raise ValueError(f"Failed to authenticate controller: {str(e)}")
+
+    async def authenticate_admin(
+        self, username: str, password: str, node_id: str, db: Session
+    ) -> tuple[str, str, str, int, int]:
         """
-        Authenticate an admin user
+        Authenticate an admin user via Master GraphQL
 
         Args:
             username: Admin username
-            password: Admin password (plaintext)
+            password: Admin password
+            node_id: Node UUID
             db: Database session
 
         Returns:
             Tuple of (access_token, refresh_token, role, access_expires_in, refresh_expires_in)
 
         Raises:
-            ValueError: If credentials are invalid
+            ValueError: If Master GraphQL authentication fails
         """
-        # Check if admin credentials exist
-        admin_creds = db.query(AdminCredentials).filter(
-            AdminCredentials.username == username
-        ).first()
-
-        if not admin_creds:
-            raise ValueError("Invalid admin credentials")
-
-        # Verify password
-        if not self._verify_password(password, admin_creds.password_hash):
-            raise ValueError("Invalid admin credentials")
-
-        # Check if user exists
-        user = db.query(User).filter(
-            User.nickname_or_username == username,
-            User.role == UserRole.ADMIN,
-        ).first()
-
-        # Create user if doesn't exist
-        if not user:
-            user = User(
-                nickname_or_username=username,
-                role=UserRole.ADMIN,
+        try:
+            # Call Master GraphQL to authenticate admin
+            response = await self.graphql_client.authenticate_admin(
+                username=username,
+                password=password,
+                node_id=node_id,
             )
-            db.add(user)
-            db.commit()
-            db.refresh(user)
 
-        # Generate tokens
-        access_token = self._generate_token(
-            user_id=str(user.id),
-            role=UserRole.ADMIN,
-            token_type="access",
-            expires_in_seconds=self.access_token_expire_seconds,
-        )
-        refresh_token = self._generate_token(
-            user_id=str(user.id),
-            role=UserRole.ADMIN,
-            token_type="refresh",
-            expires_in_seconds=self.refresh_token_expire_seconds,
-        )
+            # Extract user info from GraphQL response
+            mutation_data = response.get("authenticateAdmin", {})
+            user_data = mutation_data.get("user", {})
+            user_id = user_data.get("id")
 
-        return (
-            access_token,
-            refresh_token,
-            UserRole.ADMIN,
-            self.access_token_expire_seconds,
-            self.refresh_token_expire_seconds,
-        )
+            if not user_id:
+                raise ValueError("Failed to authenticate admin: invalid response")
 
-    def authenticate_player(self, username: str, password: str, db: Session) -> tuple[str, str, str, int, int]:
+            # Create or update local user cache
+            user = db.query(User).filter(User.id == user_id).first()
+            if not user:
+                user = User(
+                    id=user_id,
+                    nickname_or_username=username,
+                    role=UserRole.ADMIN,
+                )
+                db.add(user)
+                db.commit()
+                db.refresh(user)
+
+            # Generate Node-specific JWT tokens
+            access_token = self._generate_token(
+                user_id=user_id,
+                role=UserRole.ADMIN,
+                token_type="access",
+                expires_in_seconds=self.access_token_expire_seconds,
+            )
+            refresh_token = self._generate_token(
+                user_id=user_id,
+                role=UserRole.ADMIN,
+                token_type="refresh",
+                expires_in_seconds=self.refresh_token_expire_seconds,
+            )
+
+            return (
+                access_token,
+                refresh_token,
+                UserRole.ADMIN,
+                self.access_token_expire_seconds,
+                self.refresh_token_expire_seconds,
+            )
+
+        except (GraphQLError, HTTPException) as e:
+            logger.error(f"Master GraphQL error: {str(e)}")
+            raise ValueError(f"Failed to authenticate admin: {str(e)}")
+
+    async def authenticate_player(
+        self, session_id: str, node_id: str, db: Session
+    ) -> tuple[str, str, str, int, int]:
         """
-        Authenticate a player (playback device)
+        Authenticate a player user via Master GraphQL
 
         Args:
-            username: Player username
-            password: Player password (plaintext)
+            session_id: 4-digit session ID
+            node_id: Node UUID
             db: Database session
 
         Returns:
             Tuple of (access_token, refresh_token, role, access_expires_in, refresh_expires_in)
 
         Raises:
-            ValueError: If credentials are invalid or another player is already connected
+            ValueError: If Master GraphQL authentication fails or another player is connected
         """
-        # Check if player credentials exist
-        player_creds = db.query(PlayerCredentials).filter(
-            PlayerCredentials.username == username
-        ).first()
+        try:
+            # Check if another player is already connected (local Node rule)
+            existing_connection = db.query(PlayerConnection).first()
+            if existing_connection:
+                raise ValueError("Another player is already connected")
 
-        if not player_creds:
-            raise ValueError("Invalid player credentials")
-
-        # Verify password
-        if not self._verify_password(password, player_creds.password_hash):
-            raise ValueError("Invalid player credentials")
-
-        # Check if another player is already connected
-        existing_connection = db.query(PlayerConnection).first()
-        if existing_connection:
-            raise ValueError("Another player is already connected")
-
-        # Check if user exists
-        user = db.query(User).filter(
-            User.nickname_or_username == username,
-            User.role == UserRole.PLAYER,
-        ).first()
-
-        # Create user if doesn't exist
-        if not user:
-            user = User(
-                nickname_or_username=username,
-                role=UserRole.PLAYER,
+            # Call Master GraphQL to authenticate player
+            response = await self.graphql_client.authenticate_player(
+                session_id=session_id,
+                node_id=node_id,
             )
-            db.add(user)
+
+            # Extract user info from GraphQL response
+            mutation_data = response.get("authenticatePlayer", {})
+            user_data = mutation_data.get("user", {})
+            user_id = user_data.get("id")
+
+            if not user_id:
+                raise ValueError("Failed to authenticate player: invalid response")
+
+            # Create or update local user cache
+            user = db.query(User).filter(User.id == user_id).first()
+            if not user:
+                user = User(
+                    id=user_id,
+                    nickname_or_username=f"player-{user_id[:8]}",
+                    role=UserRole.PLAYER,
+                )
+                db.add(user)
+                db.commit()
+                db.refresh(user)
+
+            # Create player connection
+            connection = PlayerConnection(player_id=user_id)
+            db.add(connection)
             db.commit()
-            db.refresh(user)
 
-        # Create player connection
-        connection = PlayerConnection(player_id=user.id)
-        db.add(connection)
-        db.commit()
+            # Generate Node-specific JWT tokens
+            access_token = self._generate_token(
+                user_id=user_id,
+                role=UserRole.PLAYER,
+                token_type="access",
+                expires_in_seconds=self.access_token_expire_seconds,
+            )
+            refresh_token = self._generate_token(
+                user_id=user_id,
+                role=UserRole.PLAYER,
+                token_type="refresh",
+                expires_in_seconds=self.refresh_token_expire_seconds,
+            )
 
-        # Generate tokens
-        access_token = self._generate_token(
-            user_id=str(user.id),
-            role=UserRole.PLAYER,
-            token_type="access",
-            expires_in_seconds=self.access_token_expire_seconds,
-        )
-        refresh_token = self._generate_token(
-            user_id=str(user.id),
-            role=UserRole.PLAYER,
-            token_type="refresh",
-            expires_in_seconds=self.refresh_token_expire_seconds,
-        )
+            return (
+                access_token,
+                refresh_token,
+                UserRole.PLAYER,
+                self.access_token_expire_seconds,
+                self.refresh_token_expire_seconds,
+            )
 
-        return (
-            access_token,
-            refresh_token,
-            UserRole.PLAYER,
-            self.access_token_expire_seconds,
-            self.refresh_token_expire_seconds,
-        )
+        except (GraphQLError, HTTPException) as e:
+            logger.error(f"Master GraphQL error: {str(e)}")
+            raise ValueError(f"Failed to authenticate player: {str(e)}")
 
     def refresh_token(self, refresh_token: str, db: Session) -> tuple[str, str, str, int, int]:
         """
@@ -354,31 +390,3 @@ class AuthService:
         token = jwt.encode(payload, self.api_key, algorithm=self.algorithm)
         return token
 
-    @staticmethod
-    def hash_password(password: str, rounds: int = 12) -> str:
-        """
-        Hash a password using bcrypt
-
-        Args:
-            password: Plaintext password
-            rounds: Number of hashing rounds
-
-        Returns:
-            Password hash
-        """
-        salt = bcrypt.gensalt(rounds=rounds)
-        return bcrypt.hashpw(password.encode(), salt).decode()
-
-    @staticmethod
-    def _verify_password(password: str, password_hash: str) -> bool:
-        """
-        Verify a password against a hash
-
-        Args:
-            password: Plaintext password
-            password_hash: Password hash
-
-        Returns:
-            True if password matches, False otherwise
-        """
-        return bcrypt.checkpw(password.encode(), password_hash.encode())

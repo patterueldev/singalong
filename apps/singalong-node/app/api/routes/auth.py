@@ -26,21 +26,25 @@ async def authenticate_controller(
     Authenticate as a controller (attendee)
 
     Args:
-        request: Controller auth request (nickname)
+        request: Controller auth request (nickname, session_id, node_id)
         db: Database session
 
     Returns:
         TokenResponse with access/refresh tokens and role
 
     Raises:
-        HTTPException 409: If nickname is already taken
-        HTTPException 400: If request is invalid
+        HTTPException 400: If request is invalid or Master auth fails
     """
     auth_service = get_auth_service()
 
     try:
         access_token, refresh_token, role, access_expires, refresh_expires = (
-            auth_service.authenticate_controller(request.nickname, db)
+            await auth_service.authenticate_controller(
+                nickname=request.nickname,
+                session_id=request.session_id,
+                node_id=request.node_id,
+                db=db,
+            )
         )
 
         return TokenResponse(
@@ -52,9 +56,8 @@ async def authenticate_controller(
             role=role,
         )
     except ValueError as e:
-        # Nickname already taken
         raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
+            status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e),
         )
 
@@ -68,7 +71,7 @@ async def authenticate_admin(
     Authenticate as an admin (manager)
 
     Args:
-        request: Admin auth request (username, password)
+        request: Admin auth request (username, password, node_id)
         db: Database session
 
     Returns:
@@ -76,13 +79,18 @@ async def authenticate_admin(
 
     Raises:
         HTTPException 401: If credentials are invalid
-        HTTPException 400: If request is invalid
+        HTTPException 400: If request is invalid or Master auth fails
     """
     auth_service = get_auth_service()
 
     try:
         access_token, refresh_token, role, access_expires, refresh_expires = (
-            auth_service.authenticate_admin(request.username, request.password, db)
+            await auth_service.authenticate_admin(
+                username=request.username,
+                password=request.password,
+                node_id=request.node_id,
+                db=db,
+            )
         )
 
         return TokenResponse(
@@ -94,7 +102,6 @@ async def authenticate_admin(
             role=role,
         )
     except ValueError as e:
-        # Invalid credentials
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=str(e),
@@ -110,22 +117,25 @@ async def authenticate_player(
     Authenticate as a player (playback device)
 
     Args:
-        request: Player auth request (username, password)
+        request: Player auth request (session_id, node_id)
         db: Database session
 
     Returns:
         TokenResponse with access/refresh tokens and role
 
     Raises:
-        HTTPException 401: If credentials are invalid
         HTTPException 409: If another player is already connected
-        HTTPException 400: If request is invalid
+        HTTPException 400: If request is invalid or Master auth fails
     """
     auth_service = get_auth_service()
 
     try:
         access_token, refresh_token, role, access_expires, refresh_expires = (
-            auth_service.authenticate_player(request.username, request.password, db)
+            await auth_service.authenticate_player(
+                session_id=request.session_id,
+                node_id=request.node_id,
+                db=db,
+            )
         )
 
         return TokenResponse(
@@ -139,13 +149,11 @@ async def authenticate_player(
     except ValueError as e:
         error_str = str(e)
         if "already connected" in error_str:
-            # Another player is connected
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
                 detail=error_str,
             )
         else:
-            # Invalid credentials
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail=error_str,
@@ -196,3 +204,4 @@ async def refresh_tokens(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=f"Invalid refresh token: {str(e)}",
         )
+

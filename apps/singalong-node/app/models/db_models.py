@@ -23,7 +23,7 @@ def utc_now():
 
 
 class User(Base):
-    """User model - tracks all authenticated users"""
+    """User model - local cache of authenticated users (source of truth is Master)"""
     __tablename__ = "users"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -33,32 +33,6 @@ class User(Base):
 
     def __repr__(self):
         return f"<User {self.id}: {self.nickname_or_username} ({self.role})>"
-
-
-class AdminCredentials(Base):
-    """Admin credentials model - stores admin username/password"""
-    __tablename__ = "admin_credentials"
-
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    username = Column(String(255), nullable=False, unique=True, index=True)
-    password_hash = Column(String(255), nullable=False)
-    created_at = Column(DateTime(timezone=True), nullable=False, default=utc_now)
-
-    def __repr__(self):
-        return f"<AdminCredentials {self.id}: {self.username}>"
-
-
-class PlayerCredentials(Base):
-    """Player credentials model - stores player username/password"""
-    __tablename__ = "player_credentials"
-
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    username = Column(String(255), nullable=False, unique=True, index=True)
-    password_hash = Column(String(255), nullable=False)
-    created_at = Column(DateTime(timezone=True), nullable=False, default=utc_now)
-
-    def __repr__(self):
-        return f"<PlayerCredentials {self.id}: {self.username}>"
 
 
 class PlayerConnection(Base):
@@ -84,4 +58,3 @@ class Session(Base):
 
     def __repr__(self):
         return f"<Session {self.id}>"
-

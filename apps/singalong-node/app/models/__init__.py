@@ -1,9 +1,7 @@
 """Data models module"""
 
 from app.models.db_models import (
-    AdminCredentials,
     PlayerConnection,
-    PlayerCredentials,
     Session,
     User,
     UserRole,
@@ -20,8 +18,6 @@ __all__ = [
     # Database models
     "User",
     "UserRole",
-    "AdminCredentials",
-    "PlayerCredentials",
     "PlayerConnection",
     "Session",
     # Schemas
@@ -31,4 +27,3 @@ __all__ = [
     "RefreshTokenRequest",
     "TokenResponse",
 ]
-
