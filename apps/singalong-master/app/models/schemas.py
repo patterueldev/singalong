@@ -1,0 +1,46 @@
+"""Pydantic request and response schemas"""
+
+from pydantic import BaseModel, Field
+
+
+class ExchangeTokenRequest(BaseModel):
+    """Request to exchange API key for JWT tokens"""
+
+    api_key: str = Field(..., min_length=32, description="API key from environment")
+
+
+class TokenResponse(BaseModel):
+    """JWT tokens response"""
+
+    access_token: str = Field(..., description="JWT access token (1 hour TTL)")
+    refresh_token: str = Field(..., description="JWT refresh token (7 days TTL)")
+    token_type: str = Field(default="Bearer", description="Token type")
+    expires_in: int = Field(default=3600, description="Access token expiry in seconds")
+    refresh_expires_in: int = Field(
+        default=604800, description="Refresh token expiry in seconds"
+    )
+
+
+class RefreshTokenRequest(BaseModel):
+    """Request to refresh an access token"""
+
+    refresh_token: str = Field(..., description="JWT refresh token")
+
+
+class TokenValidationResponse(BaseModel):
+    """Response from token validation"""
+
+    status: str = Field(default="valid", description="Token status")
+    sub: str = Field(..., description="Token subject (service identifier)")
+    iat: int = Field(..., description="Token issued at (timestamp)")
+    exp: int = Field(..., description="Token expiration time (timestamp)")
+    expires_in: int = Field(..., description="Seconds until expiration")
+
+
+class ErrorResponse(BaseModel):
+    """Standard error response"""
+
+    status: str = Field(default="error", description="Status indicator")
+    code: str = Field(..., description="Error code")
+    message: str = Field(..., description="Human-readable error message")
+    details: dict = Field(default_factory=dict, description="Additional error details")

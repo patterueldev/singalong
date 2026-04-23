@@ -18,6 +18,18 @@ class Settings(BaseSettings):
     port: int = int(os.getenv("PORT", 5001))
     host: str = os.getenv("HOST", "0.0.0.0")
 
+    # API Key for service authentication
+    master_api_key: str = os.getenv("MASTER_API_KEY", "")
+
+    # JWT Configuration
+    jwt_algorithm: str = os.getenv("JWT_ALGORITHM", "HS256")
+    jwt_access_token_expire_seconds: int = int(
+        os.getenv("JWT_ACCESS_TOKEN_EXPIRE_SECONDS", 3600)
+    )
+    jwt_refresh_token_expire_seconds: int = int(
+        os.getenv("JWT_REFRESH_TOKEN_EXPIRE_SECONDS", 604800)
+    )
+
     class Config:
         env_file = ".env"
 
@@ -43,6 +55,11 @@ def create_app() -> FastAPI:
         debug=settings.debug,
         lifespan=lifespan,
     )
+
+    # Register routes
+    from app.api.routes import router as auth_router
+
+    app.include_router(auth_router)
 
     @app.get("/health", tags=["health"])
     async def health_check():
