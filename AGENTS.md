@@ -5,6 +5,7 @@ This document provides comprehensive guidance for AI agents and developers worki
 > **📚 Related Documentation**:
 > - **[PROJECT_OVERVIEW.md](docs/PROJECT_OVERVIEW.md)**: Project vision, user stories, system architecture, and detailed workflows
 > - **[IMPLEMENTATION_PHASES.md](docs/IMPLEMENTATION_PHASES.md)**: 10 implementation phases with dependencies, deliverables, and acceptance criteria
+> - **[BACKEND_PHASES.md](docs/BACKEND_PHASES.md)**: Backend API development phases (B1-B8) with detailed endpoint specifications and database schemas
 
 ---
 
