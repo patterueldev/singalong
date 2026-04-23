@@ -1,15 +1,36 @@
 """FastAPI application entry point"""
 
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 
 from app.config import settings
+from app.database import init_db
+from app.api.routes import auth
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Manage application lifecycle"""
+    # Startup
+    print(f"Starting {settings.service_name}")
+    print(f"Master server: {settings.master_url}")
+    init_db()  # Initialize database
+    yield
+    # Shutdown
+    print(f"Shutting down {settings.service_name}")
+
 
 app = FastAPI(
     title=settings.service_name,
     description="Local karaoke server for singalong system",
     version="0.1.0",
+    lifespan=lifespan,
 )
+
+# Include routers
+app.include_router(auth.router)
 
 
 @app.get("/health", tags=["Health"])
@@ -37,15 +58,3 @@ async def root() -> JSONResponse:
         },
     )
 
-
-@app.on_event("startup")
-async def startup_event():
-    """Application startup event"""
-    print(f"Starting {settings.service_name} on {settings.host}:{settings.port}")
-    print(f"Master server: {settings.master_url}")
-
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    """Application shutdown event"""
-    print(f"Shutting down {settings.service_name}")
