@@ -36,6 +36,47 @@ class UserAuthService:
         self.refresh_token_expire_seconds = refresh_token_expire_seconds
         self.service_name = "singalong-master"
 
+    def _record_session_history(
+        self, db: Session, user_id, node_id: str, session_id: str, nickname: Optional[str] = None
+    ) -> None:
+        """
+        Record or update user session history (upsert pattern).
+        
+        If a record already exists for this (user_id, node_id, session_id),
+        update it. Otherwise, create a new record.
+        
+        Args:
+            db: Database session
+            user_id: User ID
+            node_id: Node identifier
+            session_id: 4-digit session ID
+            nickname: Optional nickname for controllers
+        """
+        # Try to find existing history record
+        existing = db.query(UserSessionHistory).filter(
+            UserSessionHistory.user_id == user_id,
+            UserSessionHistory.node_id == node_id,
+            UserSessionHistory.session_id == session_id,
+        ).first()
+        
+        if existing:
+            # Update existing record (clear left_at if user is re-joining)
+            existing.left_at = None
+            if nickname:
+                existing.nickname = nickname
+            db.commit()
+        else:
+            # Create new record
+            session_record = UserSessionHistory(
+                user_id=user_id,
+                node_id=node_id,
+                session_id=session_id,
+                nickname=nickname,
+            )
+            db.add(session_record)
+            db.commit()
+
+
     def authenticate_controller(
         self, db: Session, nickname: str, session_id: str, node_id: str
     ) -> Tuple[str, str, int, int, User]:
@@ -68,14 +109,7 @@ class UserAuthService:
             db.refresh(user)
 
         # Record session history
-        session_record = UserSessionHistory(
-            user_id=user.id,
-            node_id=node_id,
-            session_id=session_id,
-            nickname=nickname,
-        )
-        db.add(session_record)
-        db.commit()
+        self._record_session_history(db, user.id, node_id, session_id, nickname)
 
         # Generate tokens
         access_token = self._generate_token(
@@ -125,13 +159,7 @@ class UserAuthService:
             raise ValueError("Invalid username or password")
 
         # Record session history
-        session_record = UserSessionHistory(
-            user_id=user.id,
-            node_id=node_id,
-            session_id="9999",  # Admin sessions use special ID
-        )
-        db.add(session_record)
-        db.commit()
+        self._record_session_history(db, user.id, node_id, "9999")
 
         # Generate tokens
         access_token = self._generate_token(
@@ -184,13 +212,7 @@ class UserAuthService:
         db.refresh(user)
 
         # Record session history
-        session_record = UserSessionHistory(
-            user_id=user.id,
-            node_id=node_id,
-            session_id=session_id,
-        )
-        db.add(session_record)
-        db.commit()
+        self._record_session_history(db, user.id, node_id, session_id)
 
         # Generate tokens
         access_token = self._generate_token(
