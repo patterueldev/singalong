@@ -36,6 +36,7 @@ class Settings(BaseSettings):
     # Service configuration
     service_name: str = "singalong-node"
     api_version: str = "v1"
+    node_id: str = os.getenv("NODE_ID", "550e8400-e29b-41d4-a716-446655440000")
 
     model_config = {"env_file": ".env", "case_sensitive": False}
 

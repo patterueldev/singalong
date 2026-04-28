@@ -7,20 +7,17 @@ class AuthControllerRequest(BaseModel):
     """Request schema for controller authentication"""
     nickname: str = Field(..., min_length=1, max_length=255, description="Controller nickname")
     session_id: str = Field(..., min_length=4, max_length=4, description="4-digit session ID")
-    node_id: str = Field(..., description="Node UUID")
 
 
 class AuthAdminRequest(BaseModel):
     """Request schema for admin authentication"""
     username: str = Field(..., min_length=1, max_length=255, description="Admin username")
     password: str = Field(..., min_length=1, description="Admin password")
-    node_id: str = Field(..., description="Node UUID")
 
 
 class AuthPlayerRequest(BaseModel):
     """Request schema for player authentication"""
     session_id: str = Field(..., min_length=4, max_length=4, description="4-digit session ID")
-    node_id: str = Field(..., description="Node UUID")
 
 
 class RefreshTokenRequest(BaseModel):

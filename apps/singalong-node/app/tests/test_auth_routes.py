@@ -88,18 +88,6 @@ class TestAuthPlayerRoute:
         # Endpoint should accept proper schema (will fail without real Master)
         assert response.status_code in [201, 400, 401, 409, 500]
 
-    def test_authenticate_player_missing_node_id(self, client):
-        """Player endpoint should reject requests missing node_id"""
-        response = client.post(
-            "/api/auth/player",
-            json={
-                "session_id": "1234",
-                # missing node_id
-            },
-        )
-
-        assert response.status_code == 422  # Validation error
-
 
 class TestAuthRefreshRoute:
     """Test /api/auth/refresh endpoint"""

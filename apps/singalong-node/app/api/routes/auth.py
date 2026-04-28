@@ -4,6 +4,7 @@ import jwt
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
+from app.config import settings
 from app.database import get_db
 from app.middleware.auth import get_auth_service
 from app.models.schemas import (
@@ -26,7 +27,7 @@ async def authenticate_controller(
     Authenticate as a controller (attendee)
 
     Args:
-        request: Controller auth request (nickname, session_id, node_id)
+        request: Controller auth request (nickname, session_id)
         db: Database session
 
     Returns:
@@ -42,7 +43,7 @@ async def authenticate_controller(
             await auth_service.authenticate_controller(
                 nickname=request.nickname,
                 session_id=request.session_id,
-                node_id=request.node_id,
+                node_id=settings.node_id,
                 db=db,
             )
         )
@@ -71,7 +72,7 @@ async def authenticate_admin(
     Authenticate as an admin (manager)
 
     Args:
-        request: Admin auth request (username, password, node_id)
+        request: Admin auth request (username, password)
         db: Database session
 
     Returns:
@@ -88,7 +89,7 @@ async def authenticate_admin(
             await auth_service.authenticate_admin(
                 username=request.username,
                 password=request.password,
-                node_id=request.node_id,
+                node_id=settings.node_id,
                 db=db,
             )
         )
@@ -117,7 +118,7 @@ async def authenticate_player(
     Authenticate as a player (playback device)
 
     Args:
-        request: Player auth request (session_id, node_id)
+        request: Player auth request (session_id)
         db: Database session
 
     Returns:
@@ -133,7 +134,7 @@ async def authenticate_player(
         access_token, refresh_token, role, access_expires, refresh_expires = (
             await auth_service.authenticate_player(
                 session_id=request.session_id,
-                node_id=request.node_id,
+                node_id=settings.node_id,
                 db=db,
             )
         )
