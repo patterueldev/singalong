@@ -17,7 +17,8 @@ class Settings(BaseSettings):
     master_graphql_url: str = os.getenv(
         "MASTER_GRAPHQL_URL", "http://localhost:5001/graphql"
     )
-    master_api_key: str = os.getenv("MASTER_API_KEY", "your-master-api-key")
+    # Node's API key for authenticating with Master (singular, not comma-separated)
+    master_api_key: str = os.getenv("NODE_MASTER_API_KEY", "your-master-api-key")
     master_timeout: int = int(os.getenv("MASTER_TIMEOUT", "30"))
 
     # JWT Configuration

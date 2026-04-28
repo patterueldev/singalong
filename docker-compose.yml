@@ -10,8 +10,8 @@ services:
       context: .
       dockerfile: infrastructure/development/master.dockerfile
     container_name: singalong-master
-    # ports:
-    #   - "5001:5001"
+    ports:
+      - "5001:5001"
     volumes:
       - ./apps/singalong-master:/app
       - /app/__pycache__  # Exclude pycache from volume mount
@@ -27,19 +27,18 @@ services:
       context: .
       dockerfile: infrastructure/development/node.dockerfile
     container_name: singalong-node
-    # ports:
-    #   - "5002:5002"
+    ports:
+      - "5002:5002"
     volumes:
       - ./apps/singalong-node:/app
       - /app/__pycache__  # Exclude pycache from volume mount
     environment:
       - ENVIRONMENT=development
-      - MASTER_URL=http://master:5001
-      - MASTER_API_KEY=${MASTER_API_KEY}
+      - MASTER_URL=https://singalongmaster-dev.nicenature.space
+      - MASTER_GRAPHQL_URL=https://singalongmaster-dev.nicenature.space/graphql/
+      - NODE_MASTER_API_KEY=${NODE_MASTER_API_KEY:-dev-key}
     networks:
       - singalong-network
-    depends_on:
-      - master
     restart: unless-stopped
 
   # Admin Dashboard - React/Vite frontend for administrators

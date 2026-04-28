@@ -40,7 +40,6 @@ class AuthService:
         self.service_name = "singalong-node"
         self.graphql_client = MasterGraphQLClient(
             graphql_url=settings.master_graphql_url,
-            api_key=settings.master_api_key,
             timeout=settings.master_timeout,
         )
 

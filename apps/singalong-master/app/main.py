@@ -45,8 +45,18 @@ async def lifespan(app: FastAPI):
     """Manage application lifecycle"""
     # Startup
     print(f"Starting {settings.app_name} v{settings.app_version}")
-    from app.database import init_db
+    from app.database import init_db, SessionLocal
+    from app.services.session_init import ensure_admin_session_exists
+    
     init_db()
+    
+    # Initialize admin session 9999
+    db = SessionLocal()
+    try:
+        ensure_admin_session_exists(db)
+    finally:
+        db.close()
+    
     yield
     # Shutdown
     print(f"Shutting down {settings.app_name}")

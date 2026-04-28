@@ -56,17 +56,15 @@ class MasterGraphQLClient:
     }
     """
 
-    def __init__(self, graphql_url: str, api_key: str, timeout: int = 30):
+    def __init__(self, graphql_url: str, timeout: int = 30):
         """
         Initialize GraphQL client
 
         Args:
             graphql_url: Master GraphQL endpoint URL
-            api_key: API key for Bearer token authentication
             timeout: Request timeout in seconds
         """
         self.graphql_url = graphql_url
-        self.api_key = api_key
         self.timeout = timeout
         self._bearer_token: Optional[str] = None
 
@@ -176,7 +174,7 @@ class MasterGraphQLClient:
         }
 
         try:
-            async with httpx.AsyncClient(timeout=self.timeout) as client:
+            async with httpx.AsyncClient(timeout=self.timeout, follow_redirects=False) as client:
                 response = await client.post(
                     self.graphql_url,
                     json=payload,
@@ -201,16 +199,15 @@ class MasterGraphQLClient:
 
     async def _ensure_bearer_token(self):
         """
-        Ensure we have a valid bearer token by exchanging API key with Master
+        Get the current bearer token from the MasterAuthManager
 
-        Note: In a real implementation, this would call Master's /api/auth/exchange endpoint
-        and cache the token until it expires. For now, we assume the token is provided
-        externally or use the API key directly as a placeholder.
+        The token is obtained during Node startup via initialize_master_auth().
+        This method may refresh the token if it's about to expire.
         """
-        # TODO: Implement token exchange with Master's /api/auth/exchange
-        # For now, use api_key directly as bearer token
-        # This is a simplified approach for MVP
-        self._bearer_token = self.api_key
+        from app.services.master_auth_manager import get_master_auth_manager
+        
+        auth_manager = get_master_auth_manager()
+        self._bearer_token = await auth_manager.get_access_token()
 
 
 class GraphQLError(Exception):

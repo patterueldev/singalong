@@ -16,7 +16,26 @@ async def lifespan(app: FastAPI):
     # Startup
     print(f"Starting {settings.service_name}")
     print(f"Master server: {settings.master_url}")
+    from app.database import init_db, SessionLocal
+    from app.services.session_init import ensure_admin_session_exists
+    from app.services.master_auth_manager import initialize_master_auth
+    
     init_db()  # Initialize database
+    
+    # Exchange API key for JWT tokens with Master
+    try:
+        await initialize_master_auth(settings.master_url, settings.master_api_key)
+    except Exception as e:
+        print(f"FATAL: Failed to authenticate with Master: {str(e)}")
+        raise
+    
+    # Initialize admin session 9999
+    db = SessionLocal()
+    try:
+        ensure_admin_session_exists(db)
+    finally:
+        db.close()
+    
     yield
     # Shutdown
     print(f"Shutting down {settings.service_name}")
@@ -30,7 +49,11 @@ app = FastAPI(
 )
 
 # Include routers
+from app.api.routes import auth, sessions, songs
+
 app.include_router(auth.router)
+app.include_router(sessions.router)
+app.include_router(songs.router)
 
 
 @app.get("/health", tags=["Health"])

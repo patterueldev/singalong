@@ -49,12 +49,43 @@ class PlayerConnection(Base):
 
 
 class Session(Base):
-    """Session model - tracks karaoke session metadata"""
+    """Session model - tracks karaoke sessions (Master is source of truth, Node is cache)"""
+
     __tablename__ = "sessions"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    session_id = Column(String(4), nullable=False, unique=True, index=True)
+    title = Column(String(255), nullable=False)
+    session_code = Column(String(255), nullable=True)  # Passcode, optional
+    status = Column(String(10), nullable=False, default="ACTIVE", index=True)  # ACTIVE or ENDED
+    created_by_admin_id = Column(String(255), nullable=True)
+    is_admin_session = Column(String(5), nullable=False, default="FALSE")  # TRUE only for 9999
     created_at = Column(DateTime(timezone=True), nullable=False, default=utc_now)
     ended_at = Column(DateTime(timezone=True), nullable=True)
 
     def __repr__(self):
-        return f"<Session {self.id}>"
+        return f"<Session {self.session_id}>"
+
+
+class Song(Base):
+    """Song model - local cache of songs (Master is source of truth)"""
+
+    __tablename__ = "songs"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    title = Column(String(255), nullable=False, index=True)
+    artist = Column(String(255), nullable=False, index=True)
+    duration = Column(String(10), nullable=True)  # in seconds, as string for SQLite compatibility
+    genre = Column(String(100), nullable=True, index=True)
+    year = Column(String(4), nullable=True)  # as string for SQLite compatibility
+    youtube_url = Column(String(500), nullable=True)  # original YouTube URL
+    file_path = Column(String(500), nullable=True)  # where the file is stored locally
+    status = Column(String(20), nullable=False, default="DRAFT", index=True)  # DRAFT, DOWNLOADING, COMPLETED, FAILED
+    requested_by_admin_id = Column(String(255), nullable=True)  # which admin requested
+    error_message = Column(String(500), nullable=True)  # if status is FAILED
+    created_at = Column(DateTime(timezone=True), nullable=False, default=utc_now, index=True)
+    updated_at = Column(DateTime(timezone=True), nullable=False, default=utc_now, onupdate=utc_now)
+
+    def __repr__(self):
+        return f"<Song {self.title} by {self.artist}>"
+
