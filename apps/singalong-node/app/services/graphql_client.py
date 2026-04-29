@@ -147,7 +147,7 @@ class MasterGraphQLClient:
 
     async def _execute_mutation(self, query: str, variables: dict) -> dict:
         """
-        Execute a GraphQL mutation
+        Execute a GraphQL mutation or query
 
         Args:
             query: GraphQL query string
@@ -196,6 +196,23 @@ class MasterGraphQLClient:
         except httpx.HTTPError as e:
             logger.error(f"HTTP error: {str(e)}")
             raise HTTPException(f"Failed to connect to Master: {str(e)}")
+
+    async def execute_query(self, query: str, variables: dict = None) -> dict:
+        """
+        Execute a GraphQL query
+
+        Args:
+            query: GraphQL query string
+            variables: Variables for the query (optional)
+
+        Returns:
+            GraphQL response data
+
+        Raises:
+            GraphQLError: If GraphQL response contains errors
+            HTTPException: If network error occurs
+        """
+        return await self._execute_mutation(query, variables or {})
 
     async def _ensure_bearer_token(self):
         """

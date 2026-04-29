@@ -1,5 +1,6 @@
 """Pydantic schemas for authentication"""
 
+from typing import Optional
 from pydantic import BaseModel, Field
 
 
@@ -129,3 +130,83 @@ class SongStatusResponse(BaseModel):
     progress: int = Field(0, description="Download progress (0-100)")
     error_message: str | None = Field(None, description="Error message if status is FAILED")
 
+
+# Player Schemas
+class PlayerRegisterRequest(BaseModel):
+    """Request to register a player device"""
+
+    api_key: str = Field(..., min_length=10, description="Player API key")
+    player_name: str = Field(..., min_length=1, max_length=255, description="Player display name")
+    device_type: str | None = Field(None, description="Device type (xcode, windows, web)")
+
+
+class PlayerStatusResponse(BaseModel):
+    """Player registration status response"""
+
+    player_id: str = Field(..., description="Player UUID")
+    player_name: str = Field(..., description="Player display name")
+    status: str = Field(..., description="Status (pending, active, disconnected)")
+    registered_at: str | None = Field(None, description="ISO 8601 registration timestamp")
+    activated_at: str | None = Field(None, description="ISO 8601 activation timestamp")
+    session_id: str | None = Field(None, description="Assigned session ID")
+    current_song_id: str | None = Field(None, description="Currently playing song ID")
+
+
+class PlayerQueueItem(BaseModel):
+    """Single item in player queue"""
+
+    position: int = Field(..., description="Queue position (1-based)")
+    song_id: str = Field(..., description="Song UUID")
+    title: str = Field(..., description="Song title")
+    artist: str = Field(..., description="Artist name")
+    reserved_by: str = Field(..., description="Nickname of person who reserved")
+    duration_seconds: int | None = Field(None, description="Duration in seconds")
+
+
+class PlayerQueueResponse(BaseModel):
+    """Player queue response"""
+
+    queue: list[PlayerQueueItem] = Field(default_factory=list, description="List of queued songs")
+    total: int = Field(default=0, description="Total songs in queue")
+
+
+class AdminActivatePlayerRequest(BaseModel):
+    """Request to activate a pending player"""
+
+    session_id: str = Field(..., min_length=4, max_length=4, description="Session to assign")
+
+
+class AdminPlayerListResponse(BaseModel):
+    """Admin list of all players"""
+
+    players: list[PlayerStatusResponse] = Field(
+        default_factory=list, description="List of players"
+    )
+    total: int = Field(default=0, description="Total players")
+
+
+class IdentifyRequest(BaseModel):
+    """Request to identify song metadata from YouTube URL"""
+
+    url: str = Field(
+        ...,
+        min_length=10,
+        description="YouTube URL",
+        example="https://www.youtube.com/watch?v=...",
+    )
+
+
+class SongMetadataResponse(BaseModel):
+    """Song metadata extracted from YouTube"""
+
+    videoId: str = Field(..., description="YouTube video ID")
+    title: str = Field(..., description="Video title")
+    artist: Optional[str] = Field(default="", description="Uploader/artist name")
+    duration: int = Field(default=0, description="Duration in seconds")
+    thumbnail: Optional[str] = Field(default="", description="Thumbnail URL")
+    year: Optional[str] = Field(default="", description="Release year")
+    channel: Optional[str] = Field(default="", description="Channel name")
+    language: Optional[str] = Field(default="", description="Video language")
+    description: Optional[str] = Field(default="", description="Video description")
+    viewCount: int = Field(default=0, description="View count")
+    url: str = Field(..., description="Full YouTube URL")

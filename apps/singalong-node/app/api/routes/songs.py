@@ -1,6 +1,7 @@
 """Song management API endpoints for Node"""
 
 import uuid
+import logging
 from datetime import datetime, timezone
 from typing import Optional
 
@@ -16,7 +17,13 @@ from app.models.schemas import (
     SongListResponse,
     SongStatusResponse,
     ErrorResponse,
+    IdentifyRequest,
+    SongMetadataResponse,
 )
+from app.services.graphql_client import MasterGraphQLClient, GraphQLError
+from app.config import settings
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/songs", tags=["Songs"])
 
@@ -28,6 +35,100 @@ def get_db():
         yield db
     finally:
         db.close()
+
+
+@router.post("/identify", response_model=SongMetadataResponse, status_code=200)
+async def identify_song(request: IdentifyRequest) -> SongMetadataResponse:
+    """
+    Identify song metadata from YouTube URL
+
+    Extracts metadata from YouTube video using yt-dlp on the master server.
+    User can then edit the metadata before downloading.
+
+    Args:
+        request: IdentifyRequest with YouTube URL
+
+    Returns:
+        SongMetadataResponse with extracted metadata
+
+    Raises:
+        HTTPException: 400 if invalid URL, 404 if video not found, 500 if extraction fails
+    """
+    try:
+        logger.info(f"Identifying song from URL: {request.url}")
+
+        graphql_client = MasterGraphQLClient(settings.master_graphql_url)
+
+        query = """
+        query IdentifySong($url: String!) {
+          identifySong(url: $url) {
+            videoId
+            title
+            artist
+            duration
+            thumbnail
+            year
+            channel
+            language
+            description
+            viewCount
+            url
+          }
+        }
+        """
+
+        response = await graphql_client.execute_query(
+            query, variables={"url": request.url}
+        )
+
+        metadata = response.get("identifySong")
+        if not metadata:
+            logger.error(f"No metadata returned from master for {request.url}")
+            raise HTTPException(status_code=500, detail="Failed to extract metadata")
+
+        logger.info(f"Successfully identified: {metadata.get('title')}")
+        return SongMetadataResponse(**metadata)
+
+    except GraphQLError as e:
+        error_str = str(e)
+        logger.error(f"GraphQL error identifying song: {error_str}")
+
+        # Map error messages to HTTP status codes
+        if "Invalid YouTube URL" in error_str:
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid YouTube URL format",
+            )
+        if "not found" in error_str.lower() or "removed" in error_str.lower():
+            raise HTTPException(
+                status_code=404,
+                detail="Video not found or has been removed",
+            )
+        if "private" in error_str or "age-restricted" in error_str:
+            raise HTTPException(
+                status_code=403,
+                detail="Video is private or age-restricted",
+            )
+        if "throttled" in error_str:
+            raise HTTPException(
+                status_code=429,
+                detail="Request throttled by YouTube. Please try again later.",
+            )
+        if "timed out" in error_str.lower():
+            raise HTTPException(
+                status_code=504,
+                detail="Request timed out. Please try again with a different video.",
+            )
+
+        # Generic error
+        raise HTTPException(status_code=400, detail=error_str)
+
+    except Exception as e:
+        logger.exception(f"Unexpected error identifying song: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail="Failed to identify song. Please try again."
+        )
+
 
 
 def _format_song_response(song: Song) -> SongResponse:

@@ -1,6 +1,7 @@
 """Application configuration"""
 
 import os
+from pydantic import Field
 from pydantic_settings import BaseSettings
 
 
@@ -8,39 +9,61 @@ class Settings(BaseSettings):
     """Application settings loaded from environment variables"""
 
     # Server configuration
-    host: str = os.getenv("HOST", "0.0.0.0")
-    port: int = int(os.getenv("PORT", "5002"))
-    debug: bool = os.getenv("DEBUG", "False").lower() == "true"
+    host: str = Field(default="0.0.0.0", validation_alias="HOST")
+    port: int = Field(default=5002, validation_alias="PORT")
+    debug: bool = Field(default=False, validation_alias="DEBUG")
 
     # Master server configuration
-    master_url: str = os.getenv("MASTER_URL", "http://localhost:5001")
-    master_graphql_url: str = os.getenv(
-        "MASTER_GRAPHQL_URL", "http://localhost:5001/graphql"
+    master_url: str = Field(
+        default="http://localhost:5001", validation_alias="MASTER_URL"
     )
-    # Node's API key for authenticating with Master (singular, not comma-separated)
-    master_api_key: str = os.getenv("NODE_MASTER_API_KEY", "your-master-api-key")
-    master_timeout: int = int(os.getenv("MASTER_TIMEOUT", "30"))
+    master_graphql_url: str = Field(
+        default="http://localhost:5001/graphql",
+        validation_alias="MASTER_GRAPHQL_URL",
+    )
+    # Node's API key for authenticating with Master
+    master_api_key: str = Field(
+        default="your-master-api-key", validation_alias="NODE_MASTER_API_KEY"
+    )
+    master_timeout: int = Field(default=30, validation_alias="MASTER_TIMEOUT")
 
     # JWT Configuration
-    jwt_secret_key: str = os.getenv("JWT_SECRET_KEY", "your-secret-key-change-in-production")
-    jwt_algorithm: str = os.getenv("JWT_ALGORITHM", "HS256")
-    jwt_access_token_expire_seconds: int = int(
-        os.getenv("JWT_ACCESS_TOKEN_EXPIRE_SECONDS", 10800)  # 3 hours
+    jwt_secret_key: str = Field(
+        default="your-secret-key-change-in-production",
+        validation_alias="JWT_SECRET_KEY",
     )
-    jwt_refresh_token_expire_seconds: int = int(
-        os.getenv("JWT_REFRESH_TOKEN_EXPIRE_SECONDS", 604800)  # 7 days
+    jwt_algorithm: str = Field(default="HS256", validation_alias="JWT_ALGORITHM")
+    jwt_access_token_expire_seconds: int = Field(
+        default=10800, validation_alias="JWT_ACCESS_TOKEN_EXPIRE_SECONDS"
+    )
+    jwt_refresh_token_expire_seconds: int = Field(
+        default=604800, validation_alias="JWT_REFRESH_TOKEN_EXPIRE_SECONDS"
     )
 
     # Database configuration
-    database_url: str = os.getenv("DATABASE_URL", "sqlite:///./singalong_node.db")
+    database_url: str = Field(
+        default="sqlite:///./singalong_node.db", validation_alias="DATABASE_URL"
+    )
+
+    # Player API Keys for registration validation (comma-separated)
+    node_player_api_keys: str = Field(default="", validation_alias="NODE_PLAYER_API_KEYS")
 
     # Service configuration
     service_name: str = "singalong-node"
     api_version: str = "v1"
-    node_id: str = os.getenv("NODE_ID", "550e8400-e29b-41d4-a716-446655440000")
+    node_id: str = Field(
+        default="550e8400-e29b-41d4-a716-446655440000", validation_alias="NODE_ID"
+    )
 
-    model_config = {"env_file": ".env", "case_sensitive": False}
+    model_config = {"env_file": ".env", "case_sensitive": False, "extra": "ignore"}
+
+    def get_valid_player_api_keys(self) -> list[str]:
+        """Parse comma-separated player API keys from NODE_PLAYER_API_KEYS env var"""
+        if not self.node_player_api_keys:
+            return []
+        return [key.strip() for key in self.node_player_api_keys.split(",") if key.strip()]
 
 
 settings = Settings()
+
 

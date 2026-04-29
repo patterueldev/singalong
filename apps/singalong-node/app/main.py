@@ -7,7 +7,7 @@ from fastapi.responses import JSONResponse
 
 from app.config import settings
 from app.database import init_db
-from app.api.routes import auth
+from app.services.player_manager import PlayerManager
 
 
 @asynccontextmanager
@@ -36,6 +36,11 @@ async def lifespan(app: FastAPI):
     finally:
         db.close()
     
+    # Initialize player manager with valid API keys
+    valid_keys = settings.get_valid_player_api_keys()
+    PlayerManager.create_singleton(valid_keys)
+    print(f"Player manager initialized with {len(valid_keys)} valid API key(s)")
+    
     yield
     # Shutdown
     print(f"Shutting down {settings.service_name}")
@@ -49,11 +54,12 @@ app = FastAPI(
 )
 
 # Include routers
-from app.api.routes import auth, sessions, songs
+from app.api.routes import auth, sessions, songs, players
 
 app.include_router(auth.router)
 app.include_router(sessions.router)
 app.include_router(songs.router)
+app.include_router(players.router)
 
 
 @app.get("/health", tags=["Health"])
@@ -80,4 +86,5 @@ async def root() -> JSONResponse:
             "docs": "/docs",
         },
     )
+
 

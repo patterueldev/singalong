@@ -1,7 +1,8 @@
-"""GraphQL schema definition for user authentication"""
+"""GraphQL schema definition for user authentication and song operations"""
 
-from ariadne import graphql_sync, make_executable_schema, MutationType
+from ariadne import graphql_sync, make_executable_schema, MutationType, QueryType
 from app.services.user_auth_service import UserAuthService
+from app.services.yt_dlp_service import YTDLPService, YTDLPError
 from app.database import SessionLocal
 
 # GraphQL schema
@@ -19,8 +20,23 @@ type_defs = """
         user: User!
     }
 
+    type SongMetadata {
+        videoId: String!
+        title: String!
+        artist: String
+        duration: Int
+        thumbnail: String
+        year: String
+        channel: String
+        language: String
+        description: String
+        viewCount: Int
+        url: String!
+    }
+
     type Query {
         hello: String!
+        identifySong(url: String!): SongMetadata!
     }
 
     type Mutation {
@@ -45,6 +61,29 @@ type_defs = """
 
 # Mutation resolvers
 mutation = MutationType()
+
+# Query resolvers
+query = QueryType()
+
+
+@query.field("hello")
+def resolve_hello(obj, info):
+    """Hello world query"""
+    return "Hello from Master GraphQL!"
+
+
+@query.field("identifySong")
+def resolve_identify_song(obj, info, url: str):
+    """Extract metadata from YouTube URL"""
+    try:
+        yt_dlp = YTDLPService(timeout=30)
+        metadata = yt_dlp.extract_metadata(url)
+        return metadata
+    except YTDLPError as e:
+        raise ValueError(f"Failed to identify song: {str(e)}")
+    except Exception as e:
+        raise ValueError(f"Unexpected error: {str(e)}")
+
 
 
 @mutation.field("authenticateController")
@@ -123,5 +162,5 @@ def resolve_authenticate_player(obj, info, sessionId, nodeId):
 
 
 # Build executable schema
-schema = make_executable_schema(type_defs, mutation)
+schema = make_executable_schema(type_defs, query, mutation)
 
