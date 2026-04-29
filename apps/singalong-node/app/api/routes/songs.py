@@ -781,6 +781,134 @@ async def get_active_downloads(
     except Exception as e:
         logger.exception(f"Error listing downloads: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to list downloads")
+
+
+@router.post("/downloads/{download_id}/retry", status_code=200)
+async def retry_failed_download(
+    download_id: str,
+    db: SQLSession = Depends(get_db),
+) -> dict:
+    """
+    Retry a failed download by resetting it to pending status.
+    
+    This endpoint allows users to retry a download that previously failed
+    (e.g., due to network issues, timeout, etc).
+    
+    Path Parameters:
+        download_id: UUID of the failed download
+    
+    Returns:
+        200 OK: Retry queued
+        400 Bad Request: Download not in failed state
+        404 Not Found: Download not found
+        500 Internal Server Error: Operation failed
+    """
+    try:
+        logger.info(f"Retry requested for download: {download_id}")
+        
+        from app.services.node_download_service import NodeDownloadService
+        download_service = NodeDownloadService(db)
+        
+        result = download_service.retry_failed_download(download_id)
+        
+        if "error" in result:
+            raise HTTPException(status_code=400, detail=result["error"])
+        
+        return result
+        
+    except HTTPException:
+        # Re-raise HTTPException without catching it
+        raise
+    except ValueError as e:
+        logger.error(f"Invalid download ID: {str(e)}")
+        raise HTTPException(status_code=404, detail="Download not found")
+    except Exception as e:
+        logger.exception(f"Error retrying download: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to retry download")
+
+
+@router.delete("/downloads/{download_id}", status_code=200)
+async def delete_download(
+    download_id: str,
+    db: SQLSession = Depends(get_db),
+) -> dict:
+    """
+    Delete/remove a download from the queue.
+    
+    Useful for cleaning up failed downloads or canceling pending ones.
+    This does NOT delete the actual video file if already downloaded.
+    
+    Path Parameters:
+        download_id: UUID of the download to delete
+    
+    Returns:
+        200 OK: Download removed
+        404 Not Found: Download not found
+        500 Internal Server Error: Operation failed
+    """
+    try:
+        logger.info(f"Delete requested for download: {download_id}")
+        
+        from app.services.node_download_service import NodeDownloadService
+        download_service = NodeDownloadService(db)
+        
+        result = download_service.delete_download(download_id)
+        
+        if "error" in result:
+            raise HTTPException(status_code=404, detail=result["error"])
+        
+        return result
+        
+    except HTTPException:
+        # Re-raise HTTPException without catching it
+        raise
+    except ValueError as e:
+        logger.error(f"Invalid download ID: {str(e)}")
+        raise HTTPException(status_code=404, detail="Download not found")
+    except Exception as e:
+        logger.exception(f"Error deleting download: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to delete download")
+
+
+@router.post("/downloads/cleanup", status_code=200)
+async def cleanup_old_downloads(
+    hours: int = Query(1, ge=0, le=24),
+    db: SQLSession = Depends(get_db),
+) -> dict:
+    """
+    Clean up (remove) failed downloads older than specified hours.
+    
+    Admin-only operation to remove stale failed downloads from the queue.
+    
+    Query Parameters:
+        hours: Age threshold in hours (0-24, default: 1)
+    
+    Returns:
+        200 OK: Cleanup completed
+        403 Forbidden: Not authorized (admin only, in future)
+        500 Internal Server Error: Operation failed
+    """
+    try:
+        logger.info(f"Cleanup requested for downloads older than {hours} hour(s)")
+        
+        from app.services.node_download_service import NodeDownloadService
+        download_service = NodeDownloadService(db)
+        
+        deleted_count = download_service.cleanup_old_failed_downloads(hours=hours)
+        
+        return {
+            "deleted_count": deleted_count,
+            "message": f"Removed {deleted_count} failed downloads older than {hours} hour(s)",
+        }
+        
+    except HTTPException:
+        # Re-raise HTTPException without catching it
+        raise
+    except Exception as e:
+        logger.exception(f"Error cleaning up downloads: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to cleanup downloads")
+
+
 @router.get("/{song_id}")
 async def get_song(
     song_id: str,

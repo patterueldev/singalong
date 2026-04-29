@@ -195,3 +195,133 @@ class NodeDownloadService:
             self.db.rollback()
             logger.error(f"Error updating download status: {str(e)}")
             raise
+
+    def cleanup_old_failed_downloads(self, hours: int = 1) -> int:
+        """
+        Remove failed downloads older than specified hours.
+        
+        Args:
+            hours: Age threshold in hours (default: 1 hour)
+        
+        Returns:
+            Number of downloads removed
+        """
+        try:
+            from datetime import timedelta
+            
+            cutoff_time = utc_now() - timedelta(hours=hours)
+            
+            deleted_count = self.db.query(DownloadQueue).filter(
+                DownloadQueue.status == "failed",
+                DownloadQueue.completed_at < cutoff_time
+            ).delete()
+            
+            self.db.commit()
+            
+            if deleted_count > 0:
+                logger.info(f"Cleaned up {deleted_count} failed downloads older than {hours} hour(s)")
+            
+            return deleted_count
+            
+        except Exception as e:
+            self.db.rollback()
+            logger.error(f"Error cleaning up old downloads: {str(e)}")
+            return 0
+
+    def retry_failed_download(self, download_id: str) -> dict:
+        """
+        Retry a failed download by resetting status to pending.
+        
+        Args:
+            download_id: Download queue entry ID
+        
+        Returns:
+            Updated download entry
+        """
+        try:
+            import uuid as uuid_module
+            
+            # Convert string UUID to UUID object if needed
+            if isinstance(download_id, str):
+                download_id = uuid_module.UUID(download_id)
+            
+            download = self.db.query(DownloadQueue).filter(
+                DownloadQueue.id == download_id
+            ).first()
+            
+            if not download:
+                logger.error(f"Download queue entry not found: {download_id}")
+                return {}
+            
+            if download.status != "failed":
+                logger.warning(f"Cannot retry download {download_id}: status is {download.status}, not 'failed'")
+                return {
+                    "error": f"Cannot retry: status is {download.status}, not failed"
+                }
+            
+            # Reset to pending for retry
+            download.status = "pending"
+            download.progress = 0
+            download.error_message = None
+            download.completed_at = None
+            download.updated_at = utc_now()
+            
+            self.db.commit()
+            self.db.refresh(download)
+            
+            logger.info(f"Retry requested for download {download_id}: {download.title}")
+            
+            return {
+                "download_id": str(download.id),
+                "status": download.status,
+                "message": f"Download retry queued for '{download.title}'",
+            }
+            
+        except Exception as e:
+            self.db.rollback()
+            logger.error(f"Error retrying download: {str(e)}")
+            raise
+
+    def delete_download(self, download_id: str) -> dict:
+        """
+        Delete a download from the queue (for cleanup or user cancellation).
+        
+        Args:
+            download_id: Download queue entry ID
+        
+        Returns:
+            Deletion confirmation
+        """
+        try:
+            import uuid as uuid_module
+            
+            # Convert string UUID to UUID object if needed
+            if isinstance(download_id, str):
+                download_id = uuid_module.UUID(download_id)
+            
+            download = self.db.query(DownloadQueue).filter(
+                DownloadQueue.id == download_id
+            ).first()
+            
+            if not download:
+                logger.error(f"Download queue entry not found: {download_id}")
+                return {"error": "Download not found"}
+            
+            title = download.title
+            video_id = download.video_id
+            
+            self.db.delete(download)
+            self.db.commit()
+            
+            logger.info(f"Deleted download {download_id}: {title} (video={video_id})")
+            
+            return {
+                "download_id": download_id,
+                "title": title,
+                "message": "Download removed from queue",
+            }
+            
+        except Exception as e:
+            self.db.rollback()
+            logger.error(f"Error deleting download: {str(e)}")
+            raise
