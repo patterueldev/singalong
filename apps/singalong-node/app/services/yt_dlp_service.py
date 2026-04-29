@@ -35,6 +35,10 @@ class YTDLPService:
         """
         Extract metadata from YouTube URL
 
+        Strategy: Extract video ID from URL and pass just the ID to yt-dlp.
+        This helps bypass YouTube bot detection, since yt-dlp constructs the URL
+        internally rather than using the full URL directly.
+
         Args:
             url: YouTube URL
 
@@ -47,8 +51,14 @@ class YTDLPService:
         if not self.validate_url(url):
             raise YTDLPError("Invalid YouTube URL format")
 
+        # Extract video ID from URL (e.g., "dQw4w9WgXcQ" from full URL)
+        video_id = self._extract_video_id(url)
+        if not video_id:
+            raise YTDLPError("Could not extract video ID from URL")
+
         try:
-            # Run yt-dlp to extract metadata (JSON output)
+            # Run yt-dlp with JUST the video ID (not the full URL)
+            # This helps bypass YouTube bot detection
             result = subprocess.run(
                 [
                     "yt-dlp",
@@ -56,7 +66,7 @@ class YTDLPService:
                     "--no-warnings",
                     "--socket-timeout",
                     str(self.timeout),
-                    url,
+                    video_id,  # Use video ID instead of full URL
                 ],
                 capture_output=True,
                 text=True,
@@ -119,3 +129,36 @@ class YTDLPService:
         if not url or not isinstance(url, str):
             return False
         return "youtube.com" in url or "youtu.be" in url
+
+    def _extract_video_id(self, url: str) -> Optional[str]:
+        """
+        Extract video ID from YouTube URL
+
+        Supports formats:
+        - https://www.youtube.com/watch?v=VIDEO_ID
+        - https://youtu.be/VIDEO_ID
+        - https://youtube.com/watch?v=VIDEO_ID&...
+
+        Args:
+            url: YouTube URL
+
+        Returns:
+            Video ID string, or None if not found
+        """
+        import re
+
+        # Pattern 1: youtu.be/VIDEO_ID
+        match = re.search(r"youtu\.be/([a-zA-Z0-9_-]{11})", url)
+        if match:
+            return match.group(1)
+
+        # Pattern 2: youtube.com/watch?v=VIDEO_ID
+        match = re.search(r"v=([a-zA-Z0-9_-]{11})", url)
+        if match:
+            return match.group(1)
+
+        # Pattern 3: Maybe it's already just a video ID
+        if re.match(r"^[a-zA-Z0-9_-]{11}$", url):
+            return url
+
+        return None
