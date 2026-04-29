@@ -239,19 +239,25 @@ Current extracted data:
 - Language: {metadata.get('language', '')}
 
 Your task:
-1. Use parse_title() to extract artist and title from the YouTube title
-2. Use search_musicbrainz() to verify/improve artist, year information
+1. Use parse_title() to extract song title from the YouTube title (removes metadata like "Instrumental", "Karaoke", etc)
+2. Use search_musicbrainz() to find the correct artist and release year 
 3. Use detect_language() to identify the song's language from title/description
 4. Use search_lyrics() to get additional context if needed
 
 IMPORTANT RULES:
-- Parse_title gives you the most reliable artist extraction from the YouTube title - trust it
-- MusicBrainz returns multiple results sorted by year (earliest first):
-  * If "primary" field exists, it's the earliest/original recording
-  * If you see multiple results, prefer the earliest year (original release)
-  * Only accept results where artist matches parse_title's artist
-  * If artist doesn't match, use parse_title's artist and leave year empty
-- Always prefer parse_title's title over MusicBrainz if parse_title exists
+- Parse_title extracts the SONG TITLE only from YouTube titles (especially for karaoke videos)
+  * For karaoke videos "Song (Metadata) - Channel", parse_title returns just the song title
+  * Do NOT trust parse_title for artist extraction—use MusicBrainz instead
+  * Use parse_title's title to search MusicBrainz, then extract artist from there
+- MusicBrainz search:
+  * Search using parse_title's extracted title
+  * Results are returned sorted by year (earliest first = original)
+  * CRITICAL: Verify that returned results actually match your song
+    - Check the title match (exact or close)
+    - Prefer results with YEARS (confirms real recordings, not fan covers)
+    - Avoid results from 2023+ (likely fan covers or remixes)
+    - If no good matches or low confidence, leave artist/year empty rather than wrong data
+  * Take the first VALID result with a year (prefer oldest years = originals)
 - For language: If the provided language is already set (like "ja" for Japanese), ALWAYS use it and do NOT call detect_language
   * Only use detect_language if language is empty or missing
   * Japanese kanji (especially in titles like "未熟DREAMER") requires detect_language for confirmation

@@ -21,6 +21,7 @@ class ResearchTools:
         """
         Search MusicBrainz for recording information.
         
+        Accepts both artist and title, or just one of them.
         Returns multiple results sorted by release date (earliest first).
         Agent can then pick the best match based on artist and year consistency.
         """
@@ -28,29 +29,41 @@ class ResearchTools:
             import musicbrainzngs
             musicbrainzngs.set_useragent("Singalong", "1.0")
             
-            if not artist or not title:
+            # Allow searching with just title (when artist is unknown)
+            if not title and not artist:
                 return {"status": "no_query"}
             
-            # First try: search with both artist and title explicitly
-            # MusicBrainz search syntax: arid: artist ID, recording: title
-            query = f'recording:"{title}" artist:"{artist}"'
+            # Build search queries in order of preference
+            queries = []
             
-            result = await asyncio.to_thread(
-                musicbrainzngs.search_recordings,
-                query=query,
-                limit=10
-            )
+            if artist and title:
+                # First try: search with both artist and title explicitly
+                queries.append(f'recording:"{title}" artist:"{artist}"')
+                # Second try: simpler artist + title
+                queries.append(f"{artist} {title}")
+            elif title:
+                # Only title available (e.g., from parse_title)
+                queries.append(f'recording:"{title}"')
+                queries.append(title)
+            else:
+                # Only artist available
+                queries.append(artist)
             
-            # If no results, try simpler query
-            if not result.get("recording-list"):
-                query = f"{artist} {title}"
-                result = await asyncio.to_thread(
-                    musicbrainzngs.search_recordings,
-                    query=query,
-                    limit=10
-                )
+            # Try each query until we get results
+            result = None
+            for query in queries:
+                try:
+                    result = await asyncio.to_thread(
+                        musicbrainzngs.search_recordings,
+                        query=query,
+                        limit=10
+                    )
+                    if result.get("recording-list"):
+                        break  # Got results, stop trying
+                except Exception:
+                    continue  # Try next query
             
-            if not result.get("recording-list"):
+            if not result or not result.get("recording-list"):
                 return {"status": "not_found"}
             
             # Collect all recordings with release info
@@ -209,13 +222,17 @@ class ResearchTools:
         - "Artist - Song Title"
         - "[Karaoke] Artist - Title"
         - "Song (Artist)"
+        - "Song (Metadata) - Channel" (karaoke pattern)
+        
+        For karaoke videos with format "Song (Metadata) - Channel",
+        we extract the song name from the first part and discard the channel.
         """
         try:
             import re
             
             title = title.strip()
             
-            # Remove karaoke markers
+            # Remove karaoke/cover markers from start
             cleaned = re.sub(
                 r'^\[(karaoke|instrumental|cover|remix|remix|acoustic|live|cover|\d+)\][\s-]*',
                 '',
@@ -223,8 +240,39 @@ class ResearchTools:
                 flags=re.IGNORECASE
             ).strip()
             
-            # Pattern 1: "Artist - Title"
-            match = re.match(r'^([^-]+?)\s*-\s*(.+)$', cleaned)
+            # CRITICAL FIX: For karaoke videos with format "Song (Metadata) - Channel",
+            # we need to remove metadata in parentheses FIRST before checking for dash pattern.
+            # This prevents misinterpreting "Song (details) - Channel" as "Artist - Title"
+            
+            # Remove parenthetical metadata from the main song part
+            # Strategy: find the dash that separates song from channel,
+            # and clean up only the song part (before the last dash in many cases)
+            
+            # If the title has parentheses followed by a dash (karaoke pattern):
+            # "Bakamitai (Instrumental+Lyrics) (Yakuza 0) - Hamburger Karaoke"
+            # Extract the song info before " - Channel"
+            if ' - ' in cleaned:
+                # Split on the dash
+                parts = cleaned.split(' - ', 1)
+                song_with_metadata = parts[0].strip()
+                channel_or_title = parts[1].strip()
+                
+                # Remove parenthetical metadata from song part
+                # e.g., "Bakamitai (Instrumental+Lyrics) (Yakuza 0)" -> "Bakamitai"
+                song_clean = re.sub(r'\s*\([^)]*\)\s*', ' ', song_with_metadata).strip()
+                song_clean = re.sub(r'\s+', ' ', song_clean)  # Clean up multiple spaces
+                
+                # If we got a song (before dash), return it
+                if song_clean:
+                    return {
+                        "status": "parsed",
+                        "title": song_clean,
+                        "artist": ""  # Can't determine artist from this format
+                    }
+            
+            # Pattern 1: "Artist - Title" (classic format)
+            # But only apply this if we didn't already handle the karaoke pattern above
+            match = re.match(r'^([^-()]+?)\s*-\s*(.+)$', cleaned)
             if match:
                 artist, song = match.groups()
                 # Clean up title: remove parenthetical content (romanization alternatives)
@@ -247,8 +295,9 @@ class ResearchTools:
                     "artist": artist_part.strip()
                 }
             
-            # Couldn't parse, return original
-            cleaned_title = re.sub(r'\s*\([^)]*\)\s*$', '', cleaned).strip()
+            # Couldn't parse, return original with parentheses removed
+            cleaned_title = re.sub(r'\s*\([^)]*\)\s*', ' ', cleaned).strip()
+            cleaned_title = re.sub(r'\s+', ' ', cleaned_title)  # Clean up spaces
             return {
                 "status": "not_parsed",
                 "title": cleaned_title
