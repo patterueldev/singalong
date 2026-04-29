@@ -98,34 +98,36 @@ async def identify_song(request: IdentifyRequest) -> SongMetadataResponse:
         logger.error(f"YT-DLP error identifying song: {error_str}")
 
         # Map error messages to HTTP status codes
-        if "Invalid YouTube URL" in error_str:
+        error_lower = error_str.lower()
+        
+        if "invalid youtube url" in error_str:
             raise HTTPException(
                 status_code=400,
                 detail="Invalid YouTube URL format",
             )
-        if "not found" in error_str.lower() or "removed" in error_str.lower():
+        if "unavailable" in error_lower or "not found" in error_lower or "removed" in error_lower:
             raise HTTPException(
                 status_code=404,
                 detail="Video not found or has been removed",
             )
-        if "private" in error_str or "age-restricted" in error_str:
+        if "private" in error_lower or "age-restricted" in error_lower or "age restricted" in error_lower:
             raise HTTPException(
                 status_code=403,
                 detail="Video is private or age-restricted",
             )
-        if "throttled" in error_str:
+        if "throttled" in error_lower:
             raise HTTPException(
                 status_code=429,
                 detail="Request throttled by YouTube. Please try again later.",
             )
-        if "timed out" in error_str.lower():
+        if "timed out" in error_lower:
             raise HTTPException(
                 status_code=504,
                 detail="Request timed out. Please try again with a different video.",
             )
 
-        # Generic error
-        raise HTTPException(status_code=400, detail=error_str)
+        # Generic error (default to 400)
+        raise HTTPException(status_code=400, detail="Failed to identify song. Please check the URL and try again.")
 
     except HTTPException:
         # Re-raise HTTP exceptions
