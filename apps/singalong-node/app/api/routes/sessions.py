@@ -438,6 +438,10 @@ async def list_reservations(
     """
     
     try:
+        from uuid import UUID as UUID_type
+        from app.models.db_models import Reservation
+        from sqlalchemy import asc, join
+        
         logger.info(f"List reservations: session={session_id}")
         
         # Verify session exists
@@ -452,12 +456,39 @@ async def list_reservations(
                 detail="Session not found",
             )
         
-        # TODO: Query Master for reservations ordered by order_position
-        # For MVP, return placeholder response
+        # Query reservations for this session, ordered by position
+        try:
+            session_uuid = UUID_type(session_id)
+        except ValueError:
+            session_uuid = session.id if hasattr(session, 'id') else None
+            if not session_uuid:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Invalid session ID",
+                )
+        
+        reservations = db.query(Reservation).filter(
+            Reservation.session_id == session_uuid
+        ).order_by(asc(Reservation.position)).all()
+        
+        # Build response with song details
+        reservation_list = [
+            {
+                "id": str(r.id),
+                "sessionId": str(r.session_id),
+                "songId": str(r.song_id),
+                "position": r.position,
+                "status": r.status,
+                "reservedByNickname": r.reserved_by_nickname,
+                "reservedAt": r.reserved_at.isoformat() if r.reserved_at else None,
+                "userId": str(r.user_id) if r.user_id else None,
+            }
+            for r in reservations
+        ]
         
         return {
-            "reservations": [],
-            "total": 0,
+            "reservations": reservation_list,
+            "total": len(reservation_list),
         }
         
     except HTTPException:
@@ -504,6 +535,10 @@ async def reserve_song(
     """
     
     try:
+        from uuid import UUID as UUID_type
+        from app.models.db_models import Reservation, Song
+        from sqlalchemy import desc
+        
         logger.info(f"Reserve song: session={session_id}, song={song_id}, reserved_by={reserved_by_user_id}, user={user.sub}")
         
         # Verify session exists
@@ -518,23 +553,92 @@ async def reserve_song(
                 detail="Session not found",
             )
         
-        # TODO: Create reservation in Master database
-        # Validation:
-        # - Song must exist and be ACTIVE
-        # - Get next order_position for this session
-        # - Create Reservation record
-        # - Return created reservation
+        # Verify song exists and is ACTIVE in local database
+        try:
+            song_uuid = UUID_type(song_id)
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid song ID format",
+            )
+        
+        song = db.query(Song).filter(
+            Song.id == song_uuid,
+            Song.status == "ACTIVE"
+        ).first()
+        
+        if not song:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Song not found or not available",
+            )
+        
+        # Get session UUID
+        try:
+            session_uuid = UUID_type(session_id)
+        except ValueError:
+            session_uuid = session.id if hasattr(session, 'id') else None
+            if not session_uuid:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Invalid session ID",
+                )
+        
+        # Check if song already reserved in this session (unique constraint)
+        existing = db.query(Reservation).filter(
+            Reservation.session_id == session_uuid,
+            Reservation.song_id == song_uuid
+        ).first()
+        
+        if existing:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Song already reserved in this session",
+            )
+        
+        # Get next position (max position + 1)
+        max_position = db.query(Reservation).filter(
+            Reservation.session_id == session_uuid
+        ).with_entities(Reservation.position).order_by(desc(Reservation.position)).first()
+        
+        next_position = (max_position[0] if max_position else 0) + 1
+        
+        # Get nickname if available (from JWT if attendee, or use admin context)
+        nickname = None
+        if user.role == "attendee" and user.sub:
+            # TODO: Lookup user nickname from database
+            nickname = f"User-{user.sub[:8]}"
+        elif reserved_by_user_id:
+            # Admin context: use provided user_id
+            nickname = f"User-{reserved_by_user_id[:8]}"
+        
+        # Create reservation
+        reservation = Reservation(
+            id=uuid.uuid4(),
+            session_id=session_uuid,
+            song_id=song_uuid,
+            user_id=UUID_type(reserved_by_user_id) if reserved_by_user_id else (UUID_type(user.sub) if user.sub else None),
+            reserved_by_nickname=nickname,
+            position=next_position,
+            status="reserved" if hasattr(Reservation, 'status') else "pending",
+        )
+        
+        db.add(reservation)
+        db.commit()
+        
+        logger.info(f"Reserved song: {song.title} at position {next_position}")
         
         return {
-            "reservation_id": str(uuid.uuid4()),
-            "song_id": song_id,
-            "order_position": 1,
+            "reservation_id": str(reservation.id),
+            "song_id": str(reservation.song_id),
+            "order_position": next_position,
             "status": "reserved",
         }
         
     except HTTPException:
         raise
     except Exception as e:
+        db.rollback()
         logger.error(f"Error reserving song: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -568,6 +672,10 @@ async def cancel_reservation(
     """
     
     try:
+        from uuid import UUID as UUID_type
+        from app.models.db_models import Reservation
+        from sqlalchemy import asc
+        
         logger.info(f"Cancel reservation: session={session_id}, reservation={reservation_id}, user={user.sub}")
         
         # Verify session exists
@@ -582,18 +690,60 @@ async def cancel_reservation(
                 detail="Session not found",
             )
         
-        # TODO: Delete reservation from Master database
-        # Check authorization:
-        # - If admin: allow
-        # - If attendee: verify they own the reservation
-        # Re-number remaining reservations' order_position
+        # Parse UUIDs
+        try:
+            session_uuid = UUID_type(session_id)
+            reservation_uuid = UUID_type(reservation_id)
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid session or reservation ID",
+            )
         
-        # For now, return success
+        # Find reservation
+        reservation = db.query(Reservation).filter(
+            Reservation.id == reservation_uuid,
+            Reservation.session_id == session_uuid
+        ).first()
+        
+        if not reservation:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Reservation not found",
+            )
+        
+        # Authorization check
+        if user.role != "admin" and reservation.user_id != UUID_type(user.sub) if user.sub else False:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You can only cancel your own reservations",
+            )
+        
+        # Get the position of deleted reservation
+        cancelled_position = reservation.position
+        
+        # Delete reservation
+        db.delete(reservation)
+        db.flush()
+        
+        # Re-number remaining reservations with higher positions
+        higher_reservations = db.query(Reservation).filter(
+            Reservation.session_id == session_uuid,
+            Reservation.position > cancelled_position
+        ).order_by(asc(Reservation.position)).all()
+        
+        for i, res in enumerate(higher_reservations, start=cancelled_position):
+            res.position = i
+        
+        db.commit()
+        logger.info(f"Cancelled reservation {reservation_id}, re-numbered {len(higher_reservations)} reservations")
+        
         return None
         
     except HTTPException:
         raise
     except Exception as e:
+        db.rollback()
         logger.error(f"Error canceling reservation: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -630,6 +780,10 @@ async def change_reservation_order(
     """
     
     try:
+        from uuid import UUID as UUID_type
+        from app.models.db_models import Reservation
+        from sqlalchemy import asc
+        
         logger.info(f"Change order: session={session_id}, reservation={reservation_id}, new_order={new_order}, user={user.sub}")
         
         # Authorization check
@@ -651,12 +805,72 @@ async def change_reservation_order(
                 detail="Session not found",
             )
         
-        # TODO: Update reservation order in Master database
+        # Parse UUIDs
+        try:
+            session_uuid = UUID_type(session_id)
+            reservation_uuid = UUID_type(reservation_id)
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid session or reservation ID",
+            )
+        
+        # Find reservation
+        reservation = db.query(Reservation).filter(
+            Reservation.id == reservation_uuid,
+            Reservation.session_id == session_uuid
+        ).first()
+        
+        if not reservation:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Reservation not found",
+            )
+        
+        # Get all reservations for this session
+        all_reservations = db.query(Reservation).filter(
+            Reservation.session_id == session_uuid
+        ).order_by(asc(Reservation.position)).all()
+        
+        # Validate new_order is within bounds
+        if new_order < 1 or new_order > len(all_reservations):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"New order must be between 1 and {len(all_reservations)}",
+            )
+        
+        # Get current position
+        current_position = reservation.position
+        
+        if current_position == new_order:
+            # No change needed
+            return {
+                "reservation_id": reservation_id,
+                "order_position": new_order,
+            }
+        
         # Algorithm:
-        # - Get current order_position
-        # - Remove from current position
-        # - Insert at new_order position
-        # - Re-number affected positions
+        # If moving down (current < new): shift items between current+1 and new down by 1
+        # If moving up (current > new): shift items between new and current-1 up by 1
+        
+        if current_position < new_order:
+            # Moving down (e.g., from position 2 to 4)
+            # Items at positions 3,4 shift up to 2,3
+            for res in all_reservations:
+                if current_position < res.position <= new_order:
+                    res.position -= 1
+        else:
+            # Moving up (e.g., from position 4 to 2)
+            # Items at positions 2,3 shift down to 3,4
+            for res in all_reservations:
+                if new_order <= res.position < current_position:
+                    res.position += 1
+        
+        # Set target position
+        reservation.position = new_order
+        
+        db.commit()
+        logger.info(f"Moved reservation from position {current_position} to {new_order}")
         
         return {
             "reservation_id": reservation_id,
@@ -666,6 +880,7 @@ async def change_reservation_order(
     except HTTPException:
         raise
     except Exception as e:
+        db.rollback()
         logger.error(f"Error changing order: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
