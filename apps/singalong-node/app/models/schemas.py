@@ -211,10 +211,6 @@ class SongMetadataResponse(BaseModel):
     url: str = Field(..., description="Full URL to video")
     tags: list[str] = Field(default_factory=list, description="Tags/keywords from metadata")
 
-    # Master database lookup results
-    exists: bool = Field(default=False, description="Whether song exists in Master database")
-    song_id: Optional[str] = Field(default=None, description="Master song ID if exists, null otherwise")
-
 
 class DownloadSongRequest(BaseModel):
     """Request to download and finalize a song"""
