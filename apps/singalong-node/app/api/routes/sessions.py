@@ -11,6 +11,7 @@ from app.database import get_db
 from app.middleware.auth import verify_bearer_token
 from app.services.session_service import SessionService
 from app.api.dependencies import get_current_user, TokenPayload
+from app.models.db_models import ReservationStatus
 
 logger = logging.getLogger(__name__)
 
@@ -619,7 +620,7 @@ async def reserve_song(
             user_id=UUID_type(reserved_by_user_id) if reserved_by_user_id else (UUID_type(user.sub) if user.sub else None),
             reserved_by_nickname=nickname,
             position=next_position,
-            status="reserved" if hasattr(Reservation, 'status') else "pending",
+            status=ReservationStatus.PENDING,  # Use correct enum value
         )
         
         db.add(reservation)
