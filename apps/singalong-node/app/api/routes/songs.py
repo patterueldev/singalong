@@ -144,16 +144,15 @@ async def identify_song(request: IdentifyRequest) -> SongMetadataResponse:
 @router.post("/enhance", response_model=SongMetadataResponse, status_code=200)
 async def enhance_song(request: EnhanceSongRequest) -> SongMetadataResponse:
     """
-    Enhance song metadata using agent-based orchestration.
+    Enhance song metadata using OpenAI agent with function calling.
     
-    Uses multiple specialized agents to research and verify:
-    - Title and artist (DescriptionParser + MusicBrainz)
-    - Year (MusicBrainz)
-    - Language (LanguageDetection)
-    - Lyrics (LyricsResearch)
+    Uses OpenAI to intelligently coordinate multiple research tools:
+    - parse_title: Extract artist and title from YouTube title
+    - search_musicbrainz: Verify artist, year from official database
+    - detect_language: Identify song language
+    - search_lyrics: Get lyrics for context
     
-    Accepts the output from /identify endpoint and returns enhanced version.
-    Gracefully degrades to original metadata if agents fail.
+    The agent decides which tools to call based on what's missing/unclear.
     
     **Request Body (from /identify output):**
     ```json
@@ -173,25 +172,24 @@ async def enhance_song(request: EnhanceSongRequest) -> SongMetadataResponse:
     
     **Response:**
     Same structure with improved fields: title, artist, year, language
-    
-    **Example Enhanced Response:**
-    ```json
-    {
-      "videoId": "x_6nob9_WLc",
-      "source": "youtube",
-      "title": "未熟DREAMER",
-      "artist": "Aqours",
-      "duration": 352,
-      "thumbnail": "...",
-      "year": "2016",
-      "language": "ja",
-      "url": "...",
-      "tags": [...],
-      "lyrics": ""
-    }
-    ```
     """
     try:
+        if not settings.openai_api_key:
+            logger.warning("OpenAI API key not configured, returning original metadata")
+            return SongMetadataResponse(
+                videoId=request.videoId,
+                source=request.source,
+                title=request.title,
+                artist=request.artist,
+                duration=request.duration,
+                thumbnail=request.thumbnail,
+                year=request.year,
+                language=request.language,
+                url=request.url,
+                tags=request.tags,
+                lyrics="",
+            )
+
         logger.info(f"Enhancing song: {request.title}")
 
         # Convert request to metadata dict
@@ -220,8 +218,8 @@ async def enhance_song(request: EnhanceSongRequest) -> SongMetadataResponse:
             except Exception as e:
                 logger.warning(f"Could not fetch YouTube description: {str(e)}")
 
-        # Use orchestrator to enhance metadata
-        enhancement_service = EnhancementService()
+        # Use OpenAI agent to enhance metadata
+        enhancement_service = EnhancementService(settings.openai_api_key)
         enhanced = await enhancement_service.enhance(metadata)
 
         # Return full response with enhanced fields
@@ -240,9 +238,8 @@ async def enhance_song(request: EnhanceSongRequest) -> SongMetadataResponse:
         )
 
     except Exception as e:
-        logger.error(f"Error enhancing song: {str(e)}")
+        logger.error(f"Error enhancing song: {str(e)}", exc_info=True)
         # Graceful degradation: return original metadata
-        logger.info("Returning original metadata due to enhancement error")
         return SongMetadataResponse(
             videoId=request.videoId,
             source=request.source,

@@ -1,16 +1,16 @@
 """
-Service for song metadata enhancement using agent-based orchestration.
+Service for song metadata enhancement using OpenAI agents.
 
-The enhancement service coordinates multiple agents that specialize in:
-- Parsing metadata from titles/descriptions
-- Researching from free databases (MusicBrainz, AniDB)
-- Detecting language and extracting lyrics
+The enhancement service uses OpenAI with function calling to:
+- Parse YouTube titles intelligently
+- Research metadata from MusicBrainz, lyrics, language detection
+- Iterate until confident in enhanced data
 """
 
 import logging
 from typing import Dict, Any
 
-from ..services.orchestrator import EnhancementOrchestrator
+from app.services.song_enhancement_agent import SongEnhancementAgent
 
 logger = logging.getLogger(__name__)
 
@@ -22,15 +22,15 @@ class EnhancementError(Exception):
 
 class EnhancementService:
     """
-    Enhance song metadata using agent-based orchestration.
+    Enhance song metadata using OpenAI agent with function calling.
     
-    Uses multiple specialized agents to research and verify:
-    - Title and artist (DescriptionParser + MusicBrainz)
-    - Year and genre (MusicBrainz + AniDB)
-    - Language (LanguageDetection)
-    - Lyrics (LyricsResearch)
+    The agent coordinates multiple research tools:
+    - parse_title: Extract artist and title from YouTube title
+    - search_musicbrainz: Verify artist, year from official database
+    - detect_language: Identify song language
+    - search_lyrics: Get lyrics for language detection context
     
-    Agents run in parallel with graceful degradation.
+    Agent iterates strategically to improve accuracy.
     """
 
     # Validation constraints
@@ -47,19 +47,19 @@ class EnhancementService:
         "ar", "hi", "bn", "pa", "te", "mr", "ta", "gu", "kn", "ml"
     }
 
-    def __init__(self):
+    def __init__(self, api_key: str):
         """
-        Initialize enhancement service with agent orchestrator.
+        Initialize enhancement service with OpenAI agent.
         
-        In Phase 1: Orchestrator has no agents, returns original metadata
-        In Phase 2: Agents are added and orchestrator coordinates them
+        Args:
+            api_key: OpenAI API key for function calling
         """
-        self.orchestrator = EnhancementOrchestrator()
-        logger.info("EnhancementService initialized with orchestrator")
+        self.agent = SongEnhancementAgent(api_key)
+        logger.info("EnhancementService initialized with OpenAI agent")
 
     async def enhance(self, metadata: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Enhance song metadata using orchestrated agents.
+        Enhance song metadata using OpenAI agent.
         
         Args:
             metadata: Original metadata from identify endpoint:
@@ -76,39 +76,21 @@ class EnhancementService:
                 - description: Optional[str]
         
         Returns:
-            Enhanced metadata with improved fields, or original on error.
+            Enhanced metadata with improved: title, artist, year, language
             Always returns valid metadata (never None/null).
             Always HTTP 200 OK (enhancement is optional).
-        
-        Examples:
-            Input:
-            {
-                "title": "[Karaoke 0] Aqours - 未熟DREAMER...",
-                "artist": "",
-                "year": "",
-                "language": ""
-            }
-            
-            Output (after agents research):
-            {
-                "title": "未熟DREAMER",
-                "artist": "Aqours",
-                "year": "2016",
-                "language": "ja"
-            }
         """
         try:
-            logger.debug(f"Enhancing metadata for: {metadata.get('title', 'unknown')}")
+            logger.info(f"Enhancing metadata for: {metadata.get('title', 'unknown')}")
             
-            # Use orchestrator to enhance metadata
-            enhanced = await self.orchestrator.enhance(metadata)
+            # Use agent to enhance metadata
+            enhanced = await self.agent.enhance(metadata)
             
             # Validate enhanced metadata
             validated = self._validate_enhanced(enhanced, metadata)
             
             logger.info(
-                f"Enhancement complete for: {metadata.get('title', 'unknown')}",
-                extra={"enhanced_fields": list(validated.keys())}
+                f"Enhancement complete: {validated.get('artist', 'N/A')} - {validated.get('title', 'N/A')}"
             )
             
             return validated
@@ -135,7 +117,7 @@ class EnhancementService:
         Invalid fields revert to original values.
         
         Args:
-            enhanced: Enhanced metadata from agents
+            enhanced: Enhanced metadata from agent
             original: Original metadata (fallback)
         
         Returns:
