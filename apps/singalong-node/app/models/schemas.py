@@ -210,6 +210,16 @@ class SongMetadataResponse(BaseModel):
     description: Optional[str] = Field(default="", description="Video description")
     viewCount: int = Field(default=0, description="View count")
     url: str = Field(..., description="Full YouTube URL")
+    exists_in_master: bool = Field(
+        default=False,
+        description="Whether this song already exists in Master database"
+    )
+    master_song_id: Optional[str] = Field(
+        default=None, description="Master song ID if already exists"
+    )
+    master_song_status: Optional[str] = Field(
+        default=None, description="Status in Master (e.g., completed, downloading)"
+    )
 
 
 class DownloadSongRequest(BaseModel):

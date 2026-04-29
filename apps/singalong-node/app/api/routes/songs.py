@@ -26,6 +26,8 @@ from app.models.schemas import (
 )
 from app.services.graphql_client import MasterGraphQLClient, GraphQLError
 from app.services.enhancement_service import EnhancementService
+from app.services.yt_dlp_service import YTDLPService, YTDLPError
+from app.services.song_lookup_service import SongLookupService, SongLookupError
 from app.config import settings
 
 logger = logging.getLogger(__name__)
@@ -47,56 +49,71 @@ async def identify_song(request: IdentifyRequest) -> SongMetadataResponse:
     """
     Identify song metadata from YouTube URL
 
-    Extracts metadata from YouTube video using yt-dlp on the master server.
-    User can then edit the metadata before downloading.
+    Step 1: Node uses local YT-DLP to extract metadata from YouTube video
+    Step 2: Node checks if song already exists in Master's database
+    Step 3: Returns metadata + existence flag
+
+    This avoids unnecessary round-trips to Master for every identification.
+    Master is only called to check if the song already exists.
 
     Args:
         request: IdentifyRequest with YouTube URL
 
     Returns:
-        SongMetadataResponse with extracted metadata
+        SongMetadataResponse with extracted metadata and existence flag
 
     Raises:
         HTTPException: 400 if invalid URL, 404 if video not found, 500 if extraction fails
     """
     try:
-        logger.info(f"Identifying song from URL: {request.url}")
+        logger.info(f"Identifying song from URL (local): {request.url}")
 
-        graphql_client = MasterGraphQLClient(settings.master_graphql_url)
+        # Step 1: Use local YT-DLP to extract metadata
+        yt_dlp = YTDLPService(timeout=30)
+        metadata = yt_dlp.extract_metadata(request.url)
 
-        query = """
-        query IdentifySong($url: String!) {
-          identifySong(url: $url) {
-            videoId
-            title
-            artist
-            duration
-            thumbnail
-            year
-            channel
-            language
-            description
-            viewCount
-            url
-          }
-        }
-        """
+        logger.info(f"✓ Extracted metadata: {metadata.get('title')}")
 
-        response = await graphql_client.execute_query(
-            query, variables={"url": request.url}
+        # Step 2: Check if song exists in Master database
+        exists_in_master = False
+        master_song_id = None
+        master_song_status = None
+
+        try:
+            lookup_service = SongLookupService(settings.master_graphql_url)
+            exists, song_data = await lookup_service.check_song_exists(
+                video_id=metadata.get("videoId"),
+                title=metadata.get("title"),
+            )
+
+            if exists and song_data:
+                exists_in_master = True
+                master_song_id = song_data.get("id")
+                master_song_status = song_data.get("status")
+                logger.info(
+                    f"✓ Song exists in Master: {master_song_id} (status: {master_song_status})"
+                )
+            else:
+                logger.info(
+                    f"✓ Song not in Master yet: {metadata.get('title')}"
+                )
+
+        except SongLookupError as e:
+            # If lookup fails, log but don't fail the whole request
+            # User can still proceed with enhancement/download
+            logger.warning(f"Could not check Master: {str(e)}")
+
+        # Step 3: Return metadata with existence flag
+        return SongMetadataResponse(
+            **metadata,
+            exists_in_master=exists_in_master,
+            master_song_id=master_song_id,
+            master_song_status=master_song_status,
         )
 
-        metadata = response.get("identifySong")
-        if not metadata:
-            logger.error(f"No metadata returned from master for {request.url}")
-            raise HTTPException(status_code=500, detail="Failed to extract metadata")
-
-        logger.info(f"Successfully identified: {metadata.get('title')}")
-        return SongMetadataResponse(**metadata)
-
-    except GraphQLError as e:
+    except YTDLPError as e:
         error_str = str(e)
-        logger.error(f"GraphQL error identifying song: {error_str}")
+        logger.error(f"YT-DLP error identifying song: {error_str}")
 
         # Map error messages to HTTP status codes
         if "Invalid YouTube URL" in error_str:
