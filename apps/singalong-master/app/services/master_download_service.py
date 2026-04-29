@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 class MasterDownloadService:
     """Service for downloading videos via YT-DLP"""
 
-    def __init__(self, output_dir: str = "./data/master/videos"):
+    def __init__(self, output_dir: str = "/data/master/videos"):
         """
         Initialize download service.
 
