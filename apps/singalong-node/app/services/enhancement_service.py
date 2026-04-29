@@ -208,7 +208,7 @@ Return ONLY valid JSON, no other text."""
             )
 
             # Parse JSON from response
-            content = response.choices[0].message.content.strip()
+            content = str(response.choices[0].message.content).strip()
 
             # Try to extract JSON if wrapped in markdown
             if "```json" in content:
@@ -236,10 +236,10 @@ Return ONLY valid JSON, no other text."""
         Ensures all fields are strings and handles invalid values gracefully
         """
         try:
-            title = (response.get("title") or "").strip()
-            artist = (response.get("artist") or "").strip()
-            year = (response.get("year") or "").strip()
-            language = (response.get("language") or "").strip()
+            title = str(response.get("title") or "").strip()
+            artist = str(response.get("artist") or "").strip()
+            year = str(response.get("year") or "").strip()
+            language = str(response.get("language") or "").strip()
 
             # Validate title
             if not title:
