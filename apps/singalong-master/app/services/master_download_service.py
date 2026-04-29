@@ -51,18 +51,17 @@ class MasterDownloadService:
 
             # Build yt-dlp command
             output_path = os.path.join(self.output_dir, filename)
-            output_template = os.path.splitext(output_path)[0]  # Remove .mp4
 
             cmd = [
                 "yt-dlp",
                 "--format",
-                "best",  # Best quality available
+                "best[ext=mp4]/best",  # Prefer mp4, fallback to best available
                 "--socket-timeout",
                 "30",
                 "--quiet",  # Less verbose
                 "--no-warnings",
                 "-o",
-                output_template,  # Output template without extension
+                output_path,  # Use full path with extension so yt-dlp preserves it
                 f"https://www.youtube.com/watch?v={video_id}",
             ]
 
@@ -137,18 +136,17 @@ class MasterDownloadService:
             logger.info(f"Starting sync download: {video_id} → {filename}")
 
             output_path = os.path.join(self.output_dir, filename)
-            output_template = os.path.splitext(output_path)[0]
 
             cmd = [
                 "yt-dlp",
                 "--format",
-                "best",
+                "best[ext=mp4]/best",  # Prefer mp4, fallback to best available
                 "--socket-timeout",
                 "30",
                 "--quiet",
                 "--no-warnings",
                 "-o",
-                output_template,
+                output_path,  # Use full path with extension
                 f"https://www.youtube.com/watch?v={video_id}",
             ]
 
@@ -158,6 +156,12 @@ class MasterDownloadService:
                 text=True,
                 timeout=timeout,
             )
+
+            logger.info(f"yt-dlp return code: {result.returncode}")
+            if result.stdout:
+                logger.debug(f"yt-dlp stdout: {result.stdout[:200]}")
+            if result.stderr:
+                logger.debug(f"yt-dlp stderr: {result.stderr[:200]}")
 
             if result.returncode != 0:
                 error_msg = result.stderr or "Unknown error"
@@ -172,9 +176,14 @@ class MasterDownloadService:
 
                 return None, error_msg
 
+            logger.info(f"Checking if file exists: {output_path}")
             if not os.path.exists(output_path):
+                # Try to find what files were created
+                import glob
+                pattern = os.path.join(self.output_dir, "*")
+                files_in_dir = glob.glob(pattern)
+                logger.error(f"File not created at {output_path}. Files in {self.output_dir}: {files_in_dir}")
                 error_msg = f"File not created at {output_path}"
-                logger.error(error_msg)
                 return None, error_msg
 
             file_size = os.path.getsize(output_path)
