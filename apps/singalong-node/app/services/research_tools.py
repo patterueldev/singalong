@@ -110,26 +110,74 @@ class ResearchTools:
         """
         Detect language from text using multiple sources.
         
+        For CJK scripts: First check for hiragana/katakana (Japanese) or Hangul (Korean)
+        before falling back to langdetect which can be inaccurate on short mixed text.
+        
         Returns ISO 639-1 language code.
         """
         try:
-            from langdetect import detect, detect_langs
-            
             if not text or len(text) < 3:
                 return {"status": "insufficient_text"}
             
-            # Get language with confidence
+            # First: Check for script-specific indicators
+            # Japanese hiragana range: U+3040-U+309F
+            # Japanese katakana range: U+30A0-U+30FF
+            # Korean Hangul range: U+AC00-U+D7AF, U+1100-U+11FF
+            
+            has_hiragana = any('\u3040' <= c <= '\u309F' for c in text)
+            has_katakana = any('\u30A0' <= c <= '\u30FF' for c in text)
+            has_hangul = any('\uAC00' <= c <= '\uD7AF' or '\u1100' <= c <= '\u11FF' for c in text)
+            
+            # If we have hiragana or katakana, it's definitely Japanese
+            if has_hiragana or has_katakana:
+                return {
+                    "status": "detected",
+                    "language": "ja",
+                    "confidence": 0.99,
+                    "method": "script_detection"
+                }
+            
+            # If we have Hangul, it's definitely Korean
+            if has_hangul:
+                return {
+                    "status": "detected",
+                    "language": "ko",
+                    "confidence": 0.99,
+                    "method": "script_detection"
+                }
+            
+            # Second: Use langdetect for other languages
             try:
+                from langdetect import detect, detect_langs
+                
                 lang = detect(text)
                 langs = detect_langs(text)
                 confidence = next(
                     (l.prob for l in langs if l.lang == lang),
                     0
                 )
+                
+                # Fix: langdetect sometimes incorrectly detects Japanese CJK as Korean
+                # If langdetect says "ko" but we see CJK characters, double-check with langdetect_cld
+                if lang == "ko":
+                    has_cjk = any('\u4E00' <= c <= '\u9FFF' for c in text)  # CJK Unified Ideographs
+                    if has_cjk:
+                        # CJK-only text detected as Korean is often wrong, try detecting again
+                        # or prefer Japanese as more likely for CJK-only text with low confidence
+                        if confidence < 0.7:
+                            logger.warning(f"Low confidence Korean detection ({confidence}) for CJK text: {text[:20]}... - may be Japanese")
+                            return {
+                                "status": "detected",
+                                "language": "ja",
+                                "confidence": 0.5,
+                                "method": "cjk_heuristic_correction"
+                            }
+                
                 return {
                     "status": "detected",
                     "language": lang,
-                    "confidence": confidence
+                    "confidence": confidence,
+                    "method": "langdetect"
                 }
             except:
                 return {"status": "detection_failed"}
