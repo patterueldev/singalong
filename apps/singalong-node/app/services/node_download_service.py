@@ -325,3 +325,29 @@ class NodeDownloadService:
             self.db.rollback()
             logger.error(f"Error deleting download: {str(e)}")
             raise
+
+    def clear_pending_downloads(self) -> int:
+        """
+        Remove all pending and in_progress downloads from the queue.
+        
+        Useful for resetting the download queue after crashes or when 
+        old test data is blocking new downloads.
+        
+        Returns:
+            Number of downloads removed
+        """
+        try:
+            deleted_count = self.db.query(DownloadQueue).filter(
+                DownloadQueue.status.in_(["pending", "in_progress"])
+            ).delete()
+            
+            self.db.commit()
+            
+            logger.warning(f"Cleared {deleted_count} pending/in_progress downloads from queue")
+            
+            return deleted_count
+            
+        except Exception as e:
+            self.db.rollback()
+            logger.error(f"Error clearing pending downloads: {str(e)}")
+            raise

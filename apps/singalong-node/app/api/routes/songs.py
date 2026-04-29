@@ -909,6 +909,45 @@ async def cleanup_old_downloads(
         raise HTTPException(status_code=500, detail="Failed to cleanup downloads")
 
 
+@router.post("/downloads/clear-pending", status_code=200)
+async def clear_pending_downloads(
+    db: SQLSession = Depends(get_db),
+) -> dict:
+    """
+    DANGEROUS: Immediately remove ALL pending and in-progress downloads.
+    
+    Use this to reset the download queue after crashes or when old test data 
+    is blocking new downloads. This will force-clear all queued downloads 
+    regardless of age or status.
+    
+    Warning: This is a destructive operation and cannot be undone.
+    
+    Returns:
+        200 OK: All pending downloads cleared
+        500 Internal Server Error: Operation failed
+    """
+    try:
+        logger.warning("ADMIN OPERATION: Force-clearing all pending downloads")
+        
+        from app.services.node_download_service import NodeDownloadService
+        download_service = NodeDownloadService(db)
+        
+        deleted_count = download_service.clear_pending_downloads()
+        
+        return {
+            "deleted_count": deleted_count,
+            "message": f"Force-cleared {deleted_count} pending/in_progress downloads from queue",
+            "warning": "This operation removed all pending downloads without waiting for completion",
+        }
+        
+    except HTTPException:
+        # Re-raise HTTPException without catching it
+        raise
+    except Exception as e:
+        logger.exception(f"Error clearing pending downloads: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to clear pending downloads")
+
+
 @router.get("/{song_id}")
 async def get_song(
     song_id: str,
