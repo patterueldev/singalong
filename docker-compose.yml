@@ -14,6 +14,7 @@ services:
       - "5001:5001"
     volumes:
       - ./apps/singalong-master:/app
+      - ./data/master:/data/master  # Mount master video storage
       - /app/__pycache__  # Exclude pycache from volume mount
     environment:
       - ENVIRONMENT=development
@@ -31,6 +32,7 @@ services:
       - "5002:5002"
     volumes:
       - ./apps/singalong-node:/app
+      - ./data/node:/data/node  # Mount node video storage
       - /app/__pycache__  # Exclude pycache from volume mount
     environment:
       - ENVIRONMENT=development
