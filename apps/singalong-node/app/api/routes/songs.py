@@ -984,6 +984,7 @@ async def get_songbook(
     limit: int = Query(10, ge=1, le=100, description="Results per page"),
     offset: int = Query(0, ge=0, description="Pagination offset"),
     sort: str = Query("title", regex="^(title|artist|year)$", description="Sort field"),
+    sessionId: Optional[str] = Query(None, description="Session ID to check reservation status"),
     db: SQLSession = Depends(get_db),
 ) -> dict:
     """
@@ -999,6 +1000,7 @@ async def get_songbook(
     - limit: Results per page (1-100, default 10)
     - offset: Pagination offset (default 0)
     - sort: Sort order - title, artist, or year (default: title)
+    - sessionId: Session ID to check reservation status (optional, returns isReserved field)
 
     Returns:
     {
@@ -1010,7 +1012,8 @@ async def get_songbook(
                 "duration": 180,
                 "year": 2020,
                 "thumbnail": "https://...",
-                "status": "ACTIVE"
+                "status": "ACTIVE",
+                "isReserved": true or false or null  (null if sessionId not provided)
             }
         ],
         "total": 142,
@@ -1049,6 +1052,21 @@ async def get_songbook(
         # Apply pagination
         songs = query.limit(limit).offset(offset).all()
 
+        # Build reservation lookup if sessionId provided
+        reserved_song_ids = set()
+        if sessionId:
+            from uuid import UUID as UUID_type
+            from app.models.db_models import Reservation
+            
+            try:
+                session_uuid = UUID_type(sessionId)
+                reserved_songs = db.query(Reservation.song_id).filter(
+                    Reservation.session_id == session_uuid
+                ).all()
+                reserved_song_ids = {str(r[0]) for r in reserved_songs}
+            except (ValueError, Exception) as e:
+                logger.warning(f"Could not check reservation status for session {sessionId}: {str(e)}")
+
         # Build response
         song_list = [
             {
@@ -1062,6 +1080,7 @@ async def get_songbook(
                 "thumbnail": song.thumbnail,
                 "status": song.status,
                 "syncedAt": song.synced_at.isoformat() if song.synced_at else None,
+                "isReserved": str(song.id) in reserved_song_ids if sessionId else None,
             }
             for song in songs
         ]
