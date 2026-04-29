@@ -92,18 +92,17 @@ class YTDLPService:
             # Extract and normalize fields
             return {
                 "videoId": data.get("id"),
+                "source": "youtube",
                 "title": data.get("title", ""),
-                "artist": data.get("uploader", ""),
+                "artist": "",  # Artist not reliably available from YouTube metadata
                 "duration": data.get("duration", 0),
                 "thumbnail": data.get("thumbnail", ""),
                 "year": data.get("release_date", "")[:4]
                 if data.get("release_date")
                 else "",
-                "channel": data.get("uploader", ""),
                 "language": data.get("language", ""),
-                "description": data.get("description", ""),
-                "viewCount": data.get("view_count", 0),
                 "url": data.get("webpage_url", url),
+                "tags": data.get("tags", []),
             }
 
         except subprocess.TimeoutExpired:

@@ -77,7 +77,6 @@ async def identify_song(request: IdentifyRequest) -> SongMetadataResponse:
         # Step 2: Check if song exists in Master database
         exists_in_master = False
         master_song_id = None
-        master_song_status = None
 
         try:
             lookup_service = SongLookupService(settings.master_graphql_url)
@@ -89,9 +88,8 @@ async def identify_song(request: IdentifyRequest) -> SongMetadataResponse:
             if exists and song_data:
                 exists_in_master = True
                 master_song_id = song_data.get("id")
-                master_song_status = song_data.get("status")
                 logger.info(
-                    f"✓ Song exists in Master: {master_song_id} (status: {master_song_status})"
+                    f"✓ Song exists in Master: {master_song_id}"
                 )
             else:
                 logger.info(
@@ -106,9 +104,8 @@ async def identify_song(request: IdentifyRequest) -> SongMetadataResponse:
         # Step 3: Return metadata with existence flag
         return SongMetadataResponse(
             **metadata,
-            exists_in_master=exists_in_master,
-            master_song_id=master_song_id,
-            master_song_status=master_song_status,
+            exists=exists_in_master,
+            song_id=master_song_id,
         )
 
     except YTDLPError as e:

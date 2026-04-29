@@ -197,29 +197,23 @@ class IdentifyRequest(BaseModel):
 
 
 class SongMetadataResponse(BaseModel):
-    """Song metadata extracted from YouTube"""
+    """Song metadata extracted from video source (source-agnostic)"""
 
-    videoId: str = Field(..., description="YouTube video ID")
-    title: str = Field(..., description="Video title")
-    artist: Optional[str] = Field(default="", description="Uploader/artist name")
-    duration: int = Field(default=0, description="Duration in seconds")
-    thumbnail: Optional[str] = Field(default="", description="Thumbnail URL")
-    year: Optional[str] = Field(default="", description="Release year")
-    channel: Optional[str] = Field(default="", description="Channel name")
-    language: Optional[str] = Field(default="", description="Video language")
-    description: Optional[str] = Field(default="", description="Video description")
-    viewCount: int = Field(default=0, description="View count")
-    url: str = Field(..., description="Full YouTube URL")
-    exists_in_master: bool = Field(
-        default=False,
-        description="Whether this song already exists in Master database"
-    )
-    master_song_id: Optional[str] = Field(
-        default=None, description="Master song ID if already exists"
-    )
-    master_song_status: Optional[str] = Field(
-        default=None, description="Status in Master (e.g., completed, downloading)"
-    )
+    # Core extracted metadata from source
+    videoId: str = Field(..., description="Video ID (e.g., YouTube video ID)")
+    source: str = Field(default="youtube", description="Source (youtube, spotify, etc.)")
+    title: str = Field(..., description="Video title as-is from source")
+    artist: str = Field(default="", description="Artist name (empty string if not available)")
+    duration: int = Field(..., description="Duration in seconds")
+    thumbnail: str = Field(..., description="Thumbnail image URL")
+    year: str = Field(default="", description="Release year (empty string if not available)")
+    language: str = Field(default="", description="Video language (empty string if not available)")
+    url: str = Field(..., description="Full URL to video")
+    tags: list[str] = Field(default_factory=list, description="Tags/keywords from metadata")
+
+    # Master database lookup results
+    exists: bool = Field(default=False, description="Whether song exists in Master database")
+    song_id: Optional[str] = Field(default=None, description="Master song ID if exists, null otherwise")
 
 
 class DownloadSongRequest(BaseModel):
