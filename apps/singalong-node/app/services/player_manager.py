@@ -1,203 +1,210 @@
 """Player registration and management service"""
 
+import logging
 import uuid
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Dict, List
+
+logger = logging.getLogger(__name__)
 
 
 class PlayerRegistration:
-    """In-memory player registration record"""
+    """Represents a registered player"""
 
     def __init__(
         self,
         player_id: str,
         player_name: str,
-        status: str = "pending",
-        registered_at: Optional[datetime] = None,
+        device_type: str,
+        registered_at: datetime,
     ):
         self.player_id = player_id
         self.player_name = player_name
-        self.status = status  # pending, active, disconnected
-        self.registered_at = registered_at or datetime.utcnow()
+        self.device_type = device_type
+        self.registered_at = registered_at
+        self.status = "pending"  # pending, active, disconnected
         self.activated_at: Optional[datetime] = None
         self.session_id: Optional[str] = None
         self.current_song_id: Optional[str] = None
 
-    def to_dict(self) -> dict:
-        """Convert to dict for responses"""
-        return {
-            "player_id": self.player_id,
-            "player_name": self.player_name,
-            "status": self.status,
-            "registered_at": self.registered_at.isoformat() + "Z" if self.registered_at else None,
-            "activated_at": self.activated_at.isoformat() + "Z" if self.activated_at else None,
-            "session_id": self.session_id,
-            "current_song_id": self.current_song_id,
-        }
 
+class PlayerManager:
+    """Manages player registration and lifecycle"""
 
-class PlayerRegistry:
-    """In-memory registry for player registrations"""
+    _instance: Optional["PlayerManager"] = None
+    _valid_api_keys: List[str] = []
 
-    def __init__(self, valid_api_keys: list[str]):
-        """
-        Initialize player registry with valid API keys
+    def __init__(self):
+        self.players: Dict[str, PlayerRegistration] = {}
+        logger.info("PlayerManager initialized")
 
-        Args:
-            valid_api_keys: List of valid player API keys from NODE_PLAYER_API_KEYS env var
-        """
-        self.players: dict[str, PlayerRegistration] = {}
-        self.valid_api_keys = valid_api_keys
+    @classmethod
+    def create_singleton(cls, valid_api_keys: List[str]) -> "PlayerManager":
+        """Create or get singleton instance"""
+        if cls._instance is None:
+            cls._instance = cls()
+            cls._valid_api_keys = valid_api_keys
+        return cls._instance
 
-    def validate_api_key(self, api_key: str) -> bool:
-        """Check if api_key is in valid keys list"""
-        return api_key in self.valid_api_keys
+    @classmethod
+    def get_instance(cls) -> "PlayerManager":
+        """Get singleton instance"""
+        if cls._instance is None:
+            cls._instance = cls()
+        return cls._instance
 
     def register_player(
-        self, api_key: str, player_name: str, device_type: Optional[str] = None
-    ) -> Optional[PlayerRegistration]:
+        self, api_key: str, player_name: str, device_type: str
+    ) -> tuple[str, str]:
         """
-        Register a new player
+        Register a new player with API key validation
 
         Args:
-            api_key: Player API key to validate
-            player_name: Human-readable name for the player
-            device_type: Optional device type (xcode, windows, web)
+            api_key: API key from player config
+            player_name: Human-readable player name
+            device_type: Device type (xcode, windows, web, etc)
 
         Returns:
-            PlayerRegistration if valid, None if api_key invalid
-        """
-        if not self.validate_api_key(api_key):
-            return None
+            Tuple of (player_id, status)
 
-        # Create new player registration
+        Raises:
+            ValueError: If API key is invalid
+        """
+        # Validate API key
+        logger.debug(f"Validating API key. Received: '{api_key}', Valid keys: {self._valid_api_keys}")
+        if api_key not in self._valid_api_keys:
+            logger.warning(f"Player registration failed: invalid API key. Received: '{api_key}'")
+            raise ValueError("Invalid player API key")
+
+        # Generate player ID
         player_id = str(uuid.uuid4())
-        player = PlayerRegistration(
+
+        # Create registration
+        registration = PlayerRegistration(
             player_id=player_id,
             player_name=player_name,
+            device_type=device_type,
+            registered_at=datetime.utcnow(),
         )
 
-        self.players[player_id] = player
-        return player
+        # Store in memory
+        self.players[player_id] = registration
+
+        logger.info(
+            f"Player registered: {player_name} ({device_type}) - ID: {player_id}"
+        )
+
+        return player_id, registration.status
 
     def get_player(self, player_id: str) -> Optional[PlayerRegistration]:
         """Get player by ID"""
         return self.players.get(player_id)
 
-    def activate_player(self, player_id: str, session_id: str) -> Optional[PlayerRegistration]:
-        """
-        Activate a pending player
-
-        Args:
-            player_id: Player to activate
-            session_id: Session to assign
-
-        Returns:
-            Updated PlayerRegistration if found, None if not found
-        """
-        player = self.players.get(player_id)
+    def get_player_status(self, player_id: str) -> dict:
+        """Get player status for polling"""
+        player = self.get_player(player_id)
         if not player:
-            return None
+            raise ValueError("Player not found")
+
+        return {
+            "player_id": player.player_id,
+            "status": player.status,
+            "activated_at": player.activated_at.isoformat() if player.activated_at else None,
+            "session_id": player.session_id,
+            "message": self._get_status_message(player),
+        }
+
+    def activate_player(self, player_id: str, session_id: str) -> dict:
+        """Activate a registered player (admin only)"""
+        player = self.get_player(player_id)
+        if not player:
+            raise ValueError("Player not found")
 
         player.status = "active"
-        player.session_id = session_id
         player.activated_at = datetime.utcnow()
-        return player
+        player.session_id = session_id
 
-    def get_pending_players(self) -> list[PlayerRegistration]:
-        """Get all pending players awaiting activation"""
-        return [p for p in self.players.values() if p.status == "pending"]
+        logger.info(f"Player activated: {player.player_name} - session: {session_id}")
 
-    def get_active_players(self) -> list[PlayerRegistration]:
-        """Get all active players"""
-        return [p for p in self.players.values() if p.status == "active"]
+        return self.get_player_status(player_id)
 
-    def get_all_players(self) -> list[PlayerRegistration]:
-        """Get all players"""
-        return list(self.players.values())
+    def get_pending_players(self) -> List[dict]:
+        """Get all pending players (admin only)"""
+        return [
+            {
+                "player_id": p.player_id,
+                "player_name": p.player_name,
+                "status": p.status,
+                "device_type": p.device_type,
+                "registered_at": p.registered_at.isoformat(),
+            }
+            for p in self.players.values()
+            if p.status == "pending"
+        ]
 
-    def report_now_playing(self, player_id: str, song_id: str) -> Optional[PlayerRegistration]:
-        """Update current song being played"""
-        player = self.players.get(player_id)
-        if player:
-            player.current_song_id = song_id
-        return player
+    def get_all_players(self, status: Optional[str] = None) -> List[dict]:
+        """Get all players, optionally filtered by status"""
+        result = []
+        for p in self.players.values():
+            if status and p.status != status:
+                continue
 
-    def report_completed(self, player_id: str) -> Optional[PlayerRegistration]:
-        """Clear current song (mark as completed)"""
-        player = self.players.get(player_id)
-        if player:
+            result.append(
+                {
+                    "player_id": p.player_id,
+                    "player_name": p.player_name,
+                    "status": p.status,
+                    "device_type": p.device_type,
+                    "session_id": p.session_id,
+                    "current_song_id": p.current_song_id,
+                    "registered_at": p.registered_at.isoformat(),
+                    "activated_at": p.activated_at.isoformat() if p.activated_at else None,
+                }
+            )
+
+        return result
+
+    def report_now_playing(self, player_id: str, song_id: str) -> None:
+        """Update the currently playing song"""
+        player = self.get_player(player_id)
+        if not player:
+            raise ValueError("Player not found")
+
+        if player.status != "active":
+            raise ValueError("Player is not active")
+
+        player.current_song_id = song_id
+        logger.info(f"Player {player.player_name} now playing: {song_id}")
+
+    def report_completed(self, player_id: str, song_id: str) -> None:
+        """Mark song as completed"""
+        player = self.get_player(player_id)
+        if not player:
+            raise ValueError("Player not found")
+
+        if player.status != "active":
+            raise ValueError("Player is not active")
+
+        if player.current_song_id == song_id:
             player.current_song_id = None
-        return player
 
+        logger.info(f"Player {player.player_name} completed song: {song_id}")
 
-class PlayerManager:
-    """Manager for player registration and status"""
-
-    _instance: Optional["PlayerManager"] = None
-
-    def __init__(self, valid_api_keys: list[str]):
-        """Initialize player manager with valid API keys"""
-        self.registry = PlayerRegistry(valid_api_keys)
+    def disconnect_player(self, player_id: str) -> None:
+        """Mark player as disconnected"""
+        player = self.get_player(player_id)
+        if player:
+            player.status = "disconnected"
+            logger.info(f"Player disconnected: {player.player_name}")
 
     @staticmethod
-    def create_singleton(valid_api_keys: list[str]) -> "PlayerManager":
-        """Create or get singleton instance"""
-        if PlayerManager._instance is None:
-            PlayerManager._instance = PlayerManager(valid_api_keys)
-        return PlayerManager._instance
-
-    @staticmethod
-    def get_instance() -> Optional["PlayerManager"]:
-        """Get singleton instance"""
-        return PlayerManager._instance
-
-    def register_player(
-        self, api_key: str, player_name: str, device_type: Optional[str] = None
-    ) -> tuple[Optional[str], bool]:
-        """
-        Register a player
-
-        Returns:
-            (player_id, success) - player_id is None if api_key invalid
-        """
-        player = self.registry.register_player(api_key, player_name, device_type)
-        if player is None:
-            return None, False
-        return player.player_id, True
-
-    def get_player_status(self, player_id: str) -> Optional[dict]:
-        """Get player status"""
-        player = self.registry.get_player(player_id)
-        if not player:
-            return None
-        return player.to_dict()
-
-    def activate_player(self, player_id: str, session_id: str) -> Optional[dict]:
-        """Activate a player and assign session"""
-        player = self.registry.activate_player(player_id, session_id)
-        if not player:
-            return None
-        return player.to_dict()
-
-    def get_pending_players_list(self) -> list[dict]:
-        """Get list of pending players"""
-        return [p.to_dict() for p in self.registry.get_pending_players()]
-
-    def get_all_players_list(self) -> list[dict]:
-        """Get list of all players"""
-        return [p.to_dict() for p in self.registry.get_all_players()]
-
-    def report_now_playing(self, player_id: str, song_id: str) -> Optional[dict]:
-        """Report current song"""
-        player = self.registry.report_now_playing(player_id, song_id)
-        if not player:
-            return None
-        return player.to_dict()
-
-    def report_completed(self, player_id: str) -> Optional[dict]:
-        """Report song completed"""
-        player = self.registry.report_completed(player_id)
-        if not player:
-            return None
-        return player.to_dict()
+    def _get_status_message(player: PlayerRegistration) -> str:
+        """Get human-readable status message"""
+        if player.status == "pending":
+            return "Awaiting admin activation"
+        elif player.status == "active":
+            return "Player activated and ready to play"
+        elif player.status == "disconnected":
+            return "Player disconnected"
+        else:
+            return f"Status: {player.status}"
