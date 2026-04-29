@@ -1,58 +1,52 @@
-"""Session initialization service - auto-creates session 9999 on startup"""
+"""Session initialization service - auto-creates admin session on startup"""
 
 import os
+import uuid
 from datetime import datetime, timezone
 from sqlalchemy.orm import Session as DBSession
 
-from app.models.db_models import Session
+from app.models.db_models import Session, SessionStatus
 
 
 def init_admin_session(db: DBSession) -> Session:
     """
-    Initialize or verify admin session (9999) exists on startup.
+    Initialize or verify admin session exists on startup.
     
-    If session 9999 doesn't exist, create it with:
-    - is_admin_session = TRUE
-    - status = ACTIVE
-    - passcode from ADMIN_SESSION_CODE env var
-    - created_at = now
-    
-    If accidentally deleted, recreate on next startup.
+    Admin session has code "ADMIN" and special permissions for managing the Node.
     
     Args:
         db: Database session
         
     Returns:
-        Session object for session 9999
+        Session object for admin session
     """
-    admin_session_passcode = os.getenv("ADMIN_SESSION_CODE", "admin9999")
-    
-    # Check if session 9999 exists
+    # Check if admin session already exists
     existing = db.query(Session).filter(
-        Session.session_id == "9999"
+        Session.code == "ADMIN"
     ).first()
     
     if existing:
-        # Session exists, just return it
-        # (In future, could update passcode if env var changed)
+        # Admin session exists, just return it
         return existing
     
-    # Create session 9999
+    # Create admin session with system user ID
     admin_session = Session(
-        session_id="9999",
+        id=uuid.uuid4(),
+        code="ADMIN",
         title="Admin Workspace",
-        session_code=admin_session_passcode,
-        status="ACTIVE",
-        created_by_admin_id=None,  # System-created
-        is_admin_session="TRUE",
+        vibes="",  # No vibes for admin
+        max_users=None,  # Unlimited for admin
+        created_by=uuid.uuid4(),  # System-created (no specific user)
+        status=SessionStatus.ACTIVE,
         created_at=datetime.now(timezone.utc),
+        ended_at=None,
     )
     
     db.add(admin_session)
     db.commit()
     db.refresh(admin_session)
     
-    print(f"✓ Created admin session 9999")
+    print(f"✓ Created admin session with code 'ADMIN'")
     return admin_session
 
 

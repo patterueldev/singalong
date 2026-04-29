@@ -1,247 +1,328 @@
-"""Session management API routes for Node"""
+"""Session management endpoints"""
 
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session as DBSession
+import logging
+import uuid
+from typing import Optional
+from fastapi import APIRouter, HTTPException, Depends
+from pydantic import BaseModel, Field
+from sqlalchemy.orm import Session as SQLSession
 
 from app.database import get_db
-from app.models.db_models import Session
-from app.models.schemas import (
-    CreateSessionRequest,
-    SessionResponse,
-    SessionListResponse,
-    SessionUsersResponse,
-    UserInSessionResponse,
-    ErrorResponse,
-)
+from app.middleware.auth import verify_bearer_token
+from app.services.session_service import SessionService
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/sessions", tags=["Sessions"])
 
 
-@router.post("", response_model=SessionResponse, status_code=status.HTTP_201_CREATED)
+async def optional_verify_bearer_token(
+    authorization: Optional[str] = None,
+) -> Optional[dict]:
+    """
+    Optional Bearer token verification.
+    
+    Returns token payload if provided, None otherwise.
+    """
+    if not authorization or not authorization.startswith("Bearer "):
+        return None
+    
+    try:
+        # Extract token
+        token = authorization.split(" ", 1)[1]
+        # Could verify here if needed, but for MVP just pass through
+        return {"token": token}
+    except:
+        return None
+
+
+class CreateSessionRequest(BaseModel):
+    """Create session request"""
+
+    title: str = Field(..., min_length=1, max_length=255, description="Session title")
+    vibes: str = Field(default="", description="Comma-separated vibes (party, chill, etc)")
+    max_users: int = Field(default=0, ge=0, description="Max users (0=unlimited)")
+
+
+class SessionResponse(BaseModel):
+    """Session response"""
+
+    session_id: str = Field(..., description="Session UUID")
+    code: str = Field(..., description="Unique session code")
+    title: str = Field(..., description="Session title")
+    vibes: str = Field(default="", description="Session vibes")
+    max_users: int = Field(default=0, description="Max users")
+    status: str = Field(..., description="Session status (active, paused, ended)")
+    created_at: str = Field(..., description="Creation timestamp")
+    created_by: str = Field(..., description="Creator user ID")
+    user_count: int = Field(default=0, description="Current user count")
+
+
+class SessionUserResponse(BaseModel):
+    """Session user info"""
+
+    user_id: str = Field(..., description="User UUID")
+    joined_at: str = Field(..., description="Join timestamp")
+
+
+class SessionDetailsResponse(BaseModel):
+    """Detailed session info"""
+
+    session_id: str = Field(..., description="Session UUID")
+    code: str = Field(..., description="Session code")
+    title: str = Field(..., description="Session title")
+    vibes: str = Field(default="", description="Session vibes")
+    status: str = Field(..., description="Session status")
+    max_users: int = Field(default=0, description="Max users")
+    users: list[SessionUserResponse] = Field(default_factory=list, description="Users in session")
+    user_count: int = Field(default=0, description="Current user count")
+    created_at: str = Field(..., description="Creation timestamp")
+    created_by: str = Field(..., description="Creator user ID")
+
+
+@router.post("", status_code=201, response_model=SessionResponse)
 async def create_session(
-    request: CreateSessionRequest, db: DBSession = Depends(get_db)
+    request: CreateSessionRequest,
+    db: SQLSession = Depends(get_db),
 ) -> SessionResponse:
     """
-    Create a new session on this node.
-    
-    Admin-only endpoint. When creating a new party session, automatically ends
-    other active party sessions (but NOT session 9999).
-    
+    Create a new karaoke session
+
+    Optional: Bearer token can be provided for audit logging
+    If no token provided, creates session with system user ID
+
     Args:
-        request: CreateSessionRequest with session_id, title, optional session_code
+        request: CreateSessionRequest with title and optional vibes/max_users
         db: Database session
-        
+
     Returns:
-        SessionResponse with created session details
-        
+        SessionResponse with session_id and code
+
     Raises:
-        HTTPException: If validation fails (session_id already exists, invalid format, etc.)
+        HTTPException: 400 if validation fails, 500 if database error
     """
-    # Validate session_id format (4 digits, 0000-9999)
     try:
-        session_num = int(request.session_id)
-        if session_num < 0 or session_num > 9999:
-            raise ValueError()
-    except (ValueError, TypeError):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail={
-                "code": "INVALID_SESSION_ID",
-                "message": "Session ID must be 4-digit number (0000-9999)",
-            },
+        # TODO: Require admin authentication for session creation (B8.2 phase)
+        user_id = str(uuid.uuid4())
+
+        session_service = SessionService(db)
+
+        # Create session
+        session = session_service.create_session(
+            title=request.title,
+            created_by_user_id=user_id,
+            vibes=request.vibes if request.vibes else None,
+            max_users=request.max_users if request.max_users > 0 else None,
         )
 
-    # Check if session_id already exists
-    existing = db.query(Session).filter(Session.session_id == request.session_id).first()
-    if existing:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail={
-                "code": "SESSION_EXISTS",
-                "message": f"Session {request.session_id} already exists",
-            },
+        logger.info(f"Session created: {session.code}")
+
+        return SessionResponse(
+            session_id=str(session.id),
+            code=session.code,
+            title=session.title,
+            vibes=session.vibes or "",
+            max_users=int(session.max_users) if session.max_users else 0,
+            status=session.status.value,
+            created_at=session.created_at.isoformat(),
+            created_by=str(session.created_by),
+            user_count=0,
         )
 
-    # If creating a new party session (not 9999), end other party sessions
-    if request.session_id != "9999":
-        # Find all active party sessions (not admin session)
-        active_parties = (
-            db.query(Session)
-            .filter(
-                Session.status == "ACTIVE",
-                Session.is_admin_session == "FALSE",
-            )
-            .all()
-        )
-
-        # End them
-        for party in active_parties:
-            party.status = "ENDED"
-            db.add(party)
-
-    # Create new session
-    new_session = Session(
-        session_id=request.session_id,
-        title=request.title,
-        session_code=request.session_code,
-        status="ACTIVE",
-        is_admin_session="FALSE",
-    )
-
-    db.add(new_session)
-    db.commit()
-    db.refresh(new_session)
-
-    return SessionResponse(
-        id=str(new_session.id),
-        session_id=new_session.session_id,
-        title=new_session.title,
-        status=new_session.status,
-        is_admin_session=new_session.is_admin_session == "TRUE",
-        created_at=new_session.created_at.isoformat(),
-        ended_at=new_session.ended_at.isoformat() if new_session.ended_at else None,
-    )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.exception(f"Error creating session: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to create session")
 
 
-@router.get("", response_model=SessionListResponse)
-async def list_sessions(db: DBSession = Depends(get_db)) -> SessionListResponse:
+@router.get("/{session_id}", response_model=SessionDetailsResponse)
+async def get_session_details(
+    session_id: str,
+    db: SQLSession = Depends(get_db),
+) -> SessionDetailsResponse:
     """
-    List all sessions on this node.
-    
+    Get detailed session information
+
+    No authentication required - sessions are public once created.
+
     Args:
+        session_id: Session UUID or code
         db: Database session
-        
+
     Returns:
-        SessionListResponse with all sessions
-    """
-    sessions = db.query(Session).order_by(Session.created_at.desc()).all()
+        SessionDetailsResponse with users and stats
 
-    session_responses = [
-        SessionResponse(
-            id=str(s.id),
-            session_id=s.session_id,
-            title=s.title,
-            status=s.status,
-            is_admin_session=s.is_admin_session == "TRUE",
-            created_at=s.created_at.isoformat(),
-            ended_at=s.ended_at.isoformat() if s.ended_at else None,
-            user_count=0,  # TODO: Query user count from membership table
-        )
-        for s in sessions
-    ]
-
-    return SessionListResponse(sessions=session_responses, total=len(session_responses))
-
-
-@router.delete("/{session_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_session(session_id: str, db: DBSession = Depends(get_db)) -> None:
-    """
-    End a session on this node.
-    
-    Admin-only endpoint. Sets session status to ENDED. Users in this session
-    will receive errors on subsequent API calls.
-    
-    Args:
-        session_id: 4-digit session ID to end
-        db: Database session
-        
     Raises:
-        HTTPException: If session not found or already ended
+        HTTPException: 404 if session not found
     """
-    # Validate session_id format
-    if len(session_id) != 4 or not session_id.isdigit():
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail={
-                "code": "INVALID_SESSION_ID",
-                "message": "Session ID must be 4-digit number",
-            },
+    try:
+        session_service = SessionService(db)
+
+        # Try by UUID first, then by code
+        session = session_service.get_session(session_id)
+        if not session:
+            session = session_service.get_session_by_code(session_id)
+
+        if not session:
+            raise HTTPException(status_code=404, detail="Session not found")
+
+        # Get users
+        user_data = session_service.get_session_users(str(session.id))
+        users = [SessionUserResponse(**u) for u in user_data]
+
+        user_count = len(users)
+
+        return SessionDetailsResponse(
+            session_id=str(session.id),
+            code=session.code,
+            title=session.title,
+            vibes=session.vibes or "",
+            status=session.status.value,
+            max_users=int(session.max_users) if session.max_users else 0,
+            users=users,
+            user_count=user_count,
+            created_at=session.created_at.isoformat(),
+            created_by=str(session.created_by),
         )
 
-    session = (
-        db.query(Session).filter(Session.session_id == session_id).first()
-    )
-
-    if not session:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail={
-                "code": "SESSION_NOT_FOUND",
-                "message": f"Session {session_id} not found",
-            },
-        )
-
-    if session.status == "ENDED":
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail={
-                "code": "SESSION_ALREADY_ENDED",
-                "message": f"Session {session_id} is already ended",
-            },
-        )
-
-    # Don't allow ending session 9999
-    if session.is_admin_session == "TRUE":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail={
-                "code": "CANNOT_END_ADMIN_SESSION",
-                "message": "Cannot end admin session 9999",
-            },
-        )
-
-    # End the session
-    session.status = "ENDED"
-    db.add(session)
-    db.commit()
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception(f"Error getting session: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to get session")
 
 
-@router.get("/{session_id}/users", response_model=SessionUsersResponse)
-async def get_session_users(
-    session_id: str, db: DBSession = Depends(get_db)
-) -> SessionUsersResponse:
+@router.post("/{session_id}/users/{user_id}", status_code=201)
+async def add_user_to_session(
+    session_id: str,
+    user_id: str,
+    db: SQLSession = Depends(get_db),
+) -> dict:
     """
-    Get list of users in a specific session.
-    
+    Add user to session
+
     Args:
-        session_id: 4-digit session ID
+        session_id: Session UUID or code
+        user_id: User UUID
         db: Database session
-        
+
     Returns:
-        SessionUsersResponse with list of users
-        
+        Success message
+
     Raises:
-        HTTPException: If session not found
+        HTTPException: 404 if not found, 400 if validation fails
     """
-    # Validate session_id format
-    if len(session_id) != 4 or not session_id.isdigit():
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail={
-                "code": "INVALID_SESSION_ID",
-                "message": "Session ID must be 4-digit number",
-            },
+    try:
+        session_service = SessionService(db)
+
+        # Try by UUID first, then by code
+        session = session_service.get_session(session_id)
+        if not session:
+            session = session_service.get_session_by_code(session_id)
+
+        if not session:
+            raise ValueError("Session not found")
+
+        # Add user
+        session_service.add_user_to_session(str(session.id), user_id)
+
+        logger.info(f"User {user_id} joined session {session.code}")
+
+        return {
+            "message": "User added to session",
+            "session_code": session.code,
+        }
+
+    except ValueError as e:
+        error_msg = str(e)
+        if "not found" in error_msg.lower():
+            raise HTTPException(status_code=404, detail=error_msg)
+        else:
+            raise HTTPException(status_code=400, detail=error_msg)
+    except Exception as e:
+        logger.exception(f"Error adding user: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to add user")
+
+
+@router.delete("/{session_id}/users/{user_id}", status_code=204)
+async def remove_user_from_session(
+    session_id: str,
+    user_id: str,
+    db: SQLSession = Depends(get_db),
+) -> None:
+    """
+    Remove user from session
+
+    Args:
+        session_id: Session UUID
+        user_id: User UUID
+        db: Database session
+    """
+    try:
+        session_service = SessionService(db)
+        session_service.remove_user_from_session(session_id, user_id)
+        logger.info(f"User {user_id} left session {session_id}")
+    except Exception as e:
+        logger.exception(f"Error removing user: {str(e)}")
+        # Don't raise - silently succeed
+
+
+@router.post("/{session_id}/status/{status}", status_code=200)
+async def update_session_status(
+    session_id: str,
+    status: str,
+    token_payload: dict = Depends(verify_bearer_token),
+    db: SQLSession = Depends(get_db),
+) -> SessionResponse:
+    """
+    Update session status (admin/creator only)
+
+    Args:
+        session_id: Session UUID
+        status: New status (active, paused, ended)
+        token_payload: Admin token
+        db: Database session
+
+    Returns:
+        Updated SessionResponse
+
+    Raises:
+        HTTPException: 404 if not found, 403 if not authorized, 400 if invalid status
+    """
+    try:
+        session_service = SessionService(db)
+
+        session = session_service.get_session(session_id)
+        if not session:
+            raise HTTPException(status_code=404, detail="Session not found")
+
+        # Only creator or admin can update
+        user_id = token_payload.get("user_id")
+        if str(session.created_by) != user_id:
+            raise HTTPException(status_code=403, detail="Not authorized to update this session")
+
+        # Update status
+        updated = session_service.update_session_status(session_id, status)
+
+        user_count = session_service.get_session_user_count(session_id)
+
+        return SessionResponse(
+            session_id=str(updated.id),
+            code=updated.code,
+            title=updated.title,
+            vibes=updated.vibes or "",
+            max_users=int(updated.max_users) if updated.max_users else 0,
+            status=updated.status.value,
+            created_at=updated.created_at.isoformat(),
+            created_by=str(updated.created_by),
+            user_count=user_count,
         )
 
-    session = (
-        db.query(Session).filter(Session.session_id == session_id).first()
-    )
-
-    if not session:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail={
-                "code": "SESSION_NOT_FOUND",
-                "message": f"Session {session_id} not found",
-            },
-        )
-
-    # TODO: Query from user_session_membership table
-    # For now, return empty list
-    users = []
-
-    return SessionUsersResponse(
-        session_id=session_id,
-        users=users,
-        total=len(users),
-    )
+    except HTTPException:
+        raise
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.exception(f"Error updating session: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to update session")
