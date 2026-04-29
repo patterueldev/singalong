@@ -37,8 +37,8 @@ services:
       - /app/__pycache__  # Exclude pycache from volume mount
     environment:
       - ENVIRONMENT=development
-      - MASTER_URL=http://singalong-master:5001
-      - MASTER_GRAPHQL_URL=http://singalong-master:5001/graphql/
+      - MASTER_URL=${MASTER_PUBLIC_URL:-https://singalongmaster-dev.nicenature.space}
+      - MASTER_GRAPHQL_URL=${MASTER_PUBLIC_URL:-https://singalongmaster-dev.nicenature.space}/graphql/
       - NODE_MASTER_API_KEY=${NODE_MASTER_API_KEY:-dev-key}
       - OPENAI_API_KEY=${OPENAI_KEY}
     networks:
