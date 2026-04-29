@@ -28,16 +28,27 @@ class ResearchTools:
             import musicbrainzngs
             musicbrainzngs.set_useragent("Singalong", "1.0")
             
-            query = f"{artist} {title}".strip()
-            if not query:
+            if not artist or not title:
                 return {"status": "no_query"}
             
-            # Search recordings (limit=10 to get more options)
+            # First try: search with both artist and title explicitly
+            # MusicBrainz search syntax: arid: artist ID, recording: title
+            query = f'recording:"{title}" artist:"{artist}"'
+            
             result = await asyncio.to_thread(
                 musicbrainzngs.search_recordings,
                 query=query,
                 limit=10
             )
+            
+            # If no results, try simpler query
+            if not result.get("recording-list"):
+                query = f"{artist} {title}"
+                result = await asyncio.to_thread(
+                    musicbrainzngs.search_recordings,
+                    query=query,
+                    limit=10
+                )
             
             if not result.get("recording-list"):
                 return {"status": "not_found"}
@@ -48,9 +59,10 @@ class ResearchTools:
                 if "release-list" in recording and recording["release-list"]:
                     for release in recording["release-list"]:
                         year = release.get("date", "")[:4] if release.get("date") else ""
+                        recording_artist = recording.get("artist-credit-phrase", "")
                         matches.append({
                             "title": recording.get("title", ""),
-                            "artist": recording.get("artist-credit-phrase", ""),
+                            "artist": recording_artist,
                             "year": year,
                             "country": release.get("country", ""),
                         })
