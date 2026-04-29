@@ -170,16 +170,20 @@ class EnhancementService:
 {context}
 
 Return a JSON object with improved values for:
-1. "title": Clean song title (remove [Karaoke], (Instrumental), etc. prefixes unless they're essential to the song identity)
+1. "title": Clean song title ONLY (do NOT include artist name as a prefix)
 2. "artist": Full artist name (not channel name, not "unknown"). Empty string if truly unknown.
 3. "year": Release year as number (e.g., 2020). Empty string if unknown.
 4. "language": ISO 639-1 language code (en, ja, ko, etc.). Empty string if unknown.
 
 For title:
 - Clean up bracketed annotations like [Karaoke 0], (Instrumental), (Off Vocal)
-- Keep the actual song name clean
+- Remove artist name prefix (the artist goes in the "artist" field separately)
+- Keep the actual song name clean and meaningful
 - Keep Unicode characters as-is (Japanese, Chinese, Korean, etc.)
-- Example: "[Karaoke 0] Aqours - 未熟DREAMER ( Mijuku DREAMER )" → "Aqours - 未熟DREAMER"
+- Examples:
+  - "[Karaoke 0] Aqours - 未熟DREAMER ( Mijuku DREAMER )" → "未熟DREAMER" (not "Aqours - 未熟DREAMER")
+  - "Rick Astley - Never Gonna Give You Up (Official Video)" → "Never Gonna Give You Up"
+  - "BTS - Dynamite (Karaoke)" → "Dynamite"
 
 For artist:
 - Extract primary artist name
