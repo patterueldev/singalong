@@ -21,8 +21,11 @@ from app.models.schemas import (
     SongMetadataResponse,
     DownloadSongRequest,
     DownloadStatusResponse,
+    SongEnhanceRequest,
+    EnhancedSongMetadataResponse,
 )
 from app.services.graphql_client import MasterGraphQLClient, GraphQLError
+from app.services.enhancement_service import EnhancementService
 from app.config import settings
 
 logger = logging.getLogger(__name__)
@@ -129,6 +132,73 @@ async def identify_song(request: IdentifyRequest) -> SongMetadataResponse:
         logger.exception(f"Unexpected error identifying song: {str(e)}")
         raise HTTPException(
             status_code=500, detail="Failed to identify song. Please try again."
+        )
+
+
+@router.put("/enhance", response_model=EnhancedSongMetadataResponse, status_code=200)
+async def enhance_song(
+    request: SongEnhanceRequest,
+) -> EnhancedSongMetadataResponse:
+    """
+    Enhance song metadata before downloading.
+
+    Allows users to manually edit song details (title, artist, year, etc.) after
+    identification but before downloading. All fields are optional and will be
+    validated.
+
+    **Request Body:**
+    - `youtube_url`: Required YouTube URL
+    - `title`: Optional, 1-255 characters
+    - `artist`: Optional, 1-255 characters
+    - `year`: Optional, 1900-2100
+    - `language`: Optional, ISO 639-1 code (e.g., 'en', 'es', 'fr')
+    - `genre`: Optional, will be matched to standard genres
+    - `duration_seconds`: Optional, 1-86400 seconds
+    - `additional_notes`: Optional, max 1000 characters
+
+    **Response:**
+    - All enhanced fields back to user
+    - `enhanced_at`: ISO 8601 timestamp
+    - `ready_to_download`: Always true if validation passes
+
+    **Example:**
+    ```json
+    {
+      "youtube_url": "https://youtube.com/watch?v=...",
+      "title": "Song Title (edited)",
+      "artist": "Artist Name (edited)",
+      "year": 2024,
+      "language": "en",
+      "genre": "Pop"
+    }
+    ```
+    """
+    try:
+        logger.info(f"Enhancing song metadata: {request.youtube_url}")
+
+        # Validate and enhance using EnhancementService
+        enhanced = EnhancementService.validate_and_enhance(
+            youtube_url=request.youtube_url,
+            title=request.title,
+            artist=request.artist,
+            year=request.year,
+            language=request.language,
+            genre=request.genre,
+            duration_seconds=request.duration_seconds,
+            additional_notes=request.additional_notes,
+        )
+
+        logger.info(f"Successfully enhanced metadata for: {request.youtube_url}")
+        return EnhancedSongMetadataResponse(**enhanced)
+
+    except ValueError as e:
+        logger.warning(f"Validation error enhancing song: {str(e)}")
+        raise HTTPException(status_code=400, detail=str(e))
+
+    except Exception as e:
+        logger.exception(f"Unexpected error enhancing song: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail="Failed to enhance metadata. Please try again."
         )
 
 

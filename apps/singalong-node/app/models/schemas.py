@@ -308,3 +308,34 @@ class QueueResponse(BaseModel):
     queue: List[QueueItemResponse] = Field(..., description="Ordered list of songs")
     current_position: int = Field(default=0, description="Current playing position (0 if none)")
     total: int = Field(default=0, description="Total pending songs")
+
+
+# Enhancement Schemas
+class SongEnhanceRequest(BaseModel):
+    """Request to enhance song metadata"""
+    youtube_url: str = Field(..., description="YouTube URL of the song")
+    title: Optional[str] = Field(None, min_length=1, max_length=255, description="Song title")
+    artist: Optional[str] = Field(None, min_length=1, max_length=255, description="Artist name")
+    year: Optional[int] = Field(None, ge=1900, le=2100, description="Release year")
+    language: Optional[str] = Field(None, max_length=2, description="Language code (ISO 639-1)")
+    genre: Optional[str] = Field(None, max_length=50, description="Genre classification")
+    duration_seconds: Optional[int] = Field(None, ge=1, description="Duration in seconds")
+    additional_notes: Optional[str] = Field(None, max_length=1000, description="Additional notes")
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class EnhancedSongMetadataResponse(BaseModel):
+    """Response with enhanced song metadata"""
+    youtube_url: str = Field(..., description="YouTube URL")
+    title: Optional[str] = Field(None, description="Song title")
+    artist: Optional[str] = Field(None, description="Artist name")
+    year: Optional[int] = Field(None, description="Release year")
+    language: Optional[str] = Field(None, description="Language code")
+    genre: Optional[str] = Field(None, description="Genre")
+    duration_seconds: Optional[int] = Field(None, description="Duration in seconds")
+    additional_notes: Optional[str] = Field(None, description="Additional notes")
+    enhanced_at: str = Field(..., description="Timestamp of enhancement")
+    ready_to_download: bool = Field(default=True, description="Ready for download")
+
+    model_config = ConfigDict(from_attributes=True)
