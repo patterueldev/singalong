@@ -39,11 +39,13 @@ type_defs = """
         status: String!
         progress: Int!
         message: String
+        error: String
     }
 
     type Query {
         hello: String!
         identifySong(url: String!): SongMetadata!
+        downloadStatus(songId: String!): DownloadResponse!
     }
 
     type Mutation {
@@ -101,6 +103,39 @@ def resolve_identify_song(obj, info, url: str):
     except Exception as e:
         raise ValueError(f"Unexpected error: {str(e)}")
 
+
+@query.field("downloadStatus")
+def resolve_download_status(obj, info, songId: str):
+    """Get the status of a download"""
+    db = SessionLocal()
+    try:
+        from uuid import UUID
+        from app.models.db_models import DraftSong
+
+        try:
+            song_uuid = UUID(songId)
+        except ValueError:
+            raise ValueError("Invalid song ID format")
+
+        draft = db.query(DraftSong).filter(DraftSong.id == song_uuid).first()
+
+        if not draft:
+            raise ValueError("Download not found")
+
+        return {
+            "songId": str(draft.id),
+            "status": draft.status,
+            "progress": int(draft.download_progress),
+            "message": f"Download {draft.status}",
+            "error": draft.error_message,
+        }
+
+    except ValueError as e:
+        raise ValueError(str(e))
+    except Exception as e:
+        raise ValueError(f"Failed to get download status: {str(e)}")
+    finally:
+        db.close()
 
 
 @mutation.field("authenticateController")

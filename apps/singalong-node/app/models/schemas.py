@@ -1,7 +1,7 @@
 """Pydantic schemas for authentication"""
 
 from typing import Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 
 class AuthControllerRequest(BaseModel):
@@ -236,7 +236,7 @@ class DownloadSongRequest(BaseModel):
 class DownloadStatusResponse(BaseModel):
     """Response for download status check"""
 
-    song_id: str = Field(..., description="Song/Draft ID")
+    song_id: str = Field(..., description="Song/Draft ID", alias="songId")
     status: str = Field(
         ...,
         description="Download status (pending, downloading, completed, failed)",
@@ -245,3 +245,4 @@ class DownloadStatusResponse(BaseModel):
     message: str = Field(default="", description="Status message")
     error: Optional[str] = Field(default=None, description="Error message if failed")
 
+    model_config = ConfigDict(populate_by_name=True)

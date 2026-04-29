@@ -214,6 +214,37 @@ class MasterGraphQLClient:
         result = await self._execute_mutation(query, variables)
         return result.get("requestSongDownload", {})
 
+    async def get_download_status(self, song_id: str) -> dict:
+        """
+        Get the download status of a song
+
+        Args:
+            song_id: Draft song UUID
+
+        Returns:
+            Response with status, progress, message, error
+
+        Raises:
+            GraphQLError: If request fails
+            HTTPException: If network error occurs
+        """
+        query = """
+        query GetDownloadStatus($songId: String!) {
+            downloadStatus(songId: $songId) {
+                songId
+                status
+                progress
+                message
+                error
+            }
+        }
+        """
+
+        variables = {"songId": song_id}
+
+        result = await self._execute_mutation(query, variables)
+        return result.get("downloadStatus", {})
+
     async def _execute_mutation(self, query: str, variables: dict) -> dict:
         """
         Execute a GraphQL mutation or query

@@ -487,3 +487,45 @@ async def get_song_status(
         progress=progress,
         error_message=song.error_message,
     )
+
+
+@router.get("/{song_id}/download-status", response_model=DownloadStatusResponse)
+async def check_download_status(song_id: str) -> DownloadStatusResponse:
+    """
+    Check the download status of a song
+
+    Queries Master for current download progress.
+
+    Args:
+        song_id: Draft or final song UUID
+
+    Returns:
+        DownloadStatusResponse with current status and progress
+
+    Raises:
+        HTTPException: 404 if song not found, 500 if server error
+    """
+    try:
+        logger.info(f"Checking download status for {song_id}")
+
+        graphql_client = MasterGraphQLClient(settings.master_graphql_url)
+
+        # Query Master for download status
+        status_data = await graphql_client.get_download_status(song_id)
+
+        if not status_data:
+            raise HTTPException(status_code=404, detail="Download not found")
+
+        logger.info(f"Status for {song_id}: {status_data.get('status')}")
+
+        return DownloadStatusResponse(**status_data)
+
+    except GraphQLError as e:
+        error_str = str(e)
+        if "not found" in error_str.lower():
+            raise HTTPException(status_code=404, detail="Song not found")
+        raise HTTPException(status_code=500, detail=str(e))
+
+    except Exception as e:
+        logger.exception(f"Error checking download status: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to check status")
