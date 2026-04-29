@@ -5,13 +5,16 @@ Handles pulling ACTIVE songs from Master via GraphQL, downloading video files,
 and updating Node's local Song table.
 """
 
+import asyncio
 import logging
+import os
 import shutil
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import List, Dict, Optional
 from uuid import UUID
 
+import httpx
 from sqlalchemy.orm import Session as SQLSession
 
 from app.models.db_models import Song
@@ -59,8 +62,8 @@ class NodeSyncService:
         1. Query Master for ACTIVE songs (paginated)
         2. For each song:
            - Check if already in local database
-           - If new: download file, create Song record
-           - If exists: update metadata, sync_at timestamp
+           - Download video file from Master to /data/node/videos/
+           - Create/update Song record with local file path
         3. Skip songs that fail to download
         
         Args:
@@ -92,15 +95,24 @@ class NodeSyncService:
                         Song.id == song_id
                     ).first()
                     
+                    # Download video file from Master
+                    local_file_path = await self._download_video_from_master(master_song)
+                    if not local_file_path:
+                        error_msg = f"Failed to download video for {master_song.get('title', 'unknown')}"
+                        logger.error(error_msg)
+                        result.failed += 1
+                        result.errors.append(error_msg)
+                        continue
+                    
                     if existing:
                         # Update existing song
                         logger.debug(f"Updating song: {master_song['title']}")
-                        self._update_song(existing, master_song)
+                        self._update_song(existing, master_song, local_file_path)
                         result.updated += 1
                     else:
                         # Create new song record
-                        logger.info(f"Syncing new song: {master_song['title']}")
-                        self._create_song(master_song)
+                        logger.info(f"Syncing new song: {master_song['title']} from {local_file_path}")
+                        self._create_song(master_song, local_file_path)
                         result.synced += 1
                         
                 except Exception as e:
@@ -166,12 +178,13 @@ class NodeSyncService:
             logger.error(f"Failed to query Master: {str(e)}")
             raise GraphQLError(f"Failed to query Master: {str(e)}")
     
-    def _create_song(self, master_song: dict):
+    def _create_song(self, master_song: dict, local_file_path: str):
         """
         Create a new local Song record from Master song data.
         
         Args:
             master_song: Song data from Master
+            local_file_path: Path to downloaded video file on Node
         """
         song = Song(
             id=UUID(master_song["id"]),
@@ -183,28 +196,82 @@ class NodeSyncService:
             video_id=master_song.get("videoId"),
             thumbnail=master_song.get("thumbnail"),
             status="ACTIVE",
-            file_path=None,  # Will be set if/when we download
+            file_path=local_file_path,  # Local Node copy
             synced_at=datetime.now(timezone.utc),
         )
         self.db.add(song)
-        logger.debug(f"Created local Song record: {song.title}")
+        logger.debug(f"Created local Song record: {song.title} -> {local_file_path}")
     
-    def _update_song(self, song: Song, master_song: dict):
+    def _update_song(self, song: Song, master_song: dict, local_file_path: str = None):
         """
         Update an existing local Song record with Master data.
         
         Args:
             song: Existing Song record
             master_song: Updated data from Master
+            local_file_path: Path to downloaded video file (if re-syncing)
         """
         song.title = master_song.get("title", song.title)
         song.artist = master_song.get("artist", song.artist)
         song.duration = master_song.get("duration", song.duration)
         song.year = master_song.get("year", song.year)
         song.thumbnail = master_song.get("thumbnail", song.thumbnail)
+        if local_file_path:
+            song.file_path = local_file_path
         song.status = "ACTIVE"
         song.synced_at = datetime.now(timezone.utc)
         logger.debug(f"Updated Song record: {song.title}")
+    
+    async def _download_video_from_master(self, master_song: dict) -> Optional[str]:
+        """
+        Download video file from Master to Node's local storage.
+        
+        The video is served by Master's /api/songs/video/{videoId} endpoint.
+        Downloads to /data/node/videos/{filename}
+        
+        Args:
+            master_song: Song data from Master containing videoId
+        
+        Returns:
+            Path to downloaded file, or None if failed
+        """
+        try:
+            video_id = master_song.get("videoId")
+            if not video_id:
+                logger.error(f"No videoId for song {master_song.get('title')}")
+                return None
+            
+            from app.config import settings
+            
+            # Construct download URL from Master
+            master_base_url = settings.master_url.rstrip('/')
+            download_url = f"{master_base_url}/api/songs/video/{video_id}"
+            
+            # Create destination filename (alphanumeric + underscore only)
+            title_safe = "".join(c if c.isalnum() or c == '_' else '_' for c in master_song.get("title", "unknown"))
+            dest_filename = f"{title_safe}_{video_id}.mp4"
+            dest_path = self.VIDEOS_DIR / dest_filename
+            
+            logger.info(f"Downloading {master_song.get('title')} from {download_url} -> {dest_path}")
+            
+            # Download file from Master using httpx
+            async with httpx.AsyncClient(timeout=300.0) as client:
+                response = await client.get(download_url, follow_redirects=True)
+                response.raise_for_status()
+                
+                # Write to local file
+                with open(dest_path, 'wb') as f:
+                    f.write(response.content)
+            
+            file_size = os.path.getsize(dest_path)
+            logger.info(f"Downloaded {dest_filename} ({file_size} bytes)")
+            
+            # Return absolute path for database storage
+            return str(dest_path.absolute())
+            
+        except Exception as e:
+            logger.error(f"Failed to download video {master_song.get('videoId', 'unknown')}: {str(e)}", exc_info=True)
+            return None
     
     def get_synced_songs(
         self,

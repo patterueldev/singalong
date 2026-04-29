@@ -97,6 +97,51 @@ def create_app() -> FastAPI:
             "version": settings.app_version,
         }
 
+    @app.get("/api/songs/video/{video_id}", tags=["songs"])
+    async def stream_video(video_id: str):
+        """
+        Stream a video file for a song.
+        
+        Used by Node during sync to download video files from Master.
+        Also used by Node to serve videos to frontends.
+        
+        Path Parameters:
+            video_id: YouTube video ID
+        
+        Returns:
+            200 OK: Video file (mp4)
+            404 Not Found: Video file not found
+        """
+        import os
+        from pathlib import Path
+        from fastapi.responses import FileResponse
+        
+        try:
+            # Construct expected file path
+            # Files follow pattern: {title_safe}_{videoId}.mp4
+            videos_dir = Path("/data/master/videos")
+            
+            # Find the file (since we don't know the title, search for pattern)
+            if videos_dir.exists():
+                for file in videos_dir.iterdir():
+                    if file.is_file() and file.suffix == ".mp4" and video_id in file.name:
+                        return FileResponse(
+                            path=str(file),
+                            media_type="video/mp4",
+                            filename=file.name,
+                        )
+            
+            # Not found
+            from fastapi import HTTPException
+            raise HTTPException(status_code=404, detail="Video file not found")
+            
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Error streaming video {video_id}: {str(e)}")
+            from fastapi import HTTPException
+            raise HTTPException(status_code=500, detail="Failed to stream video")
+
     @app.get("/", tags=["root"])
     async def root():
         """Root endpoint"""
