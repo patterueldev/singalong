@@ -1,5 +1,6 @@
 """Song management API endpoints for Node"""
 
+import asyncio
 import uuid
 import logging
 from datetime import datetime, timezone
@@ -977,6 +978,107 @@ async def clear_pending_downloads(
         raise HTTPException(status_code=500, detail="Failed to clear pending downloads")
 
 
+@router.get("/songbook", response_model=dict)
+async def get_songbook(
+    search: Optional[str] = Query(None, description="Search by title or artist"),
+    limit: int = Query(10, ge=1, le=100, description="Results per page"),
+    offset: int = Query(0, ge=0, description="Pagination offset"),
+    sort: str = Query("title", regex="^(title|artist|year)$", description="Sort field"),
+    db: SQLSession = Depends(get_db),
+) -> dict:
+    """
+    Get synced songs from Node's local database (songbook).
+
+    Returns songs that have been synced via POST /api/songs/sync.
+    Only returns ACTIVE songs (not archived or corrupted).
+
+    No Master queries - instant response using local cache.
+
+    Query Parameters:
+    - search: Filter by title or artist (case-insensitive, optional)
+    - limit: Results per page (1-100, default 10)
+    - offset: Pagination offset (default 0)
+    - sort: Sort order - title, artist, or year (default: title)
+
+    Returns:
+    {
+        "songs": [
+            {
+                "id": "uuid",
+                "title": "Song Title",
+                "artist": "Artist Name",
+                "duration": 180,
+                "year": 2020,
+                "thumbnail": "https://...",
+                "status": "ACTIVE"
+            }
+        ],
+        "total": 142,
+        "limit": 10,
+        "offset": 0,
+        "hasMore": true
+    }
+    """
+    from sqlalchemy import or_, desc
+
+    try:
+        # Query all ACTIVE songs from local database
+        query = db.query(Song).filter(Song.status == "ACTIVE")
+
+        # Apply search filter if provided
+        if search:
+            search_term = f"%{search}%"
+            query = query.filter(
+                or_(
+                    Song.title.ilike(search_term),
+                    Song.artist.ilike(search_term),
+                )
+            )
+
+        # Get total count before pagination
+        total = query.count()
+
+        # Apply sorting
+        if sort == "title":
+            query = query.order_by(Song.title)
+        elif sort == "artist":
+            query = query.order_by(Song.artist)
+        elif sort == "year":
+            query = query.order_by(desc(Song.year))
+
+        # Apply pagination
+        songs = query.limit(limit).offset(offset).all()
+
+        # Build response
+        song_list = [
+            {
+                "id": str(song.id),
+                "title": song.title,
+                "artist": song.artist,
+                "duration": song.duration,
+                "year": song.year,
+                "source": song.source,
+                "videoId": song.video_id,
+                "thumbnail": song.thumbnail,
+                "status": song.status,
+                "syncedAt": song.synced_at.isoformat() if song.synced_at else None,
+            }
+            for song in songs
+        ]
+
+        return {
+            "songs": song_list,
+            "total": total,
+            "limit": limit,
+            "offset": offset,
+            "hasMore": offset + limit < total,
+        }
+
+    except Exception as e:
+        logger.error(f"Error fetching songbook: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to fetch songbook")
+
+
 @router.get("/{song_id}")
 async def get_song(
     song_id: str,
@@ -1168,7 +1270,8 @@ async def sync_songs_from_master(
         try:
             logger.info(f"Background sync started (limit={limit}, offset={offset})")
             sync_service = NodeSyncService(db_session)
-            result = sync_service.sync_songs_from_master(limit=limit, offset=offset)
+            # Use asyncio.run() to execute async method in thread
+            result = asyncio.run(sync_service.sync_songs_from_master(limit=limit, offset=offset))
             logger.info(f"Background sync complete: {result.to_dict()}")
         except Exception as e:
             logger.error(f"Background sync failed: {str(e)}", exc_info=True)
@@ -1188,105 +1291,5 @@ async def sync_songs_from_master(
         "task_id": task_id,
     }
 
-
-@router.get("/songbook", response_model=dict)
-async def get_songbook(
-    search: Optional[str] = Query(None, description="Search by title or artist"),
-    limit: int = Query(10, ge=1, le=100, description="Results per page"),
-    offset: int = Query(0, ge=0, description="Pagination offset"),
-    sort: str = Query("title", regex="^(title|artist|year)$", description="Sort field"),
-    db: SQLSession = Depends(get_db),
-) -> dict:
-    """
-    Get synced songs from Node's local database (songbook).
-
-    Returns songs that have been synced via POST /api/songs/sync.
-    Only returns ACTIVE songs (not archived or corrupted).
-
-    No Master queries - instant response using local cache.
-
-    Query Parameters:
-    - search: Filter by title or artist (case-insensitive, optional)
-    - limit: Results per page (1-100, default 10)
-    - offset: Pagination offset (default 0)
-    - sort: Sort order - title, artist, or year (default: title)
-
-    Returns:
-    {
-        "songs": [
-            {
-                "id": "uuid",
-                "title": "Song Title",
-                "artist": "Artist Name",
-                "duration": 180,
-                "year": 2020,
-                "thumbnail": "https://...",
-                "status": "ACTIVE"
-            }
-        ],
-        "total": 142,
-        "limit": 10,
-        "offset": 0,
-        "hasMore": true
-    }
-    """
-    from sqlalchemy import or_, desc
-
-    try:
-        # Query all ACTIVE songs from local database
-        query = db.query(Song).filter(Song.status == "ACTIVE")
-
-        # Apply search filter if provided
-        if search:
-            search_term = f"%{search}%"
-            query = query.filter(
-                or_(
-                    Song.title.ilike(search_term),
-                    Song.artist.ilike(search_term),
-                )
-            )
-
-        # Get total count before pagination
-        total = query.count()
-
-        # Apply sorting
-        if sort == "title":
-            query = query.order_by(Song.title)
-        elif sort == "artist":
-            query = query.order_by(Song.artist)
-        elif sort == "year":
-            query = query.order_by(desc(Song.year))
-
-        # Apply pagination
-        songs = query.limit(limit).offset(offset).all()
-
-        # Build response
-        song_list = [
-            {
-                "id": str(song.id),
-                "title": song.title,
-                "artist": song.artist,
-                "duration": song.duration,
-                "year": song.year,
-                "source": song.source,
-                "videoId": song.video_id,
-                "thumbnail": song.thumbnail,
-                "status": song.status,
-                "syncedAt": song.synced_at.isoformat() if song.synced_at else None,
-            }
-            for song in songs
-        ]
-
-        return {
-            "songs": song_list,
-            "total": total,
-            "limit": limit,
-            "offset": offset,
-            "hasMore": offset + limit < total,
-        }
-
-    except Exception as e:
-        logger.error(f"Error fetching songbook: {str(e)}", exc_info=True)
-        raise HTTPException(status_code=500, detail="Failed to fetch songbook")
 
 

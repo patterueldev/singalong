@@ -217,10 +217,10 @@ def resolve_active_songs(obj, info, limit: int = 100, offset: int = 0):
                 "title": s.title,
                 "artist": s.artist,
                 "duration": s.duration,
-                "year": int(s.year) if s.year and s.year.isdigit() else None,
+                "year": None,  # DraftSong doesn't have year field
                 "source": "youtube",
                 "videoId": s.video_id,
-                "thumbnail": s.thumbnail,
+                "thumbnail": None,  # DraftSong doesn't have thumbnail field
                 "filePath": s.file_path,
                 "status": "ACTIVE",
             }

@@ -46,7 +46,8 @@ class NodeSyncService:
     
     def __init__(self, db: SQLSession):
         self.db = db
-        self.master_client = MasterGraphQLClient()
+        from app.config import settings
+        self.master_client = MasterGraphQLClient(settings.master_graphql_url)
         # Ensure videos directory exists
         self.VIDEOS_DIR.mkdir(parents=True, exist_ok=True)
     
@@ -86,8 +87,9 @@ class NodeSyncService:
             for master_song in master_songs:
                 try:
                     # Check if song already exists locally
+                    song_id = UUID(master_song["id"]) if isinstance(master_song["id"], str) else master_song["id"]
                     existing = self.db.query(Song).filter(
-                        Song.id == master_song["id"]
+                        Song.id == song_id
                     ).first()
                     
                     if existing:
@@ -156,7 +158,7 @@ class NodeSyncService:
         }
         
         try:
-            response = await self.master_client._execute_query(query, variables)
+            response = await self.master_client.execute_query(query, variables)
             songs = response.get("activeSongs", {}).get("songs", [])
             logger.debug(f"Master returned {len(songs)} songs")
             return songs

@@ -10,8 +10,7 @@ from sqlalchemy.orm import Session as SQLSession
 from app.database import get_db
 from app.middleware.auth import verify_bearer_token
 from app.services.session_service import SessionService
-from app.api.dependencies import get_current_user
-from app.models.schemas import TokenPayload
+from app.api.dependencies import get_current_user, TokenPayload
 
 logger = logging.getLogger(__name__)
 
