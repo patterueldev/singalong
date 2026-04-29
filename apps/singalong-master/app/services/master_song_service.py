@@ -142,7 +142,7 @@ class MasterSongService:
         Update draft song status.
 
         Args:
-            draft_song_id: Draft song UUID
+            draft_song_id: Draft song UUID (as string or UUID object)
             status: New status (pending, downloading, completed, failed)
             progress: Download progress (0-100)
             error_message: Error message if failed
@@ -153,6 +153,12 @@ class MasterSongService:
             Updated DraftSong object
         """
         try:
+            import uuid as uuid_module
+            
+            # Convert string UUID to UUID object if needed
+            if isinstance(draft_song_id, str):
+                draft_song_id = uuid_module.UUID(draft_song_id)
+            
             draft_song = self.db.query(DraftSong).filter(
                 DraftSong.id == draft_song_id
             ).first()
@@ -194,12 +200,18 @@ class MasterSongService:
         Convert a completed draft song into a final Song record.
 
         Args:
-            draft_song_id: Draft song UUID to finalize
+            draft_song_id: Draft song UUID to finalize (as string or UUID object)
 
         Returns:
             Finalized Song object
         """
         try:
+            import uuid as uuid_module
+            
+            # Convert string UUID to UUID object if needed
+            if isinstance(draft_song_id, str):
+                draft_song_id = uuid_module.UUID(draft_song_id)
+            
             draft_song = self.db.query(DraftSong).filter(
                 DraftSong.id == draft_song_id
             ).first()
@@ -249,6 +261,12 @@ class MasterSongService:
     def get_draft_song(self, draft_song_id: str) -> Optional[DraftSong]:
         """Get draft song by ID"""
         try:
+            import uuid as uuid_module
+            
+            # Convert string UUID to UUID object if needed
+            if isinstance(draft_song_id, str):
+                draft_song_id = uuid_module.UUID(draft_song_id)
+            
             return self.db.query(DraftSong).filter(
                 DraftSong.id == draft_song_id
             ).first()

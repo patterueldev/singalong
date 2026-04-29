@@ -140,3 +140,23 @@ class Reservation(Base):
 
     def __repr__(self):
         return f"<Reservation {self.position}: {self.song_id} in {self.session_id} ({self.status})>"
+
+
+class DownloadQueue(Base):
+    """Tracks song downloads requested from Master"""
+    __tablename__ = "download_queue"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    video_id = Column(String(255), nullable=False, unique=True, index=True)  # YouTube video ID
+    title = Column(String(500), nullable=False)  # Song title
+    master_download_id = Column(String(36), nullable=False, index=True)  # Master's draft song UUID
+    status = Column(String(50), nullable=False, default="pending", index=True)  # pending, downloading, completed, failed
+    progress = Column(Integer, nullable=False, default=0)  # 0-100 percent
+    file_path = Column(String(1000), nullable=True)  # Local file path when completed
+    error_message = Column(String(1000), nullable=True)  # Error details if failed
+    created_at = Column(DateTime(timezone=True), nullable=False, default=utc_now, index=True)
+    updated_at = Column(DateTime(timezone=True), nullable=False, default=utc_now)
+    completed_at = Column(DateTime(timezone=True), nullable=True)
+
+    def __repr__(self):
+        return f"<DownloadQueue {self.video_id} ({self.status})>"
