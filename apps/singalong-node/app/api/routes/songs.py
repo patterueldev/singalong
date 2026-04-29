@@ -144,12 +144,16 @@ async def identify_song(request: IdentifyRequest) -> SongMetadataResponse:
 @router.post("/enhance", response_model=SongMetadataResponse, status_code=200)
 async def enhance_song(request: EnhanceSongRequest) -> SongMetadataResponse:
     """
-    Enhance song metadata using AI
+    Enhance song metadata using agent-based orchestration.
     
-    Uses OpenAI to improve: title, artist, year, language
+    Uses multiple specialized agents to research and verify:
+    - Title and artist (DescriptionParser + MusicBrainz)
+    - Year (MusicBrainz)
+    - Language (LanguageDetection)
+    - Lyrics (LyricsResearch)
     
     Accepts the output from /identify endpoint and returns enhanced version.
-    If OpenAI API is not configured, returns original metadata unchanged.
+    Gracefully degrades to original metadata if agents fail.
     
     **Request Body (from /identify output):**
     ```json
@@ -175,7 +179,7 @@ async def enhance_song(request: EnhanceSongRequest) -> SongMetadataResponse:
     {
       "videoId": "x_6nob9_WLc",
       "source": "youtube",
-      "title": "Aqours - 未熟DREAMER",
+      "title": "未熟DREAMER",
       "artist": "Aqours",
       "duration": 352,
       "thumbnail": "...",
@@ -188,64 +192,51 @@ async def enhance_song(request: EnhanceSongRequest) -> SongMetadataResponse:
     ```
     """
     try:
-        if not settings.openai_api_key:
-            logger.warning("OpenAI API key not configured, returning unenhanced metadata")
-            # Return unenhanced but with all fields
-            return SongMetadataResponse(
-                videoId=request.videoId,
-                source=request.source,
-                title=request.title,
-                artist=request.artist,
-                duration=request.duration,
-                thumbnail=request.thumbnail,
-                year=request.year,
-                language=request.language,
-                url=request.url,
-                tags=request.tags,
-                lyrics="",
-            )
-
         logger.info(f"Enhancing song: {request.title}")
 
-        # Initialize enhancement service
-        enhancement_service = EnhancementService(settings.openai_api_key)
+        # Convert request to metadata dict
+        metadata = {
+            "videoId": request.videoId,
+            "source": request.source,
+            "title": request.title,
+            "artist": request.artist,
+            "duration": request.duration,
+            "thumbnail": request.thumbnail,
+            "year": request.year,
+            "language": request.language,
+            "url": request.url,
+            "tags": request.tags,
+            "lyrics": getattr(request, "lyrics", ""),
+        }
 
         # Fetch description from YouTube if available
-        description = ""
         if request.source == "youtube":
             try:
                 yt_dlp = YTDLPService(timeout=10)
-                # Get just the description without full metadata
-                result = yt_dlp._get_video_description(request.videoId)
-                if result:
-                    description = result
-                    logger.info(f"Fetched YouTube description ({len(description)} chars)")
+                description = yt_dlp._get_video_description(request.videoId)
+                if description:
+                    metadata["description"] = description
+                    logger.debug(f"Fetched YouTube description ({len(description)} chars)")
             except Exception as e:
                 logger.warning(f"Could not fetch YouTube description: {str(e)}")
 
-        # Call OpenAI to enhance metadata
-        enhanced = await enhancement_service.enhance(
-            title=request.title,
-            artist=request.artist,
-            year=request.year,
-            language=request.language,
-            tags=request.tags,
-            description=description,
-        )
+        # Use orchestrator to enhance metadata
+        enhancement_service = EnhancementService()
+        enhanced = await enhancement_service.enhance(metadata)
 
         # Return full response with enhanced fields
         return SongMetadataResponse(
-            videoId=request.videoId,
-            source=request.source,
-            title=enhanced["title"],
-            artist=enhanced["artist"],
-            duration=request.duration,
-            thumbnail=request.thumbnail,
-            year=enhanced["year"],
-            language=enhanced["language"],
-            url=request.url,
-            tags=request.tags,
-            lyrics="",
+            videoId=enhanced.get("videoId", request.videoId),
+            source=enhanced.get("source", request.source),
+            title=enhanced.get("title", request.title),
+            artist=enhanced.get("artist", request.artist),
+            duration=enhanced.get("duration", request.duration),
+            thumbnail=enhanced.get("thumbnail", request.thumbnail),
+            year=enhanced.get("year", request.year),
+            language=enhanced.get("language", request.language),
+            url=enhanced.get("url", request.url),
+            tags=enhanced.get("tags", request.tags),
+            lyrics=enhanced.get("lyrics", ""),
         )
 
     except Exception as e:

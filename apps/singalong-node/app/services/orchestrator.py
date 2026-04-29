@@ -8,9 +8,15 @@ The orchestrator is responsible for:
 4. Gracefully handling agent failures (skip failed agents)
 """
 
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any
 import asyncio
 import logging
+
+from .agents.description_parser import DescriptionParserAgent
+from .agents.musicbrainz_agent import MusicBrainzAgent
+from .agents.anidb_agent import AniDBAgent
+from .agents.lyrics_research import LyricsResearchAgent
+from .agents.language_detection import LanguageDetectionAgent
 
 logger = logging.getLogger(__name__)
 
@@ -18,51 +24,67 @@ logger = logging.getLogger(__name__)
 class EnhancementOrchestrator:
     """
     Coordinates all enhancement agents and merges their results.
-    
-    Flow:
-    1. DescriptionParser runs first (other agents depend on its results)
-    2. Other agents run in parallel
-    3. Results are merged with priority (MusicBrainz > AniDB > Parser > Original)
-    4. Validation ensures consistency
-    5. Original metadata is returned as fallback
-    
-    Priority for conflicts:
-    - Higher priority: Prefer MusicBrainz (official DB)
-    - Medium priority: AniDB (anime-specific)
-    - Lower priority: Parser (heuristics)
-    - Fallback: Original metadata
-    
-    Confidence scoring:
-    - All agents return confidence (0.0 to 1.0)
-    - Higher confidence = prefer this result
-    - If multiple sources have same field: use highest confidence
     """
 
-    def __init__(self, agents: Optional[List] = None):
-        """
-        Initialize orchestrator.
-        
-        Args:
-            agents: List of agent instances (will be set in Phase 2)
-        """
-        self.agents = agents or []
-        self.total_timeout = 30  # 30s total for all agents
+    def __init__(self):
+        """Initialize orchestrator with all agents"""
+        self.agents = {
+            "parser": DescriptionParserAgent(),
+            "musicbrainz": MusicBrainzAgent(),
+            "anidb": AniDBAgent(),
+            "lyrics": LyricsResearchAgent(),
+            "language": LanguageDetectionAgent(),
+        }
+        logger.info("EnhancementOrchestrator initialized with 5 agents")
         
     async def enhance(self, original_metadata: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Enhance metadata using all available agents.
-        
-        Args:
-            original_metadata: Original metadata from identify endpoint
-        
-        Returns:
-            Enhanced metadata with all available improvements, or original on error
-        """
+        """Enhance metadata using all agents"""
         try:
-            # In Phase 2, agents will be added here
-            # For now, return original metadata unchanged
-            logger.info("Enhancement orchestrator initialized (no agents in Phase 1)")
-            return original_metadata
+            # Step 1: Run parser first
+            parser_result = await asyncio.wait_for(
+                self.agents["parser"].execute(original_metadata),
+                timeout=self.agents["parser"].timeout
+            )
+            
+            # Step 2: Run other agents in parallel
+            other_results = await asyncio.gather(
+                asyncio.wait_for(
+                    self.agents["musicbrainz"].execute({**original_metadata, **parser_result}),
+                    timeout=self.agents["musicbrainz"].timeout
+                ),
+                asyncio.wait_for(
+                    self.agents["anidb"].execute({**original_metadata, **parser_result}),
+                    timeout=self.agents["anidb"].timeout
+                ),
+                asyncio.wait_for(
+                    self.agents["lyrics"].execute({**original_metadata, **parser_result}),
+                    timeout=self.agents["lyrics"].timeout
+                ),
+                asyncio.wait_for(
+                    self.agents["language"].execute({**original_metadata, **parser_result}),
+                    timeout=self.agents["language"].timeout
+                ),
+                return_exceptions=True
+            )
+            
+            # Handle exceptions
+            mb_result, anidb_result, lyrics_result, lang_result = [
+                r if not isinstance(r, Exception) else {} for r in other_results
+            ]
+            
+            # Step 3: Merge results
+            merged = self._merge_results(
+                original_metadata,
+                parser_result,
+                mb_result,
+                lyrics_result,
+                lang_result
+            )
+            
+            # Step 4: Validate
+            validated = self._validate(merged, original_metadata)
+            
+            return validated
             
         except Exception as e:
             logger.error(f"Orchestration error: {e}", exc_info=True)
@@ -72,71 +94,85 @@ class EnhancementOrchestrator:
         self,
         original: Dict[str, Any],
         parser_result: Dict[str, Any],
-        other_results: List[Dict[str, Any]]
+        mb_result: Dict[str, Any],
+        lyrics_result: Dict[str, Any],
+        lang_result: Dict[str, Any],
     ) -> Dict[str, Any]:
-        """
-        Merge results from all agents using priority-based conflict resolution.
+        """Merge results from all agents"""
+        merged = original.copy()
         
-        Priority: MusicBrainz > AniDB > Parser > Original
+        # Title: Prefer parser
+        if parser_result.get("title"):
+            merged["title"] = parser_result["title"]
         
-        Args:
-            original: Original metadata
-            parser_result: Results from DescriptionParser
-            other_results: Results from other agents
+        # Artist: MusicBrainz > Parser
+        if mb_result.get("artist"):
+            merged["artist"] = mb_result["artist"]
+        elif parser_result.get("artist"):
+            merged["artist"] = parser_result["artist"]
         
-        Returns:
-            Merged metadata with best results from all agents
-        """
-        # This will be implemented in Phase 3
-        return original
+        # Year: MusicBrainz
+        if mb_result.get("year"):
+            merged["year"] = mb_result["year"]
+        
+        # Language: MusicBrainz > LanguageDetection
+        if mb_result.get("language"):
+            merged["language"] = mb_result["language"]
+        elif lang_result.get("language"):
+            merged["language"] = lang_result["language"]
+        
+        # Lyrics
+        if lyrics_result.get("lyrics"):
+            merged["lyrics"] = lyrics_result["lyrics"]
+        else:
+            merged["lyrics"] = merged.get("lyrics", "")
+        
+        return merged
 
-    def _validate(self, metadata: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Validate merged results for consistency and correctness.
+    def _validate(
+        self,
+        metadata: Dict[str, Any],
+        original: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Validate merged results"""
+        validated = metadata.copy()
         
-        Validation rules:
-        - title: max 200 chars
-        - artist: max 100 chars
-        - year: 1900-2100 range
-        - language: 2-5 char ISO code
+        # Title
+        try:
+            title = str(validated.get("title") or "")
+            if not (1 <= len(title) <= 200):
+                title = original.get("title", "")
+            validated["title"] = title
+        except:
+            validated["title"] = original.get("title", "")
         
-        Invalid fields are reverted to original values.
+        # Artist
+        try:
+            artist = str(validated.get("artist") or "")
+            if not (0 <= len(artist) <= 100):
+                artist = original.get("artist", "")
+            validated["artist"] = artist
+        except:
+            validated["artist"] = original.get("artist", "")
         
-        Args:
-            metadata: Metadata to validate
+        # Year
+        try:
+            year_str = str(validated.get("year") or "")
+            if year_str:
+                year_int = int(year_str)
+                if not (1900 <= year_int <= 2100):
+                    year_str = original.get("year", "")
+            validated["year"] = year_str
+        except:
+            validated["year"] = original.get("year", "")
         
-        Returns:
-            Validated metadata (invalid fields reverted to original)
-        """
-        # This will be implemented in Phase 3
-        return metadata
-
-    def _get_confidence(self, result: Dict[str, Any], field: str) -> float:
-        """
-        Get confidence score for a field result.
+        # Language
+        try:
+            language = str(validated.get("language") or "")
+            if language and not (2 <= len(language) <= 5):
+                language = original.get("language", "")
+            validated["language"] = language
+        except:
+            validated["language"] = original.get("language", "")
         
-        Args:
-            result: Agent result dictionary
-            field: Field name
-        
-        Returns:
-            Confidence score (0.0 to 1.0), default 0.5
-        """
-        return result.get(f"{field}_confidence", 0.5)
-
-    def _get_priority(self, agent_name: str) -> int:
-        """
-        Get priority for an agent (higher = more trusted).
-        
-        Args:
-            agent_name: Name of agent class
-        
-        Returns:
-            Priority score (higher = more trusted)
-        """
-        priority_map = {
-            "MusicBrainzAgent": 100,
-            "AniDBAgent": 80,
-            "DescriptionParserAgent": 60,
-        }
-        return priority_map.get(agent_name, 50)
+        return validated
