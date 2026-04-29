@@ -176,16 +176,16 @@ class ResearchTools:
                 )
                 
                 # Fix: langdetect sometimes incorrectly detects Japanese CJK as Korean
-                # If langdetect says "ko" but we see CJK characters, double-check
+                # If langdetect says "ko" but we see CJK characters, it's definitely wrong
+                # because Korean uses Hangul, not kanji. CJK + non-Hangul = Japanese or Chinese.
                 if lang == "ko" and has_kanji:
-                    if confidence < 0.7:
-                        logger.warning(f"Low confidence Korean detection ({confidence}) for CJK text: {text[:20]}... - assuming Japanese")
-                        return {
-                            "status": "detected",
-                            "language": "ja",
-                            "confidence": 0.5,
-                            "method": "cjk_correction"
-                        }
+                    logger.warning(f"Langdetect incorrectly detected Korean for CJK text (confidence: {confidence}): {text[:20]}... - correcting to Japanese")
+                    return {
+                        "status": "detected",
+                        "language": "ja",
+                        "confidence": 0.95,  # High confidence because kanji = not Korean
+                        "method": "cjk_correction"
+                    }
                 
                 return {
                     "status": "detected",

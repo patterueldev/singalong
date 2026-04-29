@@ -252,7 +252,9 @@ IMPORTANT RULES:
   * Only accept results where artist matches parse_title's artist
   * If artist doesn't match, use parse_title's artist and leave year empty
 - Always prefer parse_title's title over MusicBrainz if parse_title exists
-- For language: If the provided language is already set (like "ja" for Japanese), prefer it over detect_language
+- For language: If the provided language is already set (like "ja" for Japanese), ALWAYS use it and do NOT call detect_language
+  * Only use detect_language if language is empty or missing
+  * Japanese kanji (especially in titles like "未熟DREAMER") requires detect_language for confirmation
 - Remove any parenthetical content from titles (e.g., romanization, alternatives)
 
 Return your final answer as JSON with these exact fields:
