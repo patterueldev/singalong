@@ -50,11 +50,13 @@ async def identify_song(request: IdentifyRequest) -> SongMetadataResponse:
     Identify song metadata from YouTube URL
 
     Workflow:
-    Step 1: Extract video ID from URL
-    Step 2: Check if song already exists in Master database
-    Step 3: If exists → return 409 Conflict
-    Step 4: If not exists → Extract metadata from local YT-DLP
-    Step 5: Return metadata for user enhancement
+    Step 1: Validate URL and extract video ID
+    Step 2: Extract metadata from local YT-DLP
+    Step 3: Return metadata for user enhancement
+
+    Note: Master duplicate checking not yet implemented (B-phase feature)
+    For now, users will receive "song already exists" error during download 
+    if they try to submit a video that's already in Master.
 
     Args:
         request: IdentifyRequest with YouTube URL
@@ -65,14 +67,13 @@ async def identify_song(request: IdentifyRequest) -> SongMetadataResponse:
     Raises:
         HTTPException: 
           - 400 if invalid URL
-          - 409 if song already exists in Master
           - 403 if video is private/age-restricted
           - 404 if video not found or removed
           - 429 if request throttled by YouTube
           - 504 if request timed out
     """
     try:
-        # Validate URL format and extract video ID first
+        # Step 1: Validate URL format and extract video ID
         yt_dlp_validator = YTDLPService(timeout=30)
         if not yt_dlp_validator.validate_url(request.url):
             raise YTDLPError("Invalid YouTube URL format")
@@ -83,39 +84,13 @@ async def identify_song(request: IdentifyRequest) -> SongMetadataResponse:
 
         logger.info(f"Identifying song: {request.url} (video_id: {video_id})")
 
-        # Step 1: Check Master database FIRST
-        # If song exists → fail early (409 Conflict)
-        try:
-            lookup_service = SongLookupService(settings.master_graphql_url)
-            exists_in_master, song_data = await lookup_service.check_song_exists(
-                video_id=video_id,
-                title="",  # Just checking by video ID
-            )
-
-            if exists_in_master and song_data:
-                song_id = song_data.get("id")
-                logger.info(f"⚠️  Song already exists in Master: {song_id}")
-                raise HTTPException(
-                    status_code=409,
-                    detail=f"Song already exists in Master database (ID: {song_id})",
-                )
-
-            logger.info(f"✓ Song not in Master, safe to identify")
-
-        except SongLookupError as e:
-            # If lookup fails, log but continue (don't block identify)
-            logger.warning(f"Could not check Master: {str(e)}")
-        except HTTPException:
-            # Re-raise HTTP exceptions (409 Conflict)
-            raise
-
         # Step 2: Extract metadata from local YT-DLP
         yt_dlp = YTDLPService(timeout=30)
         metadata = yt_dlp.extract_metadata(request.url)
 
         logger.info(f"✓ Identified: {metadata.get('title')}")
         
-        # Return metadata (without exists/song_id fields)
+        # Return metadata
         return SongMetadataResponse(**metadata)
 
     except YTDLPError as e:

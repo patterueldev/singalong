@@ -90,19 +90,18 @@ class YTDLPService:
             data = json.loads(result.stdout)
 
             # Extract and normalize fields
+            # Ensure all string fields are non-None (use empty string as default)
             return {
                 "videoId": data.get("id"),
                 "source": "youtube",
-                "title": data.get("title", ""),
+                "title": data.get("title") or "",
                 "artist": "",  # Artist not reliably available from YouTube metadata
                 "duration": data.get("duration", 0),
-                "thumbnail": data.get("thumbnail", ""),
-                "year": data.get("release_date", "")[:4]
-                if data.get("release_date")
-                else "",
-                "language": data.get("language", ""),
-                "url": data.get("webpage_url", url),
-                "tags": data.get("tags", []),
+                "thumbnail": data.get("thumbnail") or "",
+                "year": (data.get("release_date") or "")[:4],
+                "language": data.get("language") or "",
+                "url": data.get("webpage_url") or url,
+                "tags": data.get("tags") or [],
             }
 
         except subprocess.TimeoutExpired:
