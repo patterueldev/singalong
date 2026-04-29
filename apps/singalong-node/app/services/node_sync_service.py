@@ -44,8 +44,8 @@ class SyncResult:
 class NodeSyncService:
     """Service for syncing songs from Master to Node"""
     
-    # Node's local video storage directory
-    VIDEOS_DIR = Path("./data/node/videos")
+    # Node's local video storage directory (absolute path for Docker volumes)
+    VIDEOS_DIR = Path("/data/node/videos")
     
     def __init__(self, db: SQLSession):
         self.db = db
