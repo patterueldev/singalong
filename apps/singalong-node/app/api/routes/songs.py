@@ -112,6 +112,30 @@ async def identify_song(request: IdentifyRequest, enhance: bool = Query(False)) 
         except Exception as e:
             logger.warning(f"Could not check Master for existing video: {str(e)}, proceeding anyway")
 
+        # Step 0.5: Check if video is currently being downloaded
+        try:
+            from app.services.node_download_service import NodeDownloadService
+            from app.database import SessionLocal
+            db = SessionLocal()
+            try:
+                download_service = NodeDownloadService(db)
+                active_downloads = download_service.get_active_downloads()
+                for download in active_downloads:
+                    if download.get("video_id") == video_id:
+                        status = download.get("status", "unknown")
+                        if status != "completed":
+                            logger.warning(f"Video {video_id} is already being downloaded (status: {status})")
+                            raise HTTPException(
+                                status_code=424,
+                                detail=f"Download in progress: Video {video_id} is already being downloaded"
+                            )
+            finally:
+                db.close()
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.warning(f"Could not check Node download queue: {str(e)}, proceeding anyway")
+
         # Step 1: Validate URL format and extract video ID (already done above)
 
         # Step 2: Extract metadata from local YT-DLP
