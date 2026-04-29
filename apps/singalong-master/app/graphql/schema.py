@@ -4,6 +4,7 @@ from ariadne import graphql_sync, make_executable_schema, MutationType, QueryTyp
 from app.services.user_auth_service import UserAuthService
 from app.services.yt_dlp_service import YTDLPService, YTDLPError
 from app.database import SessionLocal
+from app.models.db_models import DraftSong
 
 # GraphQL schema
 type_defs = """
@@ -257,8 +258,9 @@ def resolve_request_song_download(
     """
     Request a song download from Node.
     
-    Validates video doesn't already exist, creates draft record, 
-    and starts async YT-DLP download in background.
+    Creates draft record and starts async YT-DLP download in background.
+    If a draft already exists for this videoId, it will be deleted and recreated.
+    This allows users to "re-download" songs to fix or update metadata (MVP simplification).
     
     Args:
         videoId: YouTube video ID (11 chars)
@@ -287,10 +289,14 @@ def resolve_request_song_download(
         
         logger = logging.getLogger(__name__)
         
-        # Step 1: Check if video already exists
+        # Step 1: Check if draft already exists for this videoId and delete it
+        # This allows users to "re-download" songs to fix/update them (MVP simplification)
         song_service = MasterSongService(db)
-        if song_service.check_video_exists(videoId):
-            raise ValueError(f"Video {videoId} has already been requested or exists")
+        existing_draft = db.query(DraftSong).filter(DraftSong.video_id == videoId).first()
+        if existing_draft:
+            logger.info(f"Removing existing draft for video {videoId} to allow re-download")
+            db.delete(existing_draft)
+            db.commit()
         
         # Step 2: Generate filename
         filename = generate_filename(title, videoId)

@@ -114,7 +114,7 @@ class Song(Base):
     year = Column(String(4), nullable=True)  # as string for SQLite compatibility
     youtube_url = Column(String(500), nullable=True)  # original YouTube URL
     file_path = Column(String(500), nullable=True)  # where the file is stored
-    status = Column(String(20), nullable=False, default="DRAFT", index=True)  # DRAFT, DOWNLOADING, COMPLETED, FAILED
+    status = Column(String(20), nullable=False, default="DRAFT", index=True)  # DRAFT, ACTIVE, ARCHIVED, CORRUPTED
     requested_by_admin_id = Column(String(255), nullable=True)  # which admin requested
     error_message = Column(String(500), nullable=True)  # if status is FAILED
     created_at = Column(DateTime(timezone=True), nullable=False, default=utc_now, index=True)
@@ -137,7 +137,7 @@ class DraftSong(Base):
     language = Column(String(20), nullable=True)  # detected language
     requested_by_node_id = Column(String(255), nullable=False, index=True)  # which node requested
     enhanced_metadata = Column(String(4000), nullable=True)  # JSON string of user-edited metadata
-    status = Column(String(20), nullable=False, default="pending", index=True)  # pending, downloading, finalized, failed
+    status = Column(String(20), nullable=False, default="pending", index=True)  # pending, downloading, completed, failed, archived, corrupted
     download_progress = Column(String(3), nullable=False, default="0")  # 0-100
     error_message = Column(String(500), nullable=True)  # error if failed
     file_path = Column(String(500), nullable=True)  # where the file will be stored

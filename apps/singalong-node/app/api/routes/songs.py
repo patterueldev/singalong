@@ -51,11 +51,14 @@ async def identify_song(request: IdentifyRequest, enhance: bool = Query(False)) 
     Identify song metadata from YouTube URL
 
     Workflow:
-    Step 0: Check if video already exists on Master
-    Step 1: Validate URL and extract video ID
-    Step 2: Extract metadata from local YT-DLP
-    Step 3: (Optional) Enhance metadata using OpenAI agent
-    Step 4: Return metadata for user review/modification
+    Step 0: Validate URL and extract video ID
+    Step 1: Extract metadata from local YT-DLP
+    Step 2: (Optional) Enhance metadata using OpenAI agent
+    Step 3: Return metadata for user review/modification
+
+    Note: We intentionally allow re-identification of songs. Users can identify
+    the same video multiple times to fix/update metadata. The download endpoint
+    will handle overwriting existing records if needed.
 
     Query Parameters:
         enhance: bool (default: False)
@@ -78,12 +81,11 @@ async def identify_song(request: IdentifyRequest, enhance: bool = Query(False)) 
           - 400 if invalid URL
           - 403 if video is private/age-restricted
           - 404 if video not found or removed
-          - 409 if video already exists on Master (duplicate)
           - 429 if request throttled by YouTube
           - 504 if request timed out
     """
     try:
-        # Step 0: Check Master first - if video already exists, reject it
+        # Step 0: Validate URL and extract video ID
         yt_dlp_validator = YTDLPService(timeout=30)
         if not yt_dlp_validator.validate_url(request.url):
             raise YTDLPError("Invalid YouTube URL format")
@@ -94,47 +96,9 @@ async def identify_song(request: IdentifyRequest, enhance: bool = Query(False)) 
 
         logger.info(f"Identifying song: {request.url} (video_id: {video_id}, enhance={enhance})")
 
-        # Check Master database for duplicate
-        try:
-            from app.services.graphql_client import MasterGraphQLClient
-            graphql = MasterGraphQLClient(settings.master_graphql_url)
-            logger.debug(f"Checking if video {video_id} exists on Master")
-            exists = await graphql.check_video_exists(video_id)
-            logger.debug(f"Video {video_id} exists on Master: {exists}")
-            if exists:
-                logger.warning(f"Video {video_id} already exists on Master")
-                raise HTTPException(
-                    status_code=409,
-                    detail=f"Song already exists: Video {video_id} has already been registered"
-                )
-        except HTTPException:
-            raise
-        except Exception as e:
-            logger.warning(f"Could not check Master for existing video: {str(e)}, proceeding anyway")
-
-        # Step 0.5: Check if video is currently being downloaded
-        try:
-            from app.services.node_download_service import NodeDownloadService
-            from app.database import SessionLocal
-            db = SessionLocal()
-            try:
-                download_service = NodeDownloadService(db)
-                active_downloads = download_service.get_active_downloads()
-                for download in active_downloads:
-                    if download.get("video_id") == video_id:
-                        status = download.get("status", "unknown")
-                        if status != "completed":
-                            logger.warning(f"Video {video_id} is already being downloaded (status: {status})")
-                            raise HTTPException(
-                                status_code=424,
-                                detail=f"Download in progress: Video {video_id} is already being downloaded"
-                            )
-            finally:
-                db.close()
-        except HTTPException:
-            raise
-        except Exception as e:
-            logger.warning(f"Could not check Node download queue: {str(e)}, proceeding anyway")
+        # Note: We intentionally do NOT check for existing videos on Master.
+        # This allows users to "re-identify" songs to fix or update their metadata.
+        # The download endpoint will handle overwriting existing records.
 
         # Step 1: Validate URL format and extract video ID (already done above)
 
@@ -598,10 +562,14 @@ async def download_song(
     3. User submits to /api/songs/download to start download
     
     The endpoint:
-    - Validates videoId doesn't already exist
+    - Allows re-downloading the same video (replaces existing draft)
     - Calls Master GraphQL mutation: requestSongDownload
     - Returns immediately (async download on Master)
     - Stores local tracking record
+    
+    Note: If the same videoId is downloaded multiple times, previous drafts
+    are deleted and a new draft is created. This allows fixing corrupted 
+    downloads or updating metadata without manual cleanup (MVP approach).
     
     Query Parameters:
         reserve: bool (default: False)
@@ -618,7 +586,6 @@ async def download_song(
     
     Error Codes:
         400 Bad Request: Invalid metadata
-        409 Conflict: Video already being downloaded or exists
         500 Internal Server Error: Master unreachable or download failed
     """
     try:
