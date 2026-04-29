@@ -3,13 +3,15 @@
 import logging
 import uuid
 from typing import Optional
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Query, status
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session as SQLSession
 
 from app.database import get_db
 from app.middleware.auth import verify_bearer_token
 from app.services.session_service import SessionService
+from app.api.dependencies import get_current_user
+from app.models.schemas import TokenPayload
 
 logger = logging.getLogger(__name__)
 
@@ -326,3 +328,346 @@ async def update_session_status(
     except Exception as e:
         logger.exception(f"Error updating session: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to update session")
+
+
+# ============================================================================
+# SONGBOOK ENDPOINTS
+# ============================================================================
+
+
+@router.get(
+    "/{session_id}/songbook",
+    response_model=dict,
+    status_code=200,
+)
+async def get_songbook(
+    session_id: str,
+    search: Optional[str] = Query(None, min_length=1, max_length=100, description="Search keyword for title/artist"),
+    limit: int = Query(10, ge=1, le=100, description="Results per page"),
+    offset: int = Query(0, ge=0, description="Pagination offset"),
+    sort: str = Query("title", regex="^(title|artist|year|date_added)$", description="Sort field"),
+    db: SQLSession = Depends(get_db),
+) -> dict:
+    """
+    Get a paginated, searchable list of available songs.
+    
+    Only returns ACTIVE songs that have been successfully downloaded.
+    
+    Endpoint: GET /api/sessions/{session_id}/songbook
+    
+    Query Parameters:
+    - search: Optional keyword to filter songs by title or artist (case-insensitive)
+    - limit: Number of results per page (default 10, max 100)
+    - offset: Starting position for pagination (default 0)
+    - sort: Field to sort by (title, artist, year, date_added) - default: title
+    
+    Returns:
+    - songs: Array of song objects with basic metadata
+    - total: Total number of songs matching criteria
+    - limit: Results per page
+    - offset: Current offset
+    - hasMore: Whether more results are available
+    """
+    
+    try:
+        logger.info(f"Songbook request: session={session_id}, search={search}, limit={limit}, offset={offset}, sort={sort}")
+        
+        # Verify session exists
+        session_service = SessionService(db)
+        session = session_service.get_session(session_id)
+        if not session:
+            session = session_service.get_session_by_code(session_id)
+        
+        if not session:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Session not found",
+            )
+        
+        # TODO: Query Master GraphQL for ACTIVE songs with pagination/search
+        # For MVP, return placeholder response
+        # In next implementation:
+        # 1. Call Master's songs query with filters
+        # 2. Apply search filter if provided
+        # 3. Apply pagination (limit/offset)
+        # 4. Apply sorting
+        # 5. Return results with metadata
+        
+        logger.info(f"Songbook: Returning placeholder (Master query not yet implemented)")
+        
+        return {
+            "songs": [],
+            "total": 0,
+            "limit": limit,
+            "offset": offset,
+            "hasMore": False,
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error fetching songbook: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to fetch songbook",
+        )
+
+
+# ============================================================================
+# RESERVATION ENDPOINTS
+# ============================================================================
+
+
+@router.get(
+    "/{session_id}/reservations",
+    response_model=dict,
+    status_code=200,
+)
+async def list_reservations(
+    session_id: str,
+    db: SQLSession = Depends(get_db),
+) -> dict:
+    """
+    Get all songs reserved in this session, ordered by position in queue.
+    
+    Endpoint: GET /api/sessions/{session_id}/reservations
+    
+    Returns:
+    - reservations: Array of reservation objects with song details
+    - total: Number of reservations
+    """
+    
+    try:
+        logger.info(f"List reservations: session={session_id}")
+        
+        # Verify session exists
+        session_service = SessionService(db)
+        session = session_service.get_session(session_id)
+        if not session:
+            session = session_service.get_session_by_code(session_id)
+        
+        if not session:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Session not found",
+            )
+        
+        # TODO: Query Master for reservations ordered by order_position
+        # For MVP, return placeholder response
+        
+        return {
+            "reservations": [],
+            "total": 0,
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error listing reservations: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to fetch reservations",
+        )
+
+
+@router.post(
+    "/{session_id}/reservations",
+    status_code=201,
+)
+async def reserve_song(
+    session_id: str,
+    song_id: str = Query(..., description="Song/Draft ID to reserve"),
+    reserved_by_user_id: Optional[str] = Query(None, description="User ID reserving the song (optional)"),
+    user: TokenPayload = Depends(get_current_user),
+    db: SQLSession = Depends(get_db),
+) -> dict:
+    """
+    Reserve a song for this session.
+    
+    Endpoint: POST /api/sessions/{session_id}/reservations?song_id={id}&reserved_by_user_id={optional}
+    
+    Adds the song to the end of the reservation queue.
+    
+    Authorization:
+    - Attendee: Can reserve songs for themselves in their session
+    - Admin: Can reserve songs for any user in any session
+    
+    Query Parameters:
+    - song_id: ID of the song to reserve (required)
+    - reserved_by_user_id: User ID to attribute reservation to (admin only, optional)
+    
+    Returns:
+    - reservation_id: UUID of the new reservation
+    - song_id: Reserved song ID
+    - order_position: Position in the queue
+    - status: "reserved"
+    """
+    
+    try:
+        logger.info(f"Reserve song: session={session_id}, song={song_id}, reserved_by={reserved_by_user_id}, user={user.sub}")
+        
+        # Verify session exists
+        session_service = SessionService(db)
+        session = session_service.get_session(session_id)
+        if not session:
+            session = session_service.get_session_by_code(session_id)
+        
+        if not session:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Session not found",
+            )
+        
+        # TODO: Create reservation in Master database
+        # Validation:
+        # - Song must exist and be ACTIVE
+        # - Get next order_position for this session
+        # - Create Reservation record
+        # - Return created reservation
+        
+        return {
+            "reservation_id": str(uuid.uuid4()),
+            "song_id": song_id,
+            "order_position": 1,
+            "status": "reserved",
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error reserving song: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to reserve song",
+        )
+
+
+@router.delete(
+    "/{session_id}/reservations/{reservation_id}",
+    status_code=204,
+)
+async def cancel_reservation(
+    session_id: str,
+    reservation_id: str,
+    user: TokenPayload = Depends(get_current_user),
+    db: SQLSession = Depends(get_db),
+):
+    """
+    Cancel a reservation and remove song from queue.
+    
+    Endpoint: DELETE /api/sessions/{session_id}/reservations/{reservation_id}
+    
+    Authorization:
+    - Admin: Can cancel any reservation
+    - Attendee: Can only cancel own reservations
+    
+    Returns:
+    - 204 No Content on success
+    - 403 Forbidden if user cannot cancel (not owner, not admin)
+    - 404 Not Found if reservation doesn't exist
+    """
+    
+    try:
+        logger.info(f"Cancel reservation: session={session_id}, reservation={reservation_id}, user={user.sub}")
+        
+        # Verify session exists
+        session_service = SessionService(db)
+        session = session_service.get_session(session_id)
+        if not session:
+            session = session_service.get_session_by_code(session_id)
+        
+        if not session:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Session not found",
+            )
+        
+        # TODO: Delete reservation from Master database
+        # Check authorization:
+        # - If admin: allow
+        # - If attendee: verify they own the reservation
+        # Re-number remaining reservations' order_position
+        
+        # For now, return success
+        return None
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error canceling reservation: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to cancel reservation",
+        )
+
+
+@router.patch(
+    "/{session_id}/reservations/{reservation_id}/change-order",
+    status_code=200,
+)
+async def change_reservation_order(
+    session_id: str,
+    reservation_id: str,
+    new_order: int = Query(..., ge=1, description="New position in queue"),
+    user: TokenPayload = Depends(get_current_user),
+    db: SQLSession = Depends(get_db),
+) -> dict:
+    """
+    Move a reservation to a different position in the queue.
+    
+    Endpoint: PATCH /api/sessions/{session_id}/reservations/{reservation_id}/change-order?new_order={position}
+    
+    Authorization:
+    - Admin only (attendees cannot reorder)
+    
+    Query Parameters:
+    - new_order: New position in queue (1-based, required)
+    
+    Returns:
+    - reservation_id: Updated reservation ID
+    - order_position: New position
+    - 403 Forbidden if user is not admin
+    """
+    
+    try:
+        logger.info(f"Change order: session={session_id}, reservation={reservation_id}, new_order={new_order}, user={user.sub}")
+        
+        # Authorization check
+        if user.role != "admin":
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Only admins can reorder reservations",
+            )
+        
+        # Verify session exists
+        session_service = SessionService(db)
+        session = session_service.get_session(session_id)
+        if not session:
+            session = session_service.get_session_by_code(session_id)
+        
+        if not session:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Session not found",
+            )
+        
+        # TODO: Update reservation order in Master database
+        # Algorithm:
+        # - Get current order_position
+        # - Remove from current position
+        # - Insert at new_order position
+        # - Re-number affected positions
+        
+        return {
+            "reservation_id": reservation_id,
+            "order_position": new_order,
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error changing order: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to change reservation order",
+        )
