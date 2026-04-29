@@ -4,7 +4,7 @@ import uuid
 from datetime import datetime, timezone
 from enum import Enum
 
-from sqlalchemy import Column, DateTime, Enum as SQLEnum, String, UniqueConstraint
+from sqlalchemy import Column, DateTime, Enum as SQLEnum, String, UniqueConstraint, Integer
 from sqlalchemy.dialects.postgresql import UUID
 
 from app.database import Base
@@ -110,3 +110,33 @@ class SessionUser(Base):
 
     def __repr__(self):
         return f"<SessionUser session={self.session_id} user={self.user_id}>"
+
+
+class ReservationStatus(str, Enum):
+    """Reservation status enumeration"""
+    PENDING = "pending"
+    PLAYING = "playing"
+    COMPLETED = "completed"
+    CANCELLED = "cancelled"
+
+
+class Reservation(Base):
+    """Song reservation for a session"""
+    __tablename__ = "reservations"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    session_id = Column(UUID(as_uuid=True), nullable=False, index=True)
+    song_id = Column(UUID(as_uuid=True), nullable=False, index=True)
+    user_id = Column(UUID(as_uuid=True), nullable=False, index=True)
+    position = Column(Integer, nullable=False, index=True)  # Queue position (1-based)
+    status = Column(SQLEnum(ReservationStatus), nullable=False, default=ReservationStatus.PENDING)
+    reserved_at = Column(DateTime(timezone=True), nullable=False, default=utc_now)
+    started_at = Column(DateTime(timezone=True), nullable=True)
+    completed_at = Column(DateTime(timezone=True), nullable=True)
+    cancelled_at = Column(DateTime(timezone=True), nullable=True)
+
+    # Composite unique constraint - one instance per song per session
+    __table_args__ = (UniqueConstraint('session_id', 'song_id', name='uq_session_song_reservation'),)
+
+    def __repr__(self):
+        return f"<Reservation {self.position}: {self.song_id} in {self.session_id} ({self.status})>"

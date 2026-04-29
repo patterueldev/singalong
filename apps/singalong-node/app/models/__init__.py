@@ -3,8 +3,12 @@
 from app.models.db_models import (
     PlayerConnection,
     Session,
+    SessionUser,
     User,
     UserRole,
+    Reservation,
+    ReservationStatus,
+    Song,
 )
 from app.models.schemas import (
     AuthAdminRequest,
@@ -12,6 +16,8 @@ from app.models.schemas import (
     AuthPlayerRequest,
     RefreshTokenRequest,
     TokenResponse,
+    CreateReservationRequest,
+    ReservationResponse,
 )
 
 __all__ = [
@@ -20,10 +26,16 @@ __all__ = [
     "UserRole",
     "PlayerConnection",
     "Session",
+    "SessionUser",
+    "Reservation",
+    "ReservationStatus",
+    "Song",
     # Schemas
     "AuthControllerRequest",
     "AuthAdminRequest",
     "AuthPlayerRequest",
     "RefreshTokenRequest",
     "TokenResponse",
+    "CreateReservationRequest",
+    "ReservationResponse",
 ]

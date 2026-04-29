@@ -1,6 +1,6 @@
 """Pydantic schemas for authentication"""
 
-from typing import Optional
+from typing import Optional, List
 from pydantic import BaseModel, Field, ConfigDict
 
 
@@ -246,3 +246,65 @@ class DownloadStatusResponse(BaseModel):
     error: Optional[str] = Field(default=None, description="Error message if failed")
 
     model_config = ConfigDict(populate_by_name=True)
+
+# Reservation schemas
+class CreateReservationRequest(BaseModel):
+    """Create reservation request"""
+    song_id: str = Field(..., description="Song UUID")
+    user_id: str = Field(..., description="User UUID")
+
+
+class ReservationResponse(BaseModel):
+    """Reservation response"""
+    reservation_id: str = Field(alias="id", description="Reservation UUID")
+    session_id: str = Field(..., description="Session UUID")
+    song_id: str = Field(..., description="Song UUID")
+    position: int = Field(..., description="Queue position (1-based)")
+    status: str = Field(..., description="Reservation status")
+    reserved_at: str = Field(..., description="Reservation timestamp")
+    started_at: Optional[str] = Field(None, description="When playing started")
+    completed_at: Optional[str] = Field(None, description="When completed")
+    cancelled_at: Optional[str] = Field(None, description="When cancelled")
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ReservationDetailResponse(BaseModel):
+    """Detailed reservation with song info"""
+    reservation_id: str = Field(alias="id", description="Reservation UUID")
+    session_id: str = Field(..., description="Session UUID")
+    song_id: str = Field(..., description="Song UUID")
+    song_title: str = Field(..., description="Song title")
+    song_artist: str = Field(..., description="Song artist")
+    position: int = Field(..., description="Queue position")
+    status: str = Field(..., description="Reservation status")
+    reserved_by: str = Field(..., description="User ID who reserved")
+    reserved_at: str = Field(..., description="Reservation timestamp")
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class UpdateReservationStatusRequest(BaseModel):
+    """Update reservation status request"""
+    status: str = Field(..., description="New status (pending, playing, completed, cancelled)")
+
+
+class QueueItemResponse(BaseModel):
+    """Queue item for player app"""
+    position: int = Field(..., description="Queue position")
+    reservation_id: str = Field(alias="id", description="Reservation UUID")
+    song_id: str = Field(..., description="Song UUID")
+    title: str = Field(..., description="Song title")
+    artist: str = Field(..., description="Song artist")
+    reserved_by: str = Field(..., description="User nickname/ID")
+    status: str = Field(..., description="Reservation status (pending, playing)")
+    duration_seconds: int = Field(..., description="Song duration in seconds")
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class QueueResponse(BaseModel):
+    """Complete queue for a session"""
+    queue: List[QueueItemResponse] = Field(..., description="Ordered list of songs")
+    current_position: int = Field(default=0, description="Current playing position (0 if none)")
+    total: int = Field(default=0, description="Total pending songs")
