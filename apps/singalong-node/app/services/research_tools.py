@@ -21,7 +21,8 @@ class ResearchTools:
         """
         Search MusicBrainz for recording information.
         
-        Returns artist, release date, genres.
+        Returns multiple results sorted by release date (earliest first).
+        Agent can then pick the best match based on artist and year consistency.
         """
         try:
             import musicbrainzngs
@@ -31,29 +32,40 @@ class ResearchTools:
             if not query:
                 return {"status": "no_query"}
             
-            # Search recordings
+            # Search recordings (limit=10 to get more options)
             result = await asyncio.to_thread(
                 musicbrainzngs.search_recordings,
                 query=query,
-                limit=5
+                limit=10
             )
             
             if not result.get("recording-list"):
                 return {"status": "not_found"}
             
-            # Extract first recording with release info
+            # Collect all recordings with release info
+            matches = []
             for recording in result["recording-list"]:
                 if "release-list" in recording and recording["release-list"]:
-                    release = recording["release-list"][0]
-                    return {
-                        "status": "found",
-                        "title": recording.get("title", ""),
-                        "artist": recording.get("artist-credit-phrase", ""),
-                        "year": release.get("date", "")[:4] if release.get("date") else "",
-                        "country": release.get("country", ""),
-                    }
+                    for release in recording["release-list"]:
+                        year = release.get("date", "")[:4] if release.get("date") else ""
+                        matches.append({
+                            "title": recording.get("title", ""),
+                            "artist": recording.get("artist-credit-phrase", ""),
+                            "year": year,
+                            "country": release.get("country", ""),
+                        })
             
-            return {"status": "no_releases"}
+            if not matches:
+                return {"status": "no_releases"}
+            
+            # Sort by year (earliest first) to prioritize originals
+            matches.sort(key=lambda x: x.get("year", "9999"))
+            
+            return {
+                "status": "found",
+                "results": matches[:5],  # Return top 5 results (earliest first)
+                "primary": matches[0],  # Primary result (earliest/original)
+            }
             
         except Exception as e:
             logger.debug(f"MusicBrainz search error: {e}")
@@ -141,26 +153,31 @@ class ResearchTools:
             match = re.match(r'^([^-]+?)\s*-\s*(.+)$', cleaned)
             if match:
                 artist, song = match.groups()
+                # Clean up title: remove parenthetical content (romanization alternatives)
+                song = re.sub(r'\s*\([^)]*\)\s*$', '', song).strip()
                 return {
                     "status": "parsed",
                     "artist": artist.strip(),
-                    "title": song.strip()
+                    "title": song
                 }
             
             # Pattern 2: "Title (Artist)"
             match = re.search(r'^(.+?)\s*\(([^)]+)\)$', cleaned)
             if match:
                 title_part, artist_part = match.groups()
+                # Clean up title: remove parenthetical content
+                title_part = re.sub(r'\s*\([^)]*\)\s*$', '', title_part).strip()
                 return {
                     "status": "parsed",
-                    "title": title_part.strip(),
+                    "title": title_part,
                     "artist": artist_part.strip()
                 }
             
             # Couldn't parse, return original
+            cleaned_title = re.sub(r'\s*\([^)]*\)\s*$', '', cleaned).strip()
             return {
                 "status": "not_parsed",
-                "title": cleaned
+                "title": cleaned_title
             }
             
         except Exception as e:

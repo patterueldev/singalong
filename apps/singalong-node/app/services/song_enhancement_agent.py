@@ -223,6 +223,7 @@ class SongEnhancementAgent:
         """Build context prompt for the agent"""
         tags_str = ", ".join(metadata.get("tags", [])[:10])
         description = metadata.get("description", "")[:500]
+        provided_language = metadata.get("language", "")
         
         return f"""You are a music metadata enhancement agent. Your job is to improve song details using available research tools.
 
@@ -230,6 +231,7 @@ Current YouTube metadata:
 - Title: {metadata.get('title', '')}
 - Tags: {tags_str}
 - Description: {description[:200]}
+- Provided Language: {provided_language if provided_language else '(none)'}
 
 Current extracted data:
 - Artist: {metadata.get('artist', '')}
@@ -242,9 +244,20 @@ Your task:
 3. Use detect_language() to identify the song's language from title/description
 4. Use search_lyrics() to get additional context if needed
 
+IMPORTANT RULES:
+- Parse_title gives you the most reliable artist extraction from the YouTube title - trust it
+- MusicBrainz returns multiple results sorted by year (earliest first):
+  * If "primary" field exists, it's the earliest/original recording
+  * If you see multiple results, prefer the earliest year (original release)
+  * Only accept results where artist matches parse_title's artist
+  * If artist doesn't match, use parse_title's artist and leave year empty
+- Always prefer parse_title's title over MusicBrainz if parse_title exists
+- For language: If the provided language is already set (like "ja" for Japanese), prefer it over detect_language
+- Remove any parenthetical content from titles (e.g., romanization, alternatives)
+
 Return your final answer as JSON with these exact fields:
 {{
-  "title": "cleaned song title",
+  "title": "cleaned song title (no parentheses or alternatives)",
   "artist": "artist name or empty string",
   "year": "4-digit year or empty string",
   "language": "ISO 639-1 code (en, ja, ko, etc) or empty string"
