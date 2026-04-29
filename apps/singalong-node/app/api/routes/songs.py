@@ -10,7 +10,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session as SQLSession
 
 from app.database import SessionLocal
-from app.models.db_models import Song
+from app.models.db_models import Song, DownloadQueue
 from app.models.schemas import (
     CreateSongRequest,
     SongResponse,
@@ -762,6 +762,25 @@ async def get_active_downloads(
 
                 if status_data:
                     download_status = status_data.get("status", "unknown")
+
+                    # Update local DownloadQueue record to reflect Master's status
+                    try:
+                        from uuid import UUID
+                        download_uuid = UUID(download.get("download_id"))
+                        local_download = db.query(DownloadQueue).filter(
+                            DownloadQueue.id == download_uuid
+                        ).first()
+                        if local_download:
+                            old_status = local_download.status
+                            local_download.status = download_status
+                            local_download.progress = status_data.get("progress", 0)
+                            local_download.file_path = status_data.get("filePath")
+                            local_download.error_message = status_data.get("error")
+                            db.commit()
+                            if old_status != download_status:
+                                logger.info(f"Updated {download.get('video_id')} status: {old_status} → {download_status}")
+                    except Exception as e:
+                        logger.warning(f"Could not update local download record: {str(e)}")
 
                     # Filter by status if requested
                     if status_filter and download_status != status_filter:
