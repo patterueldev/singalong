@@ -736,3 +736,68 @@ curl "http://localhost:5002/api/songs?sort_by=artist&order=desc"
 For complete API reference, see [`MVP_BACKEND_API.md`](./MVP_BACKEND_API.md)
 
 For testing procedures, see [`MVP_BACKEND_TESTING.md`](./MVP_BACKEND_TESTING.md)
+
+---
+
+## 📋 Architecture Note: Song Identification Flow
+
+### How Identification Works (After Refactoring)
+
+**Old Flow (Master-based):**
+```
+Client → Node → Master (YT-DLP) → Node → Client
+```
+
+**New Flow (Node-local):**
+```
+Client → Node (YT-DLP locally) → check Master → Client
+```
+
+### Steps:
+1. **Node runs YT-DLP locally** to extract YouTube video metadata
+   - Reduces latency (no network roundtrip to Master)
+   - Faster identification response
+
+2. **Node queries Master database** to check if song already exists
+   - Uses GraphQL to look up by video ID
+   - Returns existence status + song data if found
+
+3. **Response includes:**
+   - `exists_in_master`: true/false
+   - `master_song_id`: UUID if already exists
+   - `master_song_status`: current status (e.g., "completed", "downloading")
+
+### Example Response:
+```json
+{
+  "videoId": "dQw4w9WgXcQ",
+  "title": "Rick Astley - Never Gonna Give You Up",
+  "artist": "Rick Astley",
+  "duration": 212,
+  "exists_in_master": false,
+  "master_song_id": null,
+  "master_song_status": null,
+  ...
+}
+```
+
+Or if song already exists:
+```json
+{
+  "videoId": "dQw4w9WgXcQ",
+  "title": "Rick Astley - Never Gonna Give You Up",
+  "artist": "Rick Astley",
+  "duration": 212,
+  "exists_in_master": true,
+  "master_song_id": "550e8400-e29b-41d4-a716-446655440000",
+  "master_song_status": "completed",
+  ...
+}
+```
+
+### Benefits:
+✅ **Faster identification** - local YT-DLP, no network latency  
+✅ **Reduced Master load** - only database queries, not extraction  
+✅ **Better UX** - user knows if song already exists immediately  
+✅ **Cleaner separation** - Node identifies, Master stores  
+
