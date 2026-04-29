@@ -541,6 +541,246 @@ async def list_songs(
     return SongListResponse(songs=song_list, total=total)
 
 
+@router.post("/download", response_model=DownloadStatusResponse, status_code=202)
+async def download_song(
+    request: SongMetadataResponse,
+    reserve: bool = Query(False),
+    db: SQLSession = Depends(get_db),
+) -> DownloadStatusResponse:
+    """
+    Request to download a song from Master.
+    
+    This is the final step in the workflow:
+    1. User identifies song via /api/songs/identify
+    2. (Optional) User enhances metadata via /api/songs/enhance
+    3. User submits to /api/songs/download to start download
+    
+    The endpoint:
+    - Validates videoId doesn't already exist
+    - Calls Master GraphQL mutation: requestSongDownload
+    - Returns immediately (async download on Master)
+    - Stores local tracking record
+    
+    Query Parameters:
+        reserve: bool (default: False)
+            - True: Reserve song after download completes (B8, placeholder for now)
+            - False: Just download, no reservation
+    
+    Request Body: SongMetadataResponse (from /identify or /enhance)
+    
+    Returns:
+        DownloadStatusResponse with download_id, status='queued'
+    
+    Status Code:
+        202 Accepted: Download request queued (async, not waiting for completion)
+    
+    Error Codes:
+        400 Bad Request: Invalid metadata
+        409 Conflict: Video already being downloaded or exists
+        500 Internal Server Error: Master unreachable or download failed
+    """
+    try:
+        logger.info(
+            f"Download request: {request.title} (videoId={request.videoId}, reserve={reserve})"
+        )
+
+        # Step 1: Validate metadata
+        if not request.videoId:
+            raise ValueError("videoId is required")
+        if not request.source:
+            raise ValueError("source is required (e.g., 'youtube')")
+        if not request.url:
+            raise ValueError("url is required")
+
+        # Step 2: Call Master GraphQL requestSongDownload mutation using existing client method
+        master_client = MasterGraphQLClient(settings.master_graphql_url)
+        
+        logger.debug(f"Calling Master GraphQL: requestSongDownload({request.videoId})")
+
+        # Call the mutation directly with correct parameters matching Master schema
+        mutation_query = """
+            mutation requestSongDownload(
+                $videoId: String!
+                $source: String!
+                $title: String!
+                $artist: String!
+                $year: String!
+                $language: String!
+                $duration: Int!
+                $thumbnail: String!
+                $url: String!
+                $tags: [String!]!
+                $lyrics: String!
+                $requestedByNodeId: String!
+            ) {
+                requestSongDownload(
+                    videoId: $videoId
+                    source: $source
+                    title: $title
+                    artist: $artist
+                    year: $year
+                    language: $language
+                    duration: $duration
+                    thumbnail: $thumbnail
+                    url: $url
+                    tags: $tags
+                    lyrics: $lyrics
+                    requestedByNodeId: $requestedByNodeId
+                ) {
+                    songId
+                    status
+                    progress
+                    message
+                    error
+                }
+            }
+        """
+
+        variables = {
+            "videoId": request.videoId,
+            "source": request.source,
+            "title": request.title,
+            "artist": request.artist,
+            "year": request.year,
+            "language": request.language,
+            "duration": int(request.duration) if request.duration else 0,
+            "thumbnail": request.thumbnail,
+            "url": request.url,
+            "tags": request.tags,
+            "lyrics": request.lyrics or "",
+            "requestedByNodeId": settings.node_id,
+        }
+
+        # Execute mutation
+        download_data = await master_client._execute_mutation(mutation_query, variables)
+        
+        download_id = download_data.get("requestSongDownload", {}).get("songId")
+        status = download_data.get("requestSongDownload", {}).get("status", "queued")
+
+        if not download_id:
+            error_msg = download_data.get("requestSongDownload", {}).get("error", "Unknown error")
+            raise ValueError(f"Master error: {error_msg}")
+
+        logger.info(f"✓ Master accepted download: {download_id}")
+
+        # Step 3: Store local tracking record
+        from app.services.node_download_service import NodeDownloadService
+        download_service = NodeDownloadService(db)
+        entry = download_service.create_download_queue_entry(
+            video_id=request.videoId,
+            title=request.title,
+            master_download_id=download_id,
+        )
+
+        # Step 4: Placeholder for reservation
+        if reserve:
+            logger.info(f"Reserve flag set (placeholder for B8): {request.title}")
+            # TODO: B8 - Implement actual reservation logic
+
+        # Return 202 Accepted (download queued, not waiting)
+        return DownloadStatusResponse(
+            song_id=download_id,
+            status=status,
+            progress=0,
+            message="Download queued on Master",
+            error=None,
+        )
+
+    except ValueError as e:
+        logger.error(f"Validation error: {str(e)}")
+        raise HTTPException(status_code=400, detail=str(e))
+
+    except GraphQLError as e:
+        error_str = str(e)
+        logger.error(f"Master GraphQL error: {error_str}")
+
+        if "already" in error_str.lower():
+            raise HTTPException(
+                status_code=409,
+                detail=f"Song already requested: {error_str}",
+            )
+
+        raise HTTPException(status_code=500, detail=f"Master error: {error_str}")
+
+    except Exception as e:
+        logger.exception(f"Error requesting download: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to request download")
+
+
+@router.get("/downloads", response_model=list, status_code=200)
+async def get_active_downloads(
+    status_filter: str = Query(None, alias="status"),
+    db: SQLSession = Depends(get_db),
+) -> list:
+    """
+    Get list of active song downloads being tracked by this Node.
+    
+    This endpoint shows:
+    - Downloads queued on Master (awaiting YT-DLP download)
+    - Downloads in progress on Master
+    - Downloads completed (synced to Node in B3)
+    
+    Query Parameters:
+        status: (optional) Filter by status
+            - pending: Queued, not yet downloading
+            - downloading: YT-DLP download in progress
+            - completed: Downloaded and synced to Node
+            - failed: Download failed
+    
+    Returns:
+        Array of DownloadStatusResponse objects
+    
+    Status Code: 200 OK
+    """
+    try:
+        logger.info(f"Listing active downloads (status={status_filter})")
+
+        # Step 1: Get local tracking records
+        from app.services.node_download_service import NodeDownloadService
+        download_service = NodeDownloadService(db)
+        downloads = download_service.get_active_downloads()
+
+        # Step 2: Query Master for latest status on each
+        master_client = MasterGraphQLClient(settings.master_graphql_url)
+
+        updated_downloads = []
+        for download in downloads:
+            try:
+                # Query Master for latest status using existing method
+                status_data = await master_client.get_download_status(
+                    download.get("master_download_id")
+                )
+
+                if status_data:
+                    download_status = status_data.get("status", "unknown")
+
+                    # Filter by status if requested
+                    if status_filter and download_status != status_filter:
+                        continue
+
+                    updated_downloads.append(
+                        {
+                            "download_id": download.get("download_id"),
+                            "videoId": download.get("video_id"),
+                            "title": download.get("title"),
+                            "status": download_status,
+                            "progress_percent": status_data.get("progress", 0),
+                            "created_at": download.get("created_at"),
+                            "completed_at": None,
+                            "file_path": None,
+                            "error_message": status_data.get("error"),
+                        }
+                    )
+            except Exception as e:
+                logger.warning(f"Could not query Master for {download.get('master_download_id')}: {str(e)}")
+                updated_downloads.append(download)
+
+        logger.info(f"Found {len(updated_downloads)} active downloads")
+        return updated_downloads
+
+    except Exception as e:
+        logger.exception(f"Error listing downloads: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to list downloads")
 @router.get("/{song_id}")
 async def get_song(
     song_id: str,
@@ -692,3 +932,5 @@ async def check_download_status(song_id: str) -> DownloadStatusResponse:
     except Exception as e:
         logger.exception(f"Error checking download status: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to check status")
+
+

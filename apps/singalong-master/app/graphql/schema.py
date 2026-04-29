@@ -67,12 +67,17 @@ type_defs = """
         ): AuthResponse!
 
         requestSongDownload(
-            url: String!
+            videoId: String!
+            source: String!
             title: String!
-            artist: String
-            duration: Int
-            language: String
-            enhancedMetadata: String
+            artist: String!
+            year: String!
+            language: String!
+            duration: Int!
+            thumbnail: String!
+            url: String!
+            tags: [String!]!
+            lyrics: String!
             requestedByNodeId: String!
         ): DownloadResponse!
     }
@@ -217,40 +222,150 @@ def resolve_authenticate_player(obj, info, sessionId, nodeId):
 def resolve_request_song_download(
     obj,
     info,
-    url: str,
+    videoId: str,
+    source: str,
     title: str,
-    artist: str = None,
-    duration: int = None,
-    language: str = None,
-    enhancedMetadata: str = None,
+    artist: str,
+    year: str,
+    language: str,
+    duration: int,
+    thumbnail: str,
+    url: str,
+    tags: list,
+    lyrics: str,
     requestedByNodeId: str = "unknown",
 ):
-    """Request a song download from Master"""
+    """
+    Request a song download from Node.
+    
+    Validates video doesn't already exist, creates draft record, 
+    and starts async YT-DLP download in background.
+    
+    Args:
+        videoId: YouTube video ID (11 chars)
+        source: Source type (currently "youtube")
+        title: Song title
+        artist: Artist name
+        year: Release year
+        language: ISO 639-1 language code
+        duration: Duration in seconds
+        thumbnail: Thumbnail URL
+        url: YouTube URL
+        tags: List of tags
+        lyrics: Song lyrics (empty string for now)
+        requestedByNodeId: Node ID requesting download
+    
+    Returns:
+        DownloadResponse with songId, status, progress
+    """
     db = SessionLocal()
     try:
-        from app.services.download_service import DownloadService
-
-        download_service = DownloadService(db)
-        draft = download_service.request_download(
-            url=url,
+        import logging
+        from app.utils.file_naming import generate_filename
+        from app.services.master_song_service import MasterSongService
+        from app.services.master_download_service import MasterDownloadService
+        import asyncio
+        
+        logger = logging.getLogger(__name__)
+        
+        # Step 1: Check if video already exists
+        song_service = MasterSongService(db)
+        if song_service.check_video_exists(videoId):
+            raise ValueError(f"Video {videoId} has already been requested or exists")
+        
+        # Step 2: Generate filename
+        filename = generate_filename(title, videoId)
+        logger.info(f"Generated filename: {filename}")
+        
+        # Step 3: Create draft song record
+        draft = song_service.create_draft_song(
+            video_id=videoId,
             title=title,
             artist=artist,
-            duration=duration,
+            year=year,
             language=language,
-            enhanced_metadata=enhancedMetadata,
+            duration=duration,
+            thumbnail=thumbnail,
+            url=url,
+            tags=tags,
+            lyrics=lyrics,
             requested_by_node_id=requestedByNodeId,
+            enhanced_metadata=None,
         )
-
+        
+        logger.info(f"Created draft song: {draft.id}")
+        
+        # Step 4: Start async download in background
+        # Fire-and-forget: don't wait for completion
+        def background_download():
+            try:
+                logger.info(f"Starting background download for {videoId}")
+                
+                # Update status to downloading
+                song_service.update_draft_status(
+                    str(draft.id),
+                    status="downloading",
+                    progress=0,
+                )
+                
+                # Download video
+                download_service = MasterDownloadService()
+                file_path, error_msg = download_service.download_video_sync(
+                    video_id=videoId,
+                    filename=filename,
+                    timeout=300,
+                )
+                
+                # Update final status
+                if file_path:
+                    file_size = download_service.get_file_size(file_path)
+                    song_service.update_draft_status(
+                        str(draft.id),
+                        status="completed",
+                        progress=100,
+                        file_path=file_path,
+                        file_size=str(file_size),
+                    )
+                    logger.info(f"✓ Download completed: {file_path}")
+                else:
+                    song_service.update_draft_status(
+                        str(draft.id),
+                        status="failed",
+                        progress=0,
+                        error_message=error_msg,
+                    )
+                    logger.error(f"✗ Download failed: {error_msg}")
+                    
+            except Exception as e:
+                logger.exception(f"Background download error: {str(e)}")
+                try:
+                    song_service.update_draft_status(
+                        str(draft.id),
+                        status="failed",
+                        error_message=str(e),
+                    )
+                except:
+                    pass
+        
+        # Start download in background thread
+        import threading
+        thread = threading.Thread(target=background_download, daemon=True)
+        thread.start()
+        
+        # Return immediate response (don't wait for download)
         return {
             "songId": str(draft.id),
-            "status": draft.status,
-            "progress": int(draft.download_progress),
-            "message": "Download started",
+            "status": "queued",
+            "progress": 0,
+            "message": "Download queued. Monitor progress via downloadStatus query.",
+            "error": None,
         }
-
+        
     except ValueError as e:
+        logger.error(f"Validation error: {str(e)}")
         raise ValueError(str(e))
     except Exception as e:
+        logger.exception(f"Unexpected error: {str(e)}")
         raise ValueError(f"Failed to request download: {str(e)}")
     finally:
         db.close()
