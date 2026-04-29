@@ -1,25 +1,36 @@
-"""Service for song metadata enhancement using OpenAI."""
+"""
+Service for song metadata enhancement using agent-based orchestration.
 
-import json
+The enhancement service coordinates multiple agents that specialize in:
+- Parsing metadata from titles/descriptions
+- Researching from free databases (MusicBrainz, AniDB)
+- Detecting language and extracting lyrics
+"""
+
 import logging
-from typing import Optional
+from typing import Dict, Any
 
-from openai import OpenAI, APIError, APIConnectionError, RateLimitError
+from ..services.orchestrator import EnhancementOrchestrator
 
 logger = logging.getLogger(__name__)
 
 
 class EnhancementError(Exception):
     """Base exception for enhancement errors"""
-
     pass
 
 
 class EnhancementService:
     """
-    Enhance song metadata using OpenAI
+    Enhance song metadata using agent-based orchestration.
     
-    Improves: title, artist, year, language
+    Uses multiple specialized agents to research and verify:
+    - Title and artist (DescriptionParser + MusicBrainz)
+    - Year and genre (MusicBrainz + AniDB)
+    - Language (LanguageDetection)
+    - Lyrics (LyricsResearch)
+    
+    Agents run in parallel with graceful degradation.
     """
 
     # Validation constraints
@@ -36,256 +47,143 @@ class EnhancementService:
         "ar", "hi", "bn", "pa", "te", "mr", "ta", "gu", "kn", "ml"
     }
 
-    def __init__(self, openai_api_key: Optional[str] = None, timeout: int = 30):
+    def __init__(self):
         """
-        Initialize OpenAI client for AI enhancement
+        Initialize enhancement service with agent orchestrator.
+        
+        In Phase 1: Orchestrator has no agents, returns original metadata
+        In Phase 2: Agents are added and orchestrator coordinates them
+        """
+        self.orchestrator = EnhancementOrchestrator()
+        logger.info("EnhancementService initialized with orchestrator")
+
+    async def enhance(self, metadata: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Enhance song metadata using orchestrated agents.
         
         Args:
-            openai_api_key: OpenAI API key (optional if not using AI enhancement)
-            timeout: Request timeout in seconds
-        """
-        self.openai_api_key = openai_api_key
-        self.timeout = timeout
-        self.model = "gpt-4o-mini"  # Fast, cheap model for metadata extraction
-        self.client = None
-
-        if openai_api_key:
-            self.client = OpenAI(api_key=openai_api_key)
-
-    async def enhance(
-        self,
-        title: str,
-        artist: str = "",
-        year: str = "",
-        language: str = "",
-        tags: list = None,
-        description: str = "",
-    ) -> dict:
-        """
-        Enhance song metadata using OpenAI
-        
-        Improves: title, artist, year, language
-        
-        Strategy:
-        1. Use title as primary source
-        2. Use description for additional context
-        3. Use tags for artist/genre/language hints
-        4. LLM extracts/improves: title, artist, year, language
-        5. Validate and return enhanced metadata
-        
-        Args:
-            title: Song title (from identify)
-            artist: Current artist (may be empty)
-            year: Current year (may be empty)
-            language: Current language (may be empty)
-            tags: List of tags from metadata
-            description: Video description (may be empty)
+            metadata: Original metadata from identify endpoint:
+                - videoId: str
+                - source: str (usually "youtube")
+                - title: str
+                - artist: str (may be empty)
+                - duration: int
+                - thumbnail: str
+                - year: str (may be empty)
+                - language: str (may be empty)
+                - url: str
+                - tags: List[str]
+                - description: Optional[str]
         
         Returns:
-            Dict with enhanced fields: title, artist, year, language
+            Enhanced metadata with improved fields, or original on error.
+            Always returns valid metadata (never None/null).
+            Always HTTP 200 OK (enhancement is optional).
         
-        Raises:
-            EnhancementError: If OpenAI not configured
+        Examples:
+            Input:
+            {
+                "title": "[Karaoke 0] Aqours - 未熟DREAMER...",
+                "artist": "",
+                "year": "",
+                "language": ""
+            }
+            
+            Output (after agents research):
+            {
+                "title": "未熟DREAMER",
+                "artist": "Aqours",
+                "year": "2016",
+                "language": "ja"
+            }
         """
-        if not self.client:
-            raise EnhancementError("OpenAI API key not configured")
-
-        if tags is None:
-            tags = []
-
         try:
-            # Build context for LLM
-            context = self._build_context(title, artist, year, language, tags, description)
-
-            # Call OpenAI with structured extraction
-            response = await self._call_openai(context)
-
-            # Parse and validate response
-            enhanced = self._parse_response(response, title, artist, year, language)
-
+            logger.debug(f"Enhancing metadata for: {metadata.get('title', 'unknown')}")
+            
+            # Use orchestrator to enhance metadata
+            enhanced = await self.orchestrator.enhance(metadata)
+            
+            # Validate enhanced metadata
+            validated = self._validate_enhanced(enhanced, metadata)
+            
             logger.info(
-                f"✓ Enhanced metadata: "
-                f"title='{enhanced['title']}', "
-                f"artist='{enhanced['artist']}', "
-                f"year='{enhanced['year']}', "
-                f"language='{enhanced['language']}'"
+                f"Enhancement complete for: {metadata.get('title', 'unknown')}",
+                extra={"enhanced_fields": list(validated.keys())}
             )
-
-            return enhanced
-
-        except (APIError, APIConnectionError, RateLimitError) as e:
-            logger.warning(f"OpenAI API error: {str(e)}. Returning original metadata.")
-            # Graceful degradation: return original if LLM fails
-            return {
-                "title": title,
-                "artist": artist,
-                "year": year,
-                "language": language,
-            }
+            
+            return validated
+            
         except Exception as e:
-            logger.error(f"Unexpected error during enhancement: {str(e)}")
-            # Graceful degradation
-            return {
-                "title": title,
-                "artist": artist,
-                "year": year,
-                "language": language,
-            }
+            logger.error(f"Enhancement error: {e}", exc_info=True)
+            # Graceful degradation: return original metadata
+            return metadata
 
-    def _build_context(
+    def _validate_enhanced(
         self,
-        title: str,
-        artist: str,
-        year: str,
-        language: str,
-        tags: list,
-        description: str,
-    ) -> str:
-        """Build context string for LLM"""
-        parts = [f"Title: {title}"]
-
-        if artist:
-            parts.append(f"Current Artist: {artist}")
-
-        if year:
-            parts.append(f"Current Year: {year}")
-
-        if language:
-            parts.append(f"Current Language: {language}")
-
-        if description:
-            parts.append(f"Description: {description[:500]}")  # Limit to 500 chars
-
-        if tags:
-            parts.append(f"Tags: {', '.join(tags[:20])}")  # Limit to 20 tags
-
-        return "\n".join(parts)
-
-    async def _call_openai(self, context: str) -> dict:
+        enhanced: Dict[str, Any],
+        original: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """
-        Call OpenAI to enhance song metadata
-        """
-        prompt = f"""Enhance song metadata from the following information:
-
-{context}
-
-Return a JSON object with improved values for:
-1. "title": Clean song title ONLY (do NOT include artist name as a prefix)
-2. "artist": Full artist name (not channel name, not "unknown"). Empty string if truly unknown.
-3. "year": Release year as number (e.g., 2020). Empty string if unknown.
-4. "language": ISO 639-1 language code (en, ja, ko, etc.). Empty string if unknown.
-
-For title:
-- Clean up bracketed annotations like [Karaoke 0], (Instrumental), (Off Vocal)
-- Remove artist name prefix (the artist goes in the "artist" field separately)
-- Keep the actual song name clean and meaningful
-- Keep Unicode characters as-is (Japanese, Chinese, Korean, etc.)
-- Examples:
-  - "[Karaoke 0] Aqours - 未熟DREAMER ( Mijuku DREAMER )" → "未熟DREAMER" (not "Aqours - 未熟DREAMER")
-  - "Rick Astley - Never Gonna Give You Up (Official Video)" → "Never Gonna Give You Up"
-  - "BTS - Dynamite (Karaoke)" → "Dynamite"
-
-For artist:
-- Extract primary artist name
-- If multiple artists, list them
-- Don't include "(Karaoke)" or "(Instrumental)" in artist name
-- If no artist found, return empty string
-
-For year:
-- Return ORIGINAL release year, not remaster or upload date
-- Try to infer from context clues
-- If genuinely unknown, return empty string
-
-For language:
-- Return ISO 639-1 code (e.g., "en", "ja", "ko", "zh")
-- If multiple languages, return primary one
-- If unknown, return empty string
-
-Return ONLY valid JSON, no other text."""
-
-        try:
-            response = self.client.chat.completions.create(
-                model=self.model,
-                messages=[{"role": "user", "content": prompt}],
-                temperature=0,  # Deterministic extraction
-                timeout=self.timeout,
-            )
-
-            # Parse JSON from response
-            content = str(response.choices[0].message.content).strip()
-
-            # Try to extract JSON if wrapped in markdown
-            if "```json" in content:
-                content = content.split("```json")[1].split("```")[0].strip()
-            elif "```" in content:
-                content = content.split("```")[1].split("```")[0].strip()
-
-            return json.loads(content)
-
-        except json.JSONDecodeError as e:
-            logger.error(f"Failed to parse OpenAI response as JSON: {e}")
-            raise EnhancementError("Invalid JSON response from OpenAI")
-
-    def _parse_response(
-        self,
-        response: dict,
-        original_title: str,
-        original_artist: str,
-        original_year: str,
-        original_language: str,
-    ) -> dict:
-        """
-        Parse and validate LLM response
+        Validate enhanced metadata fields.
         
-        Ensures all fields are strings and handles invalid values gracefully
+        Ensures:
+        - No None/null values (use empty string instead)
+        - Field lengths within limits
+        - Year in valid range
+        - Language in SUPPORTED_LANGUAGES
+        
+        Invalid fields revert to original values.
+        
+        Args:
+            enhanced: Enhanced metadata from agents
+            original: Original metadata (fallback)
+        
+        Returns:
+            Validated metadata (invalid fields use original values)
         """
+        validated = enhanced.copy()
+
+        # Validate title
         try:
-            title = str(response.get("title") or "").strip()
-            artist = str(response.get("artist") or "").strip()
-            year = str(response.get("year") or "").strip()
-            language = str(response.get("language") or "").strip()
+            title = str(validated.get("title") or original.get("title", ""))
+            if not (self.MIN_TITLE_LENGTH <= len(title) <= self.MAX_TITLE_LENGTH):
+                title = original.get("title", "")
+            validated["title"] = title
+        except (TypeError, ValueError):
+            validated["title"] = original.get("title", "")
 
-            # Validate title
-            if not title:
-                logger.warning("LLM returned empty title, using original")
-                title = original_title
-            elif len(title) > self.MAX_TITLE_LENGTH:
-                logger.warning(f"Title too long, truncating")
-                title = title[: self.MAX_TITLE_LENGTH]
+        # Validate artist
+        try:
+            artist = str(validated.get("artist") or original.get("artist", ""))
+            if not (self.MIN_ARTIST_LENGTH <= len(artist) <= self.MAX_ARTIST_LENGTH):
+                artist = original.get("artist", "")
+            validated["artist"] = artist
+        except (TypeError, ValueError):
+            validated["artist"] = original.get("artist", "")
 
-            # Validate year format (should be 4-digit number or empty)
-            if year:
-                try:
-                    year_int = int(year)
-                    if year_int < self.MIN_YEAR or year_int > self.MAX_YEAR:
-                        logger.warning(f"Invalid year {year_int}, using original")
-                        year = original_year
-                except ValueError:
-                    logger.warning(f"Invalid year format '{year}', using original")
-                    year = original_year
+        # Validate year
+        try:
+            year_str = str(validated.get("year") or "")
+            if year_str:
+                year_int = int(year_str)
+                if not (self.MIN_YEAR <= year_int <= self.MAX_YEAR):
+                    year_str = original.get("year", "")
+            validated["year"] = year_str
+        except (TypeError, ValueError):
+            validated["year"] = original.get("year", "")
 
-            # Validate language code (should be 2-5 chars and in supported list)
-            if language:
-                if len(language) < 2 or len(language) > 5:
-                    logger.warning(f"Invalid language code length '{language}', using original")
-                    language = original_language
-                elif language not in self.SUPPORTED_LANGUAGES:
-                    logger.warning(f"Unsupported language '{language}', using original")
-                    language = original_language
+        # Validate language
+        try:
+            language = str(validated.get("language") or "")
+            if language and language not in self.SUPPORTED_LANGUAGES:
+                language = original.get("language", "")
+            validated["language"] = language
+        except (TypeError, ValueError):
+            validated["language"] = original.get("language", "")
 
-            return {
-                "title": title,
-                "artist": artist,
-                "year": year,
-                "language": language,
-            }
+        # Ensure all fields from original are present
+        for key in original:
+            if key not in validated:
+                validated[key] = original[key]
 
-        except Exception as e:
-            logger.error(f"Error parsing LLM response: {e}")
-            # Return original values if parsing fails
-            return {
-                "title": original_title,
-                "artist": original_artist,
-                "year": original_year,
-                "language": original_language,
-            }
+        return validated
