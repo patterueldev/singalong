@@ -19,6 +19,8 @@ from app.models.schemas import (
     ErrorResponse,
     IdentifyRequest,
     SongMetadataResponse,
+    DownloadSongRequest,
+    DownloadStatusResponse,
 )
 from app.services.graphql_client import MasterGraphQLClient, GraphQLError
 from app.config import settings
@@ -128,6 +130,68 @@ async def identify_song(request: IdentifyRequest) -> SongMetadataResponse:
         raise HTTPException(
             status_code=500, detail="Failed to identify song. Please try again."
         )
+
+
+@router.post("/download-request", response_model=dict, status_code=202)
+async def download_song_request(
+    request: DownloadSongRequest,
+) -> dict:
+    """
+    Request a song download to Master
+
+    Sends enhanced metadata to Master, which starts async download.
+    Returns immediately with draft song ID for progress tracking.
+
+    Args:
+        request: DownloadSongRequest with URL and metadata
+
+    Returns:
+        202 Accepted with songId and status
+
+    Raises:
+        HTTPException: 400 if invalid, 500 if server error
+    """
+    try:
+        logger.info(f"Download request for {request.title} from {request.url}")
+
+        graphql_client = MasterGraphQLClient(settings.master_graphql_url)
+
+        # Call Master to request download
+        response = await graphql_client.request_song_download(
+            url=request.url,
+            title=request.title,
+            artist=request.artist,
+            enhanced_metadata={"user_id": request.user_id, "reserve": request.reserve},
+            requested_by_node_id="node-1",  # TODO: Get actual node ID from context
+        )
+
+        logger.info(f"Download request accepted: {response.get('songId')}")
+
+        return {
+            "songId": response.get("songId"),
+            "status": response.get("status"),
+            "message": response.get("message", "Download started"),
+            "estimatedTime": 120,  # TODO: Improve estimation
+        }
+
+    except GraphQLError as e:
+        error_str = str(e)
+        logger.error(f"GraphQL error requesting download: {error_str}")
+
+        # Map errors
+        if "Invalid YouTube URL" in error_str:
+            raise HTTPException(status_code=400, detail="Invalid YouTube URL")
+        if "not found" in error_str.lower():
+            raise HTTPException(status_code=404, detail="Video not found")
+
+        raise HTTPException(status_code=400, detail=error_str)
+
+    except Exception as e:
+        logger.exception(f"Error requesting download: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail="Failed to request download. Please try again."
+        )
+
 
 
 

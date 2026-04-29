@@ -210,3 +210,38 @@ class SongMetadataResponse(BaseModel):
     description: Optional[str] = Field(default="", description="Video description")
     viewCount: int = Field(default=0, description="View count")
     url: str = Field(..., description="Full YouTube URL")
+
+
+class DownloadSongRequest(BaseModel):
+    """Request to download and finalize a song"""
+
+    url: str = Field(
+        ...,
+        min_length=10,
+        description="YouTube URL",
+        example="https://www.youtube.com/watch?v=...",
+    )
+    title: str = Field(
+        ..., min_length=1, description="Song title (user-edited)"
+    )
+    artist: Optional[str] = Field(
+        default="", description="Artist name (user-edited)"
+    )
+    user_id: Optional[str] = Field(default="", description="User requesting download")
+    reserve: bool = Field(
+        default=False, description="Auto-reserve after download"
+    )
+
+
+class DownloadStatusResponse(BaseModel):
+    """Response for download status check"""
+
+    song_id: str = Field(..., description="Song/Draft ID")
+    status: str = Field(
+        ...,
+        description="Download status (pending, downloading, completed, failed)",
+    )
+    progress: int = Field(default=0, description="Progress percentage 0-100")
+    message: str = Field(default="", description="Status message")
+    error: Optional[str] = Field(default=None, description="Error message if failed")
+

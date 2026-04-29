@@ -145,6 +145,75 @@ class MasterGraphQLClient:
             self.AUTHENTICATE_PLAYER_MUTATION, variables
         )
 
+    async def request_song_download(
+        self,
+        url: str,
+        title: str,
+        artist: str = None,
+        duration: int = None,
+        language: str = None,
+        enhanced_metadata: dict = None,
+        requested_by_node_id: str = "unknown",
+    ) -> dict:
+        """
+        Request a song download from Master
+
+        Args:
+            url: YouTube URL
+            title: Song title
+            artist: Artist name
+            duration: Song duration in seconds
+            language: Song language
+            enhanced_metadata: User-edited metadata dict
+            requested_by_node_id: Node ID requesting the download
+
+        Returns:
+            Response with songId, status, progress
+
+        Raises:
+            GraphQLError: If request fails
+            HTTPException: If network error occurs
+        """
+        query = """
+        mutation RequestSongDownload(
+            $url: String!
+            $title: String!
+            $artist: String
+            $duration: Int
+            $language: String
+            $enhancedMetadata: String
+            $requestedByNodeId: String!
+        ) {
+            requestSongDownload(
+                url: $url
+                title: $title
+                artist: $artist
+                duration: $duration
+                language: $language
+                enhancedMetadata: $enhancedMetadata
+                requestedByNodeId: $requestedByNodeId
+            ) {
+                songId
+                status
+                progress
+                message
+            }
+        }
+        """
+
+        variables = {
+            "url": url,
+            "title": title,
+            "artist": artist,
+            "duration": duration,
+            "language": language,
+            "enhancedMetadata": str(enhanced_metadata) if enhanced_metadata else None,
+            "requestedByNodeId": requested_by_node_id,
+        }
+
+        result = await self._execute_mutation(query, variables)
+        return result.get("requestSongDownload", {})
+
     async def _execute_mutation(self, query: str, variables: dict) -> dict:
         """
         Execute a GraphQL mutation or query

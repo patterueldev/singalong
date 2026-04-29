@@ -34,6 +34,13 @@ type_defs = """
         url: String!
     }
 
+    type DownloadResponse {
+        songId: String!
+        status: String!
+        progress: Int!
+        message: String
+    }
+
     type Query {
         hello: String!
         identifySong(url: String!): SongMetadata!
@@ -56,6 +63,16 @@ type_defs = """
             sessionId: String!
             nodeId: String!
         ): AuthResponse!
+
+        requestSongDownload(
+            url: String!
+            title: String!
+            artist: String
+            duration: Int
+            language: String
+            enhancedMetadata: String
+            requestedByNodeId: String!
+        ): DownloadResponse!
     }
 """
 
@@ -157,6 +174,49 @@ def resolve_authenticate_player(obj, info, sessionId, nodeId):
         }
     except ValueError as e:
         raise ValueError(str(e))
+    finally:
+        db.close()
+
+
+@mutation.field("requestSongDownload")
+def resolve_request_song_download(
+    obj,
+    info,
+    url: str,
+    title: str,
+    artist: str = None,
+    duration: int = None,
+    language: str = None,
+    enhancedMetadata: str = None,
+    requestedByNodeId: str = "unknown",
+):
+    """Request a song download from Master"""
+    db = SessionLocal()
+    try:
+        from app.services.download_service import DownloadService
+
+        download_service = DownloadService(db)
+        draft = download_service.request_download(
+            url=url,
+            title=title,
+            artist=artist,
+            duration=duration,
+            language=language,
+            enhanced_metadata=enhancedMetadata,
+            requested_by_node_id=requestedByNodeId,
+        )
+
+        return {
+            "songId": str(draft.id),
+            "status": draft.status,
+            "progress": int(draft.download_progress),
+            "message": "Download started",
+        }
+
+    except ValueError as e:
+        raise ValueError(str(e))
+    except Exception as e:
+        raise ValueError(f"Failed to request download: {str(e)}")
     finally:
         db.close()
 

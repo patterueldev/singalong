@@ -123,3 +123,29 @@ class Song(Base):
     def __repr__(self):
         return f"<Song {self.title} by {self.artist}>"
 
+
+class DraftSong(Base):
+    """Draft song model - tracks songs being downloaded before finalization"""
+
+    __tablename__ = "draft_songs"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    video_id = Column(String(50), nullable=True, index=True)  # YouTube video ID
+    title = Column(String(255), nullable=False)
+    artist = Column(String(255), nullable=True)
+    duration = Column(String(10), nullable=True)  # in seconds
+    language = Column(String(20), nullable=True)  # detected language
+    requested_by_node_id = Column(String(255), nullable=False, index=True)  # which node requested
+    enhanced_metadata = Column(String(4000), nullable=True)  # JSON string of user-edited metadata
+    status = Column(String(20), nullable=False, default="pending", index=True)  # pending, downloading, finalized, failed
+    download_progress = Column(String(3), nullable=False, default="0")  # 0-100
+    error_message = Column(String(500), nullable=True)  # error if failed
+    file_path = Column(String(500), nullable=True)  # where the file will be stored
+    file_size = Column(String(20), nullable=True)  # size in bytes
+    created_at = Column(DateTime(timezone=True), nullable=False, default=utc_now, index=True)
+    started_at = Column(DateTime(timezone=True), nullable=True)
+    completed_at = Column(DateTime(timezone=True), nullable=True)
+    finalized_at = Column(DateTime(timezone=True), nullable=True)
+
+    def __repr__(self):
+        return f"<DraftSong {self.title} ({self.status})>"
