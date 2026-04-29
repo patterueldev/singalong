@@ -49,26 +49,42 @@ class PlayerConnection(Base):
 
 
 class Song(Base):
-    """Song model - local cache of songs (Master is source of truth)"""
+    """
+    Song model - local cache of songs synced from Master.
+    
+    Status values:
+    - ACTIVE: Synced successfully, file available locally
+    - ARCHIVED: Marked as archived on Master
+    - CORRUPTED: File missing or integrity check failed
+    """
 
     __tablename__ = "songs"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    # Primary identifiers
+    id = Column(UUID(as_uuid=True), primary_key=True)  # Matches Master's DraftSong.id exactly
     title = Column(String(255), nullable=False, index=True)
-    artist = Column(String(255), nullable=False, index=True)
-    duration = Column(String(10), nullable=True)  # in seconds, as string for SQLite compatibility
-    genre = Column(String(100), nullable=True, index=True)
-    year = Column(String(4), nullable=True)  # as string for SQLite compatibility
-    youtube_url = Column(String(500), nullable=True)  # original YouTube URL
-    file_path = Column(String(500), nullable=True)  # where the file is stored locally
-    status = Column(String(20), nullable=False, default="DRAFT", index=True)  # DRAFT, DOWNLOADING, COMPLETED, FAILED
-    requested_by_admin_id = Column(String(255), nullable=True)  # which admin requested
-    error_message = Column(String(500), nullable=True)  # if status is FAILED
+    artist = Column(String(255), nullable=True, index=True)
+    
+    # Song metadata
+    duration = Column(Integer, nullable=True)  # in seconds
+    year = Column(Integer, nullable=True)
+    source = Column(String(50), nullable=True)  # 'youtube', 'spotify', etc.
+    video_id = Column(String(255), nullable=True, unique=True)  # YouTube video ID for deduplication
+    thumbnail = Column(String(512), nullable=True)  # Image URL
+    
+    # Local storage
+    file_path = Column(String(512), nullable=True)  # Local path: ./data/node/videos/filename.mp4
+    status = Column(String(50), nullable=False, default="ACTIVE", index=True)  # ACTIVE, ARCHIVED, CORRUPTED
+    
+    # Sync tracking
+    synced_at = Column(DateTime(timezone=True), nullable=True)  # When this song was last synced from Master
+    
+    # Timestamps
     created_at = Column(DateTime(timezone=True), nullable=False, default=utc_now, index=True)
     updated_at = Column(DateTime(timezone=True), nullable=False, default=utc_now, onupdate=utc_now)
 
     def __repr__(self):
-        return f"<Song {self.title} by {self.artist}>"
+        return f"<Song {self.id}: {self.title} by {self.artist}>"
 
 
 class SessionStatus(str, Enum):
@@ -121,14 +137,24 @@ class ReservationStatus(str, Enum):
 
 
 class Reservation(Base):
-    """Song reservation for a session"""
+    """
+    Song reservation for a session.
+    
+    Tracks songs reserved in a session with order management.
+    Status values: reserved, skipped, completed, cancelled
+    """
     __tablename__ = "reservations"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     session_id = Column(UUID(as_uuid=True), nullable=False, index=True)
     song_id = Column(UUID(as_uuid=True), nullable=False, index=True)
-    user_id = Column(UUID(as_uuid=True), nullable=False, index=True)
-    position = Column(Integer, nullable=False, index=True)  # Queue position (1-based)
+    user_id = Column(UUID(as_uuid=True), nullable=True, index=True)  # Optional: who reserved it (may be admin)
+    reserved_by_nickname = Column(String(255), nullable=True)  # Display name of who reserved
+    
+    # Queue position (1-based, re-numbered when items cancel)
+    position = Column(Integer, nullable=False, index=True)
+    
+    # Status lifecycle
     status = Column(SQLEnum(ReservationStatus), nullable=False, default=ReservationStatus.PENDING)
     reserved_at = Column(DateTime(timezone=True), nullable=False, default=utc_now)
     started_at = Column(DateTime(timezone=True), nullable=True)

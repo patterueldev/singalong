@@ -44,11 +44,32 @@ type_defs = """
         filePath: String
     }
 
+    type SyncSong {
+        id: String!
+        title: String!
+        artist: String
+        duration: Int
+        year: Int
+        source: String
+        videoId: String
+        thumbnail: String
+        filePath: String
+        status: String!
+    }
+
+    type SyncSongsResponse {
+        songs: [SyncSong!]!
+        total: Int!
+        limit: Int!
+        offset: Int!
+    }
+
     type Query {
         hello: String!
         identifySong(url: String!): SongMetadata!
         downloadStatus(songId: String!): DownloadResponse!
         checkVideoExists(videoId: String!): Boolean!
+        activeSongs(limit: Int, offset: Int): SyncSongsResponse!
     }
 
     type Mutation {
@@ -159,6 +180,63 @@ def resolve_check_video_exists(obj, info, videoId: str):
         return exists
     except Exception as e:
         raise ValueError(f"Failed to check if video exists: {str(e)}")
+    finally:
+        db.close()
+
+
+@query.field("activeSongs")
+def resolve_active_songs(obj, info, limit: int = 100, offset: int = 0):
+    """
+    Get ACTIVE songs for Node syncing.
+    
+    Returns paginated list of songs that have been successfully downloaded.
+    Used by Node to sync its local song database.
+    """
+    from app.services.master_song_service import MasterSongService
+    from sqlalchemy import and_
+    
+    db = SessionLocal()
+    try:
+        # Query all ACTIVE DraftSong records (completed downloads)
+        from app.models.db_models import DraftSong
+        
+        query = db.query(DraftSong).filter(
+            DraftSong.status == "completed"
+        ).order_by(DraftSong.title)
+        
+        # Get total count
+        total = query.count()
+        
+        # Apply pagination
+        songs = query.limit(limit).offset(offset).all()
+        
+        # Build response
+        song_list = [
+            {
+                "id": str(s.id),
+                "title": s.title,
+                "artist": s.artist,
+                "duration": s.duration,
+                "year": int(s.year) if s.year and s.year.isdigit() else None,
+                "source": "youtube",
+                "videoId": s.video_id,
+                "thumbnail": s.thumbnail,
+                "filePath": s.file_path,
+                "status": "ACTIVE",
+            }
+            for s in songs
+        ]
+        
+        return {
+            "songs": song_list,
+            "total": total,
+            "limit": limit,
+            "offset": offset,
+        }
+    except Exception as e:
+        import logging
+        logging.error(f"Error fetching active songs: {str(e)}", exc_info=True)
+        raise ValueError(f"Failed to fetch active songs: {str(e)}")
     finally:
         db.close()
 
