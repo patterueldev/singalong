@@ -110,8 +110,15 @@ class ResearchTools:
         """
         Detect language from text using multiple sources.
         
-        For CJK scripts: First check for hiragana/katakana (Japanese) or Hangul (Korean)
-        before falling back to langdetect which can be inaccurate on short mixed text.
+        For CJK scripts: First check for script-specific indicators before falling
+        back to langdetect which can be inaccurate on short mixed-script text.
+        
+        Script ranges:
+        - Japanese hiragana: U+3040-U+309F
+        - Japanese katakana: U+30A0-U+30FF
+        - Japanese kanji: CJK Unified Ideographs (subset of U+4E00-U+9FFF)
+        - Korean Hangul: U+AC00-U+D7AF, U+1100-U+11FF
+        - Chinese hanzi: CJK Unified Ideographs (U+4E00-U+9FFF)
         
         Returns ISO 639-1 language code.
         """
@@ -120,13 +127,10 @@ class ResearchTools:
                 return {"status": "insufficient_text"}
             
             # First: Check for script-specific indicators
-            # Japanese hiragana range: U+3040-U+309F
-            # Japanese katakana range: U+30A0-U+30FF
-            # Korean Hangul range: U+AC00-U+D7AF, U+1100-U+11FF
-            
             has_hiragana = any('\u3040' <= c <= '\u309F' for c in text)
             has_katakana = any('\u30A0' <= c <= '\u30FF' for c in text)
             has_hangul = any('\uAC00' <= c <= '\uD7AF' or '\u1100' <= c <= '\u11FF' for c in text)
+            has_kanji = any('\u4E00' <= c <= '\u9FFF' for c in text)
             
             # If we have hiragana or katakana, it's definitely Japanese
             if has_hiragana or has_katakana:
@@ -146,6 +150,20 @@ class ResearchTools:
                     "method": "script_detection"
                 }
             
+            # If we have kanji (CJK) mixed with latin/roman text, likely Japanese
+            # (Chinese usually doesn't mix scripts like "未熟DREAMER")
+            # (Korean uses Hangul, not kanji)
+            if has_kanji:
+                has_latin = any(c.isalpha() and ord(c) < 256 for c in text)
+                if has_latin:
+                    # Kanji + Latin mix is almost always Japanese
+                    return {
+                        "status": "detected",
+                        "language": "ja",
+                        "confidence": 0.95,
+                        "method": "cjk_heuristic"
+                    }
+            
             # Second: Use langdetect for other languages
             try:
                 from langdetect import detect, detect_langs
@@ -158,20 +176,16 @@ class ResearchTools:
                 )
                 
                 # Fix: langdetect sometimes incorrectly detects Japanese CJK as Korean
-                # If langdetect says "ko" but we see CJK characters, double-check with langdetect_cld
-                if lang == "ko":
-                    has_cjk = any('\u4E00' <= c <= '\u9FFF' for c in text)  # CJK Unified Ideographs
-                    if has_cjk:
-                        # CJK-only text detected as Korean is often wrong, try detecting again
-                        # or prefer Japanese as more likely for CJK-only text with low confidence
-                        if confidence < 0.7:
-                            logger.warning(f"Low confidence Korean detection ({confidence}) for CJK text: {text[:20]}... - may be Japanese")
-                            return {
-                                "status": "detected",
-                                "language": "ja",
-                                "confidence": 0.5,
-                                "method": "cjk_heuristic_correction"
-                            }
+                # If langdetect says "ko" but we see CJK characters, double-check
+                if lang == "ko" and has_kanji:
+                    if confidence < 0.7:
+                        logger.warning(f"Low confidence Korean detection ({confidence}) for CJK text: {text[:20]}... - assuming Japanese")
+                        return {
+                            "status": "detected",
+                            "language": "ja",
+                            "confidence": 0.5,
+                            "method": "cjk_correction"
+                        }
                 
                 return {
                     "status": "detected",
