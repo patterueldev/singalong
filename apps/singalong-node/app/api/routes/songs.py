@@ -46,14 +46,24 @@ def get_db():
 
 
 @router.post("/identify", response_model=SongMetadataResponse, status_code=200)
-async def identify_song(request: IdentifyRequest) -> SongMetadataResponse:
+async def identify_song(request: IdentifyRequest, enhance: bool = Query(False)) -> SongMetadataResponse:
     """
     Identify song metadata from YouTube URL
 
     Workflow:
     Step 1: Validate URL and extract video ID
     Step 2: Extract metadata from local YT-DLP
-    Step 3: Return metadata for user enhancement
+    Step 3: (Optional) Enhance metadata using OpenAI agent
+    Step 4: Return metadata for user review/modification
+
+    Query Parameters:
+        enhance: bool (default: False)
+            - True: Automatically enhance metadata using OpenAI agent
+            - False: Return raw YT-DLP metadata (faster, no API cost)
+            
+    Enhancement Fallback:
+        If OpenAI enhancement fails (API key missing, quota exceeded, etc.),
+        gracefully returns raw metadata instead of failing the entire request.
 
     Note: Master duplicate checking not yet implemented (B-phase feature)
     For now, users will receive "song already exists" error during download 
@@ -61,9 +71,10 @@ async def identify_song(request: IdentifyRequest) -> SongMetadataResponse:
 
     Args:
         request: IdentifyRequest with YouTube URL
+        enhance: bool, whether to auto-enhance using OpenAI (default: False)
 
     Returns:
-        SongMetadataResponse with extracted metadata
+        SongMetadataResponse with extracted metadata (enhanced if requested)
 
     Raises:
         HTTPException: 
@@ -83,7 +94,7 @@ async def identify_song(request: IdentifyRequest) -> SongMetadataResponse:
         if not video_id:
             raise YTDLPError("Could not extract video ID from URL")
 
-        logger.info(f"Identifying song: {request.url} (video_id: {video_id})")
+        logger.info(f"Identifying song: {request.url} (video_id: {video_id}, enhance={enhance})")
 
         # Step 2: Extract metadata from local YT-DLP
         yt_dlp = YTDLPService(timeout=30)
@@ -91,7 +102,36 @@ async def identify_song(request: IdentifyRequest) -> SongMetadataResponse:
 
         logger.info(f"✓ Identified: {metadata.get('title')}")
         
-        # Return metadata
+        # Step 3: Optionally enhance metadata using OpenAI
+        if enhance:
+            try:
+                logger.debug(f"Enhancing metadata for: {metadata.get('title')}")
+                
+                # Fetch description from YouTube
+                description = None
+                try:
+                    description = yt_dlp._get_video_description(video_id)
+                    if description:
+                        metadata["description"] = description
+                        logger.debug(f"Fetched YouTube description ({len(description)} chars)")
+                except Exception as e:
+                    logger.warning(f"Could not fetch YouTube description: {str(e)}")
+                
+                # Use OpenAI agent to enhance
+                if settings.openai_api_key:
+                    enhancement_service = EnhancementService(settings.openai_api_key)
+                    enhanced = await enhancement_service.enhance(metadata)
+                    metadata = enhanced
+                    logger.info(f"✓ Enhanced: {metadata.get('title')} | {metadata.get('artist')} | {metadata.get('year')}")
+                else:
+                    logger.warning("OpenAI API key not configured, skipping enhancement")
+                    
+            except Exception as e:
+                # Graceful degradation: log warning but return original metadata
+                logger.warning(f"Enhancement failed (returning original): {str(e)}")
+                # metadata already contains raw YT-DLP data, just continue
+        
+        # Return metadata (raw or enhanced)
         return SongMetadataResponse(**metadata)
 
     except YTDLPError as e:
