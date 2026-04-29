@@ -245,6 +245,32 @@ class MasterGraphQLClient:
         result = await self._execute_mutation(query, variables)
         return result.get("downloadStatus", {})
 
+    async def check_video_exists(self, video_id: str) -> bool:
+        """
+        Check if a video with the given video ID already exists on Master.
+        
+        This is used to prevent duplicate song identification and downloads.
+        
+        Args:
+            video_id: YouTube video ID (11 chars)
+        
+        Returns:
+            True if video already exists on Master, False otherwise
+        
+        Raises:
+            GraphQLError: If query fails
+        """
+        query = """
+        query CheckVideoExists($videoId: String!) {
+            checkVideoExists(videoId: $videoId)
+        }
+        """
+        
+        variables = {"videoId": video_id}
+        
+        result = await self._execute_mutation(query, variables)
+        return result.get("checkVideoExists", False)
+
     async def _execute_mutation(self, query: str, variables: dict) -> dict:
         """
         Execute a GraphQL mutation or query

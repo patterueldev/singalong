@@ -51,6 +51,7 @@ async def identify_song(request: IdentifyRequest, enhance: bool = Query(False)) 
     Identify song metadata from YouTube URL
 
     Workflow:
+    Step 0: Check if video already exists on Master
     Step 1: Validate URL and extract video ID
     Step 2: Extract metadata from local YT-DLP
     Step 3: (Optional) Enhance metadata using OpenAI agent
@@ -65,10 +66,6 @@ async def identify_song(request: IdentifyRequest, enhance: bool = Query(False)) 
         If OpenAI enhancement fails (API key missing, quota exceeded, etc.),
         gracefully returns raw metadata instead of failing the entire request.
 
-    Note: Master duplicate checking not yet implemented (B-phase feature)
-    For now, users will receive "song already exists" error during download 
-    if they try to submit a video that's already in Master.
-
     Args:
         request: IdentifyRequest with YouTube URL
         enhance: bool, whether to auto-enhance using OpenAI (default: False)
@@ -81,11 +78,12 @@ async def identify_song(request: IdentifyRequest, enhance: bool = Query(False)) 
           - 400 if invalid URL
           - 403 if video is private/age-restricted
           - 404 if video not found or removed
+          - 409 if video already exists on Master (duplicate)
           - 429 if request throttled by YouTube
           - 504 if request timed out
     """
     try:
-        # Step 1: Validate URL format and extract video ID
+        # Step 0: Check Master first - if video already exists, reject it
         yt_dlp_validator = YTDLPService(timeout=30)
         if not yt_dlp_validator.validate_url(request.url):
             raise YTDLPError("Invalid YouTube URL format")
@@ -95,6 +93,26 @@ async def identify_song(request: IdentifyRequest, enhance: bool = Query(False)) 
             raise YTDLPError("Could not extract video ID from URL")
 
         logger.info(f"Identifying song: {request.url} (video_id: {video_id}, enhance={enhance})")
+
+        # Check Master database for duplicate
+        try:
+            from app.services.graphql_client import MasterGraphQLClient
+            graphql = MasterGraphQLClient(settings.master_graphql_url)
+            logger.debug(f"Checking if video {video_id} exists on Master")
+            exists = await graphql.check_video_exists(video_id)
+            logger.debug(f"Video {video_id} exists on Master: {exists}")
+            if exists:
+                logger.warning(f"Video {video_id} already exists on Master")
+                raise HTTPException(
+                    status_code=409,
+                    detail=f"Song already exists: Video {video_id} has already been registered"
+                )
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.warning(f"Could not check Master for existing video: {str(e)}, proceeding anyway")
+
+        # Step 1: Validate URL format and extract video ID (already done above)
 
         # Step 2: Extract metadata from local YT-DLP
         yt_dlp = YTDLPService(timeout=30)

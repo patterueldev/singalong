@@ -234,8 +234,8 @@ class SongEnhancementOrchestrator:
             logger.warning("[RESEARCHER] No title to search for")
             return extraction
         
-        # Search MusicBrainz (synchronously wrapped)
-        mb_result = ResearchTools.search_musicbrainz(artist, title)
+        # Search MusicBrainz (await async function)
+        mb_result = await ResearchTools.search_musicbrainz(artist, title)
         
         if mb_result.get('status') == 'found':
             primary = mb_result.get('primary', {})
@@ -252,7 +252,7 @@ class SongEnhancementOrchestrator:
         
         # Detect language if not already set
         if not extraction.get('language') and title:
-            lang_result = ResearchTools.detect_language(title)
+            lang_result = await ResearchTools.detect_language(title)
             if lang_result.get('status') == 'detected':
                 extraction['language'] = lang_result.get('language', '')
                 logger.debug(f"[RESEARCHER] Detected language: {extraction['language']}")

@@ -46,6 +46,7 @@ type_defs = """
         hello: String!
         identifySong(url: String!): SongMetadata!
         downloadStatus(songId: String!): DownloadResponse!
+        checkVideoExists(videoId: String!): Boolean!
     }
 
     type Mutation {
@@ -139,6 +140,22 @@ def resolve_download_status(obj, info, songId: str):
         raise ValueError(str(e))
     except Exception as e:
         raise ValueError(f"Failed to get download status: {str(e)}")
+    finally:
+        db.close()
+
+
+@query.field("checkVideoExists")
+def resolve_check_video_exists(obj, info, videoId: str):
+    """Check if a video with the given ID already exists on Master"""
+    from app.services.master_song_service import MasterSongService
+    
+    db = SessionLocal()
+    try:
+        service = MasterSongService(db)
+        exists = service.check_video_exists(videoId)
+        return exists
+    except Exception as e:
+        raise ValueError(f"Failed to check if video exists: {str(e)}")
     finally:
         db.close()
 
