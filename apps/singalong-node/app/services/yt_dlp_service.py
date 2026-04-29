@@ -118,17 +118,33 @@ class YTDLPService:
 
     def validate_url(self, url: str) -> bool:
         """
-        Check if URL is a valid YouTube URL
+        Check if URL is a valid YouTube URL or video ID
+
+        Supports formats:
+        - Full URLs: https://youtube.com/watch?v=VIDEO_ID
+        - Short URLs: https://youtu.be/VIDEO_ID
+        - Plain video ID: VIDEO_ID (11 alphanumeric characters)
 
         Args:
             url: URL to validate
 
         Returns:
-            True if URL is valid YouTube URL
+            True if URL is valid YouTube URL or video ID
         """
+        import re
+
         if not url or not isinstance(url, str):
             return False
-        return "youtube.com" in url or "youtu.be" in url
+
+        # Check for full/short YouTube URLs
+        if "youtube.com" in url or "youtu.be" in url:
+            return True
+
+        # Check if it's a plain 11-character video ID
+        if re.match(r"^[a-zA-Z0-9_-]{11}$", url):
+            return True
+
+        return False
 
     def _extract_video_id(self, url: str) -> Optional[str]:
         """
