@@ -8,7 +8,8 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     ffmpeg \
-    && pip install --no-cache-dir poetry \
+    git \
+    && pip install --no-cache-dir poetry yt-dlp --upgrade \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 

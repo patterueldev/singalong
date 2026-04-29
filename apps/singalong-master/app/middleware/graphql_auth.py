@@ -1,7 +1,9 @@
 """Middleware for GraphQL authentication"""
 
+import json
 import jwt
-from fastapi import Request, HTTPException
+from fastapi import Request
+from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.services.auth_service import AuthService
@@ -17,7 +19,10 @@ class GraphQLAuthMiddleware(BaseHTTPMiddleware):
         if request.url.path == "/graphql":
             auth_header = request.headers.get("Authorization", "")
             if not auth_header.startswith("Bearer "):
-                raise HTTPException(status_code=401, detail="Missing or invalid Authorization header")
+                return JSONResponse(
+                    status_code=401,
+                    content={"error": "Unauthorized", "message": "Missing or invalid Authorization header"}
+                )
 
             token = auth_header.split(" ", 1)[1]
             auth_service = AuthService(settings.master_api_key)
@@ -25,8 +30,14 @@ class GraphQLAuthMiddleware(BaseHTTPMiddleware):
             try:
                 auth_service.validate_token(token)
             except jwt.ExpiredSignatureError:
-                raise HTTPException(status_code=401, detail="Token expired")
+                return JSONResponse(
+                    status_code=401,
+                    content={"error": "Unauthorized", "message": "Token expired"}
+                )
             except jwt.InvalidTokenError:
-                raise HTTPException(status_code=401, detail="Invalid token")
+                return JSONResponse(
+                    status_code=401,
+                    content={"error": "Unauthorized", "message": "Invalid token"}
+                )
 
         return await call_next(request)

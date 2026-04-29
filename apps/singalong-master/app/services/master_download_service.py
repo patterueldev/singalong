@@ -55,7 +55,7 @@ class MasterDownloadService:
             cmd = [
                 "yt-dlp",
                 "--format",
-                "best[ext=mp4]/best",  # Prefer mp4, fallback to best available
+                "18/22/43/34/35/best",  # Try common safe formats first, then fallback to best
                 "--socket-timeout",
                 "30",
                 "--quiet",  # Less verbose
@@ -140,7 +140,7 @@ class MasterDownloadService:
             cmd = [
                 "yt-dlp",
                 "--format",
-                "best[ext=mp4]/best",  # Prefer mp4, fallback to best available
+                "18/22/43/34/35/best",  # Try common safe formats first, then fallback to best
                 "--socket-timeout",
                 "30",
                 "--quiet",
