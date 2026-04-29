@@ -40,6 +40,7 @@ type_defs = """
         progress: Int!
         message: String
         error: String
+        filePath: String
     }
 
     type Query {
@@ -134,6 +135,7 @@ def resolve_download_status(obj, info, songId: str):
             "progress": int(draft.download_progress),
             "message": f"Download {draft.status}",
             "error": draft.error_message,
+            "filePath": draft.file_path,
         }
 
     except ValueError as e:

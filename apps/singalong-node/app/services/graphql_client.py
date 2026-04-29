@@ -222,7 +222,7 @@ class MasterGraphQLClient:
             song_id: Draft song UUID
 
         Returns:
-            Response with status, progress, message, error
+            Response with status, progress, message, error, filePath
 
         Raises:
             GraphQLError: If request fails
@@ -236,6 +236,7 @@ class MasterGraphQLClient:
                 progress
                 message
                 error
+                filePath
             }
         }
         """

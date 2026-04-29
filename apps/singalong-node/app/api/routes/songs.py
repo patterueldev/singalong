@@ -785,7 +785,7 @@ async def get_active_downloads(
                             "progress_percent": status_data.get("progress", 0),
                             "created_at": download.get("created_at"),
                             "completed_at": None,
-                            "file_path": None,
+                            "file_path": status_data.get("filePath"),
                             "error_message": status_data.get("error"),
                         }
                     )
