@@ -1,2 +1,33 @@
+# Environment
 .env
-dataapp.db
+.env.local
+.env.*.local
+
+# Runtime data (never commit)
+/data/
+*.db
+singalong_*.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Dependencies
+node_modules/
+__pycache__/
+*.pyc
+.Python
+*.egg-info/
+dist/
+build/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
