@@ -662,6 +662,7 @@ async def download_song(
 
         # Execute mutation
         download_data = await master_client._execute_mutation(mutation_query, variables)
+        logger.debug(f"Master response: {download_data}")
         
         download_id = download_data.get("requestSongDownload", {}).get("songId")
         status = download_data.get("requestSongDownload", {}).get("status", "queued")
@@ -670,7 +671,7 @@ async def download_song(
             error_msg = download_data.get("requestSongDownload", {}).get("error", "Unknown error")
             raise ValueError(f"Master error: {error_msg}")
 
-        logger.info(f"✓ Master accepted download: {download_id}")
+        logger.info(f"✓ Master accepted download: videoId={request.videoId}, songId={download_id}")
 
         # Step 3: Store local tracking record
         from app.services.node_download_service import NodeDownloadService
