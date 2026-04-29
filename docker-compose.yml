@@ -33,6 +33,7 @@ services:
     volumes:
       - ./apps/singalong-node:/app
       - ./data/node:/data/node  # Mount node video storage
+      - ./data/master/videos:/data/master/videos  # Access master videos for streaming (B3 MVP)
       - /app/__pycache__  # Exclude pycache from volume mount
     environment:
       - ENVIRONMENT=development

@@ -6,9 +6,11 @@ import logging
 from datetime import datetime, timezone
 from typing import Optional
 
-from fastapi import APIRouter, HTTPException, Query, Depends
+from fastapi import APIRouter, HTTPException, Query, Depends, Request
+from fastapi.responses import FileResponse
 from sqlalchemy import select
 from sqlalchemy.orm import Session as SQLSession
+import os
 
 from app.database import SessionLocal
 from app.models.db_models import Song, DownloadQueue
@@ -978,6 +980,55 @@ async def clear_pending_downloads(
         raise HTTPException(status_code=500, detail="Failed to clear pending downloads")
 
 
+@router.get("/video/{video_id}", status_code=200)
+async def stream_video(
+    video_id: str,
+    request: Request,
+    db: SQLSession = Depends(get_db),
+):
+    """
+    Stream a video file for a synced song.
+    
+    The video file is stored on Master but accessed through Node's public URL.
+    This allows clients to fetch videos using the Node's URL without needing
+    to know about Master's internal structure.
+    
+    Path Parameters:
+        video_id: YouTube video ID
+    
+    Returns:
+        200 OK: Video file (mp4) with streaming support
+        404 Not Found: Video not found
+    """
+    try:
+        # Look up song by video_id to get file_path
+        song = db.query(Song).filter(Song.video_id == video_id).first()
+        
+        if not song or not song.file_path:
+            logger.warning(f"Video not found: {video_id}")
+            raise HTTPException(status_code=404, detail="Video not found")
+        
+        # Verify file exists
+        if not os.path.exists(song.file_path):
+            logger.error(f"Video file missing: {song.file_path}")
+            raise HTTPException(status_code=404, detail="Video file not accessible")
+        
+        logger.info(f"Streaming video: {video_id} from {song.file_path}")
+        
+        # Stream the file
+        return FileResponse(
+            path=song.file_path,
+            media_type="video/mp4",
+            filename=os.path.basename(song.file_path),
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception(f"Error streaming video {video_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to stream video")
+
+
 @router.get("/songbook", response_model=dict)
 async def get_songbook(
     search: Optional[str] = Query(None, description="Search by title or artist"),
@@ -986,6 +1037,7 @@ async def get_songbook(
     sort: str = Query("title", regex="^(title|artist|year)$", description="Sort field"),
     sessionId: Optional[str] = Query(None, description="Session ID to check reservation status"),
     db: SQLSession = Depends(get_db),
+    request: Request = None,
 ) -> dict:
     """
     Get synced songs from Node's local database (songbook).
@@ -1067,9 +1119,26 @@ async def get_songbook(
             except (ValueError, Exception) as e:
                 logger.warning(f"Could not check reservation status for session {sessionId}: {str(e)}")
 
-        # Build response
-        song_list = [
-            {
+        # Build response with videoUrl using request's host
+        song_list = []
+        for song in songs:
+            # Construct video URL using the request's origin
+            video_url = None
+            if song.video_id:
+                try:
+                    # Use request.base_url which includes scheme and host
+                    if request:
+                        base_url = str(request.base_url).rstrip('/')
+                        video_url = f"{base_url}/api/songs/video/{song.video_id}"
+                    else:
+                        # Fallback if request is not available
+                        logger.warning("Request object not available in songbook endpoint")
+                        video_url = f"/api/songs/video/{song.video_id}"
+                except Exception as e:
+                    logger.error(f"Error constructing video URL: {str(e)}")
+                    video_url = f"/api/songs/video/{song.video_id}"
+            
+            song_list.append({
                 "id": str(song.id),
                 "title": song.title,
                 "artist": song.artist,
@@ -1081,9 +1150,8 @@ async def get_songbook(
                 "status": song.status,
                 "syncedAt": song.synced_at.isoformat() if song.synced_at else None,
                 "isReserved": str(song.id) in reserved_song_ids if sessionId else None,
-            }
-            for song in songs
-        ]
+                "videoUrl": video_url,
+            })
 
         return {
             "songs": song_list,
