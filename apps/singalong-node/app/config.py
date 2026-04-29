@@ -48,6 +48,9 @@ class Settings(BaseSettings):
     # Player API Keys for registration validation (comma-separated)
     node_player_api_keys: str = Field(default="", validation_alias="NODE_PLAYER_API_KEYS")
 
+    # OpenAI Configuration
+    openai_api_key: str = Field(default="", validation_alias="OPENAI_API_KEY")
+
     # Service configuration
     service_name: str = "singalong-node"
     api_version: str = "v1"

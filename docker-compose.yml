@@ -37,6 +37,7 @@ services:
       - MASTER_URL=https://singalongmaster-dev.nicenature.space
       - MASTER_GRAPHQL_URL=https://singalongmaster-dev.nicenature.space/graphql/
       - NODE_MASTER_API_KEY=${NODE_MASTER_API_KEY:-dev-key}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
     networks:
       - singalong-network
     restart: unless-stopped

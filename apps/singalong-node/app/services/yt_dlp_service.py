@@ -176,3 +176,45 @@ class YTDLPService:
             return url
 
         return None
+
+    def _get_video_description(self, video_id: str) -> Optional[str]:
+        """
+        Fetch just the description of a YouTube video
+        
+        Used for AI enhancement - gets description for context
+        
+        Args:
+            video_id: YouTube video ID
+        
+        Returns:
+            Video description string, or None if not available
+        
+        Raises:
+            YTDLPError: If extraction fails
+        """
+        try:
+            result = subprocess.run(
+                [
+                    "yt-dlp",
+                    "--no-warnings",
+                    "--socket-timeout",
+                    str(self.timeout),
+                    "-j",
+                    "-e",
+                    video_id,
+                ],
+                capture_output=True,
+                text=True,
+                timeout=self.timeout + 5,
+            )
+
+            if result.returncode == 0:
+                data = json.loads(result.stdout)
+                return data.get("description", "")
+            else:
+                logger.warning(f"Could not fetch description for {video_id}")
+                return None
+
+        except Exception as e:
+            logger.warning(f"Error fetching description: {str(e)}")
+            return None

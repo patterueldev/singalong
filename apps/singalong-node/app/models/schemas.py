@@ -210,6 +210,22 @@ class SongMetadataResponse(BaseModel):
     language: str = Field(default="", description="Video language (empty string if not available)")
     url: str = Field(..., description="Full URL to video")
     tags: list[str] = Field(default_factory=list, description="Tags/keywords from metadata")
+    lyrics: str = Field(default="", description="Song lyrics (empty string if not available)")
+
+
+class EnhanceSongRequest(BaseModel):
+    """Request to enhance song metadata using AI"""
+
+    videoId: str = Field(..., description="Video ID")
+    source: str = Field(default="youtube", description="Source (youtube, spotify, etc.)")
+    title: str = Field(..., description="Song title")
+    artist: str = Field(default="", description="Artist name")
+    duration: int = Field(..., description="Duration in seconds")
+    thumbnail: str = Field(..., description="Thumbnail image URL")
+    year: str = Field(default="", description="Release year")
+    language: str = Field(default="", description="Language code")
+    url: str = Field(..., description="Full URL to video")
+    tags: list[str] = Field(default_factory=list, description="Tags/keywords")
 
 
 class DownloadSongRequest(BaseModel):

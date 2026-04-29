@@ -19,6 +19,7 @@ from app.models.schemas import (
     ErrorResponse,
     IdentifyRequest,
     SongMetadataResponse,
+    EnhanceSongRequest,
     DownloadSongRequest,
     DownloadStatusResponse,
     SongEnhanceRequest,
@@ -140,70 +141,129 @@ async def identify_song(request: IdentifyRequest) -> SongMetadataResponse:
         )
 
 
-@router.put("/enhance", response_model=EnhancedSongMetadataResponse, status_code=200)
-async def enhance_song(
-    request: SongEnhanceRequest,
-) -> EnhancedSongMetadataResponse:
+@router.post("/enhance", response_model=SongMetadataResponse, status_code=200)
+async def enhance_song(request: EnhanceSongRequest) -> SongMetadataResponse:
     """
-    Enhance song metadata before downloading.
-
-    Allows users to manually edit song details (title, artist, year, etc.) after
-    identification but before downloading. All fields are optional and will be
-    validated.
-
-    **Request Body:**
-    - `youtube_url`: Required YouTube URL
-    - `title`: Optional, 1-255 characters
-    - `artist`: Optional, 1-255 characters
-    - `year`: Optional, 1900-2100
-    - `language`: Optional, ISO 639-1 code (e.g., 'en', 'es', 'fr')
-    - `genre`: Optional, will be matched to standard genres
-    - `duration_seconds`: Optional, 1-86400 seconds
-    - `additional_notes`: Optional, max 1000 characters
-
-    **Response:**
-    - All enhanced fields back to user
-    - `enhanced_at`: ISO 8601 timestamp
-    - `ready_to_download`: Always true if validation passes
-
-    **Example:**
+    Enhance song metadata using AI
+    
+    Uses OpenAI to improve: title, artist, year, language
+    
+    Accepts the output from /identify endpoint and returns enhanced version.
+    If OpenAI API is not configured, returns original metadata unchanged.
+    
+    **Request Body (from /identify output):**
     ```json
     {
-      "youtube_url": "https://youtube.com/watch?v=...",
-      "title": "Song Title (edited)",
-      "artist": "Artist Name (edited)",
-      "year": 2024,
-      "language": "en",
-      "genre": "Pop"
+      "videoId": "x_6nob9_WLc",
+      "source": "youtube",
+      "title": "[Karaoke 0] Aqours - 未熟DREAMER ( Mijuku DREAMER )",
+      "artist": "",
+      "duration": 352,
+      "thumbnail": "https://i.ytimg.com/vi/x_6nob9_WLc/maxresdefault.jpg",
+      "year": "",
+      "language": "",
+      "url": "https://www.youtube.com/watch?v=x_6nob9_WLc",
+      "tags": ["aqours", "karaoke", ...]
+    }
+    ```
+    
+    **Response:**
+    Same structure with improved fields: title, artist, year, language
+    
+    **Example Enhanced Response:**
+    ```json
+    {
+      "videoId": "x_6nob9_WLc",
+      "source": "youtube",
+      "title": "Aqours - 未熟DREAMER",
+      "artist": "Aqours",
+      "duration": 352,
+      "thumbnail": "...",
+      "year": "2016",
+      "language": "ja",
+      "url": "...",
+      "tags": [...],
+      "lyrics": ""
     }
     ```
     """
     try:
-        logger.info(f"Enhancing song metadata: {request.youtube_url}")
+        if not settings.openai_api_key:
+            logger.warning("OpenAI API key not configured, returning unenhanced metadata")
+            # Return unenhanced but with all fields
+            return SongMetadataResponse(
+                videoId=request.videoId,
+                source=request.source,
+                title=request.title,
+                artist=request.artist,
+                duration=request.duration,
+                thumbnail=request.thumbnail,
+                year=request.year,
+                language=request.language,
+                url=request.url,
+                tags=request.tags,
+                lyrics="",
+            )
 
-        # Validate and enhance using EnhancementService
-        enhanced = EnhancementService.validate_and_enhance(
-            youtube_url=request.youtube_url,
+        logger.info(f"Enhancing song: {request.title}")
+
+        # Initialize enhancement service
+        enhancement_service = EnhancementService(settings.openai_api_key)
+
+        # Fetch description from YouTube if available
+        description = ""
+        if request.source == "youtube":
+            try:
+                yt_dlp = YTDLPService(timeout=10)
+                # Get just the description without full metadata
+                result = yt_dlp._get_video_description(request.videoId)
+                if result:
+                    description = result
+                    logger.info(f"Fetched YouTube description ({len(description)} chars)")
+            except Exception as e:
+                logger.warning(f"Could not fetch YouTube description: {str(e)}")
+
+        # Call OpenAI to enhance metadata
+        enhanced = await enhancement_service.enhance(
             title=request.title,
             artist=request.artist,
             year=request.year,
             language=request.language,
-            genre=request.genre,
-            duration_seconds=request.duration_seconds,
-            additional_notes=request.additional_notes,
+            tags=request.tags,
+            description=description,
         )
 
-        logger.info(f"Successfully enhanced metadata for: {request.youtube_url}")
-        return EnhancedSongMetadataResponse(**enhanced)
-
-    except ValueError as e:
-        logger.warning(f"Validation error enhancing song: {str(e)}")
-        raise HTTPException(status_code=400, detail=str(e))
+        # Return full response with enhanced fields
+        return SongMetadataResponse(
+            videoId=request.videoId,
+            source=request.source,
+            title=enhanced["title"],
+            artist=enhanced["artist"],
+            duration=request.duration,
+            thumbnail=request.thumbnail,
+            year=enhanced["year"],
+            language=enhanced["language"],
+            url=request.url,
+            tags=request.tags,
+            lyrics="",
+        )
 
     except Exception as e:
-        logger.exception(f"Unexpected error enhancing song: {str(e)}")
-        raise HTTPException(
-            status_code=500, detail="Failed to enhance metadata. Please try again."
+        logger.error(f"Error enhancing song: {str(e)}")
+        # Graceful degradation: return original metadata
+        logger.info("Returning original metadata due to enhancement error")
+        return SongMetadataResponse(
+            videoId=request.videoId,
+            source=request.source,
+            title=request.title,
+            artist=request.artist,
+            duration=request.duration,
+            thumbnail=request.thumbnail,
+            year=request.year,
+            language=request.language,
+            url=request.url,
+            tags=request.tags,
+            lyrics="",
         )
 
 
