@@ -145,15 +145,16 @@ class SessionDetailsResponse(BaseModel):
 
 
 class QueueItemResponse(BaseModel):
-    """Queue item response (renamed from ReservationResponse)"""
+    """Queue item response"""
 
     queue_id: str = Field(..., description="Queue item UUID")
     song_id: str = Field(..., description="Song UUID")
+    song_title: str = Field(..., description="Song title")
     position: int = Field(..., description="Position in queue (1-based)")
     status: str = Field(..., description="Queue item status")
-    reserved_by_nickname: Optional[str] = Field(None, description="User who reserved")
-    reserved_at: str = Field(..., description="Reservation timestamp")
-    user_id: Optional[str] = Field(None, description="User ID who reserved")
+    owner_id: Optional[str] = Field(None, description="User ID who reserved")
+    owner_nickname: Optional[str] = Field(None, description="Nickname of user who reserved")
+    queued_at: str = Field(..., description="Reservation timestamp")
 
 
 class PlaybackResponse(BaseModel):
@@ -525,9 +526,13 @@ async def list_queue(
     try:
         session = _validate_session_exists(session_code, db)
 
-        # Query reservations for this session, ordered by position
+        # Query reservations with song titles (join with Song table)
         reservations = (
-            db.query(db_models.Reservation)
+            db.query(
+                db_models.Reservation,
+                db_models.Song.title.label('song_title')
+            )
+            .outerjoin(db_models.Song, db_models.Reservation.song_id == db_models.Song.id)
             .filter(db_models.Reservation.session_code == session.code)
             .order_by(asc(db_models.Reservation.position))
             .all()
@@ -536,13 +541,14 @@ async def list_queue(
         # Build response
         queue_list = [
             QueueItemResponse(
-                queue_id=str(r.id),
-                song_id=str(r.song_id),
-                position=r.position,
-                status=r.status.value,
-                reserved_by_nickname=r.reserved_by_nickname,
-                reserved_at=r.reserved_at.isoformat() if r.reserved_at else None,
-                user_id=str(r.user_id) if r.user_id else None,
+                queue_id=str(r.Reservation.id),
+                song_id=str(r.Reservation.song_id),
+                song_title=r.song_title or "Unknown Song",
+                position=r.Reservation.position,
+                status=r.Reservation.status.value,
+                owner_nickname=r.Reservation.reserved_by_nickname,
+                owner_id=str(r.Reservation.user_id) if r.Reservation.user_id else None,
+                queued_at=r.Reservation.reserved_at.isoformat() if r.Reservation.reserved_at else None,
             )
             for r in reservations
         ]
@@ -632,22 +638,38 @@ async def add_to_queue(
 
         next_position = (max_position[0] if max_position else 0) + 1
 
-        # Get nickname
-        nickname = None
-        if user.role == "controller" and user.sub:
-            nickname = f"User-{user.sub[:8]}"
-        elif reserved_by_user_id:
-            nickname = f"User-{reserved_by_user_id[:8]}"
+        # Get the user's actual nickname from the User table
+        actual_user = None
+        if user.sub:
+            try:
+                actual_user = db.query(db_models.User).filter(
+                    db_models.User.id == uuid.UUID(user.sub)
+                ).first()
+            except (ValueError, TypeError):
+                pass
+        
+        owner_nickname = actual_user.nickname_or_username if actual_user else None
+        owner_id = uuid.UUID(user.sub) if user.sub else None
+        
+        # If admin is reserving for another user
+        if reserved_by_user_id:
+            try:
+                other_user = db.query(db_models.User).filter(
+                    db_models.User.id == uuid.UUID(reserved_by_user_id)
+                ).first()
+                owner_nickname = other_user.nickname_or_username if other_user else f"User-{reserved_by_user_id[:8]}"
+                owner_id = uuid.UUID(reserved_by_user_id)
+            except (ValueError, TypeError):
+                owner_nickname = f"User-{reserved_by_user_id[:8]}"
+                owner_id = uuid.UUID(reserved_by_user_id) if reserved_by_user_id else None
 
         # Create reservation
         reservation = db_models.Reservation(
             id=uuid.uuid4(),
             session_code=session.code,
             song_id=song_uuid,
-            user_id=uuid.UUID(reserved_by_user_id)
-            if reserved_by_user_id
-            else (uuid.UUID(user.sub) if user.sub else None),
-            reserved_by_nickname=nickname,
+            user_id=owner_id,
+            reserved_by_nickname=owner_nickname,
             position=next_position,
             status=ReservationStatus.PENDING,
         )
@@ -660,8 +682,12 @@ async def add_to_queue(
         return {
             "queue_id": str(reservation.id),
             "song_id": str(reservation.song_id),
+            "song_title": song.title,
             "position": next_position,
-            "status": "reserved",
+            "status": reservation.status.value,
+            "owner_id": str(owner_id) if owner_id else None,
+            "owner_nickname": owner_nickname,
+            "queued_at": reservation.reserved_at.isoformat(),
         }
 
     except HTTPException:
