@@ -34,7 +34,6 @@ All song endpoints are accessible to **all authenticated roles** (Admin, Control
 |----------|--------|-------|------------|--------|-------------|
 | `/api/songs/songbook` | GET | ✅ | ✅ | ✅ | List available songs (synced from master) |
 | `/api/songs` | GET | ✅ | ✅ | ✅ | List songs with filters & search |
-| `/api/songs` | POST | ✅ | ✅ | ✅ | Create/add new song to local database |
 | `/api/songs/{song_id}` | GET | ✅ | ✅ | ✅ | Get song details by ID |
 | `/api/songs/{song_id}/status` | GET | ✅ | ✅ | ✅ | Check song metadata/status |
 
@@ -49,8 +48,7 @@ All song endpoints are accessible to **all authenticated roles** (Admin, Control
 
 | Endpoint | Method | Admin | Controller | Player | Description |
 |----------|--------|-------|------------|--------|-------------|
-| `/api/songs/download-request` | POST | ✅ | ✅ | ✅ | Request download from Master (async) |
-| `/api/songs/download` | POST | ✅ | ✅ | ✅ | Download song (creates download queue entry) |
+| `/api/songs/download` | POST | ✅ | ✅ | ✅ | Download song from YouTube (creates download queue entry) |
 | `/api/songs/{song_id}/download-status` | GET | ✅ | ✅ | ✅ | Check download progress for a song |
 | `/api/songs/downloads` | GET | ✅ | ✅ | ✅ | List all active downloads with status |
 | `/api/songs/downloads/{download_id}/retry` | POST | ✅ | ✅ | ✅ | Retry failed download |
