@@ -33,6 +33,7 @@ from app.services.enhancement_service import EnhancementService
 from app.services.yt_dlp_service import YTDLPService, YTDLPError
 from app.services.song_lookup_service import SongLookupService, SongLookupError
 from app.config import settings
+from app.middleware.auth import verify_bearer_token
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +50,7 @@ def get_db():
 
 
 @router.post("/identify", response_model=SongMetadataResponse, status_code=200)
-async def identify_song(request: IdentifyRequest, enhance: bool = Query(False)) -> SongMetadataResponse:
+async def identify_song(request: IdentifyRequest, enhance: bool = Query(False), token: dict = Depends(verify_bearer_token)) -> SongMetadataResponse:
     """
     Identify song metadata from YouTube URL
 
@@ -202,7 +203,7 @@ async def identify_song(request: IdentifyRequest, enhance: bool = Query(False)) 
 
 
 @router.post("/enhance", response_model=SongMetadataResponse, status_code=200)
-async def enhance_song(request: EnhanceSongRequest) -> SongMetadataResponse:
+async def enhance_song(request: EnhanceSongRequest, token: dict = Depends(verify_bearer_token)) -> SongMetadataResponse:
     """
     Enhance song metadata using OpenAI agent with function calling.
     
@@ -326,6 +327,7 @@ async def enhance_song(request: EnhanceSongRequest) -> SongMetadataResponse:
 @router.post("/download-request", response_model=dict, status_code=202)
 async def download_song_request(
     request: DownloadSongRequest,
+    token: dict = Depends(verify_bearer_token),
 ) -> dict:
     """
     Request a song download to Master
@@ -405,6 +407,7 @@ def _format_song_response(song: Song) -> SongResponse:
 async def create_song(
     request: CreateSongRequest,
     db: SQLSession = Depends(get_db),
+    token: dict = Depends(verify_bearer_token),
 ) -> SongResponse:
     """
     Create a new song from YouTube URL
@@ -507,6 +510,7 @@ async def list_songs(
     status: Optional[str] = None,
     genre: Optional[str] = None,
     db: SQLSession = Depends(get_db),
+    token: dict = Depends(verify_bearer_token),
 ) -> SongListResponse:
     """
     List all available songs with optional filtering
@@ -574,6 +578,7 @@ async def download_song(
     request: SongMetadataResponse,
     reserve: bool = Query(False),
     db: SQLSession = Depends(get_db),
+    token: dict = Depends(verify_bearer_token),
 ) -> DownloadStatusResponse:
     """
     Request to download a song from Master.
@@ -753,6 +758,7 @@ async def download_song(
 async def get_active_downloads(
     status_filter: str = Query(None, alias="status"),
     db: SQLSession = Depends(get_db),
+    token: dict = Depends(verify_bearer_token),
 ) -> list:
     """
     Get list of active song downloads being tracked by this Node.
@@ -848,6 +854,7 @@ async def get_active_downloads(
 async def retry_failed_download(
     download_id: str,
     db: SQLSession = Depends(get_db),
+    token: dict = Depends(verify_bearer_token),
 ) -> dict:
     """
     Retry a failed download by resetting it to pending status.
@@ -892,6 +899,7 @@ async def retry_failed_download(
 async def delete_download(
     download_id: str,
     db: SQLSession = Depends(get_db),
+    token: dict = Depends(verify_bearer_token),
 ) -> dict:
     """
     Delete/remove a download from the queue.
@@ -935,6 +943,7 @@ async def delete_download(
 async def cleanup_old_downloads(
     hours: int = Query(1, ge=0, le=24),
     db: SQLSession = Depends(get_db),
+    token: dict = Depends(verify_bearer_token),
 ) -> dict:
     """
     Clean up (remove) failed downloads older than specified hours.
@@ -973,6 +982,7 @@ async def cleanup_old_downloads(
 @router.post("/downloads/clear-pending", status_code=200)
 async def clear_pending_downloads(
     db: SQLSession = Depends(get_db),
+    token: dict = Depends(verify_bearer_token),
 ) -> dict:
     """
     DANGEROUS: Immediately remove ALL pending and in-progress downloads.
@@ -1014,6 +1024,7 @@ async def stream_video(
     video_id: str,
     request: Request,
     db: SQLSession = Depends(get_db),
+    token: dict = Depends(verify_bearer_token),
 ):
     """
     Stream a video file for a synced song.
@@ -1067,6 +1078,7 @@ async def get_songbook(
     sessionId: Optional[str] = Query(None, description="Session ID to check reservation status"),
     db: SQLSession = Depends(get_db),
     request: Request = None,
+    token: dict = Depends(verify_bearer_token),
 ) -> dict:
     """
     Get synced songs from Node's local database (songbook).
@@ -1199,6 +1211,7 @@ async def get_songbook(
 async def get_song(
     song_id: str,
     db: SQLSession = Depends(get_db),
+    token: dict = Depends(verify_bearer_token),
 ) -> SongResponse:
     """
     Get a specific song by ID
@@ -1251,6 +1264,7 @@ async def get_song(
 async def get_song_status(
     song_id: str,
     db: SQLSession = Depends(get_db),
+    token: dict = Depends(verify_bearer_token),
 ) -> SongStatusResponse:
     """
     Check the download status of a song
@@ -1307,7 +1321,7 @@ async def get_song_status(
 
 
 @router.get("/{song_id}/download-status", response_model=DownloadStatusResponse)
-async def check_download_status(song_id: str) -> DownloadStatusResponse:
+async def check_download_status(song_id: str, token: dict = Depends(verify_bearer_token)) -> DownloadStatusResponse:
     """
     Check the download status of a song
 
@@ -1353,6 +1367,7 @@ async def sync_songs_from_master(
     limit: int = Query(100, ge=1, le=1000),
     offset: int = Query(0, ge=0),
     db: SQLSession = Depends(get_db),
+    token: dict = Depends(verify_bearer_token),
 ) -> dict:
     """
     Trigger song sync from Master to Node.
