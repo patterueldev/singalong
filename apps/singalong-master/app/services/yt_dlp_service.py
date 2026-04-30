@@ -2,14 +2,12 @@
 YT-DLP Wrapper Service
 
 Provides abstraction for extracting metadata and downloading videos from YouTube
-using the yt-dlp command-line tool.
+using the yt-dlp Python library.
 """
 
-import subprocess
-import json
 import logging
 from typing import Optional, Dict
-from datetime import datetime
+import yt_dlp
 
 logger = logging.getLogger(__name__)
 
@@ -48,60 +46,48 @@ class YTDLPService:
             raise YTDLPError("Invalid YouTube URL format")
 
         try:
-            # Run yt-dlp to extract metadata (JSON output)
-            result = subprocess.run(
-                [
-                    "yt-dlp",
-                    "--dump-json",
-                    "--no-warnings",
-                    "--socket-timeout",
-                    str(self.timeout),
-                    url,
-                ],
-                capture_output=True,
-                text=True,
-                timeout=self.timeout + 5,
-            )
+            # Use yt-dlp Python library directly
+            ydl_opts = {
+                "quiet": True,
+                "no_warnings": True,
+                "socket_timeout": self.timeout,
+                "extract_flat": False,
+            }
 
-            if result.returncode != 0:
-                error_msg = result.stderr or "Unknown error"
-                logger.error(f"yt-dlp error: {error_msg}")
-
-                # Parse error to provide better message
-                if "is not available" in error_msg or "removed" in error_msg:
-                    raise YTDLPError("Video not found or has been removed")
-                if "private" in error_msg or "age restricted" in error_msg:
-                    raise YTDLPError("Video is private or age-restricted")
-                if "throttled" in error_msg:
-                    raise YTDLPError("Request throttled by YouTube")
-
-                raise YTDLPError(f"Failed to extract metadata: {error_msg}")
-
-            data = json.loads(result.stdout)
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                info = ydl.extract_info(url, download=False)
 
             # Extract and normalize fields
             return {
-                "videoId": data.get("id"),
-                "title": data.get("title", ""),
-                "artist": data.get("uploader", ""),
-                "duration": data.get("duration", 0),
-                "thumbnail": data.get("thumbnail", ""),
-                "year": data.get("release_date", "")[:4]
-                if data.get("release_date")
+                "videoId": info.get("id"),
+                "title": info.get("title", ""),
+                "artist": info.get("uploader", ""),
+                "duration": info.get("duration", 0),
+                "thumbnail": info.get("thumbnail", ""),
+                "year": info.get("release_date", "")[:4]
+                if info.get("release_date")
                 else "",
-                "channel": data.get("uploader", ""),
-                "language": data.get("language", ""),
-                "description": data.get("description", ""),
-                "viewCount": data.get("view_count", 0),
-                "url": data.get("webpage_url", url),
+                "channel": info.get("uploader", ""),
+                "language": info.get("language", ""),
+                "description": info.get("description", ""),
+                "viewCount": info.get("view_count", 0),
+                "url": info.get("webpage_url", url),
             }
 
-        except subprocess.TimeoutExpired:
-            logger.error(f"yt-dlp timeout for {url}")
-            raise YTDLPError("Request timed out")
-        except json.JSONDecodeError as e:
-            logger.error(f"Failed to parse yt-dlp output: {e}")
-            raise YTDLPError("Invalid response format from metadata extractor")
+        except yt_dlp.utils.DownloadError as e:
+            error_msg = str(e)
+            logger.error(f"yt-dlp download error: {error_msg}")
+
+            # Parse error to provide better message
+            if "is not available" in error_msg or "removed" in error_msg:
+                raise YTDLPError("Video not found or has been removed")
+            if "private" in error_msg or "age restricted" in error_msg:
+                raise YTDLPError("Video is private or age-restricted")
+            if "throttled" in error_msg:
+                raise YTDLPError("Request throttled by YouTube")
+
+            raise YTDLPError(f"Failed to extract metadata: {error_msg}")
+
         except Exception as e:
             logger.error(f"Unexpected error extracting metadata: {str(e)}")
             raise YTDLPError(str(e))

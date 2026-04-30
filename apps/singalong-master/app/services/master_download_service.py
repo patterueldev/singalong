@@ -1,11 +1,11 @@
 """Master download service for managing video downloads from YouTube"""
 
 import os
-import subprocess
 import logging
 import asyncio
 from pathlib import Path
 from typing import Optional, Tuple
+import yt_dlp
 
 logger = logging.getLogger(__name__)
 
@@ -49,71 +49,86 @@ class MasterDownloadService:
         try:
             logger.info(f"Starting async download: {video_id} → {filename}")
 
-            # Build yt-dlp command
             output_path = os.path.join(self.output_dir, filename)
 
-            cmd = [
-                "yt-dlp",
-                "--format",
-                "bestvideo+bestaudio/best",  # Merge best video+audio, fallback to best single stream
-                "--socket-timeout",
-                "30",
-                "--quiet",  # Less verbose
-                "--no-warnings",
-                "-o",
-                output_path,  # Use full path with extension so yt-dlp preserves it
-                video_id,  # Use video ID instead of full URL (matches Node's approach)
-            ]
+            # Use yt-dlp Python library with async execution
+            ydl_opts = {
+                "format": "bestvideo+bestaudio/best",
+                "socket_timeout": 30,
+                "quiet": True,
+                "no_warnings": True,
+                "outtmpl": output_path,  # Output path for the file
+                "quiet": False,
+                "no_warnings": False,
+            }
 
-            logger.debug(f"Running yt-dlp: {' '.join(cmd)}")
-
-            # Run download in background
-            process = await asyncio.create_subprocess_exec(
-                *cmd,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE,
+            # Run download in thread pool to avoid blocking
+            loop = asyncio.get_event_loop()
+            output_path_result, error_msg = await asyncio.wait_for(
+                loop.run_in_executor(
+                    None,
+                    self._download_with_ydl,
+                    video_id,
+                    output_path,
+                    ydl_opts,
+                ),
+                timeout=timeout,
             )
 
-            try:
-                stdout, stderr = await asyncio.wait_for(
-                    process.communicate(),
-                    timeout=timeout,
-                )
-            except asyncio.TimeoutError:
-                process.kill()
-                error_msg = f"Download timeout after {timeout} seconds"
+            if error_msg:
+                logger.error(f"Download error: {error_msg}")
+                return None, error_msg
+
+            if not os.path.exists(output_path_result):
+                error_msg = f"File not created at {output_path_result}"
                 logger.error(error_msg)
                 return None, error_msg
 
-            if process.returncode != 0:
-                error_msg = stderr.decode() if stderr else "Unknown error"
-                logger.error(f"yt-dlp error: {error_msg}")
+            file_size = os.path.getsize(output_path_result)
+            logger.info(f"✓ Download complete: {output_path_result} ({file_size} bytes)")
 
-                # Provide better error messages
-                if "not available" in error_msg.lower():
-                    error_msg = "Video not found or removed"
-                elif "age-restricted" in error_msg.lower():
-                    error_msg = "Video is age-restricted"
-                elif "private" in error_msg.lower():
-                    error_msg = "Video is private"
+            return output_path_result, None
 
-                return None, error_msg
-
-            # Verify file exists
-            if not os.path.exists(output_path):
-                error_msg = f"File not created at {output_path}"
-                logger.error(error_msg)
-                return None, error_msg
-
-            file_size = os.path.getsize(output_path)
-            logger.info(f"✓ Download complete: {output_path} ({file_size} bytes)")
-
-            return output_path, None
-
+        except asyncio.TimeoutError:
+            error_msg = f"Download timeout after {timeout} seconds"
+            logger.error(error_msg)
+            return None, error_msg
         except Exception as e:
             error_msg = f"Unexpected download error: {str(e)}"
             logger.exception(error_msg)
             return None, error_msg
+
+    @staticmethod
+    def _download_with_ydl(
+        video_id: str, output_path: str, ydl_opts: dict
+    ) -> Tuple[Optional[str], Optional[str]]:
+        """
+        Helper method to run yt-dlp download in thread pool.
+
+        Returns:
+            Tuple of (actual_file_path, error_message)
+        """
+        try:
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                info = ydl.extract_info(video_id, download=True)
+                # yt-dlp may add extension or change filename, get actual path from info
+                actual_path = ydl.prepare_filename(info)
+                return actual_path, None
+
+        except yt_dlp.utils.DownloadError as e:
+            error_msg = str(e)
+            logger.error(f"yt-dlp download error: {error_msg}")
+
+            if "not available" in error_msg.lower():
+                return None, "Video not found or removed"
+            elif "age-restricted" in error_msg.lower():
+                return None, "Video is age-restricted"
+            elif "private" in error_msg.lower():
+                return None, "Video is private"
+
+            return None, error_msg
+        except Exception as e:
+            return None, f"Unexpected error: {str(e)}"
 
     def download_video_sync(
         self,
@@ -137,67 +152,33 @@ class MasterDownloadService:
 
             output_path = os.path.join(self.output_dir, filename)
 
-            cmd = [
-                "yt-dlp",
-                "--format",
-                "bestvideo+bestaudio/best",  # Merge best video+audio, fallback to best single stream
-                "--socket-timeout",
-                "30",
-                "--quiet",
-                "--no-warnings",
-                "-o",
-                output_path,  # Use full path with extension
-                video_id,  # Use video ID instead of full URL (matches Node's approach)
-            ]
+            ydl_opts = {
+                "format": "bestvideo+bestaudio/best",
+                "socket_timeout": 30,
+                "quiet": True,
+                "no_warnings": True,
+                "outtmpl": output_path,
+            }
 
-            result = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                timeout=timeout,
-            )
+            actual_path, error_msg = self._download_with_ydl(video_id, output_path, ydl_opts)
 
-            logger.info(f"yt-dlp return code: {result.returncode}")
-            if result.stdout:
-                logger.debug(f"yt-dlp stdout: {result.stdout[:200]}")
-            if result.stderr:
-                logger.debug(f"yt-dlp stderr: {result.stderr[:200]}")
-
-            if result.returncode != 0:
-                error_msg = result.stderr or "Unknown error"
-                logger.error(f"yt-dlp error: {error_msg}")
-
-                if "not available" in error_msg.lower():
-                    error_msg = "Video not found or removed"
-                elif "age-restricted" in error_msg.lower():
-                    error_msg = "Video is age-restricted"
-                elif "private" in error_msg.lower():
-                    error_msg = "Video is private"
-
+            if error_msg:
                 return None, error_msg
 
-            logger.info(f"Checking if file exists: {output_path}")
-            if not os.path.exists(output_path):
-                # Try to find what files were created
-                import glob
-                pattern = os.path.join(self.output_dir, "*")
-                files_in_dir = glob.glob(pattern)
-                logger.error(f"File not created at {output_path}. Files in {self.output_dir}: {files_in_dir}")
-                error_msg = f"File not created at {output_path}"
+            if not os.path.exists(actual_path):
+                error_msg = f"File not created at {actual_path}"
+                logger.error(error_msg)
                 return None, error_msg
 
-            file_size = os.path.getsize(output_path)
-            logger.info(f"✓ Download complete: {output_path} ({file_size} bytes)")
+            file_size = os.path.getsize(actual_path)
+            logger.info(f"✓ Download complete: {actual_path} ({file_size} bytes)")
 
-            return output_path, None
+            return actual_path, None
 
-        except subprocess.TimeoutExpired:
-            error_msg = f"Download timeout after {timeout} seconds"
-            logger.error(error_msg)
-            return None, error_msg
         except Exception as e:
             error_msg = f"Unexpected download error: {str(e)}"
             logger.exception(error_msg)
+            return None, error_msg
             return None, error_msg
 
     def get_file_size(self, file_path: str) -> Optional[int]:
