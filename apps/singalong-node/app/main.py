@@ -44,8 +44,8 @@ async def lifespan(app: FastAPI):
     try:
         await initialize_master_auth(settings.master_url, settings.master_api_key)
     except Exception as e:
-        print(f"WARNING: Failed to authenticate with Master: {str(e)}")
-        print("NOTE: Continuing startup without Master connection (local testing mode)")
+        print(f"FATAL: Failed to authenticate with Master: {str(e)}")
+        raise
     
     # Initialize admin session 9999
     db = SessionLocal()
