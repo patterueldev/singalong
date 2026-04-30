@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session as SQLSession
 from sqlalchemy import asc, desc
 
 from app.database import get_db
-from app.middleware.auth import verify_bearer_token
+from app.middleware.auth import verify_bearer_token, verify_admin_role
 from app.services.session_service import SessionService
 from app.api.dependencies import get_current_user, TokenPayload
 from app.models import db_models
@@ -192,7 +192,7 @@ async def list_sessions(
     offset: int = Query(0, ge=0, description="Pagination offset"),
     limit: int = Query(50, ge=1, le=100, description="Results per page"),
     db: SQLSession = Depends(get_db),
-    token: TokenPayload = Depends(get_current_user),
+    admin: dict = Depends(verify_admin_role),
 ) -> dict:
     """
     List all sessions (paginated).
@@ -268,7 +268,7 @@ async def list_sessions(
 async def create_session(
     request: CreateSessionRequest,
     db: SQLSession = Depends(get_db),
-    token: TokenPayload = Depends(get_current_user),
+    admin: dict = Depends(verify_admin_role),
 ) -> SessionResponse:
     """
     Create a new karaoke session (admin only).
@@ -276,7 +276,7 @@ async def create_session(
     Args:
         request: CreateSessionRequest with title and optional vibes/max_users
         db: Database session
-        token: Bearer token for authorization
+        admin: Bearer token for authorization (admin role required)
 
     Returns:
         SessionResponse with session_id and code
@@ -285,16 +285,12 @@ async def create_session(
         HTTPException: 400 if validation fails, 403 if not admin, 500 if database error
     """
     try:
-        # Admin only
-        if token.role != "admin":
-            raise HTTPException(status_code=403, detail="Only admins can create sessions")
-
         session_service = SessionService(db)
 
         # Create session
         session = session_service.create_session(
             title=request.title,
-            created_by_user_id=token.sub,
+            created_by_user_id=admin.get("sub"),
             vibes=request.vibes if request.vibes else None,
             max_users=request.max_users if request.max_users > 0 else None,
         )
@@ -326,6 +322,7 @@ async def create_session(
 async def get_session_details(
     session_id: str,
     db: SQLSession = Depends(get_db),
+    admin: dict = Depends(verify_admin_role),
 ) -> SessionDetailsResponse:
     """
     Get detailed session information.
@@ -385,18 +382,17 @@ async def update_session(
     session_id: str,
     request: UpdateSessionRequest,
     db: SQLSession = Depends(get_db),
-    token: TokenPayload = Depends(get_current_user),
+    admin: dict = Depends(verify_admin_role),
 ) -> SessionResponse:
     """
     Update session metadata (admin/creator only).
 
     Can update: title, vibes, status
 
-    Auth: Admin or session creator
+    Auth: Admin only
     """
     try:
         session = _validate_session_exists(session_id, db)
-        _check_session_authorization(session, token, allow_admin_only=False)
 
         # Update fields
         if request.title:
@@ -439,19 +435,18 @@ async def update_session(
 async def delete_session(
     session_id: str,
     db: SQLSession = Depends(get_db),
-    token: TokenPayload = Depends(get_current_user),
+    admin: dict = Depends(verify_admin_role),
 ):
     """
-    End/archive session (admin/creator only).
+    End/archive session (admin only).
 
     Sets status=ended, ended_at=now
     Cannot delete session 9999 (default session)
 
-    Auth: Admin or session creator
+    Auth: Admin only
     """
     try:
         session = _validate_session_exists(session_id, db)
-        _check_session_authorization(session, token, allow_admin_only=False)
 
         # Cannot delete default session 9999
         if session.code == "9999":
@@ -476,7 +471,7 @@ async def delete_session(
 async def get_attendees(
     session_id: str,
     db: SQLSession = Depends(get_db),
-    token: TokenPayload = Depends(get_current_user),
+    admin: dict = Depends(verify_admin_role),
 ) -> dict:
     """
     List attendees (users) in session by nickname.
@@ -525,7 +520,7 @@ async def get_attendees(
 async def list_queue(
     session_id: str,
     db: SQLSession = Depends(get_db),
-    token: TokenPayload = Depends(get_current_user),
+    admin: dict = Depends(verify_admin_role),
 ) -> dict:
     """
     Get all songs reserved in this session (queue), ordered by position.
@@ -581,7 +576,7 @@ async def add_to_queue(
     reserved_by_user_id: Optional[str] = Query(
         None, description="User ID reserving the song (admin only)"
     ),
-    user: TokenPayload = Depends(get_current_user),
+    admin: dict = Depends(verify_admin_role),
     db: SQLSession = Depends(get_db),
 ) -> dict:
     """
@@ -684,7 +679,7 @@ async def add_to_queue(
 async def remove_from_queue(
     session_id: str,
     queue_id: str,
-    user: TokenPayload = Depends(get_current_user),
+    admin: dict = Depends(verify_admin_role),
     db: SQLSession = Depends(get_db),
 ):
     """
@@ -760,7 +755,7 @@ async def change_queue_order(
     session_id: str,
     queue_id: str,
     new_position: int = Query(..., ge=1, description="New position in queue"),
-    user: TokenPayload = Depends(get_current_user),
+    admin: dict = Depends(verify_admin_role),
     db: SQLSession = Depends(get_db),
 ) -> dict:
     """
@@ -857,7 +852,7 @@ async def change_queue_order(
 async def get_playback_status(
     session_id: str,
     db: SQLSession = Depends(get_db),
-    token: TokenPayload = Depends(get_current_user),
+    admin: dict = Depends(verify_admin_role),
 ) -> Optional[dict]:
     """
     Get current playback status for session.
