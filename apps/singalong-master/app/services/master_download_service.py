@@ -55,14 +55,14 @@ class MasterDownloadService:
             cmd = [
                 "yt-dlp",
                 "--format",
-                "18/22/43/34/35/best",  # Try common safe formats first, then fallback to best
+                "bestvideo+bestaudio/best",  # Merge best video+audio, fallback to best single stream
                 "--socket-timeout",
                 "30",
                 "--quiet",  # Less verbose
                 "--no-warnings",
                 "-o",
                 output_path,  # Use full path with extension so yt-dlp preserves it
-                f"https://www.youtube.com/watch?v={video_id}",
+                video_id,  # Use video ID instead of full URL (matches Node's approach)
             ]
 
             logger.debug(f"Running yt-dlp: {' '.join(cmd)}")
@@ -140,14 +140,14 @@ class MasterDownloadService:
             cmd = [
                 "yt-dlp",
                 "--format",
-                "18/22/43/34/35/best",  # Try common safe formats first, then fallback to best
+                "bestvideo+bestaudio/best",  # Merge best video+audio, fallback to best single stream
                 "--socket-timeout",
                 "30",
                 "--quiet",
                 "--no-warnings",
                 "-o",
                 output_path,  # Use full path with extension
-                f"https://www.youtube.com/watch?v={video_id}",
+                video_id,  # Use video ID instead of full URL (matches Node's approach)
             ]
 
             result = subprocess.run(
