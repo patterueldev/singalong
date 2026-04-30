@@ -147,6 +147,7 @@ class Reservation(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     session_code = Column(Integer, nullable=False, index=True)  # Foreign key to Session.code
     song_id = Column(UUID(as_uuid=True), nullable=False, index=True)
+    song_title = Column(String(500), nullable=True)  # Denormalized: song title snapshot at reservation time
     user_id = Column(UUID(as_uuid=True), nullable=True, index=True)  # Optional: who reserved it (may be admin)
     reserved_by_nickname = Column(String(255), nullable=True)  # Display name of who reserved
     

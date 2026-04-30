@@ -526,29 +526,25 @@ async def list_queue(
     try:
         session = _validate_session_exists(session_code, db)
 
-        # Query reservations with song titles (join with Song table)
+        # Query reservations for this session (no join - data is denormalized)
         reservations = (
-            db.query(
-                db_models.Reservation,
-                db_models.Song.title.label('song_title')
-            )
-            .outerjoin(db_models.Song, db_models.Reservation.song_id == db_models.Song.id)
+            db.query(db_models.Reservation)
             .filter(db_models.Reservation.session_code == session.code)
             .order_by(asc(db_models.Reservation.position))
             .all()
         )
 
-        # Build response
+        # Build response from denormalized reservation data
         queue_list = [
             QueueItemResponse(
-                queue_id=str(r.Reservation.id),
-                song_id=str(r.Reservation.song_id),
+                queue_id=str(r.id),
+                song_id=str(r.song_id),
                 song_title=r.song_title or "Unknown Song",
-                position=r.Reservation.position,
-                status=r.Reservation.status.value,
-                owner_nickname=r.Reservation.reserved_by_nickname,
-                owner_id=str(r.Reservation.user_id) if r.Reservation.user_id else None,
-                queued_at=r.Reservation.reserved_at.isoformat() if r.Reservation.reserved_at else None,
+                position=r.position,
+                status=r.status.value,
+                owner_nickname=r.reserved_by_nickname,
+                owner_id=str(r.user_id) if r.user_id else None,
+                queued_at=r.reserved_at.isoformat() if r.reserved_at else None,
             )
             for r in reservations
         ]
@@ -663,11 +659,12 @@ async def add_to_queue(
                 owner_nickname = f"User-{reserved_by_user_id[:8]}"
                 owner_id = uuid.UUID(reserved_by_user_id) if reserved_by_user_id else None
 
-        # Create reservation
+        # Create reservation (denormalized with song title snapshot)
         reservation = db_models.Reservation(
             id=uuid.uuid4(),
             session_code=session.code,
             song_id=song_uuid,
+            song_title=song.title,  # Store song title at reservation time
             user_id=owner_id,
             reserved_by_nickname=owner_nickname,
             position=next_position,
