@@ -5,8 +5,12 @@ from datetime import datetime, timezone
 from uuid import uuid4
 from sqlalchemy.orm import Session
 from app.models.db_models import User, UserRole
+from passlib.context import CryptContext
 
 logger = logging.getLogger(__name__)
+
+# Password hashing context
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 def seed_admin_accounts(db: Session) -> None:
@@ -17,7 +21,7 @@ def seed_admin_accounts(db: Session) -> None:
     default_admins = [
         {
             "username": "admin",
-            "password_hash": "test_hash_admin123",  # Placeholder - authentication via GraphQL
+            "password": "admin123",  # Will be hashed
             "role": UserRole.ADMIN,
         },
     ]
@@ -28,10 +32,12 @@ def seed_admin_accounts(db: Session) -> None:
         ).first()
         
         if not existing:
+            # Hash password using bcrypt
+            password_hash = pwd_context.hash(admin_data["password"])
             user = User(
                 id=uuid4(),
                 username=admin_data["username"],
-                password_hash=admin_data["password_hash"],
+                password_hash=password_hash,
                 role=admin_data["role"].value if hasattr(admin_data["role"], "value") else admin_data["role"],
                 created_at=datetime.now(timezone.utc),
             )

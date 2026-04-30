@@ -1,10 +1,24 @@
 """GraphQL schema definition for user authentication and song operations"""
 
-from ariadne import graphql_sync, make_executable_schema, MutationType, QueryType
-from app.services.user_auth_service import UserAuthService
+from ariadne import graphql_sync, make_executable_schema, MutationType, QueryType, ObjectType
 from app.services.yt_dlp_service import YTDLPService, YTDLPError
 from app.database import SessionLocal
-from app.models.db_models import DraftSong
+
+
+def get_role_string(user_role):
+    """Extract role as plain string, avoiding enum serialization"""
+    if user_role is None:
+        return "player"
+    # Map enum to string explicitly
+    role_map = {
+        "superadmin": "superadmin",
+        "admin": "admin",
+        "player": "player",
+        "controller": "controller",
+    }
+    role_str = user_role.value if hasattr(user_role, "value") else str(user_role)
+    return role_map.get(role_str, "player")
+
 
 # GraphQL schema
 type_defs = """
@@ -244,6 +258,8 @@ def resolve_active_songs(obj, info, limit: int = 100, offset: int = 0):
 @mutation.field("authenticateController")
 def resolve_authenticate_controller(obj, info, nickname, sessionId, nodeId):
     """Authenticate controller user"""
+    from app.services.user_auth_service import UserAuthService
+    
     db = SessionLocal()
     try:
         user_auth = UserAuthService()
@@ -256,7 +272,7 @@ def resolve_authenticate_controller(obj, info, nickname, sessionId, nodeId):
             "user": {
                 "id": str(user.id),
                 "username": user.username,
-                "role": user.role.value,
+                "role": get_role_string(user.role),
                 "nickname": user.username,
             },
         }
@@ -269,6 +285,8 @@ def resolve_authenticate_controller(obj, info, nickname, sessionId, nodeId):
 @mutation.field("authenticateAdmin")
 def resolve_authenticate_admin(obj, info, username, password, nodeId):
     """Authenticate admin user"""
+    from app.services.user_auth_service import UserAuthService
+    
     db = SessionLocal()
     try:
         user_auth = UserAuthService()
@@ -281,7 +299,7 @@ def resolve_authenticate_admin(obj, info, username, password, nodeId):
             "user": {
                 "id": str(user.id),
                 "username": user.username,
-                "role": user.role.value,
+                "role": get_role_string(user.role),
                 "nickname": None,
             },
         }
@@ -294,6 +312,8 @@ def resolve_authenticate_admin(obj, info, username, password, nodeId):
 @mutation.field("authenticatePlayer")
 def resolve_authenticate_player(obj, info, sessionId, nodeId):
     """Authenticate player"""
+    from app.services.user_auth_service import UserAuthService
+    
     db = SessionLocal()
     try:
         user_auth = UserAuthService()
@@ -306,7 +326,7 @@ def resolve_authenticate_player(obj, info, sessionId, nodeId):
             "user": {
                 "id": str(user.id),
                 "username": None,
-                "role": user.role.value,
+                "role": get_role_string(user.role),
                 "nickname": None,
             },
         }
@@ -474,6 +494,15 @@ def resolve_request_song_download(
         db.close()
 
 
-# Build executable schema
-schema = make_executable_schema(type_defs, query, mutation)
+# Build executable schema with custom resolvers
+user_type = ObjectType("User")
+
+@user_type.field("role")
+def resolve_user_role(user, info):
+    """Custom resolver for User.role to prevent enum serialization"""
+    if isinstance(user, dict):
+        return user.get("role", "player")
+    return getattr(user, "role", "player")
+
+schema = make_executable_schema(type_defs, query, mutation, user_type)
 
