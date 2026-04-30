@@ -710,7 +710,7 @@ async def download_song(
             master_download_id=download_id,
             status=status,
         )
-        logger.info(f"  ✓ Local download queue entry created: {entry.download_id}")
+        logger.info(f"  ✓ Local download queue entry created: {entry['download_id']}")
 
         # Step 4: Placeholder for reservation
         if reserve:
