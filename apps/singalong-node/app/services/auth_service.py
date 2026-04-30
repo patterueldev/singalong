@@ -5,10 +5,10 @@ import time
 from datetime import datetime, timedelta, timezone
 
 import jwt
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session as SQLSession
 
 from app.config import settings
-from app.models.db_models import PlayerConnection, User, UserRole
+from app.models.db_models import PlayerConnection, User, UserRole, Session
 from app.services.graphql_client import MasterGraphQLClient, GraphQLError, HTTPException
 
 logger = logging.getLogger(__name__)
@@ -44,7 +44,7 @@ class AuthService:
         )
 
     async def authenticate_controller(
-        self, nickname: str, session_id: str, node_id: str, db: Session
+        self, nickname: str, session_id: str, node_id: str, db: SQLSession
     ) -> tuple[str, str, str, int, int]:
         """
         Authenticate a controller (attendee) user via Master GraphQL
@@ -59,8 +59,18 @@ class AuthService:
             Tuple of (access_token, refresh_token, role, access_expires_in, refresh_expires_in)
 
         Raises:
-            ValueError: If Master GraphQL authentication fails
+            ValueError: If session doesn't exist or Master GraphQL authentication fails
         """
+        # Validate session exists
+        try:
+            session_code = int(session_id)
+        except ValueError:
+            raise ValueError(f"Invalid session ID format: {session_id}")
+        
+        session = db.query(Session).filter(Session.code == session_code).first()
+        if not session:
+            raise ValueError(f"Session {session_id} does not exist")
+        
         try:
             # Call Master GraphQL to authenticate controller
             response = await self.graphql_client.authenticate_controller(
@@ -122,7 +132,7 @@ class AuthService:
             raise ValueError(f"Failed to authenticate controller: {str(e)}")
 
     async def authenticate_admin(
-        self, username: str, password: str, node_id: str, db: Session
+        self, username: str, password: str, node_id: str, db: SQLSession
     ) -> tuple[str, str, str, int, int]:
         """
         Authenticate an admin user via Master GraphQL
@@ -200,7 +210,7 @@ class AuthService:
             raise ValueError(f"Failed to authenticate admin: {str(e)}")
 
     async def authenticate_player(
-        self, session_id: str, node_id: str, db: Session
+        self, session_id: str, node_id: str, db: SQLSession
     ) -> tuple[str, str, str, int, int]:
         """
         Authenticate a player user via Master GraphQL
@@ -214,8 +224,18 @@ class AuthService:
             Tuple of (access_token, refresh_token, role, access_expires_in, refresh_expires_in)
 
         Raises:
-            ValueError: If Master GraphQL authentication fails or another player is connected
+            ValueError: If session doesn't exist, another player is connected, or Master auth fails
         """
+        # Validate session exists
+        try:
+            session_code = int(session_id)
+        except ValueError:
+            raise ValueError(f"Invalid session ID format: {session_id}")
+        
+        session = db.query(Session).filter(Session.code == session_code).first()
+        if not session:
+            raise ValueError(f"Session {session_id} does not exist")
+        
         try:
             # Check if another player is already connected (local Node rule)
             existing_connection = db.query(PlayerConnection).first()
@@ -285,7 +305,7 @@ class AuthService:
             logger.error(f"Master GraphQL error: {str(e)}")
             raise ValueError(f"Failed to authenticate player: {str(e)}")
 
-    def refresh_token(self, refresh_token: str, db: Session) -> tuple[str, str, str, int, int]:
+    def refresh_token(self, refresh_token: str, db: SQLSession) -> tuple[str, str, str, int, int]:
         """
         Validate refresh token and generate new access + refresh tokens
 
