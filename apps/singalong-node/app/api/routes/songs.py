@@ -683,6 +683,7 @@ async def download_song(
             video_id=request.videoId,
             title=request.title,
             master_download_id=download_id,
+            status=status,
         )
 
         # Step 4: Placeholder for reservation

@@ -35,6 +35,7 @@ class NodeDownloadService:
         video_id: str,
         title: str,
         master_download_id: str = None,
+        status: str = "queued",
     ) -> dict:
         """
         Create a download queue entry to track Master download.
@@ -43,6 +44,7 @@ class NodeDownloadService:
             video_id: YouTube video ID
             title: Song title
             master_download_id: Draft song ID returned from Master GraphQL
+            status: Download status from Master (default: "queued")
 
         Returns:
             Dictionary with download queue info
@@ -69,7 +71,7 @@ class NodeDownloadService:
                 video_id=video_id,
                 title=title,
                 master_download_id=master_download_id,
-                status="pending",
+                status=status,
             )
             
             self.db.add(entry)
