@@ -25,24 +25,14 @@ router = APIRouter(prefix="/api/sessions", tags=["Sessions"])
 # ============================================================================
 
 
-def _validate_session_exists(session_id: str, db: SQLSession) -> db_models.Session:
+def _validate_session_exists(session_code: int, db: SQLSession) -> db_models.Session:
     """
-    Validate session exists by UUID or code.
+    Validate session exists by numeric code.
 
     Raises HTTPException 404 if not found.
     Returns the session object if found.
     """
-    # Try by UUID first
-    try:
-        session_uuid = uuid.UUID(session_id)
-        session = db.query(db_models.Session).filter(db_models.Session.id == session_uuid).first()
-        if session:
-            return session
-    except ValueError:
-        pass
-
-    # Try by code
-    session = db.query(db_models.Session).filter(db_models.Session.code == session_id).first()
+    session = db.query(db_models.Session).filter(db_models.Session.code == session_code).first()
 
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
@@ -114,8 +104,7 @@ class UpdateSessionRequest(BaseModel):
 class SessionResponse(BaseModel):
     """Session response"""
 
-    session_id: str = Field(..., description="Session UUID")
-    code: str = Field(..., description="Unique session code")
+    code: int = Field(..., description="Numeric session code (0-9998)")
     title: str = Field(..., description="Session title")
     vibes: str = Field(default="", description="Session vibes")
     max_users: int = Field(default=0, description="Max users")
@@ -144,8 +133,7 @@ class AttendeeResponse(BaseModel):
 class SessionDetailsResponse(BaseModel):
     """Detailed session info"""
 
-    session_id: str = Field(..., description="Session UUID")
-    code: str = Field(..., description="Session code")
+    code: int = Field(..., description="Numeric session code (0-9998)")
     title: str = Field(..., description="Session title")
     vibes: str = Field(default="", description="Session vibes")
     status: str = Field(..., description="Session status")
@@ -234,13 +222,12 @@ async def list_sessions(
         for session in sessions:
             user_count = (
                 db.query(db_models.SessionUser)
-                .filter(db_models.SessionUser.session_id == session.id)
+                .filter(db_models.SessionUser.session_code == session.code)
                 .count()
             )
 
             session_list.append(
                 SessionResponse(
-                    session_id=str(session.id),
                     code=session.code,
                     title=session.title,
                     vibes=session.vibes or "",
@@ -279,7 +266,7 @@ async def create_session(
         admin: Bearer token for authorization (admin role required)
 
     Returns:
-        SessionResponse with session_id and code
+        SessionResponse with session_code and code
 
     Raises:
         HTTPException: 400 if validation fails, 403 if not admin, 500 if database error
@@ -298,7 +285,7 @@ async def create_session(
         logger.info(f"Session created: {session.code}")
 
         return SessionResponse(
-            session_id=str(session.id),
+            session_code=str(session.id),
             code=session.code,
             title=session.title,
             vibes=session.vibes or "",
@@ -318,9 +305,9 @@ async def create_session(
         raise HTTPException(status_code=500, detail="Failed to create session")
 
 
-@router.get("/{session_id}", response_model=SessionDetailsResponse)
+@router.get("/{session_code}", response_model=SessionDetailsResponse)
 async def get_session_details(
-    session_id: str,
+    session_code: int,
     db: SQLSession = Depends(get_db),
     admin: dict = Depends(verify_admin_role),
 ) -> SessionDetailsResponse:
@@ -328,7 +315,7 @@ async def get_session_details(
     Get detailed session information.
 
     Args:
-        session_id: Session UUID or code
+        session_code: Session UUID or code
         db: Database session
 
     Returns:
@@ -338,12 +325,12 @@ async def get_session_details(
         HTTPException: 404 if session not found
     """
     try:
-        session = _validate_session_exists(session_id, db)
+        session = _validate_session_exists(session_code, db)
 
         # Get users
         user_data = (
             db.query(db_models.SessionUser)
-            .filter(db_models.SessionUser.session_id == session.id)
+            .filter(db_models.SessionUser.session_code == session.id)
             .all()
         )
 
@@ -358,7 +345,7 @@ async def get_session_details(
         user_count = len(users)
 
         return SessionDetailsResponse(
-            session_id=str(session.id),
+            session_code=str(session.id),
             code=session.code,
             title=session.title,
             vibes=session.vibes or "",
@@ -377,9 +364,9 @@ async def get_session_details(
         raise HTTPException(status_code=500, detail="Failed to get session")
 
 
-@router.put("/{session_id}", response_model=SessionResponse)
+@router.put("/{session_code}", response_model=SessionResponse)
 async def update_session(
-    session_id: str,
+    session_code: int,
     request: UpdateSessionRequest,
     db: SQLSession = Depends(get_db),
     admin: dict = Depends(verify_admin_role),
@@ -392,7 +379,7 @@ async def update_session(
     Auth: Admin only
     """
     try:
-        session = _validate_session_exists(session_id, db)
+        session = _validate_session_exists(session_code, db)
 
         # Update fields
         if request.title:
@@ -407,12 +394,12 @@ async def update_session(
 
         user_count = (
             db.query(db_models.SessionUser)
-            .filter(db_models.SessionUser.session_id == session.id)
+            .filter(db_models.SessionUser.session_code == session.id)
             .count()
         )
 
         return SessionResponse(
-            session_id=str(session.id),
+            session_code=str(session.id),
             code=session.code,
             title=session.title,
             vibes=session.vibes or "",
@@ -431,9 +418,9 @@ async def update_session(
         raise HTTPException(status_code=500, detail="Failed to update session")
 
 
-@router.delete("/{session_id}", status_code=204)
+@router.delete("/{session_code}", status_code=204)
 async def delete_session(
-    session_id: str,
+    session_code: int,
     db: SQLSession = Depends(get_db),
     admin: dict = Depends(verify_admin_role),
 ):
@@ -446,7 +433,7 @@ async def delete_session(
     Auth: Admin only
     """
     try:
-        session = _validate_session_exists(session_id, db)
+        session = _validate_session_exists(session_code, db)
 
         # Cannot delete default session 9999
         if session.code == "9999":
@@ -467,9 +454,9 @@ async def delete_session(
         raise HTTPException(status_code=500, detail="Failed to end session")
 
 
-@router.get("/{session_id}/attendees", response_model=dict)
+@router.get("/{session_code}/attendees", response_model=dict)
 async def get_attendees(
-    session_id: str,
+    session_code: int,
     db: SQLSession = Depends(get_db),
     admin: dict = Depends(verify_admin_role),
 ) -> dict:
@@ -479,12 +466,12 @@ async def get_attendees(
     Returns list of users with nicknames, roles, and join timestamps.
     """
     try:
-        session = _validate_session_exists(session_id, db)
+        session = _validate_session_exists(session_code, db)
 
         # Query users in session
         session_users = (
             db.query(db_models.SessionUser)
-            .filter(db_models.SessionUser.session_id == session.id)
+            .filter(db_models.SessionUser.session_code == session.id)
             .order_by(asc(db_models.SessionUser.joined_at))
             .all()
         )
@@ -516,16 +503,16 @@ async def get_attendees(
 # ============================================================================
 
 
-@router.get("/{session_id}/queue", response_model=dict)
+@router.get("/{session_code}/queue", response_model=dict)
 async def list_queue(
-    session_id: str,
+    session_code: int,
     db: SQLSession = Depends(get_db),
     admin: dict = Depends(verify_admin_role),
 ) -> dict:
     """
     Get all songs reserved in this session (queue), ordered by position.
 
-    Endpoint: GET /api/sessions/{session_id}/queue
+    Endpoint: GET /api/sessions/{session_code}/queue
 
     Returns:
     - queue: Array of queue items
@@ -533,12 +520,12 @@ async def list_queue(
     """
 
     try:
-        session = _validate_session_exists(session_id, db)
+        session = _validate_session_exists(session_code, db)
 
         # Query reservations for this session, ordered by position
         reservations = (
             db.query(db_models.Reservation)
-            .filter(db_models.Reservation.session_id == session.id)
+            .filter(db_models.Reservation.session_code == session.id)
             .order_by(asc(db_models.Reservation.position))
             .all()
         )
@@ -569,9 +556,9 @@ async def list_queue(
         raise HTTPException(status_code=500, detail="Failed to fetch queue")
 
 
-@router.post("/{session_id}/queue", status_code=201, response_model=dict)
+@router.post("/{session_code}/queue", status_code=201, response_model=dict)
 async def add_to_queue(
-    session_id: str,
+    session_code: int,
     song_id: str = Query(..., description="Song ID to reserve"),
     reserved_by_user_id: Optional[str] = Query(
         None, description="User ID reserving the song (admin only)"
@@ -582,7 +569,7 @@ async def add_to_queue(
     """
     Add song to queue (reserve) in this session.
 
-    Endpoint: POST /api/sessions/{session_id}/queue?song_id={id}
+    Endpoint: POST /api/sessions/{session_code}/queue?song_id={id}
 
     Authorization:
     - Controller: Can reserve for themselves
@@ -594,7 +581,7 @@ async def add_to_queue(
     """
 
     try:
-        session = _validate_session_exists(session_id, db)
+        session = _validate_session_exists(session_code, db)
 
         # Verify song exists and is ACTIVE
         try:
@@ -615,7 +602,7 @@ async def add_to_queue(
         existing = (
             db.query(db_models.Reservation)
             .filter(
-                db_models.Reservation.session_id == session.id,
+                db_models.Reservation.session_code == session.id,
                 db_models.Reservation.song_id == song_uuid,
             )
             .first()
@@ -627,7 +614,7 @@ async def add_to_queue(
         # Get next position
         max_position = (
             db.query(db_models.Reservation)
-            .filter(db_models.Reservation.session_id == session.id)
+            .filter(db_models.Reservation.session_code == session.id)
             .with_entities(db_models.Reservation.position)
             .order_by(desc(db_models.Reservation.position))
             .first()
@@ -645,7 +632,7 @@ async def add_to_queue(
         # Create reservation
         reservation = db_models.Reservation(
             id=uuid.uuid4(),
-            session_id=session.id,
+            session_code=session.id,
             song_id=song_uuid,
             user_id=uuid.UUID(reserved_by_user_id)
             if reserved_by_user_id
@@ -675,9 +662,9 @@ async def add_to_queue(
         raise HTTPException(status_code=500, detail="Failed to add to queue")
 
 
-@router.delete("/{session_id}/queue/{queue_id}", status_code=204)
+@router.delete("/{session_code}/queue/{queue_id}", status_code=204)
 async def remove_from_queue(
-    session_id: str,
+    session_code: int,
     queue_id: str,
     admin: dict = Depends(verify_admin_role),
     db: SQLSession = Depends(get_db),
@@ -685,7 +672,7 @@ async def remove_from_queue(
     """
     Remove song from queue (cancel reservation).
 
-    Endpoint: DELETE /api/sessions/{session_id}/queue/{queue_id}
+    Endpoint: DELETE /api/sessions/{session_code}/queue/{queue_id}
 
     Authorization:
     - Admin: Can cancel any reservation
@@ -693,7 +680,7 @@ async def remove_from_queue(
     """
 
     try:
-        session = _validate_session_exists(session_id, db)
+        session = _validate_session_exists(session_code, db)
 
         # Parse UUID
         try:
@@ -706,7 +693,7 @@ async def remove_from_queue(
             db.query(db_models.Reservation)
             .filter(
                 db_models.Reservation.id == queue_uuid,
-                db_models.Reservation.session_id == session.id,
+                db_models.Reservation.session_code == session.id,
             )
             .first()
         )
@@ -729,7 +716,7 @@ async def remove_from_queue(
         higher_reservations = (
             db.query(db_models.Reservation)
             .filter(
-                db_models.Reservation.session_id == session.id,
+                db_models.Reservation.session_code == session.id,
                 db_models.Reservation.position > cancelled_position,
             )
             .order_by(asc(db_models.Reservation.position))
@@ -750,9 +737,9 @@ async def remove_from_queue(
         raise HTTPException(status_code=500, detail="Failed to remove from queue")
 
 
-@router.patch("/{session_id}/queue/{queue_id}/change-order", status_code=200, response_model=dict)
+@router.patch("/{session_code}/queue/{queue_id}/change-order", status_code=200, response_model=dict)
 async def change_queue_order(
-    session_id: str,
+    session_code: int,
     queue_id: str,
     new_position: int = Query(..., ge=1, description="New position in queue"),
     admin: dict = Depends(verify_admin_role),
@@ -761,13 +748,13 @@ async def change_queue_order(
     """
     Move queue item to different position (admin only).
 
-    Endpoint: PATCH /api/sessions/{session_id}/queue/{queue_id}/change-order?new_position={pos}
+    Endpoint: PATCH /api/sessions/{session_code}/queue/{queue_id}/change-order?new_position={pos}
 
     Authorization: Admin only
     """
 
     try:
-        session = _validate_session_exists(session_id, db)
+        session = _validate_session_exists(session_code, db)
 
         # Admin only
         if user.role != "admin":
@@ -784,7 +771,7 @@ async def change_queue_order(
             db.query(db_models.Reservation)
             .filter(
                 db_models.Reservation.id == queue_uuid,
-                db_models.Reservation.session_id == session.id,
+                db_models.Reservation.session_code == session.id,
             )
             .first()
         )
@@ -795,7 +782,7 @@ async def change_queue_order(
         # Get all reservations for this session
         all_reservations = (
             db.query(db_models.Reservation)
-            .filter(db_models.Reservation.session_id == session.id)
+            .filter(db_models.Reservation.session_code == session.id)
             .order_by(asc(db_models.Reservation.position))
             .all()
         )
@@ -848,9 +835,9 @@ async def change_queue_order(
         raise HTTPException(status_code=500, detail="Failed to change queue order")
 
 
-@router.get("/{session_id}/playback", response_model=Optional[dict])
+@router.get("/{session_code}/playback", response_model=Optional[dict])
 async def get_playback_status(
-    session_id: str,
+    session_code: int,
     db: SQLSession = Depends(get_db),
     admin: dict = Depends(verify_admin_role),
 ) -> Optional[dict]:
@@ -860,11 +847,11 @@ async def get_playback_status(
     Returns null if nothing playing, otherwise returns current song with progress.
     """
     try:
-        session = _validate_session_exists(session_id, db)
+        session = _validate_session_exists(session_code, db)
 
         # Query playback for this session
         playback = (
-            db.query(db_models.Playback).filter(db_models.Playback.session_id == session.id).first()
+            db.query(db_models.Playback).filter(db_models.Playback.session_code == session.id).first()
         )
 
         if not playback or not playback.queue_id:

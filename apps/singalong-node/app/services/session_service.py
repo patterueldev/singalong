@@ -44,11 +44,10 @@ class SessionService:
         if not title or not title.strip():
             raise ValueError("Session title cannot be empty")
 
-        # Generate unique 6-character code
+        # Generate unique numeric code (0-9998)
         code = self._generate_session_code()
 
         session = Session(
-            id=uuid.uuid4(),
             code=code,
             title=title.strip(),
             vibes=vibes,
@@ -65,17 +64,9 @@ class SessionService:
 
         return session
 
-    def get_session(self, session_id: str) -> Optional[Session]:
-        """Get session by ID"""
-        try:
-            session_uuid = uuid.UUID(session_id)
-            return self.db.query(Session).filter(Session.id == session_uuid).first()
-        except ValueError:
-            return None
-
-    def get_session_by_code(self, code: str) -> Optional[Session]:
-        """Get session by code"""
-        return self.db.query(Session).filter(Session.code == code.upper()).first()
+    def get_session(self, session_code: int) -> Optional[Session]:
+        """Get session by numeric code"""
+        return self.db.query(Session).filter(Session.code == session_code).first()
 
     def list_sessions(self, status: Optional[str] = None) -> List[Session]:
         """List sessions, optionally filtered by status"""
@@ -86,12 +77,12 @@ class SessionService:
 
         return query.order_by(Session.created_at.desc()).all()
 
-    def add_user_to_session(self, session_id: str, user_id: str) -> SessionUser:
+    def add_user_to_session(self, session_code: int, user_id: str) -> SessionUser:
         """
         Add user to session
 
         Args:
-            session_id: Session UUID
+            session_code: Session numeric code (0-9998)
             user_id: User UUID
 
         Returns:
@@ -101,19 +92,18 @@ class SessionService:
             ValueError: If session not found, user already in session, or max users reached
         """
         try:
-            session_uuid = uuid.UUID(session_id)
             user_uuid = uuid.UUID(user_id)
         except ValueError:
-            raise ValueError("Invalid session_id or user_id format")
+            raise ValueError("Invalid user_id format")
 
         # Check session exists
-        session = self.get_session(session_id)
+        session = self.get_session(session_code)
         if not session:
             raise ValueError("Session not found")
 
         # Check user not already in session
         existing = self.db.query(SessionUser).filter(
-            SessionUser.session_id == session_uuid,
+            SessionUser.session_code == session_code,
             SessionUser.user_id == user_uuid,
         ).first()
 
@@ -124,7 +114,7 @@ class SessionService:
         if session.max_users:
             max_limit = int(session.max_users)
             user_count = self.db.query(SessionUser).filter(
-                SessionUser.session_id == session_uuid
+                SessionUser.session_code == session_code
             ).count()
             if user_count >= max_limit:
                 raise ValueError(f"Session full (max {max_limit} users)")
@@ -132,7 +122,7 @@ class SessionService:
         # Add user
         session_user = SessionUser(
             id=uuid.uuid4(),
-            session_id=session_uuid,
+            session_code=session_code,
             user_id=user_uuid,
         )
 
@@ -140,36 +130,30 @@ class SessionService:
         self.db.commit()
         self.db.refresh(session_user)
 
-        logger.info(f"User {user_id} added to session {session_id}")
+        logger.info(f"User {user_id} added to session {session_code}")
 
         return session_user
 
-    def remove_user_from_session(self, session_id: str, user_id: str) -> None:
+    def remove_user_from_session(self, session_code: int, user_id: str) -> None:
         """Remove user from session"""
         try:
-            session_uuid = uuid.UUID(session_id)
             user_uuid = uuid.UUID(user_id)
         except ValueError:
-            raise ValueError("Invalid session_id or user_id format")
+            raise ValueError("Invalid user_id format")
 
         self.db.query(SessionUser).filter(
-            SessionUser.session_id == session_uuid,
+            SessionUser.session_code == session_code,
             SessionUser.user_id == user_uuid,
         ).delete()
 
         self.db.commit()
 
-        logger.info(f"User {user_id} removed from session {session_id}")
+        logger.info(f"User {user_id} removed from session {session_code}")
 
-    def get_session_users(self, session_id: str) -> List[dict]:
+    def get_session_users(self, session_code: int) -> List[dict]:
         """Get all users in session"""
-        try:
-            session_uuid = uuid.UUID(session_id)
-        except ValueError:
-            raise ValueError("Invalid session_id format")
-
         session_users = self.db.query(SessionUser).filter(
-            SessionUser.session_id == session_uuid
+            SessionUser.session_code == session_code
         ).order_by(SessionUser.joined_at).all()
 
         return [
@@ -180,25 +164,15 @@ class SessionService:
             for su in session_users
         ]
 
-    def get_session_user_count(self, session_id: str) -> int:
+    def get_session_user_count(self, session_code: int) -> int:
         """Get number of users in session"""
-        try:
-            session_uuid = uuid.UUID(session_id)
-        except ValueError:
-            return 0
-
         return self.db.query(SessionUser).filter(
-            SessionUser.session_id == session_uuid
+            SessionUser.session_code == session_code
         ).count()
 
-    def update_session_status(self, session_id: str, status: str) -> Session:
+    def update_session_status(self, session_code: int, status: str) -> Session:
         """Update session status"""
-        try:
-            session_uuid = uuid.UUID(session_id)
-        except ValueError:
-            raise ValueError("Invalid session_id format")
-
-        session = self.get_session(session_id)
+        session = self.get_session(session_code)
         if not session:
             raise ValueError("Session not found")
 
@@ -210,12 +184,11 @@ class SessionService:
         self.db.commit()
         self.db.refresh(session)
 
-        logger.info(f"Session {session_id} status updated to {status}")
+        logger.info(f"Session {session_code} status updated to {status}")
 
         return session
 
     @staticmethod
-    def _generate_session_code() -> str:
-        """Generate random 6-character session code"""
-        chars = string.ascii_uppercase + string.digits
-        return "".join(random.choices(chars, k=6))
+    def _generate_session_code() -> int:
+        """Generate random numeric session code (0-9998, 9999 reserved for admin)"""
+        return random.randint(0, 9998)

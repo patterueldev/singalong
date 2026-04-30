@@ -32,29 +32,29 @@ All song endpoints are accessible to **all authenticated roles** (Admin, Control
 
 | Endpoint | Method | Admin | Controller | Player | Description |
 |----------|--------|-------|------------|--------|-------------|
-| `/api/songs/songbook` | GET | ✅ | ✅ | ✅ | List available songs (synced from master) |
-| `/api/songs` | GET | ✅ | ✅ | ✅ | List songs with filters & search |
-| `/api/songs/{song_id}` | GET | ✅ | ✅ | ✅ | Get song details by ID |
-| `/api/songs/{song_id}/status` | GET | ✅ | ✅ | ✅ | Check song metadata/status |
+| `/api/songs/songbook` | GET | ✅ | ✅ | ❌ | List available songs (synced from master) |
+| `/api/songs` | GET | ✅ | ✅ | ❌ | List songs with filters & search |
+| `/api/songs/{song_id}` | GET | ✅ | ✅ | ❌ | Get song details by ID |
+| `/api/songs/{song_id}/status` | GET | ✅ | ✅ | ❌ | Check song metadata/status |
 
 ### Song Identification & Enhancement
 
 | Endpoint | Method | Admin | Controller | Player | Description |
 |----------|--------|-------|------------|--------|-------------|
-| `/api/songs/identify` | POST | ✅ | ✅ | ✅ | Identify song from YouTube URL using yt-dlp |
-| `/api/songs/enhance` | POST | ✅ | ✅ | ✅ | Enhance/correct song metadata (AI-assisted) |
+| `/api/songs/identify` | POST | ✅ | ✅ | ❌ | Identify song from YouTube URL using yt-dlp |
+| `/api/songs/enhance` | POST | ✅ | ✅ | ❌ | Enhance/correct song metadata (AI-assisted) |
 
 ### Song Download Management
 
 | Endpoint | Method | Admin | Controller | Player | Description |
 |----------|--------|-------|------------|--------|-------------|
-| `/api/songs/download` | POST | ✅ | ✅ | ✅ | Download song from YouTube (creates download queue entry) |
-| `/api/songs/{song_id}/download-status` | GET | ✅ | ✅ | ✅ | Check download progress for a song |
-| `/api/songs/downloads` | GET | ✅ | ✅ | ✅ | List all active downloads with status |
-| `/api/songs/downloads/{download_id}/retry` | POST | ✅ | ✅ | ✅ | Retry failed download |
-| `/api/songs/downloads/{download_id}` | DELETE | ✅ | ✅ | ✅ | Cancel/remove download |
-| `/api/songs/downloads/cleanup` | POST | ✅ | ✅ | ✅ | Clean up old failed downloads |
-| `/api/songs/downloads/clear-pending` | POST | ✅ | ✅ | ✅ | Clear all pending/in-progress downloads |
+| `/api/songs/download` | POST | ✅ | ✅ | ❌ | Download song from YouTube (creates download queue entry) |
+| `/api/songs/{song_id}/download-status` | GET | ✅ | ✅ | ❌ | Check download progress for a song |
+| `/api/songs/downloads` | GET | ✅ | ✅ | ❌ | List all active downloads with status |
+| `/api/songs/downloads/{download_id}/retry` | POST | ✅ | ✅ | ❌ | Retry failed download |
+| `/api/songs/downloads/{download_id}` | DELETE | ✅ | ✅ | ❌ | Cancel/remove download |
+| `/api/songs/downloads/cleanup` | POST | ✅ | ✅ | ❌ | Clean up old failed downloads |
+| `/api/songs/downloads/clear-pending` | POST | ✅ | ✅ | ❌ | Clear all pending/in-progress downloads |
 
 ### Song Streaming & Sync
 
@@ -89,8 +89,8 @@ All song endpoints are accessible to **all authenticated roles** (Admin, Control
 
 | Endpoint | Method | Admin | Controller | Player | Description |
 |----------|--------|-------|------------|--------|-------------|
-| `/api/sessions/{session_id}/queue` | GET | ✅ | ❌ | ❌ | Get song queue/reservations for session |
-| `/api/sessions/{session_id}/queue` | POST | ✅ | ❌ | ❌ | Add song to queue (reserve) |
+| `/api/sessions/{session_id}/queue` | GET | ✅ | ✅ | ❌ | Get song queue/reservations for session |
+| `/api/sessions/{session_id}/queue` | POST | ✅ | ✅ | ❌ | Add song to queue (reserve) |
 | `/api/sessions/{session_id}/queue/{queue_id}` | DELETE | ✅ | ❌ | ❌ | Remove song from queue |
 | `/api/sessions/{session_id}/queue/{queue_id}/change-order` | PATCH | ✅ | ❌ | ❌ | Reorder song in queue |
 
@@ -98,7 +98,7 @@ All song endpoints are accessible to **all authenticated roles** (Admin, Control
 
 | Endpoint | Method | Admin | Controller | Player | Description |
 |----------|--------|-------|------------|--------|-------------|
-| `/api/sessions/{session_id}/playback` | GET | ✅ | ❌ | ❌ | Get current playback status |
+| `/api/sessions/{session_id}/playback` | GET | ✅ | ❌ | ✅ | Get current playback status |
 
 ---
 
@@ -111,10 +111,10 @@ Player-related endpoints for tracking which devices are playing songs.
 | `/api/players/register` | POST | ❌ | ❌ | ✅ | Register new player device |
 | `/api/players/admin/list` | GET | ✅ | ❌ | ❌ | List all registered players (admin only) |
 | `/api/players/admin/{player_id}/activate` | POST | ✅ | ❌ | ❌ | Activate/deactivate player (admin only) |
-| `/api/players/{player_id}/status` | GET | ✅ | ✅ | ✅ | Get player status |
-| `/api/players/{player_id}/queue` | GET | ✅ | ✅ | ✅ | Get player's queue |
-| `/api/players/{player_id}/now-playing/{song_id}` | POST | ✅ | ✅ | ✅ | Mark song as now playing |
-| `/api/players/{player_id}/completed/{song_id}` | POST | ✅ | ✅ | ✅ | Mark song as completed |
+| `/api/players/{player_id}/status` | GET | ✅ | ❌ | ❌ | Get player status |
+| `/api/players/{player_id}/queue` | GET | ✅ | ❌ | ❌ | Get player's queue |
+| `/api/players/{player_id}/now-playing/{song_id}` | POST | ✅ | ❌ | ❌ | Mark song as now playing |
+| `/api/players/{player_id}/completed/{song_id}` | POST | ✅ | ❌ | ❌ | Mark song as completed |
 
 ---
 

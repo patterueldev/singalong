@@ -98,8 +98,7 @@ class Session(Base):
     """Karaoke session model"""
     __tablename__ = "sessions"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    code = Column(String(10), nullable=False, unique=True, index=True)
+    code = Column(Integer, primary_key=True, index=True)  # 0-9998 (9999 reserved for admin)
     title = Column(String(255), nullable=False)
     vibes = Column(String(500), nullable=True)  # Comma-separated or JSON string
     max_users = Column(String(10), nullable=True)  # Store as string for SQLite compat
@@ -117,15 +116,15 @@ class SessionUser(Base):
     __tablename__ = "session_users"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    session_id = Column(UUID(as_uuid=True), nullable=False, index=True)
+    session_code = Column(Integer, nullable=False, index=True)  # Foreign key to Session.code
     user_id = Column(UUID(as_uuid=True), nullable=False, index=True)
     joined_at = Column(DateTime(timezone=True), nullable=False, default=utc_now)
     
     # Composite unique constraint - user can only join session once
-    __table_args__ = (UniqueConstraint('session_id', 'user_id', name='uq_session_user'),)
+    __table_args__ = (UniqueConstraint('session_code', 'user_id', name='uq_session_user'),)
 
     def __repr__(self):
-        return f"<SessionUser session={self.session_id} user={self.user_id}>"
+        return f"<SessionUser session={self.session_code} user={self.user_id}>"
 
 
 class ReservationStatus(str, Enum):
@@ -146,7 +145,7 @@ class Reservation(Base):
     __tablename__ = "reservations"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    session_id = Column(UUID(as_uuid=True), nullable=False, index=True)
+    session_code = Column(Integer, nullable=False, index=True)  # Foreign key to Session.code
     song_id = Column(UUID(as_uuid=True), nullable=False, index=True)
     user_id = Column(UUID(as_uuid=True), nullable=True, index=True)  # Optional: who reserved it (may be admin)
     reserved_by_nickname = Column(String(255), nullable=True)  # Display name of who reserved
@@ -162,10 +161,10 @@ class Reservation(Base):
     cancelled_at = Column(DateTime(timezone=True), nullable=True)
 
     # Composite unique constraint - one instance per song per session
-    __table_args__ = (UniqueConstraint('session_id', 'song_id', name='uq_session_song_reservation'),)
+    __table_args__ = (UniqueConstraint('session_code', 'song_id', name='uq_session_song_reservation'),)
 
     def __repr__(self):
-        return f"<Reservation {self.position}: {self.song_id} in {self.session_id} ({self.status})>"
+        return f"<Reservation {self.position}: {self.song_id} in {self.session_code} ({self.status})>"
 
 
 class DownloadQueue(Base):
@@ -200,7 +199,7 @@ class Playback(Base):
     __tablename__ = "playbacks"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    session_id = Column(UUID(as_uuid=True), nullable=False, unique=True, index=True)
+    session_code = Column(Integer, nullable=False, unique=True, index=True)  # Foreign key to Session.code
     queue_id = Column(UUID(as_uuid=True), nullable=True, index=True)  # Current queue item being played
     song_id = Column(UUID(as_uuid=True), nullable=True, index=True)  # Current song metadata reference
     started_at = Column(DateTime(timezone=True), nullable=True)  # When current song started playing
@@ -210,4 +209,4 @@ class Playback(Base):
     updated_at = Column(DateTime(timezone=True), nullable=False, default=utc_now, onupdate=utc_now)
 
     def __repr__(self):
-        return f"<Playback session={self.session_id} queue={self.queue_id}>"
+        return f"<Playback session={self.session_code} queue={self.queue_id}>"
