@@ -18,6 +18,7 @@ import httpx
 from sqlalchemy.orm import Session as SQLSession
 
 from app.models.db_models import Song
+from app.utils.file_naming import generate_filename
 from app.services.graphql_client import MasterGraphQLClient, GraphQLError
 
 logger = logging.getLogger(__name__)
@@ -247,9 +248,9 @@ class NodeSyncService:
             master_base_url = settings.master_url.rstrip('/')
             download_url = f"{master_base_url}/api/songs/video/{video_id}"
             
-            # Create destination filename (alphanumeric + underscore only)
-            title_safe = "".join(c if c.isalnum() or c == '_' else '_' for c in master_song.get("title", "unknown"))
-            dest_filename = f"{title_safe}_{video_id}.mp4"
+            # Create destination filename using normalized naming (alphanumeric_[videoId].mp4)
+            title = master_song.get("title", "unknown")
+            dest_filename = generate_filename(title, video_id)
             dest_path = self.VIDEOS_DIR / dest_filename
             
             logger.info(f"Downloading {master_song.get('title')} from {download_url} -> {dest_path}")
