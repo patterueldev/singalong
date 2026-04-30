@@ -126,17 +126,21 @@ class YTDLPService:
             
             # Log all formats for debugging
             logger.info(f"  → Found {len(formats)} total formats:")
-            for fmt in formats[:10]:  # Log first 10
+            for fmt in formats:  # Log ALL formats to see what we have
                 logger.info(
                     f"    {fmt.get('format_id')} | {fmt.get('ext')} | "
                     f"H:{fmt.get('height')} | V:{fmt.get('vcodec')} | A:{fmt.get('acodec')}"
                 )
-            if len(formats) > 10:
-                logger.info(f"    ... and {len(formats) - 10} more formats")
             
             # FIRST ATTEMPT: Look for combined formats (video + audio together)
+            # Note: YouTube provides both progressive download (https) and HLS (m3u8) combined formats.
+            # Progressive formats are lower resolution but work with simple HTTP downloads.
+            # HLS formats are higher resolution but require streaming support.
+            # We prefer progressive download combined formats for simplicity.
             logger.info("  → Searching for combined video+audio formats...")
             best_combined = None
+            best_combined_height = 0
+            
             for f in formats_sorted:
                 # Skip if no video or audio codec
                 if f.get('vcodec') == 'none' or f.get('acodec') == 'none':
@@ -150,16 +154,27 @@ class YTDLPService:
                 ext = f.get('ext', '')
                 format_id = f.get('format_id', '')
                 
-                # Cap at 1080p, prefer MP4
-                if height <= 1080:
+                # Cap at 1080p, prefer highest resolution first, then prefer MP4
+                if height > 0 and height <= 1080:
                     logger.debug(f"    Candidate combined: {format_id} {ext} {height}p")
-                    if best_combined is None or (best_combined.get('ext') != 'mp4' and ext == 'mp4'):
+                    # Update if:
+                    # 1. First format found, OR
+                    # 2. Higher resolution, OR  
+                    # 3. Same resolution but prefer mp4
+                    if best_combined is None:
                         best_combined = f
-                        if ext == 'mp4':
-                            break  # Found MP4, stop searching
+                        best_combined_height = height
+                    elif height > best_combined_height:
+                        # Higher resolution always wins
+                        best_combined = f
+                        best_combined_height = height
+                    elif height == best_combined_height and ext == 'mp4' and best_combined.get('ext') != 'mp4':
+                        # Same resolution, prefer MP4
+                        best_combined = f
+                        best_combined_height = height
             
             if best_combined:
-                logger.info(f"    Selected combined: {best_combined['format_id']} {best_combined['ext']}")
+                logger.info(f"    Selected combined: {best_combined['format_id']} {best_combined['ext']} ({best_combined_height}p)")
                 # For combined formats, yield the full format dict as-is
                 yield best_combined
                 return
