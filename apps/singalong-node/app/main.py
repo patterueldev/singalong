@@ -54,11 +54,10 @@ app = FastAPI(
 )
 
 # Include routers
-from app.api.routes import auth, sessions, songs, players, reservations
+from app.api.routes import auth, sessions, songs, players
 
 app.include_router(auth.router)
 app.include_router(sessions.router)
-app.include_router(reservations.router)
 app.include_router(songs.router)
 app.include_router(players.router)
 

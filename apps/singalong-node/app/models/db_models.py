@@ -186,3 +186,28 @@ class DownloadQueue(Base):
 
     def __repr__(self):
         return f"<DownloadQueue {self.video_id} ({self.status})>"
+
+
+class PlaybackStatus(str, Enum):
+    """Playback status enumeration"""
+    PLAYING = "playing"
+    PAUSED = "paused"
+    STOPPED = "stopped"
+
+
+class Playback(Base):
+    """Tracks playback state within a session"""
+    __tablename__ = "playbacks"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    session_id = Column(UUID(as_uuid=True), nullable=False, unique=True, index=True)
+    queue_id = Column(UUID(as_uuid=True), nullable=True, index=True)  # Current queue item being played
+    song_id = Column(UUID(as_uuid=True), nullable=True, index=True)  # Current song metadata reference
+    started_at = Column(DateTime(timezone=True), nullable=True)  # When current song started playing
+    paused_at = Column(DateTime(timezone=True), nullable=True)  # When paused (null if playing)
+    duration_seconds = Column(Integer, nullable=True)  # Song duration in seconds
+    player_id = Column(UUID(as_uuid=True), nullable=True, index=True)  # Which player is playing
+    updated_at = Column(DateTime(timezone=True), nullable=False, default=utc_now, onupdate=utc_now)
+
+    def __repr__(self):
+        return f"<Playback session={self.session_id} queue={self.queue_id}>"
