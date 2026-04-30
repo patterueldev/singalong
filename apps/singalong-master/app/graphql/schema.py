@@ -383,6 +383,7 @@ def resolve_request_song_download(
         from app.utils.file_naming import generate_filename
         from app.services.master_song_service import MasterSongService
         from app.services.master_download_service import MasterDownloadService
+        from app.models.db_models import DraftSong
         import asyncio
         
         logger = logging.getLogger(__name__)
