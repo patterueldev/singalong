@@ -2,11 +2,29 @@
 FastAPI application factory and configuration
 """
 
+import logging
 import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from pydantic_settings import BaseSettings
+
+
+# Configure logging to output to console
+logging.basicConfig(
+    level=logging.DEBUG if os.getenv("DEBUG", "False").lower() == "true" else logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+)
+
+# Ensure root logger outputs to console
+root_logger = logging.getLogger()
+if not root_logger.handlers:
+    handler = logging.StreamHandler()
+    handler.setFormatter(
+        logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+    )
+    root_logger.addHandler(handler)
+    root_logger.setLevel(logging.DEBUG if os.getenv("DEBUG", "False").lower() == "true" else logging.INFO)
 
 
 class Settings(BaseSettings):
