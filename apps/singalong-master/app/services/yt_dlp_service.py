@@ -24,9 +24,10 @@ class YTDLPService:
 
     # Default yt-dlp options used for all operations
     DEFAULT_OPTS = {
-        "quiet": True,
-        "no_warnings": True,
+        "quiet": False,  # Changed to False to see full output
+        "no_warnings": False,  # Changed to False to see warnings
         "socket_timeout": 30,
+        "verbose": True,  # Added to get more detail
     }
 
     def __init__(self, timeout: int = 30):
@@ -123,7 +124,15 @@ class YTDLPService:
             # Reverse to search best-to-worst (yt-dlp sorts worst-to-best)
             formats_sorted = formats[::-1]
             
-            logger.info(f"  → Found {len(formats)} total formats")
+            # Log all formats for debugging
+            logger.info(f"  → Found {len(formats)} total formats:")
+            for fmt in formats[:10]:  # Log first 10
+                logger.info(
+                    f"    {fmt.get('format_id')} | {fmt.get('ext')} | "
+                    f"H:{fmt.get('height')} | V:{fmt.get('vcodec')} | A:{fmt.get('acodec')}"
+                )
+            if len(formats) > 10:
+                logger.info(f"    ... and {len(formats) - 10} more formats")
             
             # FIRST ATTEMPT: Look for combined formats (video + audio together)
             logger.info("  → Searching for combined video+audio formats...")
@@ -151,12 +160,8 @@ class YTDLPService:
             
             if best_combined:
                 logger.info(f"    Selected combined: {best_combined['format_id']} {best_combined['ext']}")
-                yield {
-                    'format_id': best_combined['format_id'],
-                    'ext': best_combined['ext'],
-                    'requested_formats': [best_combined],
-                    'protocol': best_combined.get('protocol', 'https')
-                }
+                # For combined formats, yield the full format dict as-is
+                yield best_combined
                 return
             
             # SECOND ATTEMPT: DASH formats (separate video and audio)
