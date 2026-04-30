@@ -62,12 +62,11 @@ class AuthService:
             ValueError: If session doesn't exist, not active, or Master GraphQL auth fails
         """
         # Validate session exists and is active
-        try:
-            session_code = int(session_id)
-        except ValueError:
-            raise ValueError(f"Invalid session ID format: {session_id}")
+        # Session codes are 4-digit strings (e.g., "0001"), stored as String(4) in database
+        if not isinstance(session_id, str) or not session_id.isdigit() or len(session_id) != 4:
+            raise ValueError(f"Invalid session ID format: {session_id} (must be 4-digit string)")
         
-        session = db.query(Session).filter(Session.code == session_code).first()
+        session = db.query(Session).filter(Session.code == session_id).first()
         if not session:
             raise ValueError(f"Session {session_id} does not exist")
         
@@ -230,12 +229,11 @@ class AuthService:
             ValueError: If session doesn't exist, not active, another player connected, or Master auth fails
         """
         # Validate session exists and is active
-        try:
-            session_code = int(session_id)
-        except ValueError:
-            raise ValueError(f"Invalid session ID format: {session_id}")
+        # Session codes are 4-digit strings (e.g., "0001"), stored as String(4) in database
+        if not isinstance(session_id, str) or not session_id.isdigit() or len(session_id) != 4:
+            raise ValueError(f"Invalid session ID format: {session_id} (must be 4-digit string)")
         
-        session = db.query(Session).filter(Session.code == session_code).first()
+        session = db.query(Session).filter(Session.code == session_id).first()
         if not session:
             raise ValueError(f"Session {session_id} does not exist")
         
