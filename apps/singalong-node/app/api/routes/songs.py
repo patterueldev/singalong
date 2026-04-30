@@ -88,7 +88,10 @@ async def identify_song(request: IdentifyRequest, enhance: bool = Query(False)) 
           - 504 if request timed out
     """
     try:
+        logger.info(f"▶ [IDENTIFY START] URL: {request.url} | enhance={enhance}")
+        
         # Step 0: Validate URL and extract video ID
+        logger.debug(f"  → Validating URL...")
         yt_dlp_validator = YTDLPService(timeout=30)
         if not yt_dlp_validator.validate_url(request.url):
             raise YTDLPError("Invalid YouTube URL format")
@@ -97,7 +100,7 @@ async def identify_song(request: IdentifyRequest, enhance: bool = Query(False)) 
         if not video_id:
             raise YTDLPError("Could not extract video ID from URL")
 
-        logger.info(f"Identifying song: {request.url} (video_id: {video_id}, enhance={enhance})")
+        logger.info(f"  ✓ Video ID extracted: {video_id}")
 
         # Note: We intentionally do NOT check for existing videos on Master.
         # This allows users to "re-identify" songs to fix or update their metadata.
@@ -106,40 +109,48 @@ async def identify_song(request: IdentifyRequest, enhance: bool = Query(False)) 
         # Step 1: Validate URL format and extract video ID (already done above)
 
         # Step 2: Extract metadata from local YT-DLP
+        logger.debug(f"  → Calling yt-dlp to extract metadata...")
         yt_dlp = YTDLPService(timeout=30)
         metadata = yt_dlp.extract_metadata(request.url)
 
-        logger.info(f"✓ Identified: {metadata.get('title')}")
+        logger.info(f"  ✓ Metadata extracted from yt-dlp")
+        logger.info(f"    Title: {metadata.get('title')}")
+        logger.info(f"    Duration: {metadata.get('duration')}s | Language: {metadata.get('language')}")
         
         # Step 3: Optionally enhance metadata using OpenAI
         if enhance:
             try:
-                logger.debug(f"Enhancing metadata for: {metadata.get('title')}")
+                logger.info(f"  → Starting enhancement with OpenAI...")
                 
                 # Fetch description from YouTube
                 description = None
                 try:
+                    logger.debug(f"    → Fetching YouTube description...")
                     description = yt_dlp._get_video_description(video_id)
                     if description:
                         metadata["description"] = description
-                        logger.debug(f"Fetched YouTube description ({len(description)} chars)")
+                        logger.info(f"    ✓ YouTube description fetched ({len(description)} chars)")
                 except Exception as e:
-                    logger.warning(f"Could not fetch YouTube description: {str(e)}")
+                    logger.warning(f"    ✗ Could not fetch YouTube description: {str(e)}")
                 
                 # Use OpenAI agent to enhance
                 if settings.openai_api_key:
+                    logger.debug(f"    → Calling OpenAI enhancement service...")
                     enhancement_service = EnhancementService(settings.openai_api_key)
                     enhanced = await enhancement_service.enhance(metadata)
                     metadata = enhanced
-                    logger.info(f"✓ Enhanced: {metadata.get('title')} | {metadata.get('artist')} | {metadata.get('year')}")
+                    logger.info(f"  ✓ Enhancement complete")
+                    logger.info(f"    Title: {metadata.get('title')}")
+                    logger.info(f"    Artist: {metadata.get('artist')} | Year: {metadata.get('year')}")
                 else:
-                    logger.warning("OpenAI API key not configured, skipping enhancement")
+                    logger.warning("  ✗ OpenAI API key not configured, skipping enhancement")
                     
             except Exception as e:
                 # Graceful degradation: log warning but return original metadata
-                logger.warning(f"Enhancement failed (returning original): {str(e)}")
+                logger.warning(f"  ✗ Enhancement failed (returning original): {str(e)}")
                 # metadata already contains raw YT-DLP data, just continue
         
+        logger.info(f"◀ [IDENTIFY END] Returning metadata for: {metadata.get('title')}")
         # Return metadata (raw or enhanced)
         return SongMetadataResponse(**metadata)
 
@@ -223,8 +234,10 @@ async def enhance_song(request: EnhanceSongRequest) -> SongMetadataResponse:
     Same structure with improved fields: title, artist, year, language
     """
     try:
+        logger.info(f"▶ [ENHANCE START] Title: {request.title} | Video ID: {request.videoId}")
+        
         if not settings.openai_api_key:
-            logger.warning("OpenAI API key not configured, returning original metadata")
+            logger.warning("  ✗ OpenAI API key not configured, returning original metadata")
             return SongMetadataResponse(
                 videoId=request.videoId,
                 source=request.source,
@@ -239,7 +252,7 @@ async def enhance_song(request: EnhanceSongRequest) -> SongMetadataResponse:
                 lyrics="",
             )
 
-        logger.info(f"Enhancing song: {request.title}")
+        logger.debug(f"  → Converting request to metadata dict...")
 
         # Convert request to metadata dict
         metadata = {
@@ -259,18 +272,24 @@ async def enhance_song(request: EnhanceSongRequest) -> SongMetadataResponse:
         # Fetch description from YouTube if available
         if request.source == "youtube":
             try:
+                logger.debug(f"  → Fetching YouTube description...")
                 yt_dlp = YTDLPService(timeout=10)
                 description = yt_dlp._get_video_description(request.videoId)
                 if description:
                     metadata["description"] = description
-                    logger.debug(f"Fetched YouTube description ({len(description)} chars)")
+                    logger.info(f"  ✓ YouTube description fetched ({len(description)} chars)")
             except Exception as e:
-                logger.warning(f"Could not fetch YouTube description: {str(e)}")
+                logger.warning(f"  ✗ Could not fetch YouTube description: {str(e)}")
 
         # Use OpenAI agent to enhance metadata
+        logger.debug(f"  → Calling OpenAI enhancement service...")
         enhancement_service = EnhancementService(settings.openai_api_key)
         enhanced = await enhancement_service.enhance(metadata)
+        logger.info(f"  ✓ OpenAI enhancement complete")
+        logger.info(f"    Title: {enhanced.get('title')} | Artist: {enhanced.get('artist')} | Year: {enhanced.get('year')}")
 
+        logger.info(f"◀ [ENHANCE END] Enhanced: {enhanced.get('title')}")
+        
         # Return full response with enhanced fields
         return SongMetadataResponse(
             videoId=enhanced.get("videoId", request.videoId),
@@ -287,7 +306,7 @@ async def enhance_song(request: EnhanceSongRequest) -> SongMetadataResponse:
         )
 
     except Exception as e:
-        logger.error(f"Error enhancing song: {str(e)}", exc_info=True)
+        logger.error(f"✗ [ENHANCE ERROR] {str(e)}", exc_info=True)
         # Graceful degradation: return original metadata
         return SongMetadataResponse(
             videoId=request.videoId,
@@ -592,23 +611,24 @@ async def download_song(
         500 Internal Server Error: Master unreachable or download failed
     """
     try:
-        logger.info(
-            f"Download request: {request.title} (videoId={request.videoId}, reserve={reserve})"
-        )
+        logger.info(f"▶ [DOWNLOAD START] Title: {request.title} | Video ID: {request.videoId} | Reserve: {reserve}")
 
         # Step 1: Validate metadata
+        logger.debug(f"  → Validating metadata...")
         if not request.videoId:
             raise ValueError("videoId is required")
         if not request.source:
             raise ValueError("source is required (e.g., 'youtube')")
         if not request.url:
             raise ValueError("url is required")
+        logger.debug(f"  ✓ Metadata validation passed")
 
         # Step 2: Call Master GraphQL requestSongDownload mutation using existing client method
+        logger.info(f"  → Calling Master GraphQL requestSongDownload mutation...")
         master_client = MasterGraphQLClient(settings.master_graphql_url)
         
-        logger.debug(f"Calling Master GraphQL: requestSongDownload({request.videoId})")
-
+        logger.debug(f"    → Preparing mutation variables...")
+        
         # Call the mutation directly with correct parameters matching Master schema
         mutation_query = """
             mutation requestSongDownload(
@@ -662,21 +682,26 @@ async def download_song(
             "lyrics": request.lyrics or "",
             "requestedByNodeId": settings.node_id,
         }
+        logger.debug(f"    ✓ Variables prepared: {variables}")
 
         # Execute mutation
+        logger.debug(f"    → Executing GraphQL mutation...")
         download_data = await master_client._execute_mutation(mutation_query, variables)
-        logger.debug(f"Master response: {download_data}")
+        logger.debug(f"    ✓ Master response received: {download_data}")
         
         download_id = download_data.get("requestSongDownload", {}).get("songId")
         status = download_data.get("requestSongDownload", {}).get("status", "queued")
 
         if not download_id:
             error_msg = download_data.get("requestSongDownload", {}).get("error", "Unknown error")
+            logger.error(f"  ✗ Master rejected download: {error_msg}")
             raise ValueError(f"Master error: {error_msg}")
 
-        logger.info(f"✓ Master accepted download: videoId={request.videoId}, songId={download_id}")
+        logger.info(f"  ✓ Master accepted download request")
+        logger.info(f"    Song ID: {download_id} | Status: {status}")
 
         # Step 3: Store local tracking record
+        logger.debug(f"  → Creating local download queue entry...")
         from app.services.node_download_service import NodeDownloadService
         download_service = NodeDownloadService(db)
         entry = download_service.create_download_queue_entry(
@@ -685,12 +710,15 @@ async def download_song(
             master_download_id=download_id,
             status=status,
         )
+        logger.info(f"  ✓ Local download queue entry created: {entry.download_id}")
 
         # Step 4: Placeholder for reservation
         if reserve:
-            logger.info(f"Reserve flag set (placeholder for B8): {request.title}")
+            logger.info(f"  → Reserve flag set (placeholder for B8)")
             # TODO: B8 - Implement actual reservation logic
 
+        logger.info(f"◀ [DOWNLOAD END] Download queued: {request.title} (songId: {download_id})")
+        
         # Return 202 Accepted (download queued, not waiting)
         return DownloadStatusResponse(
             song_id=download_id,
@@ -701,12 +729,12 @@ async def download_song(
         )
 
     except ValueError as e:
-        logger.error(f"Validation error: {str(e)}")
+        logger.error(f"✗ [DOWNLOAD VALIDATION ERROR] {str(e)}")
         raise HTTPException(status_code=400, detail=str(e))
 
     except GraphQLError as e:
         error_str = str(e)
-        logger.error(f"Master GraphQL error: {error_str}")
+        logger.error(f"✗ [DOWNLOAD GRAPHQL ERROR] {error_str}")
 
         if "already" in error_str.lower():
             raise HTTPException(
@@ -717,7 +745,7 @@ async def download_song(
         raise HTTPException(status_code=500, detail=f"Master error: {error_str}")
 
     except Exception as e:
-        logger.exception(f"Error requesting download: {str(e)}")
+        logger.exception(f"✗ [DOWNLOAD EXCEPTION] {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to request download")
 
 

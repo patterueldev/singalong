@@ -47,22 +47,23 @@ class MasterDownloadService:
             - If failed: (None, error_message)
         """
         try:
-            logger.info(f"Starting async download: {video_id} → {filename}")
+            logger.info(f"▶ [ASYNC DOWNLOAD START] Video ID: {video_id} | Filename: {filename} | Timeout: {timeout}s")
 
             output_path = os.path.join(self.output_dir, filename)
+            logger.debug(f"  → Output path: {output_path}")
 
             # Use yt-dlp Python library with async execution
+            logger.debug(f"  → Preparing yt-dlp options...")
             ydl_opts = {
                 "format": "bestvideo+bestaudio/best",
                 "socket_timeout": 30,
                 "quiet": True,
                 "no_warnings": True,
                 "outtmpl": output_path,  # Output path for the file
-                "quiet": False,
-                "no_warnings": False,
             }
 
             # Run download in thread pool to avoid blocking
+            logger.debug(f"  → Starting yt-dlp in thread pool executor...")
             loop = asyncio.get_event_loop()
             output_path_result, error_msg = await asyncio.wait_for(
                 loop.run_in_executor(
@@ -76,26 +77,30 @@ class MasterDownloadService:
             )
 
             if error_msg:
-                logger.error(f"Download error: {error_msg}")
+                logger.error(f"  ✗ Download error: {error_msg}")
                 return None, error_msg
 
             if not os.path.exists(output_path_result):
                 error_msg = f"File not created at {output_path_result}"
-                logger.error(error_msg)
+                logger.error(f"  ✗ {error_msg}")
                 return None, error_msg
 
             file_size = os.path.getsize(output_path_result)
-            logger.info(f"✓ Download complete: {output_path_result} ({file_size} bytes)")
+            logger.info(f"  ✓ Download complete: {output_path_result}")
+            logger.info(f"    File size: {file_size} bytes ({file_size / 1024 / 1024:.2f} MB)")
+            logger.info(f"◀ [ASYNC DOWNLOAD END] Success")
 
             return output_path_result, None
 
         except asyncio.TimeoutError:
             error_msg = f"Download timeout after {timeout} seconds"
-            logger.error(error_msg)
+            logger.error(f"  ✗ [ASYNC DOWNLOAD TIMEOUT] {error_msg}")
+            logger.info(f"◀ [ASYNC DOWNLOAD END] Failed")
             return None, error_msg
         except Exception as e:
             error_msg = f"Unexpected download error: {str(e)}"
-            logger.exception(error_msg)
+            logger.exception(f"  ✗ [ASYNC DOWNLOAD EXCEPTION] {error_msg}")
+            logger.info(f"◀ [ASYNC DOWNLOAD END] Failed")
             return None, error_msg
 
     @staticmethod
@@ -109,15 +114,19 @@ class MasterDownloadService:
             Tuple of (actual_file_path, error_message)
         """
         try:
+            logger.debug(f"    → yt-dlp.YoutubeDL starting download...")
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                logger.debug(f"      → extract_info('{video_id}', download=True)...")
                 info = ydl.extract_info(video_id, download=True)
                 # yt-dlp may add extension or change filename, get actual path from info
                 actual_path = ydl.prepare_filename(info)
+                logger.debug(f"      ✓ yt-dlp extract_info complete")
+                logger.debug(f"      → Actual file path: {actual_path}")
                 return actual_path, None
 
         except yt_dlp.utils.DownloadError as e:
             error_msg = str(e)
-            logger.error(f"yt-dlp download error: {error_msg}")
+            logger.error(f"    ✗ yt-dlp download error: {error_msg}")
 
             if "not available" in error_msg.lower():
                 return None, "Video not found or removed"
@@ -128,6 +137,7 @@ class MasterDownloadService:
 
             return None, error_msg
         except Exception as e:
+            logger.exception(f"    ✗ yt-dlp unexpected error: {str(e)}")
             return None, f"Unexpected error: {str(e)}"
 
     def download_video_sync(
@@ -148,10 +158,12 @@ class MasterDownloadService:
             Tuple of (file_path, error_message)
         """
         try:
-            logger.info(f"Starting sync download: {video_id} → {filename}")
+            logger.info(f"▶ [SYNC DOWNLOAD START] Video ID: {video_id} | Filename: {filename}")
 
             output_path = os.path.join(self.output_dir, filename)
+            logger.debug(f"  → Output path: {output_path}")
 
+            logger.debug(f"  → Preparing yt-dlp options...")
             ydl_opts = {
                 "format": "bestvideo+bestaudio/best",
                 "socket_timeout": 30,
@@ -160,24 +172,31 @@ class MasterDownloadService:
                 "outtmpl": output_path,
             }
 
+            logger.debug(f"  → Calling yt-dlp library (sync)...")
             actual_path, error_msg = self._download_with_ydl(video_id, output_path, ydl_opts)
 
             if error_msg:
+                logger.error(f"  ✗ Download error: {error_msg}")
+                logger.info(f"◀ [SYNC DOWNLOAD END] Failed")
                 return None, error_msg
 
             if not os.path.exists(actual_path):
                 error_msg = f"File not created at {actual_path}"
-                logger.error(error_msg)
+                logger.error(f"  ✗ {error_msg}")
+                logger.info(f"◀ [SYNC DOWNLOAD END] Failed")
                 return None, error_msg
 
             file_size = os.path.getsize(actual_path)
-            logger.info(f"✓ Download complete: {actual_path} ({file_size} bytes)")
+            logger.info(f"  ✓ Download complete: {actual_path}")
+            logger.info(f"    File size: {file_size} bytes ({file_size / 1024 / 1024:.2f} MB)")
+            logger.info(f"◀ [SYNC DOWNLOAD END] Success")
 
             return actual_path, None
 
         except Exception as e:
             error_msg = f"Unexpected download error: {str(e)}"
-            logger.exception(error_msg)
+            logger.exception(f"  ✗ [SYNC DOWNLOAD EXCEPTION] {error_msg}")
+            logger.info(f"◀ [SYNC DOWNLOAD END] Failed")
             return None, error_msg
             return None, error_msg
 
