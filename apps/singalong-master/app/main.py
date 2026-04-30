@@ -47,12 +47,14 @@ async def lifespan(app: FastAPI):
     print(f"Starting {settings.app_name} v{settings.app_version}")
     from app.database import init_db, SessionLocal
     from app.services.session_init import ensure_admin_session_exists
+    from app.seed_data import seed_database
     
     init_db()
     
-    # Initialize admin session 9999
+    # Seed test data
     db = SessionLocal()
     try:
+        seed_database(db)
         ensure_admin_session_exists(db)
     finally:
         db.close()
