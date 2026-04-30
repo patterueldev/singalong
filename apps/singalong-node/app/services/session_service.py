@@ -64,8 +64,8 @@ class SessionService:
 
         return session
 
-    def get_session(self, session_code: int) -> Optional[Session]:
-        """Get session by numeric code"""
+    def get_session(self, session_code: str) -> Optional[Session]:
+        """Get session by numeric code (e.g., "0001")"""
         return self.db.query(Session).filter(Session.code == session_code).first()
 
     def list_sessions(self, status: Optional[str] = None) -> List[Session]:
@@ -77,12 +77,12 @@ class SessionService:
 
         return query.order_by(Session.created_at.desc()).all()
 
-    def add_user_to_session(self, session_code: int, user_id: str) -> SessionUser:
+    def add_user_to_session(self, session_code: str, user_id: str) -> SessionUser:
         """
         Add user to session
 
         Args:
-            session_code: Session numeric code (0-9998)
+            session_code: Session numeric code (e.g., "0001")
             user_id: User UUID
 
         Returns:
@@ -134,7 +134,7 @@ class SessionService:
 
         return session_user
 
-    def remove_user_from_session(self, session_code: int, user_id: str) -> None:
+    def remove_user_from_session(self, session_code: str, user_id: str) -> None:
         """Remove user from session"""
         try:
             user_uuid = uuid.UUID(user_id)
@@ -150,7 +150,7 @@ class SessionService:
 
         logger.info(f"User {user_id} removed from session {session_code}")
 
-    def get_session_users(self, session_code: int) -> List[dict]:
+    def get_session_users(self, session_code: str) -> List[dict]:
         """Get all users in session"""
         session_users = self.db.query(SessionUser).filter(
             SessionUser.session_code == session_code
@@ -164,13 +164,13 @@ class SessionService:
             for su in session_users
         ]
 
-    def get_session_user_count(self, session_code: int) -> int:
+    def get_session_user_count(self, session_code: str) -> int:
         """Get number of users in session"""
         return self.db.query(SessionUser).filter(
             SessionUser.session_code == session_code
         ).count()
 
-    def update_session_status(self, session_code: int, status: str) -> Session:
+    def update_session_status(self, session_code: str, status: str) -> Session:
         """Update session status"""
         session = self.get_session(session_code)
         if not session:
@@ -189,6 +189,7 @@ class SessionService:
         return session
 
     @staticmethod
-    def _generate_session_code() -> int:
-        """Generate random numeric session code (0-9998, 9999 reserved for admin)"""
-        return random.randint(0, 9998)
+    def _generate_session_code() -> str:
+        """Generate random numeric session code (0000-9998 as zero-padded string, 9999 reserved for admin)"""
+        numeric_code = random.randint(0, 9998)
+        return f"{numeric_code:04d}"  # Zero-pad to 4 digits (e.g., "0001", "0042", "9998")

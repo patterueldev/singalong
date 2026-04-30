@@ -25,9 +25,9 @@ router = APIRouter(prefix="/api/sessions", tags=["Sessions"])
 # ============================================================================
 
 
-def _validate_session_exists(session_code: int, db: SQLSession) -> db_models.Session:
+def _validate_session_exists(session_code: str, db: SQLSession) -> db_models.Session:
     """
-    Validate session exists by numeric code.
+    Validate session exists by numeric code (4-digit string like "0001").
 
     Raises HTTPException 404 if not found.
     Returns the session object if found.
@@ -104,7 +104,7 @@ class UpdateSessionRequest(BaseModel):
 class SessionResponse(BaseModel):
     """Session response"""
 
-    code: int = Field(..., description="Numeric session code (0-9998)")
+    code: str = Field(..., description="4-digit session code (0000-9998)")
     title: str = Field(..., description="Session title")
     vibes: str = Field(default="", description="Session vibes")
     max_users: int = Field(default=0, description="Max users")
@@ -133,7 +133,7 @@ class AttendeeResponse(BaseModel):
 class SessionDetailsResponse(BaseModel):
     """Detailed session info"""
 
-    code: int = Field(..., description="Numeric session code (0-9998)")
+    code: str = Field(..., description="4-digit session code (0000-9998)")
     title: str = Field(..., description="Session title")
     vibes: str = Field(default="", description="Session vibes")
     status: str = Field(..., description="Session status")
@@ -307,7 +307,7 @@ async def create_session(
 
 @router.get("/{session_code}", response_model=SessionDetailsResponse)
 async def get_session_details(
-    session_code: int,
+    session_code: str,
     db: SQLSession = Depends(get_db),
     admin: dict = Depends(verify_admin_role),
 ) -> SessionDetailsResponse:
@@ -366,7 +366,7 @@ async def get_session_details(
 
 @router.put("/{session_code}", response_model=SessionResponse)
 async def update_session(
-    session_code: int,
+    session_code: str,
     request: UpdateSessionRequest,
     db: SQLSession = Depends(get_db),
     admin: dict = Depends(verify_admin_role),
@@ -420,7 +420,7 @@ async def update_session(
 
 @router.delete("/{session_code}", status_code=204)
 async def delete_session(
-    session_code: int,
+    session_code: str,
     db: SQLSession = Depends(get_db),
     admin: dict = Depends(verify_admin_role),
 ):
@@ -456,7 +456,7 @@ async def delete_session(
 
 @router.get("/{session_code}/attendees", response_model=dict)
 async def get_attendees(
-    session_code: int,
+    session_code: str,
     db: SQLSession = Depends(get_db),
     admin: dict = Depends(verify_admin_role),
 ) -> dict:
@@ -505,7 +505,7 @@ async def get_attendees(
 
 @router.get("/{session_code}/queue", response_model=dict)
 async def list_queue(
-    session_code: int,
+    session_code: str,
     user: TokenPayload = Depends(get_current_user),
     db: SQLSession = Depends(get_db),
 ) -> dict:
@@ -563,7 +563,7 @@ async def list_queue(
 
 @router.post("/{session_code}/queue", status_code=201, response_model=dict)
 async def add_to_queue(
-    session_code: int,
+    session_code: str,
     song_id: str = Query(..., description="Song ID to reserve"),
     reserved_by_user_id: Optional[str] = Query(
         None, description="User ID reserving the song (admin only)"
@@ -697,7 +697,7 @@ async def add_to_queue(
 
 @router.delete("/{session_code}/queue/{queue_id}", status_code=204)
 async def remove_from_queue(
-    session_code: int,
+    session_code: str,
     queue_id: str,
     admin: dict = Depends(verify_admin_role),
     db: SQLSession = Depends(get_db),
@@ -772,7 +772,7 @@ async def remove_from_queue(
 
 @router.patch("/{session_code}/queue/{queue_id}/change-order", status_code=200, response_model=dict)
 async def change_queue_order(
-    session_code: int,
+    session_code: str,
     queue_id: str,
     new_position: int = Query(..., ge=1, description="New position in queue"),
     admin: dict = Depends(verify_admin_role),
@@ -870,7 +870,7 @@ async def change_queue_order(
 
 @router.get("/{session_code}/playback", response_model=Optional[dict])
 async def get_playback_status(
-    session_code: int,
+    session_code: str,
     db: SQLSession = Depends(get_db),
     admin: dict = Depends(verify_admin_role),
 ) -> Optional[dict]:

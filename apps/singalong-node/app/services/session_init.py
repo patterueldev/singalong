@@ -12,7 +12,7 @@ def init_admin_session(db: DBSession) -> Session:
     """
     Initialize or verify admin session exists on startup.
     
-    Admin session has code "ADMIN" and special permissions for managing the Node.
+    Admin session has code "9999" (reserved for admins) with special permissions for managing the Node.
     
     Args:
         db: Database session
@@ -22,7 +22,7 @@ def init_admin_session(db: DBSession) -> Session:
     """
     # Check if admin session already exists
     existing = db.query(Session).filter(
-        Session.code == "ADMIN"
+        Session.code == "9999"
     ).first()
     
     if existing:
@@ -31,8 +31,7 @@ def init_admin_session(db: DBSession) -> Session:
     
     # Create admin session with system user ID
     admin_session = Session(
-        id=uuid.uuid4(),
-        code="ADMIN",
+        code="9999",  # Reserved admin code (4-digit string)
         title="Admin Workspace",
         vibes="",  # No vibes for admin
         max_users=None,  # Unlimited for admin
@@ -46,7 +45,7 @@ def init_admin_session(db: DBSession) -> Session:
     db.commit()
     db.refresh(admin_session)
     
-    print(f"✓ Created admin session with code 'ADMIN'")
+    print(f"✓ Created admin session with code '9999'")
     return admin_session
 
 
