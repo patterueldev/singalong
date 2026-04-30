@@ -1,17 +1,22 @@
-"""Master download service for managing video downloads from YouTube"""
+"""Master download service for managing video downloads from YouTube
+
+This service manages the download state, storage, and async/sync execution
+of video downloads. The actual yt-dlp operations are delegated to YTDLPService.
+"""
 
 import os
 import logging
 import asyncio
 from pathlib import Path
 from typing import Optional, Tuple
-import yt_dlp
+
+from app.services.yt_dlp_service import YTDLPService
 
 logger = logging.getLogger(__name__)
 
 
 class MasterDownloadService:
-    """Service for downloading videos via YT-DLP"""
+    """Service for downloading and managing video files from YouTube"""
 
     def __init__(self, output_dir: str = "/data/master/videos"):
         """
@@ -21,6 +26,7 @@ class MasterDownloadService:
             output_dir: Directory to store downloaded videos
         """
         self.output_dir = output_dir
+        self.yt_dlp_service = YTDLPService()
         self._ensure_output_dir()
 
     def _ensure_output_dir(self):
@@ -52,37 +58,28 @@ class MasterDownloadService:
             output_path = os.path.join(self.output_dir, filename)
             logger.debug(f"  → Output path: {output_path}")
 
-            # Use yt-dlp Python library with async execution
-            logger.debug(f"  → Preparing yt-dlp options...")
-            ydl_opts = {
-                "format": "bestvideo+bestaudio/best",
-                "socket_timeout": 30,
-                "quiet": True,
-                "no_warnings": True,
-                "outtmpl": output_path,  # Output path for the file
-            }
-
-            # Run download in thread pool to avoid blocking
+            # Run download in thread pool to avoid blocking event loop
             logger.debug(f"  → Starting yt-dlp in thread pool executor...")
             loop = asyncio.get_event_loop()
             output_path_result, error_msg = await asyncio.wait_for(
                 loop.run_in_executor(
                     None,
-                    self._download_with_ydl,
+                    self.yt_dlp_service.download_video,
                     video_id,
                     output_path,
-                    ydl_opts,
                 ),
                 timeout=timeout,
             )
 
             if error_msg:
                 logger.error(f"  ✗ Download error: {error_msg}")
+                logger.info(f"◀ [ASYNC DOWNLOAD END] Failed")
                 return None, error_msg
 
             if not os.path.exists(output_path_result):
                 error_msg = f"File not created at {output_path_result}"
                 logger.error(f"  ✗ {error_msg}")
+                logger.info(f"◀ [ASYNC DOWNLOAD END] Failed")
                 return None, error_msg
 
             file_size = os.path.getsize(output_path_result)
@@ -103,43 +100,6 @@ class MasterDownloadService:
             logger.info(f"◀ [ASYNC DOWNLOAD END] Failed")
             return None, error_msg
 
-    @staticmethod
-    def _download_with_ydl(
-        video_id: str, output_path: str, ydl_opts: dict
-    ) -> Tuple[Optional[str], Optional[str]]:
-        """
-        Helper method to run yt-dlp download in thread pool.
-
-        Returns:
-            Tuple of (actual_file_path, error_message)
-        """
-        try:
-            logger.debug(f"    → yt-dlp.YoutubeDL starting download...")
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                logger.debug(f"      → extract_info('{video_id}', download=True)...")
-                info = ydl.extract_info(video_id, download=True)
-                # yt-dlp may add extension or change filename, get actual path from info
-                actual_path = ydl.prepare_filename(info)
-                logger.debug(f"      ✓ yt-dlp extract_info complete")
-                logger.debug(f"      → Actual file path: {actual_path}")
-                return actual_path, None
-
-        except yt_dlp.utils.DownloadError as e:
-            error_msg = str(e)
-            logger.error(f"    ✗ yt-dlp download error: {error_msg}")
-
-            if "not available" in error_msg.lower():
-                return None, "Video not found or removed"
-            elif "age-restricted" in error_msg.lower():
-                return None, "Video is age-restricted"
-            elif "private" in error_msg.lower():
-                return None, "Video is private"
-
-            return None, error_msg
-        except Exception as e:
-            logger.exception(f"    ✗ yt-dlp unexpected error: {str(e)}")
-            return None, f"Unexpected error: {str(e)}"
-
     def download_video_sync(
         self,
         video_id: str,
@@ -152,7 +112,7 @@ class MasterDownloadService:
         Args:
             video_id: YouTube video ID
             filename: Target filename (without path)
-            timeout: Maximum download time in seconds
+            timeout: Maximum download time in seconds (not used in sync version)
 
         Returns:
             Tuple of (file_path, error_message)
@@ -163,17 +123,8 @@ class MasterDownloadService:
             output_path = os.path.join(self.output_dir, filename)
             logger.debug(f"  → Output path: {output_path}")
 
-            logger.debug(f"  → Preparing yt-dlp options...")
-            ydl_opts = {
-                "format": "bestvideo+bestaudio/best",
-                "socket_timeout": 30,
-                "quiet": True,
-                "no_warnings": True,
-                "outtmpl": output_path,
-            }
-
             logger.debug(f"  → Calling yt-dlp library (sync)...")
-            actual_path, error_msg = self._download_with_ydl(video_id, output_path, ydl_opts)
+            actual_path, error_msg = self.yt_dlp_service.download_video(video_id, output_path)
 
             if error_msg:
                 logger.error(f"  ✗ Download error: {error_msg}")
@@ -197,7 +148,6 @@ class MasterDownloadService:
             error_msg = f"Unexpected download error: {str(e)}"
             logger.exception(f"  ✗ [SYNC DOWNLOAD EXCEPTION] {error_msg}")
             logger.info(f"◀ [SYNC DOWNLOAD END] Failed")
-            return None, error_msg
             return None, error_msg
 
     def get_file_size(self, file_path: str) -> Optional[int]:
