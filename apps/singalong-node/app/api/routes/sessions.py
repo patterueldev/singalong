@@ -505,13 +505,17 @@ async def get_attendees(
 @router.get("/{session_code}/queue", response_model=dict)
 async def list_queue(
     session_code: int,
+    user: TokenPayload = Depends(get_current_user),
     db: SQLSession = Depends(get_db),
-    admin: dict = Depends(verify_admin_role),
 ) -> dict:
     """
     Get all songs reserved in this session (queue), ordered by position.
 
     Endpoint: GET /api/sessions/{session_code}/queue
+
+    Authorization:
+    - Admin: Can view any session queue
+    - Controller: Can view session queue
 
     Returns:
     - queue: Array of queue items
@@ -562,7 +566,7 @@ async def add_to_queue(
     reserved_by_user_id: Optional[str] = Query(
         None, description="User ID reserving the song (admin only)"
     ),
-    admin: dict = Depends(verify_admin_role),
+    user: TokenPayload = Depends(get_current_user),
     db: SQLSession = Depends(get_db),
 ) -> dict:
     """
@@ -581,6 +585,13 @@ async def add_to_queue(
 
     try:
         session = _validate_session_exists(session_code, db)
+        
+        # Only admin can use reserved_by_user_id parameter
+        if reserved_by_user_id and user.role != "admin":
+            raise HTTPException(
+                status_code=403,
+                detail="Only admins can reserve songs for other users"
+            )
 
         # Verify song exists and is ACTIVE
         try:
