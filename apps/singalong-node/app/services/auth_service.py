@@ -89,7 +89,7 @@ class AuthService:
                 user = User(
                     id=user_uuid,
                     nickname_or_username=nickname,
-                    role=UserRole.CONTROLLER,
+                    role="controller",
                 )
                 db.add(user)
                 db.commit()
@@ -98,13 +98,13 @@ class AuthService:
             # Generate Node-specific JWT tokens
             access_token = self._generate_token(
                 user_id=str(user_uuid),
-                role=UserRole.CONTROLLER,
+                role="controller",
                 token_type="access",
                 expires_in_seconds=self.access_token_expire_seconds,
             )
             refresh_token = self._generate_token(
                 user_id=user_id,
-                role=UserRole.CONTROLLER,
+                role="controller",
                 token_type="refresh",
                 expires_in_seconds=self.refresh_token_expire_seconds,
             )
@@ -112,7 +112,7 @@ class AuthService:
             return (
                 access_token,
                 refresh_token,
-                UserRole.CONTROLLER,
+                "controller",
                 self.access_token_expire_seconds,
                 self.refresh_token_expire_seconds,
             )
@@ -167,7 +167,7 @@ class AuthService:
                 user = User(
                     id=user_uuid,
                     nickname_or_username=username,
-                    role=UserRole.ADMIN,
+                    role="admin",
                 )
                 db.add(user)
                 db.commit()
@@ -176,13 +176,13 @@ class AuthService:
             # Generate Node-specific JWT tokens
             access_token = self._generate_token(
                 user_id=str(user_uuid),
-                role=UserRole.ADMIN,
+                role="admin",
                 token_type="access",
                 expires_in_seconds=self.access_token_expire_seconds,
             )
             refresh_token = self._generate_token(
                 user_id=user_id,
-                role=UserRole.ADMIN,
+                role="admin",
                 token_type="refresh",
                 expires_in_seconds=self.refresh_token_expire_seconds,
             )
@@ -190,7 +190,7 @@ class AuthService:
             return (
                 access_token,
                 refresh_token,
-                UserRole.ADMIN,
+                "admin",
                 self.access_token_expire_seconds,
                 self.refresh_token_expire_seconds,
             )
@@ -248,7 +248,7 @@ class AuthService:
                 user = User(
                     id=user_uuid,
                     nickname_or_username=f"player-{str(user_uuid)[:8]}",
-                    role=UserRole.PLAYER,
+                    role="player",
                 )
                 db.add(user)
                 db.commit()
@@ -262,13 +262,13 @@ class AuthService:
             # Generate Node-specific JWT tokens
             access_token = self._generate_token(
                 user_id=str(user_uuid),
-                role=UserRole.PLAYER,
+                role="player",
                 token_type="access",
                 expires_in_seconds=self.access_token_expire_seconds,
             )
             refresh_token = self._generate_token(
                 user_id=user_id,
-                role=UserRole.PLAYER,
+                role="player",
                 token_type="refresh",
                 expires_in_seconds=self.refresh_token_expire_seconds,
             )
@@ -276,7 +276,7 @@ class AuthService:
             return (
                 access_token,
                 refresh_token,
-                UserRole.PLAYER,
+                "player",
                 self.access_token_expire_seconds,
                 self.refresh_token_expire_seconds,
             )

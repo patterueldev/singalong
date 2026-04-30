@@ -103,7 +103,7 @@ class UserAuthService:
         # Find or create controller user with nickname
         user = db.query(User).filter(User.username == nickname).first()
         if not user:
-            user = User(username=nickname, role=UserRole.CONTROLLER)
+            user = User(username=nickname, role="controller")
             db.add(user)
             db.commit()
             db.refresh(user)
@@ -114,13 +114,13 @@ class UserAuthService:
         # Generate tokens
         access_token = self._generate_token(
             user_id=str(user.id),
-            role=user.role.value,
+            role=user.role,
             token_type="access",
             expires_in_seconds=self.access_token_expire_seconds,
         )
         refresh_token = self._generate_token(
             user_id=str(user.id),
-            role=user.role.value,
+            role=user.role,
             token_type="refresh",
             expires_in_seconds=self.refresh_token_expire_seconds,
         )
@@ -152,7 +152,7 @@ class UserAuthService:
             ValueError: If username or password invalid
         """
         user = db.query(User).filter(User.username == username).first()
-        if not user or user.role != UserRole.ADMIN:
+        if not user or user.role != "admin":
             raise ValueError("Invalid username or password")
 
         if not self._verify_password(password, user.password_hash):
@@ -164,13 +164,13 @@ class UserAuthService:
         # Generate tokens
         access_token = self._generate_token(
             user_id=str(user.id),
-            role=user.role.value,
+            role=user.role,
             token_type="access",
             expires_in_seconds=self.access_token_expire_seconds,
         )
         refresh_token = self._generate_token(
             user_id=str(user.id),
-            role=user.role.value,
+            role=user.role,
             token_type="refresh",
             expires_in_seconds=self.refresh_token_expire_seconds,
         )
@@ -206,7 +206,7 @@ class UserAuthService:
             raise ValueError("session_id must be a 4-digit string")
 
         # Create anonymous player user
-        user = User(role=UserRole.PLAYER)
+        user = User(role="player")
         db.add(user)
         db.commit()
         db.refresh(user)
@@ -217,13 +217,13 @@ class UserAuthService:
         # Generate tokens
         access_token = self._generate_token(
             user_id=str(user.id),
-            role=user.role.value,
+            role=user.role,
             token_type="access",
             expires_in_seconds=self.access_token_expire_seconds,
         )
         refresh_token = self._generate_token(
             user_id=str(user.id),
-            role=user.role.value,
+            role=user.role,
             token_type="refresh",
             expires_in_seconds=self.refresh_token_expire_seconds,
         )
