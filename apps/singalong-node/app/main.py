@@ -1,5 +1,6 @@
 """FastAPI application entry point"""
 
+import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -8,6 +9,23 @@ from fastapi.responses import JSONResponse
 from app.config import settings
 from app.database import init_db
 from app.services.player_manager import PlayerManager
+
+
+# Configure logging to output to console
+logging.basicConfig(
+    level=logging.DEBUG if settings.debug else logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+)
+
+# Ensure root logger outputs to console
+root_logger = logging.getLogger()
+if not root_logger.handlers:
+    handler = logging.StreamHandler()
+    handler.setFormatter(
+        logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+    )
+    root_logger.addHandler(handler)
+    root_logger.setLevel(logging.DEBUG if settings.debug else logging.INFO)
 
 
 @asynccontextmanager
