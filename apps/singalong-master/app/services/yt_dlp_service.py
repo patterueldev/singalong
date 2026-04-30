@@ -24,10 +24,10 @@ class YTDLPService:
 
     # Default yt-dlp options used for all operations
     DEFAULT_OPTS = {
-        "quiet": False,  # Changed to False to see full output
-        "no_warnings": False,  # Changed to False to see warnings
+        "quiet": True,  # Keep quiet in production
+        "no_warnings": True,  # Suppress warnings
         "socket_timeout": 30,
-        "verbose": True,  # Added to get more detail
+        "verbose": False,  # Turn off verbose logging
     }
 
     def __init__(self, timeout: int = 30):
