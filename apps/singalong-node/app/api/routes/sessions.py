@@ -285,7 +285,6 @@ async def create_session(
         logger.info(f"Session created: {session.code}")
 
         return SessionResponse(
-            session_code=str(session.id),
             code=session.code,
             title=session.title,
             vibes=session.vibes or "",
@@ -330,7 +329,7 @@ async def get_session_details(
         # Get users
         user_data = (
             db.query(db_models.SessionUser)
-            .filter(db_models.SessionUser.session_code == session.id)
+            .filter(db_models.SessionUser.session_code == session.code)
             .all()
         )
 
@@ -345,7 +344,7 @@ async def get_session_details(
         user_count = len(users)
 
         return SessionDetailsResponse(
-            session_code=str(session.id),
+            session_code=str(session.code),
             code=session.code,
             title=session.title,
             vibes=session.vibes or "",
@@ -394,12 +393,12 @@ async def update_session(
 
         user_count = (
             db.query(db_models.SessionUser)
-            .filter(db_models.SessionUser.session_code == session.id)
+            .filter(db_models.SessionUser.session_code == session.code)
             .count()
         )
 
         return SessionResponse(
-            session_code=str(session.id),
+            session_code=str(session.code),
             code=session.code,
             title=session.title,
             vibes=session.vibes or "",
@@ -471,7 +470,7 @@ async def get_attendees(
         # Query users in session
         session_users = (
             db.query(db_models.SessionUser)
-            .filter(db_models.SessionUser.session_code == session.id)
+            .filter(db_models.SessionUser.session_code == session.code)
             .order_by(asc(db_models.SessionUser.joined_at))
             .all()
         )
@@ -525,7 +524,7 @@ async def list_queue(
         # Query reservations for this session, ordered by position
         reservations = (
             db.query(db_models.Reservation)
-            .filter(db_models.Reservation.session_code == session.id)
+            .filter(db_models.Reservation.session_code == session.code)
             .order_by(asc(db_models.Reservation.position))
             .all()
         )
@@ -602,7 +601,7 @@ async def add_to_queue(
         existing = (
             db.query(db_models.Reservation)
             .filter(
-                db_models.Reservation.session_code == session.id,
+                db_models.Reservation.session_code == session.code,
                 db_models.Reservation.song_id == song_uuid,
             )
             .first()
@@ -614,7 +613,7 @@ async def add_to_queue(
         # Get next position
         max_position = (
             db.query(db_models.Reservation)
-            .filter(db_models.Reservation.session_code == session.id)
+            .filter(db_models.Reservation.session_code == session.code)
             .with_entities(db_models.Reservation.position)
             .order_by(desc(db_models.Reservation.position))
             .first()
@@ -632,7 +631,7 @@ async def add_to_queue(
         # Create reservation
         reservation = db_models.Reservation(
             id=uuid.uuid4(),
-            session_code=session.id,
+            session_code=session.code,
             song_id=song_uuid,
             user_id=uuid.UUID(reserved_by_user_id)
             if reserved_by_user_id
@@ -693,7 +692,7 @@ async def remove_from_queue(
             db.query(db_models.Reservation)
             .filter(
                 db_models.Reservation.id == queue_uuid,
-                db_models.Reservation.session_code == session.id,
+                db_models.Reservation.session_code == session.code,
             )
             .first()
         )
@@ -716,7 +715,7 @@ async def remove_from_queue(
         higher_reservations = (
             db.query(db_models.Reservation)
             .filter(
-                db_models.Reservation.session_code == session.id,
+                db_models.Reservation.session_code == session.code,
                 db_models.Reservation.position > cancelled_position,
             )
             .order_by(asc(db_models.Reservation.position))
@@ -771,7 +770,7 @@ async def change_queue_order(
             db.query(db_models.Reservation)
             .filter(
                 db_models.Reservation.id == queue_uuid,
-                db_models.Reservation.session_code == session.id,
+                db_models.Reservation.session_code == session.code,
             )
             .first()
         )
@@ -782,7 +781,7 @@ async def change_queue_order(
         # Get all reservations for this session
         all_reservations = (
             db.query(db_models.Reservation)
-            .filter(db_models.Reservation.session_code == session.id)
+            .filter(db_models.Reservation.session_code == session.code)
             .order_by(asc(db_models.Reservation.position))
             .all()
         )
@@ -851,7 +850,7 @@ async def get_playback_status(
 
         # Query playback for this session
         playback = (
-            db.query(db_models.Playback).filter(db_models.Playback.session_code == session.id).first()
+            db.query(db_models.Playback).filter(db_models.Playback.session_code == session.code).first()
         )
 
         if not playback or not playback.queue_id:
