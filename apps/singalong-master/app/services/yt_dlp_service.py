@@ -100,6 +100,10 @@ class YTDLPService:
             """
             Custom format selector that finds best video+audio combination.
             
+            Handles both:
+            1. Combined formats (video + audio in one)
+            2. DASH formats (separate video and audio streams to merge)
+            
             Formats are already sorted worst to best by yt-dlp.
             We reverse to search best-to-worst for our preferences.
             
@@ -109,6 +113,8 @@ class YTDLPService:
             Yields:
                 Format dict with format_id, ext, requested_formats, protocol
             """
+            logger.info("  ✓ CUSTOM FORMAT SELECTOR INVOKED")
+            
             formats = ctx.get('formats', [])
             if not formats:
                 logger.error("  ✗ No formats available from yt-dlp")
@@ -117,56 +123,84 @@ class YTDLPService:
             # Reverse to search best-to-worst (yt-dlp sorts worst-to-best)
             formats_sorted = formats[::-1]
             
-            logger.debug(f"  → Found {len(formats)} formats, searching for best video+audio...")
+            logger.info(f"  → Found {len(formats)} total formats")
             
-            # Prefer MP4, cap at 1080p
-            best_video = None
+            # FIRST ATTEMPT: Look for combined formats (video + audio together)
+            logger.info("  → Searching for combined video+audio formats...")
+            best_combined = None
             for f in formats_sorted:
-                # Skip video-only with no audio support
-                if f.get('vcodec') == 'none':
+                # Skip if no video or audio codec
+                if f.get('vcodec') == 'none' or f.get('acodec') == 'none':
                     continue
-                # Skip audio-only
-                if f.get('acodec') == 'none':
+                
+                # Skip storyboards
+                if f.get('format_id', '').startswith('sb'):
                     continue
                 
                 height = f.get('height', 0)
                 ext = f.get('ext', '')
                 format_id = f.get('format_id', '')
                 
-                # Skip storyboards
-                if format_id.startswith('sb'):
+                # Cap at 1080p, prefer MP4
+                if height <= 1080:
+                    logger.debug(f"    Candidate combined: {format_id} {ext} {height}p")
+                    if best_combined is None or (best_combined.get('ext') != 'mp4' and ext == 'mp4'):
+                        best_combined = f
+                        if ext == 'mp4':
+                            break  # Found MP4, stop searching
+            
+            if best_combined:
+                logger.info(f"    Selected combined: {best_combined['format_id']} {best_combined['ext']}")
+                yield {
+                    'format_id': best_combined['format_id'],
+                    'ext': best_combined['ext'],
+                    'requested_formats': [best_combined],
+                    'protocol': best_combined.get('protocol', 'https')
+                }
+                return
+            
+            # SECOND ATTEMPT: DASH formats (separate video and audio)
+            logger.info("  → No combined formats found, searching for DASH (video+audio separate)...")
+            
+            best_video = None
+            for f in formats_sorted:
+                # Must have video, no audio (video-only)
+                if f.get('vcodec') == 'none' or f.get('acodec') != 'none':
                     continue
                 
-                # Prefer MP4, but accept others
-                # Cap at 1080p
+                # Skip storyboards
+                if f.get('format_id', '').startswith('sb'):
+                    continue
+                
+                height = f.get('height', 0)
+                ext = f.get('ext', '')
+                format_id = f.get('format_id', '')
+                
+                # Cap at 1080p, prefer MP4
                 if height <= 1080:
-                    logger.debug(
-                        f"    Candidate video: {format_id} {ext} {height}p "
-                        f"({f.get('vcodec')}/{f.get('acodec')})"
-                    )
+                    logger.debug(f"    Candidate video: {format_id} {ext} {height}p")
                     if best_video is None or (best_video.get('ext') != 'mp4' and ext == 'mp4'):
                         best_video = f
                         if ext == 'mp4':
                             break  # Found MP4, stop searching
             
             if not best_video:
-                logger.error("  ✗ No suitable video format found")
+                logger.error("  ✗ No suitable video format found (even for DASH)")
                 return
             
-            logger.debug(f"    Selected video: {best_video['format_id']} {best_video['ext']}")
+            logger.info(f"    Selected video: {best_video['format_id']} {best_video['ext']}")
             
             # Find compatible audio
             audio_ext = {'mp4': 'm4a', 'webm': 'webm'}.get(best_video['ext'], 'm4a')
             best_audio = None
             
             for f in formats_sorted:
-                if (f.get('acodec') != 'none' and 
-                    f.get('vcodec') == 'none' and 
-                    f.get('ext') == audio_ext):
-                    logger.debug(
-                        f"    Found audio: {f['format_id']} {f['ext']} "
-                        f"({f.get('acodec')})"
-                    )
+                # Must have audio, no video (audio-only)
+                if f.get('acodec') == 'none' or f.get('vcodec') != 'none':
+                    continue
+                
+                if f.get('ext') == audio_ext:
+                    logger.debug(f"    Found audio: {f['format_id']} {f['ext']}")
                     best_audio = f
                     break
             
@@ -174,11 +208,11 @@ class YTDLPService:
                 logger.error(f"  ✗ No compatible audio found for {audio_ext}")
                 return
             
-            logger.debug(f"    Selected audio: {best_audio['format_id']} {best_audio['ext']}")
+            logger.info(f"    Selected audio: {best_audio['format_id']} {best_audio['ext']}")
             
             # Merge video+audio
             merged_format_id = f"{best_video['format_id']}+{best_audio['format_id']}"
-            logger.debug(f"  ✓ Merged format: {merged_format_id}")
+            logger.info(f"  ✓ Merged format: {merged_format_id}")
             
             yield {
                 'format_id': merged_format_id,
