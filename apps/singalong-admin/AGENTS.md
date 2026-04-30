@@ -7,6 +7,8 @@ Frontend web application for administrators to manage sessions, view connected u
 - **[Root AGENTS.md](../../AGENTS.md)** - Main codebase documentation
 - **[Architecture](../../docs/PROJECT_OVERVIEW.md)** - System design
 - **[Implementation Phases](../../docs/IMPLEMENTATION_PHASES.md)** - Project roadmap
+- **[Admin UI Specification](../../docs/ADMIN_UI_SPECIFICATION.md)** - UI layout, panels, and components
+- **[Sessions Architecture](../../docs/SESSIONS_ARCHITECTURE.md)** - Session management backend design
 
 ---
 
