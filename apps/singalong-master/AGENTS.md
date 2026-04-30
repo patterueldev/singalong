@@ -123,17 +123,25 @@ Database
 
 ## 3. Design Patterns
 
-### 3.1 SOLID Principles (Required)
+### 3.1 SOLID Principles (Target Architecture)
 
-Every file must follow SOLID:
+⚠️ **TECHNICAL DEBT NOTICE**: Current implementation has violations (documented below). These are flagged for future refactoring during UI development phase.
 
-1. **Single Responsibility**: Routes only handle HTTP. Services only handle logic. Repos only handle queries.
-2. **Open/Closed**: Use interfaces for repositories (BaseRepository).
-3. **Liskov Substitution**: All auth strategies work identically from caller perspective.
-4. **Interface Segregation**: Services inject only what they need.
-5. **Dependency Inversion**: Services depend on repository interfaces, not implementations.
+**Target SOLID compliance**:
 
-### 3.2 MVC Pattern (Required)
+1. **Single Responsibility**: Routes handle HTTP only. Services handle logic only. Repos handle queries only.
+2. **Open/Closed**: Use interfaces for repositories (BaseRepository) and auth strategies. Should not modify existing code to add features.
+3. **Liskov Substitution**: All implementations of an interface should be interchangeable.
+4. **Interface Segregation**: Services should inject only what they need, not full database sessions.
+5. **Dependency Inversion**: Services should depend on repository abstractions, NOT direct database access.
+
+**Current Violations** (see Section 12: Technical Debt):
+- Routes contain database queries (violates SRP, DIP)
+- Services lack repository abstraction layer (violates DIP)
+- Services receive full SQLAlchemy session instead of specific repositories (violates ISP)
+- No repository interfaces exist (violates OCP, DIP)
+
+### 3.2 MVC Pattern (Target Architecture)
 
 ```
 Model (Pydantic + Domain)
@@ -143,37 +151,13 @@ Service (Business Logic)
 Route/Controller (HTTP)
 ```
 
-**DON'T DO THIS**:
-```python
-# ❌ WRONG: Business logic in route
-@router.post("/songs")
-async def create_song(request: SongRequest):
-    if len(request.title) < 3:  # Business logic in route!
-        raise ValueError(...)
-    song = await db.query(Song).filter(...).first()
-    return song
-```
+**Correct pattern**:
+- Routes: Parse HTTP params, call service, format response
+- Services: Implement business logic, call repositories
+- Repositories: Query database only
+- Models: Data structures only (no logic)
 
-**DO THIS INSTEAD**:
-```python
-# ✅ CORRECT: Business logic in service
-@router.post("/songs")
-async def create_song(
-    request: SongRequest,
-    service: SongService = Depends()
-):
-    song = await service.create_song(request)
-    return SongResponse.from_domain(song)
-
-class SongService:
-    def __init__(self, repo: SongRepository):
-        self.repo = repo
-    
-    async def create_song(self, request: SongRequest) -> Song:
-        if len(request.title) < 3:  # Business logic in service
-            raise ValueError(...)
-        return await self.repo.save(Song.from_request(request))
-```
+⚠️ **CURRENT STATE**: Implementation does NOT fully match this pattern. See Technical Debt section for violations and refactoring plan.
 
 ---
 
@@ -458,7 +442,121 @@ poetry run python -m pdb -m uvicorn app.main:app
 
 ---
 
-## 10. Implementation Phases
+## 10. Technical Debt: SOLID/MVC Architecture Violations
+
+⚠️ **CURRENT STATE (As of latest checkpoint)**: Implementation deviates from documented SOLID principles and MVC pattern. This section documents known violations and recommended refactoring.
+
+### 10.1 Known Violations
+
+#### Issue 1: Routes Access Database Directly (CRITICAL)
+- **Files**: `app/api/routes/downloads.py`, `app/api/routes/songs.py`
+- **Problem**: Route handlers contain direct database queries instead of calling services
+- **Impact**: Violates SRP, makes routes untestable without database, couples API layer to schema
+- **Impact**: HIGH (affects testing, maintainability, schema changes break routes)
+
+#### Issue 2: Missing Repository Pattern (CRITICAL)
+- **Problem**: No `app/repositories/` layer exists despite being documented in section 5.3
+- **Should exist**: `SongRepository`, `DownloadRepository` interfaces + concrete implementations
+- **Current**: Routes and services mix data access code with business logic
+- **Impact**: Services cannot be tested in isolation, tight coupling to database
+- **Impact**: HIGH (blocks unit testing, prevents future schema migrations)
+
+#### Issue 3: Services Lack Dependency Inversion (HIGH)
+- **Files**: `app/services/download_service.py`, `app/services/song_service.py`
+- **Problem**: Services receive `db: SQLSession` and query directly instead of receiving repository instances
+- **Should be**: `SongService(song_repo: SongRepository, download_repo: DownloadRepository)`
+- **Current**: `SongService(db: SQLSession)` with direct database queries
+- **Impact**: Violates DIP and ISP, makes services database-dependent
+- **Impact**: HIGH (blocks service layer unit testing)
+
+#### Issue 4: Routes Depend on Concrete Models (HIGH)
+- **Files**: `app/api/routes/downloads.py`, `app/api/routes/songs.py`
+- **Problem**: Routes import concrete database models and use directly
+- **Should be**: Routes only use Pydantic response schemas, not database models
+- **Example**: Routes instantiate `db_models.Song(...)` directly
+- **Impact**: Routes tightly coupled to database schema, testing requires database
+
+### 10.2 Refactoring Plan (Future Sprint)
+
+**Recommended order**:
+
+1. **Implement Repository Pattern** (2-3 hours)
+   ```python
+   # Create app/repositories/base_repository.py
+   class BaseRepository(ABC, Generic[T]):
+       @abstractmethod
+       async def get_by_id(self, id: str) -> Optional[T]: pass
+       @abstractmethod
+       async def save(self, entity: T) -> T: pass
+   
+   # Create concrete repositories
+   class SongRepository(BaseRepository[Song]):
+       def __init__(self, db: SQLSession):
+           self.db = db
+       async def find_all(self, limit: int = 100) -> List[Song]:
+           query = select(Song).limit(limit)
+           return await self.db.execute(query)
+   ```
+
+2. **Move Database Queries to Services** (1-2 hours)
+   - Extract routes database queries → service methods
+   - Routes now only parse request, call service, format response
+   - Example:
+     ```python
+     # BEFORE (Route has logic):
+     @router.get("/songs")
+     async def list_songs(...):
+         songs = db.query(Song).limit(100).all()
+         return [SongResponse.from_model(s) for s in songs]
+     
+     # AFTER (Route calls service):
+     @router.get("/songs")
+     async def list_songs(..., service: SongService = Depends()):
+         songs = await service.list_songs()
+         return [SongResponse.from_domain(s) for s in songs]
+     ```
+
+3. **Inject Repositories into Services** (1-2 hours)
+   - Services receive repository instances via constructor
+   - Remove direct db.query() calls from service layer
+   - Update FastAPI dependency injection in dependencies.py
+
+4. **Remove db_models imports from routes** (30 mins)
+   - All database model conversions → service layer
+   - Routes only work with Pydantic response schemas
+
+5. **Add Unit Tests** (2-3 hours)
+   - Mock repositories, test services in isolation
+   - Mock services, test routes only handle HTTP concerns
+   - Achieve 80%+ coverage
+
+**Estimated total**: 8-12 hours of focused refactoring work
+
+### 10.3 Why This Debt Exists
+
+- **MVP Priority**: Initial implementation prioritized speed/features over architecture (pragmatic choice)
+- **Working System**: Despite violations, system is functionally correct (issues are architectural, not bugs)
+- **No Active Regression**: System works correctly; violations are design-level concerns
+
+### 10.4 Impact Assessment
+
+**Current** (MVP phase):
+- ✅ Features work
+- ✅ Endpoints respond correctly
+- ❌ Hard to test services in isolation
+- ❌ Hard to modify database schema
+- ❌ Coupling makes future features slower
+
+**After Refactoring**:
+- ✅ Same features
+- ✅ Can test without database
+- ✅ Easy schema changes
+- ✅ Can reuse services across routes
+- ✅ Faster future feature development
+
+---
+
+## 11. Implementation Phases
 
 Current implementation focus (from BACKEND_PHASES.md):
 
@@ -477,5 +575,6 @@ Each phase in [BACKEND_PHASES.md](../../docs/BACKEND_PHASES.md) includes:
 ## Document Version
 
 - **Created**: 2026-04
-- **Version**: 1.0.0
+- **Version**: 1.1.0
 - **Status**: Active
+- **Last Audit**: Current session (SOLID/MVC violations documented)

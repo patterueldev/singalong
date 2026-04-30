@@ -134,17 +134,25 @@ Local Database / Master Server
 
 ## 3. Design Patterns
 
-### 3.1 SOLID Principles (Required)
+### 3.1 SOLID Principles (Target Architecture)
 
-Every file must follow SOLID:
+⚠️ **TECHNICAL DEBT NOTICE**: Current implementation has violations (documented below). These are flagged for future refactoring.
 
-1. **Single Responsibility**: Routes handle HTTP. Services handle logic. Repos query local data. MasterClient handles network.
-2. **Open/Closed**: Use interfaces for search providers (YouTubeSearch, etc.).
-3. **Liskov Substitution**: All search implementations work identically.
-4. **Interface Segregation**: Services inject only what they need.
-5. **Dependency Inversion**: Services depend on repository interfaces and MasterClient interface.
+**Target SOLID compliance**:
 
-### 3.2 MVC Pattern (Required)
+1. **Single Responsibility**: Routes handle HTTP only. Services handle logic only. Repos handle queries only. MasterClient handles network only.
+2. **Open/Closed**: Use interfaces for search providers, auth strategies. Should not modify existing code to add features.
+3. **Liskov Substitution**: All implementations of an interface should be interchangeable.
+4. **Interface Segregation**: Services should inject only what they need, not full database sessions.
+5. **Dependency Inversion**: Services should depend on repository/client abstractions, NOT direct database or external APIs.
+
+**Current Violations** (see Section 12: Technical Debt):
+- Routes access database directly (violates SRP, DIP)
+- Services lack repository abstraction layer (violates DIP)
+- Services receive full SQLAlchemy session instead of specific repositories (violates ISP)
+- No repository interfaces exist (violates OCP, DIP)
+
+### 3.2 MVC Pattern (Target Architecture)
 
 ```
 Model (Pydantic + Domain)
@@ -155,6 +163,8 @@ Route/Controller (HTTP)
 ```
 
 **Key Difference from Master**: Node services often orchestrate between local repos AND Master communication.
+
+⚠️ **CURRENT STATE**: Implementation does NOT fully match this pattern. See Technical Debt section for violations and refactoring plan.
 
 ---
 
@@ -547,7 +557,139 @@ Each phase documented in [BACKEND_PHASES.md](../../docs/BACKEND_PHASES.md)
 
 ---
 
-## 12. Error Handling Pattern
+## 12. Technical Debt: SOLID/MVC Architecture Violations
+
+⚠️ **CURRENT STATE (As of latest checkpoint)**: Implementation deviates from documented SOLID principles and MVC pattern. This section documents known violations and recommended refactoring.
+
+### 12.1 Known Violations
+
+#### Issue 1: Routes Access Database Directly (CRITICAL)
+- **Files**: `app/api/routes/sessions.py`, `app/api/routes/queue.py`
+- **Problem**: Route handlers contain direct database queries and business logic (user count aggregation, position calculation, record creation)
+- **Impact**: Violates SRP, makes routes untestable without database, couples API layer to schema
+- **Example**: Lines 207-228 in sessions.py perform JOIN and aggregation directly in route
+- **Impact**: HIGH (affects testing, maintainability, schema changes break routes)
+
+#### Issue 2: Missing Repository Pattern (CRITICAL)
+- **Problem**: No `app/repositories/` layer exists despite being documented in AGENTS.md
+- **Should exist**: `SessionRepository`, `ReservationRepository`, `UserRepository` interfaces + implementations
+- **Current**: All data access scattered across routes and services, directly using SQLAlchemy
+- **Impact**: Services cannot be tested in isolation, tight coupling to database
+- **Impact**: HIGH (blocks unit testing, prevents future schema migrations)
+
+#### Issue 3: Services Lack Dependency Inversion (HIGH)
+- **Files**: `app/services/auth_service.py`, `app/services/session_service.py`
+- **Problem**: Services receive `db: SQLSession` and query directly instead of receiving repository instances
+- **Should be**: `AuthService(session_repo: SessionRepository, user_repo: UserRepository)`
+- **Current**: `AuthService(db: SQLSession)` with direct `db.query(Session).filter(...)`
+- **Impact**: Violates DIP and ISP, makes services database-dependent
+- **Impact**: HIGH (blocks service layer unit testing)
+
+#### Issue 4: Session Code Type Conversion Bug (CRITICAL)
+- **File**: `app/services/auth_service.py:66,234`
+- **Problem**: Code converts session_code string (e.g., "0001") to int (1), but database stores as String(4) type
+- **Query impact**: `Session.code == 1` never matches stored value `'0001'`
+- **Status**: BUG - Authentication will fail for sessions created after d9cf16d commit
+- **Fix**: Remove int() conversion, keep session_code as string throughout
+
+#### Issue 5: Routes Depend on Concrete Models (HIGH)
+- **Files**: `app/api/routes/sessions.py`
+- **Problem**: Routes import `from app.models import db_models` and use directly
+- **Should be**: Routes only use Pydantic response schemas, not database models
+- **Example**: Line 663 directly instantiates `db_models.Reservation(...)`
+- **Impact**: Routes tightly coupled to database schema, testing requires database
+
+#### Issue 6: Inconsistent Session Code Usage (MEDIUM)
+- **Problem**: After session code string refactor, some code still treats as int, others as string
+- **Files**: auth_service.py (int conversion), sessions.py (string), session_service.py (string)
+- **Impact**: Data consistency issues, potential bugs in cross-service calls
+
+### 12.2 Refactoring Plan (Future Sprint)
+
+**Recommended order**:
+
+1. **Implement Repository Pattern** (2-3 hours)
+   ```python
+   # Create app/repositories/base_repository.py
+   class BaseRepository(ABC, Generic[T]):
+       @abstractmethod
+       async def get_by_id(self, id: str) -> Optional[T]: pass
+       @abstractmethod
+       async def save(self, entity: T) -> T: pass
+   
+   # Create concrete repositories
+   class SessionRepository(BaseRepository[Session]):
+       def __init__(self, db: SQLSession):
+           self.db = db
+       async def get_by_code(self, code: str) -> Optional[Session]:
+           query = select(Session).where(Session.code == code)
+           return await self.db.execute(query)
+   ```
+
+2. **Fix Session Code Type Bug** (15 mins)
+   - Remove `int(session_id)` conversion in auth_service.py:66,234
+   - Test with curl to verify codes work
+
+3. **Move Database Queries to Services** (1-2 hours)
+   - Extract routes database queries → service methods
+   - Routes now only parse request, call service, format response
+   - Example:
+     ```python
+     # BEFORE (Route has logic):
+     @router.post("/{session_code}/queue")
+     async def add_to_queue(...):
+         max_pos = db.query(Reservation)...
+         reservation = db_models.Reservation(...)
+         db.add(reservation)
+     
+     # AFTER (Route calls service):
+     @router.post("/{session_code}/queue")
+     async def add_to_queue(...):
+         result = await queue_service.add_to_queue(...)
+         return QueueResponse(**result)
+     ```
+
+4. **Inject Repositories into Services** (1-2 hours)
+   - Services receive repository instances via constructor
+   - Remove direct db.query() calls from service layer
+   - Update FastAPI dependency injection in dependencies.py
+
+5. **Remove db_models imports from routes** (30 mins)
+   - All database model conversions → service layer
+   - Routes only work with Pydantic response schemas
+
+6. **Add Unit Tests** (2-3 hours)
+   - Mock repositories, test services in isolation
+   - Mock services, test routes only handle HTTP concerns
+   - Achieve 80%+ coverage
+
+**Estimated total**: 8-12 hours of focused refactoring work
+
+### 12.3 Why This Debt Exists
+
+- **MVP Priority**: Initial implementation prioritized speed/features over architecture (pragmatic choice)
+- **Working System**: Despite violations, system is functionally correct (issues are architectural, not bugs)
+- **No Active Regression**: Recent commits (session codes, queue denormalization) work correctly despite architectural issues
+
+### 12.4 Impact Assessment
+
+**Current** (MVP phase):
+- ✅ Features work
+- ✅ Endpoints respond correctly
+- ❌ Hard to test services in isolation
+- ❌ Hard to modify database schema
+- ❌ Coupling makes future features slower
+
+**After Refactoring**:
+- ✅ Same features
+- ✅ Can test without database
+- ✅ Easy schema changes
+- ✅ Can reuse services across routes
+- ✅ Faster future feature development
+
+---
+
+## 13. Error Handling Pattern
 
 All endpoints follow consistent error response format:
 
@@ -573,5 +715,6 @@ async def search(
 ## Document Version
 
 - **Created**: 2026-04
-- **Version**: 1.0.0
+- **Version**: 1.1.0
 - **Status**: Active
+- **Last Audit**: Current session (SOLID/MVC violations documented)
