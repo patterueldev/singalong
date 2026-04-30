@@ -85,164 +85,6 @@ class YTDLPService:
 
             raise YTDLPError(str(e))
 
-    def _create_format_selector(self):
-        """
-        Create a custom format selector function for yt-dlp.
-        
-        Selects the best video+audio combination based on:
-        1. Prefers MP4 container
-        2. Caps resolution at 1080p max
-        3. Merges best video with compatible audio
-        
-        Returns:
-            Callable format selector function
-        """
-        def format_selector(ctx):
-            """
-            Custom format selector that finds best video+audio combination.
-            
-            Handles both:
-            1. Combined formats (video + audio in one)
-            2. DASH formats (separate video and audio streams to merge)
-            
-            Formats are already sorted worst to best by yt-dlp.
-            We reverse to search best-to-worst for our preferences.
-            
-            Args:
-                ctx: yt-dlp format context with 'formats' list
-                
-            Yields:
-                Format dict with format_id, ext, requested_formats, protocol
-            """
-            logger.info("  ✓ CUSTOM FORMAT SELECTOR INVOKED")
-            
-            formats = ctx.get('formats', [])
-            if not formats:
-                logger.error("  ✗ No formats available from yt-dlp")
-                return
-            
-            # Reverse to search best-to-worst (yt-dlp sorts worst-to-best)
-            formats_sorted = formats[::-1]
-            
-            # Log all formats for debugging
-            logger.info(f"  → Found {len(formats)} total formats:")
-            for fmt in formats:  # Log ALL formats to see what we have
-                logger.info(
-                    f"    {fmt.get('format_id')} | {fmt.get('ext')} | "
-                    f"H:{fmt.get('height')} | V:{fmt.get('vcodec')} | A:{fmt.get('acodec')}"
-                )
-            
-            # FIRST ATTEMPT: Look for combined formats (video + audio together)
-            # Note: YouTube provides both progressive download (https) and HLS (m3u8) combined formats.
-            # Progressive formats are lower resolution but work with simple HTTP downloads.
-            # HLS formats are higher resolution but require streaming support.
-            # We prefer progressive download combined formats for simplicity.
-            logger.info("  → Searching for combined video+audio formats...")
-            best_combined = None
-            best_combined_height = 0
-            
-            for f in formats_sorted:
-                # Skip if no video or audio codec
-                if f.get('vcodec') == 'none' or f.get('acodec') == 'none':
-                    continue
-                
-                # Skip storyboards
-                if f.get('format_id', '').startswith('sb'):
-                    continue
-                
-                height = f.get('height', 0)
-                ext = f.get('ext', '')
-                format_id = f.get('format_id', '')
-                
-                # Cap at 1080p, prefer highest resolution first, then prefer MP4
-                if height > 0 and height <= 1080:
-                    logger.debug(f"    Candidate combined: {format_id} {ext} {height}p")
-                    # Update if:
-                    # 1. First format found, OR
-                    # 2. Higher resolution, OR  
-                    # 3. Same resolution but prefer mp4
-                    if best_combined is None:
-                        best_combined = f
-                        best_combined_height = height
-                    elif height > best_combined_height:
-                        # Higher resolution always wins
-                        best_combined = f
-                        best_combined_height = height
-                    elif height == best_combined_height and ext == 'mp4' and best_combined.get('ext') != 'mp4':
-                        # Same resolution, prefer MP4
-                        best_combined = f
-                        best_combined_height = height
-            
-            if best_combined:
-                logger.info(f"    Selected combined: {best_combined['format_id']} {best_combined['ext']} ({best_combined_height}p)")
-                # For combined formats, yield the full format dict as-is
-                yield best_combined
-                return
-            
-            # SECOND ATTEMPT: DASH formats (separate video and audio)
-            logger.info("  → No combined formats found, searching for DASH (video+audio separate)...")
-            
-            best_video = None
-            for f in formats_sorted:
-                # Must have video, no audio (video-only)
-                if f.get('vcodec') == 'none' or f.get('acodec') != 'none':
-                    continue
-                
-                # Skip storyboards
-                if f.get('format_id', '').startswith('sb'):
-                    continue
-                
-                height = f.get('height', 0)
-                ext = f.get('ext', '')
-                format_id = f.get('format_id', '')
-                
-                # Cap at 1080p, prefer MP4
-                if height <= 1080:
-                    logger.debug(f"    Candidate video: {format_id} {ext} {height}p")
-                    if best_video is None or (best_video.get('ext') != 'mp4' and ext == 'mp4'):
-                        best_video = f
-                        if ext == 'mp4':
-                            break  # Found MP4, stop searching
-            
-            if not best_video:
-                logger.error("  ✗ No suitable video format found (even for DASH)")
-                return
-            
-            logger.info(f"    Selected video: {best_video['format_id']} {best_video['ext']}")
-            
-            # Find compatible audio
-            audio_ext = {'mp4': 'm4a', 'webm': 'webm'}.get(best_video['ext'], 'm4a')
-            best_audio = None
-            
-            for f in formats_sorted:
-                # Must have audio, no video (audio-only)
-                if f.get('acodec') == 'none' or f.get('vcodec') != 'none':
-                    continue
-                
-                if f.get('ext') == audio_ext:
-                    logger.debug(f"    Found audio: {f['format_id']} {f['ext']}")
-                    best_audio = f
-                    break
-            
-            if not best_audio:
-                logger.error(f"  ✗ No compatible audio found for {audio_ext}")
-                return
-            
-            logger.info(f"    Selected audio: {best_audio['format_id']} {best_audio['ext']}")
-            
-            # Merge video+audio
-            merged_format_id = f"{best_video['format_id']}+{best_audio['format_id']}"
-            logger.info(f"  ✓ Merged format: {merged_format_id}")
-            
-            yield {
-                'format_id': merged_format_id,
-                'ext': best_video['ext'],
-                'requested_formats': [best_video, best_audio],
-                'protocol': f"{best_video.get('protocol', 'https')}+{best_audio.get('protocol', 'https')}"
-            }
-        
-        return format_selector
-
     def _get_available_formats(self, video_id: str) -> Dict[str, Any]:
         """
         Extract all available formats for a video without downloading.
@@ -284,7 +126,16 @@ class YTDLPService:
         """
         Download video from YouTube and save to specified path.
 
-        Uses a custom format selector to intelligently choose video+audio combination.
+        Uses yt-dlp's intelligent format selector that:
+        - Prefers MP4 video container with H.264/H.265 codecs
+        - Pairs with M4A audio (MP4-compatible)
+        - Falls back to best available if MP4 combo not available
+        - Capped at 1080p maximum resolution
+        - yt-dlp automatically merges and handles all protocols (https, HLS, DASH)
+
+        Format logic:
+        1. Try: bestvideo[mp4,≤1080p] + bestaudio[m4a]  → High quality MP4
+        2. Fall back to: best[≤1080p] → Most compatible
 
         Args:
             video_id: YouTube video ID (not URL)
@@ -296,34 +147,45 @@ class YTDLPService:
             - If failed: (None, error_message)
         """
         try:
-            logger.debug(f"Starting download for video ID: {video_id}")
-            logger.debug(f"Output path: {output_path}")
+            logger.info(f"▶ [DOWNLOAD] Starting for video ID: {video_id}")
+            logger.debug(f"  → Output path: {output_path}")
             
-            # Create custom format selector
-            format_selector = self._create_format_selector()
-            
+            # Smart format selection:
+            # - (bestvideo[height<=1080][ext=mp4]+bestaudio[ext=m4a]): 1080p MP4 video + M4A audio
+            # - /(best[height<=1080]): Fallback to single best format ≤1080p if above not found
+            # yt-dlp automatically merges DASH formats and handles all protocols
             ydl_opts = {
                 **self.DEFAULT_OPTS,
-                "format": format_selector,
+                "format": "(bestvideo[height<=1080][ext=mp4]+bestaudio[ext=m4a])/(best[height<=1080])",
                 "outtmpl": output_path,
             }
 
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                logger.debug(f"    → yt-dlp.YoutubeDL starting download for {video_id}...")
+                logger.debug(f"  → Calling yt-dlp for download...")
                 info = ydl.extract_info(video_id, download=True)
-                # yt-dlp may add extension or change filename, get actual path from info
-                actual_path = ydl.prepare_filename(info)
-                logger.debug(f"      ✓ yt-dlp extract_info complete")
-                logger.debug(f"      → Actual file path: {actual_path}")
+                
+                # Get actual file path from info
+                if 'filepath' in info:
+                    actual_path = info['filepath']
+                else:
+                    actual_path = ydl.prepare_filename(info)
+                
+                # Verify file exists
+                if not os.path.exists(actual_path):
+                    raise FileNotFoundError(f"Downloaded file not found at {actual_path}")
+                
+                file_size = os.path.getsize(actual_path)
+                logger.info(f"✓ Download complete: {actual_path}")
+                logger.info(f"  File size: {file_size / (1024*1024):.2f} MB")
                 return actual_path, None
 
         except yt_dlp.utils.DownloadError as e:
             error_msg = str(e)
-            logger.error(f"    ✗ yt-dlp download error: {error_msg}")
+            logger.error(f"✗ Download error: {error_msg}")
             return None, self._parse_error_message(error_msg)
 
         except Exception as e:
-            logger.exception(f"    ✗ yt-dlp unexpected error: {str(e)}")
+            logger.exception(f"✗ Unexpected error: {str(e)}")
             return None, f"Unexpected error: {str(e)}"
 
     def validate_url(self, url: str) -> bool:
