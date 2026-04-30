@@ -59,9 +59,9 @@ class AuthService:
             Tuple of (access_token, refresh_token, role, access_expires_in, refresh_expires_in)
 
         Raises:
-            ValueError: If session doesn't exist or Master GraphQL authentication fails
+            ValueError: If session doesn't exist, not active, or Master GraphQL auth fails
         """
-        # Validate session exists
+        # Validate session exists and is active
         try:
             session_code = int(session_id)
         except ValueError:
@@ -70,6 +70,9 @@ class AuthService:
         session = db.query(Session).filter(Session.code == session_code).first()
         if not session:
             raise ValueError(f"Session {session_id} does not exist")
+        
+        if session.status != "active":
+            raise ValueError(f"Session {session_id} is not active (status: {session.status})")
         
         try:
             # Call Master GraphQL to authenticate controller
@@ -224,9 +227,9 @@ class AuthService:
             Tuple of (access_token, refresh_token, role, access_expires_in, refresh_expires_in)
 
         Raises:
-            ValueError: If session doesn't exist, another player is connected, or Master auth fails
+            ValueError: If session doesn't exist, not active, another player connected, or Master auth fails
         """
-        # Validate session exists
+        # Validate session exists and is active
         try:
             session_code = int(session_id)
         except ValueError:
@@ -235,6 +238,9 @@ class AuthService:
         session = db.query(Session).filter(Session.code == session_code).first()
         if not session:
             raise ValueError(f"Session {session_id} does not exist")
+        
+        if session.status != "active":
+            raise ValueError(f"Session {session_id} is not active (status: {session.status})")
         
         try:
             # Check if another player is already connected (local Node rule)
