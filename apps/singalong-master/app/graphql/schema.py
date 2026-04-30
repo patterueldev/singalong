@@ -401,25 +401,7 @@ def resolve_request_song_download(
         filename = generate_filename(title, videoId)
         logger.info(f"Generated filename: {filename}")
         
-        # Step 3: Validate format selection BEFORE creating draft
-        # This ensures we fail fast if the video has no suitable format
-        logger.info(f"  → Validating format availability...")
-        yt_dlp_service = YTDLPService()
-        try:
-            selected_format = yt_dlp_service._select_best_format(videoId)
-            logger.info(f"  ✓ Format validation passed: {selected_format}")
-        except YTDLPError as e:
-            error_msg = str(e)
-            logger.error(f"  ✗ Format validation failed: {error_msg}")
-            return {
-                "songId": None,
-                "status": None,
-                "progress": 0,
-                "message": None,
-                "error": f"Cannot download video: {error_msg}",
-            }
-        
-        # Step 4: Create draft song record
+        # Step 3: Create draft song record (will be updated when download completes/fails)
         draft = song_service.create_draft_song(
             video_id=videoId,
             title=title,
@@ -437,7 +419,7 @@ def resolve_request_song_download(
          
         logger.info(f"Created draft song: {draft.id}")
         
-        # Step 5: Start async download in background
+        # Step 4: Start async download in background
         # Fire-and-forget: don't wait for completion
         def background_download():
             try:

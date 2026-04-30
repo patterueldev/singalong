@@ -84,6 +84,111 @@ class YTDLPService:
 
             raise YTDLPError(str(e))
 
+    def _create_format_selector(self):
+        """
+        Create a custom format selector function for yt-dlp.
+        
+        Selects the best video+audio combination based on:
+        1. Prefers MP4 container
+        2. Caps resolution at 1080p max
+        3. Merges best video with compatible audio
+        
+        Returns:
+            Callable format selector function
+        """
+        def format_selector(ctx):
+            """
+            Custom format selector that finds best video+audio combination.
+            
+            Formats are already sorted worst to best by yt-dlp.
+            We reverse to search best-to-worst for our preferences.
+            
+            Args:
+                ctx: yt-dlp format context with 'formats' list
+                
+            Yields:
+                Format dict with format_id, ext, requested_formats, protocol
+            """
+            formats = ctx.get('formats', [])
+            if not formats:
+                logger.error("  ✗ No formats available from yt-dlp")
+                return
+            
+            # Reverse to search best-to-worst (yt-dlp sorts worst-to-best)
+            formats_sorted = formats[::-1]
+            
+            logger.debug(f"  → Found {len(formats)} formats, searching for best video+audio...")
+            
+            # Prefer MP4, cap at 1080p
+            best_video = None
+            for f in formats_sorted:
+                # Skip video-only with no audio support
+                if f.get('vcodec') == 'none':
+                    continue
+                # Skip audio-only
+                if f.get('acodec') == 'none':
+                    continue
+                
+                height = f.get('height', 0)
+                ext = f.get('ext', '')
+                format_id = f.get('format_id', '')
+                
+                # Skip storyboards
+                if format_id.startswith('sb'):
+                    continue
+                
+                # Prefer MP4, but accept others
+                # Cap at 1080p
+                if height <= 1080:
+                    logger.debug(
+                        f"    Candidate video: {format_id} {ext} {height}p "
+                        f"({f.get('vcodec')}/{f.get('acodec')})"
+                    )
+                    if best_video is None or (best_video.get('ext') != 'mp4' and ext == 'mp4'):
+                        best_video = f
+                        if ext == 'mp4':
+                            break  # Found MP4, stop searching
+            
+            if not best_video:
+                logger.error("  ✗ No suitable video format found")
+                return
+            
+            logger.debug(f"    Selected video: {best_video['format_id']} {best_video['ext']}")
+            
+            # Find compatible audio
+            audio_ext = {'mp4': 'm4a', 'webm': 'webm'}.get(best_video['ext'], 'm4a')
+            best_audio = None
+            
+            for f in formats_sorted:
+                if (f.get('acodec') != 'none' and 
+                    f.get('vcodec') == 'none' and 
+                    f.get('ext') == audio_ext):
+                    logger.debug(
+                        f"    Found audio: {f['format_id']} {f['ext']} "
+                        f"({f.get('acodec')})"
+                    )
+                    best_audio = f
+                    break
+            
+            if not best_audio:
+                logger.error(f"  ✗ No compatible audio found for {audio_ext}")
+                return
+            
+            logger.debug(f"    Selected audio: {best_audio['format_id']} {best_audio['ext']}")
+            
+            # Merge video+audio
+            merged_format_id = f"{best_video['format_id']}+{best_audio['format_id']}"
+            logger.debug(f"  ✓ Merged format: {merged_format_id}")
+            
+            yield {
+                'format_id': merged_format_id,
+                'ext': best_video['ext'],
+                'requested_formats': [best_video, best_audio],
+                'protocol': f"{best_video.get('protocol', 'https')}+{best_audio.get('protocol', 'https')}"
+            }
+        
+        return format_selector
+
     def _get_available_formats(self, video_id: str) -> Dict[str, Any]:
         """
         Extract all available formats for a video without downloading.
@@ -119,127 +224,13 @@ class YTDLPService:
             logger.error(f"Error extracting formats: {str(e)}")
             return {}
 
-    def _score_format(self, format_info: Dict) -> int:
-        """
-        Score a format based on selection criteria.
-
-        Scoring logic:
-        - Skip storyboard, audio-only, and video-only formats
-        - Prefer MP4 container (100 pts) over WebM (50 pts)
-        - Prefer higher resolution, capped at 1080p:
-          * 1080p: 30 pts, 720p: 20 pts, 480p: 10 pts, 360p: 5 pts
-        - Must have both video codec (vcodec) and audio codec (acodec)
-
-        Args:
-            format_info: Format metadata dict from yt-dlp
-
-        Returns:
-            Score (higher is better), or 0 if format is unsuitable
-        """
-        score = 0
-
-        # Get key fields
-        format_id = format_info.get("format_id", "")
-        ext = format_info.get("ext", "")
-        vcodec = format_info.get("vcodec", "none")
-        acodec = format_info.get("acodec", "none")
-        height = format_info.get("height", 0)
-
-        # Skip storyboard formats
-        if format_id.startswith("sb"):
-            logger.debug(f"    Skipping {format_id} (storyboard)")
-            return 0
-
-        # Skip audio-only formats (no video codec)
-        if vcodec == "none":
-            logger.debug(f"    Skipping {format_id} (audio-only)")
-            return 0
-
-        # Skip video-only formats (no audio codec)
-        if acodec == "none":
-            logger.debug(f"    Skipping {format_id} (video-only)")
-            return 0
-
-        # Score container type
-        if ext == "mp4":
-            score += 100
-        elif ext == "webm":
-            score += 50
-        else:
-            score += 25
-
-        # Score resolution (prefer up to 1080p)
-        if height >= 1080:
-            score += 30
-        elif height >= 720:
-            score += 20
-        elif height >= 480:
-            score += 10
-        elif height >= 360:
-            score += 5
-        elif height > 0:
-            score += 1
-
-        logger.debug(
-            f"    Format {format_id}: {ext} {height}p "
-            f"({vcodec}/{acodec}) → score: {score}"
-        )
-
-        return score
-
-    def _select_best_format(self, video_id: str) -> str:
-        """
-        Intelligently select the best format for a video.
-
-        Selection criteria:
-        1. Must have both video + audio (no video-only or audio-only)
-        2. Prefer MP4 over WebM
-        3. Prefer highest resolution up to 1080p
-
-        Args:
-            video_id: YouTube video ID
-
-        Returns:
-            Format ID to use for download
-
-        Raises:
-            YTDLPError: If no suitable format can be found
-        """
-        logger.debug(f"Selecting best format for {video_id}...")
-
-        formats = self._get_available_formats(video_id)
-        if not formats:
-            error_msg = "No formats available for this video"
-            logger.error(f"  ✗ {error_msg}")
-            raise YTDLPError(error_msg)
-
-        # Score all formats
-        best_format_id = None
-        best_score = -1
-
-        logger.debug("  → Scoring available formats:")
-        for format_id, format_info in formats.items():
-            score = self._score_format(format_info)
-            if score > best_score:
-                best_score = score
-                best_format_id = format_id
-
-        # Return best format or raise error
-        if best_format_id:
-            logger.debug(
-                f"  ✓ Selected format: {best_format_id} (score: {best_score})"
-            )
-            return best_format_id
-        else:
-            error_msg = "No suitable video format found (must have both video and audio)"
-            logger.error(f"  ✗ {error_msg}")
-            raise YTDLPError(error_msg)
-
     def download_video(
         self, video_id: str, output_path: str
     ) -> Tuple[Optional[str], Optional[str]]:
         """
         Download video from YouTube and save to specified path.
+
+        Uses a custom format selector to intelligently choose video+audio combination.
 
         Args:
             video_id: YouTube video ID (not URL)
@@ -251,15 +242,15 @@ class YTDLPService:
             - If failed: (None, error_message)
         """
         try:
-            # Use smart format selection instead of "best"
-            selected_format = self._select_best_format(video_id)
-            logger.debug(
-                f"Starting download for video ID: {video_id} with format: {selected_format}"
-            )
+            logger.debug(f"Starting download for video ID: {video_id}")
             logger.debug(f"Output path: {output_path}")
+            
+            # Create custom format selector
+            format_selector = self._create_format_selector()
+            
             ydl_opts = {
                 **self.DEFAULT_OPTS,
-                "format": selected_format,
+                "format": format_selector,
                 "outtmpl": output_path,
             }
 
@@ -271,11 +262,6 @@ class YTDLPService:
                 logger.debug(f"      ✓ yt-dlp extract_info complete")
                 logger.debug(f"      → Actual file path: {actual_path}")
                 return actual_path, None
-
-        except YTDLPError as e:
-            error_msg = str(e)
-            logger.error(f"    ✗ Format selection failed: {error_msg}")
-            return None, error_msg
 
         except yt_dlp.utils.DownloadError as e:
             error_msg = str(e)
