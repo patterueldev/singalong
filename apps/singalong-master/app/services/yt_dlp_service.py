@@ -200,14 +200,18 @@ class YTDLPService:
             video_id: YouTube video ID
 
         Returns:
-            Format ID to use for download, or "best" as fallback
+            Format ID to use for download
+
+        Raises:
+            YTDLPError: If no suitable format can be found
         """
         logger.debug(f"Selecting best format for {video_id}...")
 
         formats = self._get_available_formats(video_id)
         if not formats:
-            logger.warning(f"  ! No formats extracted, falling back to 'best'")
-            return "best"
+            error_msg = "No formats available for this video"
+            logger.error(f"  ✗ {error_msg}")
+            raise YTDLPError(error_msg)
 
         # Score all formats
         best_format_id = None
@@ -220,15 +224,16 @@ class YTDLPService:
                 best_score = score
                 best_format_id = format_id
 
-        # Return best format or fallback
+        # Return best format or raise error
         if best_format_id:
             logger.debug(
                 f"  ✓ Selected format: {best_format_id} (score: {best_score})"
             )
             return best_format_id
         else:
-            logger.warning(f"  ! No suitable format found, falling back to 'best'")
-            return "best"
+            error_msg = "No suitable video format found (must have both video and audio)"
+            logger.error(f"  ✗ {error_msg}")
+            raise YTDLPError(error_msg)
 
     def download_video(
         self, video_id: str, output_path: str
@@ -266,6 +271,11 @@ class YTDLPService:
                 logger.debug(f"      ✓ yt-dlp extract_info complete")
                 logger.debug(f"      → Actual file path: {actual_path}")
                 return actual_path, None
+
+        except YTDLPError as e:
+            error_msg = str(e)
+            logger.error(f"    ✗ Format selection failed: {error_msg}")
+            return None, error_msg
 
         except yt_dlp.utils.DownloadError as e:
             error_msg = str(e)
