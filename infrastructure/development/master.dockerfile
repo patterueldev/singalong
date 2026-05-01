@@ -14,14 +14,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy dependency files
-COPY apps/singalong-master/pyproject.toml apps/singalong-master/poetry.lock* ./
+COPY pyproject.toml poetry.lock* ./
 
 # Install Python dependencies
 RUN poetry config virtualenvs.create false && \
     poetry install --no-interaction --no-ansi
 
 # Copy application code
-COPY apps/singalong-master ./
+COPY . ./
 
 # Expose port
 EXPOSE 5001

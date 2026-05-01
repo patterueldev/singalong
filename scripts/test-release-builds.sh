@@ -123,7 +123,7 @@ build_master() {
   if $docker_cmd \
     -f infrastructure/release/master.dockerfile \
     -t singalong-master:release-test \
-    .; then
+    apps/singalong-master; then
     print_success "Master release image built successfully"
     
     # Get image size
@@ -150,7 +150,7 @@ build_node() {
   if $docker_cmd \
     -f infrastructure/release/node.dockerfile \
     -t singalong-node:release-test \
-    .; then
+    apps/singalong-node; then
     print_success "Node release image built successfully"
     
     # Get image size
