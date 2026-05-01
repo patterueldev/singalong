@@ -44,25 +44,25 @@ jobs:
   # Base checks: enforce RC branch rules
   base-checks:
     name: Base checks (RC branch rules)
-    uses: ./.github/workflows/pr-checks/base-checks.yml
+    uses: ./.github/workflows/pr-base-checks.yml
 
   # Conventional commits: validate PR title and body
   conventional-commits:
     name: Conventional commits and PR body
-    uses: ./.github/workflows/pr-checks/conventional-commits.yml
+    uses: ./.github/workflows/pr-conventional-commits.yml
 
   # Master backend build: only run if master files changed
   master-backend-checks:
     name: Master backend checks
     needs: detect-changes
-    uses: ./.github/workflows/pr-checks/master-checks.yml
+    uses: ./.github/workflows/pr-master-checks.yml
     if: needs.detect-changes.outputs.master == 'true'
 
   # Node backend build: only run if node files changed
   node-backend-checks:
     name: Node backend checks
     needs: detect-changes
-    uses: ./.github/workflows/pr-checks/node-checks.yml
+    uses: ./.github/workflows/pr-node-checks.yml
     if: needs.detect-changes.outputs.node == 'true'
 
   # Summary: display overall check results
