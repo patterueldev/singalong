@@ -1,0 +1,217 @@
+#
+# Release & Deploy - Unified Workflow
+#
+# Purpose:
+#   Single workflow that orchestrates the complete release process:
+#   1. Creates version tag based on app versions
+#   2. Detects what changed since previous tag
+#   3. Triggers deployment for changed apps
+#
+# Trigger:
+#   - Push to main branch (PR merge)
+#
+# What it does:
+#   1. Reads versions from all apps (backend, mobile, web)
+#   2. Determines greatest version across all apps
+#   3. Creates annotated tag if version is new
+#   4. Compares current vs previous tag to detect changes
+#   5. Calls deploy-orchestrator.yml with detected changes
+#   6. Conditionally deploys changed apps to production
+#
+# Related Workflows:
+#   • .github/workflows/deploy-orchestrator.yml (core deployment logic)
+#   • .github/workflows/qa-build.yml (QA entry point)
+#   • .github/workflows/pr-develop-checks.yml (feature branch checks)
+#
+# Notes:
+#   - Runs on every push to main (idempotent - skips tag creation if exists)
+#   - Only deploys when new tag is created (prevents duplicate deployments)
+#   - Apps can have independent versions (only affected apps get bumped)
+#   - Tag format: v1.0.0 (semantic versioning)
+#
+
+name: Release & Deploy
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  create-tag:
+    name: Create Release Tag
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.version.outputs.tag }}
+      version: ${{ steps.version.outputs.version }}
+      tag-created: ${{ steps.tag-exists.outputs.tag-exists == 'false' }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure Git credentials
+        run: |
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
+
+      - name: Read versions from all apps
+        id: version
+        run: |
+          # Read versions from each app
+          BACKEND_VERSION=$(jq -r '.version' apps/smart-pocket-backend/package.json)
+          MOBILE_VERSION=$(jq -r '.version' apps/smart-pocket-mobile/package.json)
+          WEB_VERSION=$(jq -r '.version' apps/smart-pocket-web/package.json)
+          
+          echo "Backend version: $BACKEND_VERSION"
+          echo "Mobile version: $MOBILE_VERSION"
+          echo "Web version: $WEB_VERSION"
+          
+          # Find the greatest version
+          VERSION=$(printf "%s\n%s\n%s" "$BACKEND_VERSION" "$MOBILE_VERSION" "$WEB_VERSION" | sort -V | tail -1)
+          TAG="v$VERSION"
+          
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          
+          echo "Greatest version across all apps: $VERSION"
+          echo "Tag to create: $TAG"
+
+      - name: Check if tag already exists
+        id: tag-exists
+        run: |
+          TAG="${{ steps.version.outputs.tag }}"
+          
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "tag-exists=true" >> $GITHUB_OUTPUT
+            echo "Tag $TAG already exists"
+          else
+            echo "tag-exists=false" >> $GITHUB_OUTPUT
+            echo "Tag $TAG does not exist, will create it"
+          fi
+
+      - name: Create and push tag
+        if: steps.tag-exists.outputs.tag-exists == 'false'
+        run: |
+          TAG="${{ steps.version.outputs.tag }}"
+          COMMIT_SHA="${{ github.sha }}"
+          COMMIT_MSG=$(git log -1 --pretty=%B $COMMIT_SHA)
+          
+          # Create annotated tag with commit info
+          git tag -a "$TAG" -m "Release $TAG
+          
+          Commit: $COMMIT_SHA
+          Message: $COMMIT_MSG"
+          
+          # Push tag to remote
+          git push origin "$TAG"
+          
+          echo "Tag $TAG created and pushed"
+
+      - name: Tag creation status
+        run: |
+          if [ "${{ steps.tag-exists.outputs.tag-exists }}" == "true" ]; then
+            echo "Tag ${{ steps.version.outputs.tag }} already exists - skipping deployment"
+            echo "Bump app version in package.json to create a new tag"
+          else
+            echo "Tag ${{ steps.version.outputs.tag }} created successfully"
+            echo "Proceeding with deployment..."
+          fi
+
+  detect-changes:
+    name: Detect changed files
+    needs: create-tag
+    if: needs.create-tag.outputs.tag-created == 'true'
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.changes.outputs.backend }}
+      frontend: ${{ steps.changes.outputs.frontend }}
+      android: ${{ steps.changes.outputs.android }}
+      ios: ${{ steps.changes.outputs.ios }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect changed files
+        id: changes
+        run: |
+          # For production, compare against the previous tag
+          CURRENT_TAG="${{ needs.create-tag.outputs.tag }}"
+          
+          # Get the most recent tag BEFORE the current one
+          PREVIOUS_TAG=$(git describe --tags --abbrev=0 --exclude="$CURRENT_TAG" 2>/dev/null || echo "")
+          
+          if [ -z "$PREVIOUS_TAG" ]; then
+            echo "No previous tags found. Cannot determine changes."
+            echo "Deploying all projects (first release)."
+            echo "backend=true" >> $GITHUB_OUTPUT
+            echo "frontend=true" >> $GITHUB_OUTPUT
+            echo "android=true" >> $GITHUB_OUTPUT
+            echo "ios=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          
+          echo "Current tag: $CURRENT_TAG"
+          echo "Comparing against previous tag: $PREVIOUS_TAG"
+          echo ""
+          
+          # Check if backend files changed
+          if git diff --name-only $PREVIOUS_TAG $CURRENT_TAG | grep -q "^apps/smart-pocket-backend/"; then
+            echo "backend=true" >> $GITHUB_OUTPUT
+            echo "Changes detected in backend files."
+          else
+            echo "backend=false" >> $GITHUB_OUTPUT
+            echo "No changes detected in backend files."
+          fi
+          
+          # Check if frontend files changed
+          if git diff --name-only $PREVIOUS_TAG $CURRENT_TAG | grep -q "^apps/smart-pocket-web/"; then
+            echo "frontend=true" >> $GITHUB_OUTPUT
+            echo "Changes detected in frontend files."
+          else
+            echo "frontend=false" >> $GITHUB_OUTPUT
+            echo "No changes detected in frontend files."
+          fi
+          
+          # Check if mobile files changed
+          if git diff --name-only $PREVIOUS_TAG $CURRENT_TAG | grep -q "^apps/smart-pocket-mobile/"; then
+            echo "android=true" >> $GITHUB_OUTPUT
+            echo "ios=true" >> $GITHUB_OUTPUT
+            echo "Changes detected in mobile files."
+          else
+            echo "android=false" >> $GITHUB_OUTPUT
+            echo "ios=false" >> $GITHUB_OUTPUT
+            echo "No changes detected in mobile files."
+          fi
+
+      - name: Output detection results
+        run: |
+          echo "Detection complete:"
+          echo "- Backend changed: ${{ steps.changes.outputs.backend }}"
+          echo "- Frontend changed: ${{ steps.changes.outputs.frontend }}"
+          echo "- Android changed: ${{ steps.changes.outputs.android }}"
+          echo "- iOS changed: ${{ steps.changes.outputs.ios }}"
+
+  deploy:
+    name: Orchestrate Production Build & Deploy
+    needs: [create-tag, detect-changes]
+    if: needs.create-tag.outputs.tag-created == 'true'
+    uses: ./.github/workflows/deploy-orchestrator.yml
+    with:
+      env: prod
+      backend: ${{ needs.detect-changes.outputs.backend }}
+      frontend: ${{ needs.detect-changes.outputs.frontend }}
+      android: ${{ needs.detect-changes.outputs.android }}
+      ios: ${{ needs.detect-changes.outputs.ios }}
+    secrets: inherit
+    permissions:
+      contents: read
+      packages: write
