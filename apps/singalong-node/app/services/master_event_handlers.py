@@ -104,10 +104,11 @@ class MasterEventHandlers:
         try:
             import httpx
             from app.config import settings
-            from app.services.master_auth_manager import get_access_token
+            from app.services.master_auth_manager import get_master_auth_manager
 
             # Get Node's own JWT token for the sync endpoint
-            access_token = get_access_token()
+            auth_manager = get_master_auth_manager()
+            access_token = await auth_manager.get_access_token()
             if not access_token:
                 logger.error("Cannot trigger sync: No access token available")
                 return
