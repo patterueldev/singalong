@@ -22,7 +22,7 @@ COPY apps/singalong-node/pyproject.toml apps/singalong-node/poetry.lock* ./
 
 # Install Python dependencies
 RUN poetry config virtualenvs.create false && \
-    poetry install --no-interaction --no-ansi --no-dev
+    poetry install --no-interaction --no-ansi --only main
 
 # Copy application code
 COPY apps/singalong-node ./
