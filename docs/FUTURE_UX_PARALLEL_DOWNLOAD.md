@@ -8,58 +8,245 @@
 
 ---
 
-## Overview
+## Current UX (MVP - Sequential)
 
-Currently, the song download flow is **sequential**:
 1. User pastes YouTube URL
-2. Node validates URL → calls Master
-3. Master queues download
-4. **User waits** for download to finish
-5. User sees enhancement screen (metadata edit)
-6. User saves
+2. Node identifies with YT-DLP (validates video exists)
+3. Node enhances metadata with OpenAI (gets better details: title, artist, year, etc.)
+4. User sees enhancement screen with AI-enhanced metadata
+5. User can manually refine details if needed
+6. User clicks "Download & Reserve" (or "Download")
+7. **Download THEN starts** on Master
 
-This proposal introduces **parallel execution**:
-1. User pastes YouTube URL
-2. Node validates + immediately queues download on Master
-3. User proceeds to enhancement screen **instantly**
-4. Download progresses in background (visible via real-time progress)
-5. User edits metadata while file downloads
-6. User saves (metadata + file saved together when ready)
-
-**Result**: User doesn't wait for download before proceeding—perceived performance improves significantly.
+**Limitation**: User waits for both identification + enhancement before download can begin.
 
 ---
 
-## User Experience Flow
+## Proposed UX (Future - Parallel)
+
+1. User pastes YouTube URL
+2. Node identifies with YT-DLP (validates video exists)
+3. Node **immediately starts download with Master** (fire-and-forget, doesn't wait)
+4. Master receives raw metadata from YT-DLP, queues download
+5. Node **simultaneously** enhances metadata with OpenAI
+6. User navigates to enhancement screen instantly
+7. Enhancement screen shows:
+   - Raw metadata from YT-DLP (title, duration, etc.)
+   - Download progress in real-time (via WebSocket: 0% → 100%)
+   - OpenAI enhancement results appear as they finish (replaces raw with enhanced)
+8. User can:
+   - Wait for enhancement to complete (auto-filled)
+   - Manually refine details further (override enhancement)
+   - Save immediately (download could still be in progress)
+9. User clicks "Save" or "Save & Reserve"
+10. Master updates the drafted song with final metadata
+11. **Result**: Download may finish before/after save, but user doesn't wait for either
+
+**Benefit**: User sees enhancement screen instantly. Download + enhancement happen in parallel. Better perceived performance.
+
+---
+
+## Data Flow: Parallel Execution
 
 ```
-User Input (YouTube URL/paste)
-    ↓
-URL Validation (server-side or client-side heuristic)
-    ↓
-Immediate Download Queue (fire-and-forget to Master)
-    ↓
-Navigation to Enhancement Screen (without awaiting download)
-    ↓ (parallel)
-┌─────────────────────────────┬──────────────────────────────┐
-│  ENHANCEMENT SCREEN         │  BACKGROUND: DOWNLOAD        │
-│ ─────────────────────────   │ ────────────────────────────  │
-│ • Title field (editable)    │ • Progress: 0% → 100%        │
-│ • Artist field              │ • Speed indicator            │
-│ • Year, Language, etc.      │ • Status: downloading...     │
-│ • Optional: AI enhance btn  │ • [Complete notification]    │
-│                             │                               │
-│ [Save] [Cancel]             │                               │
-└─────────────────────────────┴──────────────────────────────┘
-    ↓
-User clicks [Save]
-    ↓
-Metadata + File Saved (if download complete)
-or
-Metadata Saved + File Marked Pending (race condition handling)
-    ↓
-Song Added to Songbook
+Timeline:
+T=0ms    User pastes "https://youtube.com/watch?v=..."
+         ↓
+T=500ms  Node YT-DLP identifies (title, duration, channel)
+         ↓
+T=600ms  ┌─────────────────────────────────────────────┐
+         │ Node calls Master GraphQL:                   │
+         │   requestSongDownload(rawMetadata={          │
+         │     videoId: "abc123",                       │
+         │     source: "youtube",                       │
+         │     title: "Song Title",  ← from YT-DLP      │
+         │     artist: "Artist Name", ← from YT-DLP     │
+         │     duration: 240                            │
+         │   })                                         │
+         │ Master queues download (returns songId)      │
+         └─────────────────────────────────────────────┘
+         │
+         ├─ Master starts async download worker
+         │
+         └─ Node calls OpenAI to enhance metadata
+         
+T=800ms  User navigates to enhancement screen
+         Screen shows:
+         • Title: "Song Title" (from YT-DLP, editable)
+         • Artist: "Artist Name" (from YT-DLP, editable)
+         • Progress bar: 0%
+         
+T=1500ms OpenAI returns enhanced metadata
+         Screen updates:
+         • Title: "Song Title (Karaoke Version)" ← enhanced
+         • Artist: "Artist Name feat. Others" ← enhanced
+         • Year: "2020" ← enhanced
+         • Language: "en" ← enhanced
+         • Progress bar: 35%
+         
+T=3000ms User clicks [Save]
+         Metadata finalized:
+         • Title, Artist, Year, Language all saved
+         • Download still in progress (65%)
+         
+T=5000ms Download completes (100%)
+         Auto-sync triggered (W2.3)
+         Song available in songbook
+         
+ACTUAL WAIT TIME: ~200ms (YT-DLP only)
+vs. PREVIOUS: ~5000ms (YT-DLP + download)
 ```
+
+---
+
+## Key Differences from Current UX
+
+| Aspect | Current (MVP) | Future (Proposed) |
+|--------|---------------|-------------------|
+| **YT-DLP Identification** | Blocks (1) → user waits | Parallel (1) → non-blocking |
+| **OpenAI Enhancement** | Blocks (2) → user waits | Parallel (2) → non-blocking |
+| **Download Start** | After step 6 (user clicks button) | After step 3 (immediately) |
+| **Master Receives** | Enhanced metadata (full) | Raw metadata (from YT-DLP first, then enhanced) |
+| **Enhancement Screen** | Shows after step 3 (complete) | Shows after step 2 (raw, updates with enhanced) |
+| **User Wait Time** | Identification + Enhancement + Download (~6-33s) | Identification only (~500ms) |
+| **Download Progress** | Not visible to user | Real-time via WebSocket |
+| **Save Timing** | AFTER download button | At ANY point during/after download |
+| **Abandonment Cost** | Zero (haven't started download) | Minimal (~100MB if user cancels mid-download) |
+
+## User Experience Flow Comparison
+
+### Current MVP Flow (Sequential)
+
+```
+User Input
+    ↓
+YT-DLP Identification (500ms)
+    ↓
+OpenAI Enhancement (1-2 seconds)
+    ↓
+Enhancement Screen Shows Results
+    ↓
+User Clicks [Download & Reserve]
+    ↓
+Download Starts (5-30 seconds)
+    ↓
+Download Complete → Auto-sync (W2.3)
+    ↓
+Song in Songbook
+
+TOTAL USER WAIT: Identification + Enhancement + Download (~6-33 seconds)
+```
+
+### Future Proposed Flow (Parallel)
+
+```
+User Input
+    ↓
+YT-DLP Identification (500ms)
+    ├─ Branch A: Start Download Immediately
+    │  ├─ Send rawMetadata (from YT-DLP) to Master
+    │  └─ Master queues download (~100ms)
+    │
+    └─ Branch B: Enhance Metadata in Parallel
+       └─ OpenAI enhances (1-2 seconds)
+
+Enhancement Screen Shows (Branch A raw + Branch B results updating)
+    ├─ Initially: Raw metadata from YT-DLP
+    ├─ Download progress updates in real-time (0% → 100%)
+    ├─ After ~1-2s: Enhanced metadata replaces raw (from OpenAI)
+    └─ User can refine further or just save
+
+User Clicks [Save] or [Save & Reserve]
+    ├─ Metadata finalized
+    └─ Download continues in background (if not done)
+
+Download Complete (if not already) → Auto-sync (W2.3)
+    ↓
+Song in Songbook
+
+TOTAL USER WAIT: Identification only (~500ms)
+IMPROVEMENT: 10-60x faster user interaction ✅
+```
+
+---
+
+## Enhancement Screen Evolution (Real-time Updates)
+
+### Initial Load (T=0.5s) - YT-DLP Complete, Download Starting
+
+```
+┌─────────────────────────────────────────────┐
+│ ENHANCE SONG                                 │
+├─────────────────────────────────────────────┤
+│ Title: Song Title                           │ ← from YT-DLP
+│ Artist: Artist Name                         │ ← from YT-DLP
+│ Year: (pending)                             │
+│ Language: (pending)                         │
+│ Duration: 3:45                              │
+│                                              │
+│ [Download Progress]                          │
+│ ░░░░░░░░░░░░░░░░░░ 0%                      │ ← just started
+│ Waiting for file...                         │
+│                                              │
+│ ⏳ Analyzing with AI...                      │
+│                                              │
+│ [Refine with AI] [Manual Edit]              │
+│ [Save] [Save & Reserve] [Cancel]            │
+└─────────────────────────────────────────────┘
+```
+
+### Mid-Process (T=1.5s) - OpenAI Enhancement Ready, Download 35%
+
+```
+┌─────────────────────────────────────────────┐
+│ ENHANCE SONG                                 │
+├─────────────────────────────────────────────┤
+│ Title: Song Title (Karaoke Version)         │ ← updated from OpenAI
+│ Artist: Artist Name feat. Others             │ ← updated from OpenAI
+│ Year: 2020                                   │ ← from OpenAI
+│ Language: English                            │ ← from OpenAI
+│ Duration: 3:45                              │
+│                                              │
+│ [Download Progress]                          │
+│ ████████░░░░░░░░░░ 35%                      │
+│ 2.1 MB/s | ~2 min remaining                 │
+│                                              │
+│ ✓ Enhancement complete                      │
+│                                              │
+│ [Refine with AI] [Manual Edit]              │
+│ [Save] [Save & Reserve] [Cancel]            │
+└─────────────────────────────────────────────┘
+```
+
+### Final (T=5s) - Download Complete, Ready to Save
+
+```
+┌─────────────────────────────────────────────┐
+│ ENHANCE SONG                                 │
+├─────────────────────────────────────────────┤
+│ Title: Song Title (Karaoke Version)         │ ← user can still edit
+│ Artist: Artist Name feat. Others             │
+│ Year: 2020                                   │
+│ Language: English                            │
+│ Duration: 3:45                              │
+│                                              │
+│ [Download Progress]                          │
+│ ████████████████████ 100% ✓                 │
+│ Downloaded successfully                      │
+│                                              │
+│ ✓ Enhancement complete                      │
+│                                              │
+│ [Refine with AI] [Manual Edit]              │
+│ [Save] [Save & Reserve] [Cancel]            │
+└─────────────────────────────────────────────┘
+```
+
+**Key behaviors**:
+- User can click [Save] at ANY point in the timeline above
+- If download is still in progress when user clicks [Save], metadata is saved and download continues
+- Auto-sync (W2.3) triggers when download finishes, merging with saved metadata
+- If user clicks [Cancel], download is stopped and song marked as abandoned
+
 
 ---
 
