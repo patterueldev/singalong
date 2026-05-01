@@ -18,14 +18,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy dependency files
-COPY apps/singalong-node/pyproject.toml apps/singalong-node/poetry.lock* ./
+COPY pyproject.toml poetry.lock* ./
 
 # Install Python dependencies
 RUN poetry config virtualenvs.create false && \
     poetry install --no-interaction --no-ansi --only main
 
 # Copy application code
-COPY apps/singalong-node ./
+COPY . ./
 
 # Stage 2: Runtime
 FROM python:3.11-slim

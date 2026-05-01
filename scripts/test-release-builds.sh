@@ -115,15 +115,15 @@ build_master() {
   
   cd "$PROJECT_ROOT"
   
-  print_info "Building from: infrastructure/release/master.dockerfile"
+  print_info "Building from: apps/singalong-master/Dockerfile"
   
   local docker_cmd="docker build"
   [ "$VERBOSE" = true ] && docker_cmd="$docker_cmd --progress=plain"
   
   if $docker_cmd \
-    -f infrastructure/release/master.dockerfile \
+    -f apps/singalong-master/Dockerfile \
     -t singalong-master:release-test \
-    .; then
+    apps/singalong-master/; then
     print_success "Master release image built successfully"
     
     # Get image size
@@ -142,15 +142,15 @@ build_node() {
   
   cd "$PROJECT_ROOT"
   
-  print_info "Building from: infrastructure/release/node.dockerfile"
+  print_info "Building from: apps/singalong-node/Dockerfile"
   
   local docker_cmd="docker build"
   [ "$VERBOSE" = true ] && docker_cmd="$docker_cmd --progress=plain"
   
   if $docker_cmd \
-    -f infrastructure/release/node.dockerfile \
+    -f apps/singalong-node/Dockerfile \
     -t singalong-node:release-test \
-    .; then
+    apps/singalong-node/; then
     print_success "Node release image built successfully"
     
     # Get image size
