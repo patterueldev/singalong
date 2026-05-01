@@ -7,6 +7,7 @@ from Master WebSocket endpoint.
 
 import logging
 import asyncio
+import threading
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -60,8 +61,8 @@ class MasterEventHandlers:
         """
         Handle download completion event from Master.
 
-        When a download completes on Master, automatically trigger a sync
-        on Node to pull the newly downloaded video into local cache.
+        When a download completes on Master, automatically sync that video
+        to Node's local cache by calling the sync service directly.
 
         Event format:
         {
@@ -77,62 +78,57 @@ class MasterEventHandlers:
 
             logger.info(f"[DOWNLOAD COMPLETE] video_id={video_id} | {artist} - {title}")
 
-            # Trigger catalog sync to download video file to local storage
-            # This runs in background so we don't block the event handler
-            try:
-                await MasterEventHandlers._trigger_sync_for_video(video_id)
-            except Exception as sync_error:
-                logger.error(
-                    f"Failed to trigger sync after download: {sync_error}",
-                    exc_info=True
-                )
+            # Directly call sync service in background (don't make HTTP call to ourselves!)
+            logger.info(f"[AUTO-SYNC] Syncing newly downloaded video: {video_id}")
+            
+            # Run sync in background thread
+            thread = threading.Thread(
+                target=MasterEventHandlers._sync_video_in_background,
+                args=(video_id,),
+                daemon=True
+            )
+            thread.start()
 
         except Exception as e:
             logger.error(f"Error handling download complete: {e}")
 
     @staticmethod
-    async def _trigger_sync_for_video(video_id: str) -> None:
+    def _sync_video_in_background(video_id: str) -> None:
         """
-        Trigger catalog sync on Node to download newly completed video.
-
-        Calls Node's sync endpoint to fetch the video file from Master.
-        Runs asynchronously in background.
-
+        Sync a single video in background thread.
+        
+        This is called directly (not via HTTP) when Master broadcasts
+        a download:complete event.
+        
         Args:
-            video_id: YouTube video ID that was just downloaded
+            video_id: YouTube video ID that was just downloaded on Master
         """
         try:
-            import httpx
-            from app.config import settings
-            from app.services.master_auth_manager import get_master_auth_manager
-
-            # Get Node's own JWT token for the sync endpoint
-            auth_manager = get_master_auth_manager()
-            access_token = await auth_manager.get_access_token()
-            if not access_token:
-                logger.error("Cannot trigger sync: No access token available")
-                return
-
-            # Call local Node sync endpoint
-            # Note: In docker-compose, use service name 'node' for inter-container calls
-            sync_url = "http://node:5002/api/songs/sync"
-            headers = {"Authorization": f"Bearer {access_token}"}
-
-            logger.info(f"[AUTO-SYNC] Triggering sync for newly downloaded video: {video_id}")
-
-            async with httpx.AsyncClient(timeout=10.0) as client:
-                response = await client.post(sync_url, headers=headers)
-                response.raise_for_status()
-
-                result = response.json()
+            from app.services.node_sync_service import NodeSyncService
+            from app.models.db_models import SessionLocal
+            
+            # Create database session for this thread
+            db_session = SessionLocal()
+            try:
+                logger.info(f"[AUTO-SYNC] Starting sync for video: {video_id}")
+                
+                # Call sync service directly (no HTTP)
+                sync_service = NodeSyncService(db_session)
+                result = asyncio.run(sync_service.sync_songs_from_master(limit=100, offset=0))
+                
                 logger.info(
-                    f"[AUTO-SYNC] Sync triggered successfully: task_id={result.get('task_id')}"
+                    f"[AUTO-SYNC] Sync complete for {video_id}: "
+                    f"synced={result.synced}, updated={result.updated}, "
+                    f"failed={result.failed}"
                 )
-
-        except httpx.HTTPError as http_error:
-            logger.error(f"HTTP error triggering sync: {http_error}")
+                if result.errors:
+                    logger.warning(f"[AUTO-SYNC] Errors during sync: {result.errors}")
+                    
+            finally:
+                db_session.close()
+                
         except Exception as e:
-            logger.error(f"Unexpected error triggering sync: {e}", exc_info=True)
+            logger.error(f"[AUTO-SYNC] Error syncing video {video_id}: {e}", exc_info=True)
 
     @staticmethod
     async def handle_catalog_updated(data: dict[str, Any]) -> None:

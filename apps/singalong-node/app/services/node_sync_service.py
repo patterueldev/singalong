@@ -86,10 +86,15 @@ class NodeSyncService:
                 return result
             
             logger.info(f"Master returned {len(master_songs)} songs to sync")
+            total_songs = len(master_songs)
             
-            # Process each song
-            for master_song in master_songs:
+            # Process each song with progress logging
+            for idx, master_song in enumerate(master_songs, 1):
+                progress_percent = (idx / total_songs) * 100
+                song_title = master_song.get('title', 'Unknown')
                 try:
+                    logger.info(f"[SYNC PROGRESS] {progress_percent:.1f}% ({idx}/{total_songs}) | {song_title}")
+                    
                     # Check if song already exists locally (by id or video_id)
                     song_id = UUID(master_song["id"]) if isinstance(master_song["id"], str) else master_song["id"]
                     video_id = master_song.get("videoId")
@@ -115,7 +120,7 @@ class NodeSyncService:
                         result.updated += 1
                     else:
                         # Create new song record
-                        logger.info(f"Syncing new song: {master_song['title']} from {local_file_path}")
+                        logger.info(f"  ✓ Synced: {master_song['title']}")
                         self._create_song(master_song, local_file_path)
                         result.synced += 1
                         
@@ -126,7 +131,9 @@ class NodeSyncService:
                     result.errors.append(error_msg)
             
             self.db.commit()
-            logger.info(f"Sync complete: {result.synced} new, {result.updated} updated, {result.failed} failed")
+            logger.info(
+                f"[SYNC COMPLETE] 100% | {result.synced} new, {result.updated} updated, {result.failed} failed"
+            )
             
         except GraphQLError as e:
             error_msg = f"Master query error: {str(e)}"
