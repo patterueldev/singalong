@@ -29,13 +29,12 @@
 name: Development Build & Push
 
 # on:
-#   push:
+#   pull_request:
 #     branches:
 #       - develop
 
-# TODO: ONCE TESTED, SWITCH TO PUSH AND REMOVE PR TRIGGER
 on:
-  pull_request:
+  push:
     branches:
       - develop
 
@@ -104,10 +103,6 @@ jobs:
           echo ""
           echo "Changed files:"
           git diff --name-only $PREVIOUS_COMMIT HEAD
-
-          # TODO: Temporary override for testing - force both to true
-          echo "master=true" >> $GITHUB_OUTPUT
-          echo "node=true" >> $GITHUB_OUTPUT
 
       - name: Output detection results
         run: |
