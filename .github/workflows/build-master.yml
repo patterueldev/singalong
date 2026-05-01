@@ -63,7 +63,7 @@ jobs:
             type=raw,value=${{ inputs.env }}
             type=sha,prefix=${{ inputs.env }}-
 
-       - name: Build and push Master image
+      - name: Build and push Master image
         uses: docker/build-push-action@v5
         with:
           context: ./apps/singalong-master
