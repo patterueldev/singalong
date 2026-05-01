@@ -30,6 +30,26 @@ class MasterDownloadService:
         self.progress_callback: Optional[Callable] = None
         self.complete_callback: Optional[Callable] = None
         self._ensure_output_dir()
+        
+        # Set the YTDLPService progress callback to our wrapper
+        # This will be called during downloads to emit progress events
+        self.yt_dlp_service.set_progress_callback(self._on_ytdlp_progress)
+    
+    async def _on_ytdlp_progress(self, progress_data: dict) -> None:
+        """
+        Handle progress events from YTDLPService.
+        
+        This is called during downloads with yt-dlp progress information.
+        We emit WebSocket broadcast events here.
+        
+        Args:
+            progress_data: Dict with video_id, status, progress_percent, etc.
+        """
+        if self.progress_callback:
+            try:
+                await self.progress_callback(progress_data)
+            except Exception as e:
+                logger.error(f"Failed to call progress callback: {e}")
     
     def set_progress_callback(self, callback: Callable) -> None:
         """

@@ -38,6 +38,25 @@ class YTDLPService:
             timeout: Default timeout in seconds for operations
         """
         self.timeout = timeout
+        self.progress_callback: Optional[callable] = None
+    
+    def set_progress_callback(self, callback: callable) -> None:
+        """
+        Set callback for download progress events.
+        
+        Callback will be called with yt-dlp's progress_hooks format:
+        {
+            'status': 'downloading',
+            'downloaded_bytes': 1024000,
+            'total_bytes': 10240000,
+            '_speed_str': '1.23MiB/s',
+            'filename': 'video.mp4'
+        }
+        
+        Args:
+            callback: Async function that receives progress dict
+        """
+        self.progress_callback = callback
 
     def extract_metadata(self, url: str) -> Dict:
         """
@@ -159,6 +178,10 @@ class YTDLPService:
                 "format": "(bestvideo[height<=1080][ext=mp4]+bestaudio[ext=m4a])/(best[height<=1080])",
                 "outtmpl": output_path,
             }
+            
+            # Add progress hook if callback is configured
+            if self.progress_callback:
+                ydl_opts["progress_hooks"] = [self._create_progress_hook(video_id)]
 
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 logger.debug(f"  → Calling yt-dlp for download...")
@@ -187,6 +210,81 @@ class YTDLPService:
         except Exception as e:
             logger.exception(f"✗ Unexpected error: {str(e)}")
             return None, f"Unexpected error: {str(e)}"
+
+    def _create_progress_hook(self, video_id: str):
+        """
+        Create a progress hook for yt-dlp that calls the async callback.
+        
+        yt-dlp progress_hooks are synchronous, but we need to call async callbacks.
+        We use asyncio.run in a thread-safe way to bridge the gap.
+        
+        Args:
+            video_id: Video ID for context
+            
+        Returns:
+            Synchronous progress hook function
+        """
+        import asyncio
+        import threading
+        
+        def progress_hook(d):
+            if not self.progress_callback:
+                return
+            
+            # Map yt-dlp progress status to our format
+            status = d.get('status', 'unknown')
+            
+            # Skip post-processing and finished statuses for cleaner output
+            if status in ('finished', 'error'):
+                return
+            
+            # Extract progress info
+            downloaded = d.get('downloaded_bytes', 0)
+            total = d.get('total_bytes', 0) or d.get('total_bytes_estimate', 0)
+            
+            # Calculate progress percentage
+            progress_percent = 0
+            if total > 0:
+                progress_percent = int((downloaded / total) * 100)
+            
+            # Map yt-dlp status to our status names
+            status_map = {
+                'downloading': 'DOWNLOADING',
+                'processing': 'PROCESSING',
+            }
+            current_status = status_map.get(status, status.upper())
+            
+            # Determine current step from yt-dlp info
+            current_step = d.get('_speed_str', 'Downloading...')
+            if status == 'processing':
+                current_step = 'Post-processing (merging audio/video)'
+            
+            progress_data = {
+                "video_id": video_id,
+                "status": current_status,
+                "progress_percent": progress_percent,
+                "current_step": current_step,
+                "downloaded_bytes": downloaded,
+                "total_bytes": total,
+            }
+            
+            # Call the async callback in a way that works with sync progress hooks
+            try:
+                # Try to get the current event loop
+                loop = asyncio.get_event_loop()
+                if loop.is_running():
+                    # If loop is already running, schedule as task
+                    asyncio.create_task(self.progress_callback(progress_data))
+                else:
+                    # Otherwise run it directly
+                    loop.run_until_complete(self.progress_callback(progress_data))
+            except RuntimeError:
+                # No event loop, create one in this thread
+                new_loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(new_loop)
+                new_loop.run_until_complete(self.progress_callback(progress_data))
+        
+        return progress_hook
 
     def validate_url(self, url: str) -> bool:
         """
