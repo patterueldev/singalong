@@ -1,4 +1,4 @@
-# Singalong Node Service - Development Dockerfile
+# Singalong Master Service - Development Dockerfile
 FROM python:3.11-slim
 
 # Set working directory
@@ -8,22 +8,23 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     ffmpeg \
-    && pip install --no-cache-dir poetry \
+    git \
+    && pip install --no-cache-dir poetry yt-dlp --upgrade \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy dependency files
-COPY pyproject.toml poetry.lock* ./
+COPY apps/singalong-master/pyproject.toml apps/singalong-master/poetry.lock* ./
 
 # Install Python dependencies
 RUN poetry config virtualenvs.create false && \
     poetry install --no-interaction --no-ansi
 
 # Copy application code
-COPY . ./
+COPY apps/singalong-master ./
 
 # Expose port
-EXPOSE 5002
+EXPOSE 5001
 
 # Run with hot-reload
-CMD ["poetry", "run", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "5002", "--reload"]
+CMD ["poetry", "run", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "5001", "--reload"]

@@ -7,8 +7,8 @@ services:
   # Master Service - Central server for video storage and data management
   master:
     build:
-      context: ./apps/singalong-master
-      dockerfile: Dockerfile.dev
+      context: .
+      dockerfile: infrastructure/development/master.dockerfile
     container_name: singalong-master
     ports:
       - "5001:5001"
@@ -26,8 +26,8 @@ services:
   # Node Service - Local karaoke server
   node:
     build:
-      context: ./apps/singalong-node
-      dockerfile: Dockerfile.dev
+      context: .
+      dockerfile: infrastructure/development/node.dockerfile
     container_name: singalong-node
     ports:
       - "5002:5002"
