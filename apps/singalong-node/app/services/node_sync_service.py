@@ -90,10 +90,13 @@ class NodeSyncService:
             # Process each song
             for master_song in master_songs:
                 try:
-                    # Check if song already exists locally
+                    # Check if song already exists locally (by id or video_id)
                     song_id = UUID(master_song["id"]) if isinstance(master_song["id"], str) else master_song["id"]
+                    video_id = master_song.get("videoId")
+                    
+                    # Check both by id and by video_id to avoid UNIQUE constraint errors
                     existing = self.db.query(Song).filter(
-                        Song.id == song_id
+                        (Song.id == song_id) | (Song.video_id == video_id)
                     ).first()
                     
                     # Download video file from Master

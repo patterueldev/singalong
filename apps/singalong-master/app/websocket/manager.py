@@ -50,7 +50,22 @@ class ConnectionManager:
             "data": data,
         }
 
-        logger.debug(f"Broadcasting {event_type} to {len(self.active_connections)} connections")
+        # Log with actual data details
+        if event_type == "download:progress":
+            progress = data.get("progress_percent", 0)
+            video_id = data.get("video_id", "unknown")
+            status = data.get("status", "unknown")
+            logger.info(f"[BROADCAST] download:progress | {video_id} | {progress}% | status={status}")
+        elif event_type == "download:complete":
+            video_id = data.get("video_id", "unknown")
+            title = data.get("title", "unknown")
+            logger.info(f"[BROADCAST] download:complete | {video_id} | {title}")
+        elif event_type == "download:error":
+            video_id = data.get("video_id", "unknown")
+            error = data.get("error_message", "unknown")
+            logger.info(f"[BROADCAST] download:error | {video_id} | {error}")
+        else:
+            logger.debug(f"[BROADCAST] {event_type} | connections={len(self.active_connections)}")
 
         # Track disconnected connections to clean up
         disconnected = set()
