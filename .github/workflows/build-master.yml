@@ -66,8 +66,8 @@ jobs:
       - name: Build and push Master image
         uses: docker/build-push-action@v5
         with:
-          context: .
-          dockerfile: ./infrastructure/release/master.dockerfile
+          context: ./apps/singalong-master
+          dockerfile: ../../infrastructure/release/master.dockerfile
           platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
