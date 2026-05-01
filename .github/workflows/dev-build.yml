@@ -55,22 +55,36 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Fetch base branch (for PRs)
+        if: github.event_name == 'pull_request'
+        run: |
+          git fetch origin ${{ github.base_ref }}:${{ github.base_ref }}
+
       - name: Detect changed files
         id: changes
         run: |
-          # Get the previous commit on develop branch
-          # For the first push, compare against initial commit
-          if [ "${{ github.event.before }}" != "0000000000000000000000000000000000000000" ]; then
-            PREVIOUS_COMMIT="${{ github.event.before }}"
+          # Determine the comparison base
+          # For pull_request events, compare against base branch
+          # For push events, compare against previous commit
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            # Pull request: compare against base branch
+            PREVIOUS_COMMIT="origin/${{ github.base_ref }}"
+            CURRENT_COMMIT="HEAD"
           else
-            PREVIOUS_COMMIT="HEAD~1"
+            # Push event: compare against previous commit
+            if [ "${{ github.event.before }}" != "0000000000000000000000000000000000000000" ]; then
+              PREVIOUS_COMMIT="${{ github.event.before }}"
+            else
+              PREVIOUS_COMMIT="HEAD~1"
+            fi
+            CURRENT_COMMIT="HEAD"
           fi
 
-          echo "Comparing changes between $PREVIOUS_COMMIT and HEAD"
+          echo "Comparing changes between $PREVIOUS_COMMIT and $CURRENT_COMMIT"
           echo ""
 
           # Check if master files changed
-          if git diff --name-only $PREVIOUS_COMMIT HEAD | grep -q "^apps/singalong-master/" || git diff --name-only $PREVIOUS_COMMIT HEAD | grep -q "^infrastructure.*master"; then
+          if git diff --name-only $PREVIOUS_COMMIT $CURRENT_COMMIT | grep -q "^apps/singalong-master/" || git diff --name-only $PREVIOUS_COMMIT $CURRENT_COMMIT | grep -q "^infrastructure.*master"; then
             echo "master=true" >> $GITHUB_OUTPUT
             echo "✓ Changes detected in master service"
           else
@@ -79,7 +93,7 @@ jobs:
           fi
 
           # Check if node files changed
-          if git diff --name-only $PREVIOUS_COMMIT HEAD | grep -q "^apps/singalong-node/" || git diff --name-only $PREVIOUS_COMMIT HEAD | grep -q "^infrastructure.*node"; then
+          if git diff --name-only $PREVIOUS_COMMIT $CURRENT_COMMIT | grep -q "^apps/singalong-node/" || git diff --name-only $PREVIOUS_COMMIT $CURRENT_COMMIT | grep -q "^infrastructure.*node"; then
             echo "node=true" >> $GITHUB_OUTPUT
             echo "✓ Changes detected in node service"
           else
