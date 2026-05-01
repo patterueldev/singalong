@@ -28,8 +28,14 @@
 
 name: Development Build & Push
 
+# on:
+#   push:
+#     branches:
+#       - develop
+
+# TODO: ONCE TESTED, SWITCH TO PUSH AND REMOVE PR TRIGGER
 on:
-  push:
+  pull_request:
     branches:
       - develop
 
