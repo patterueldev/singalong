@@ -1,0 +1,26 @@
+name: PR / Base Checks (RC branch rules)
+
+on:
+  workflow_call:
+
+jobs:
+  base-checks:
+    name: Base checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Check base branch
+        run: |
+          BASE_BRANCH="${{ github.base_ref }}"
+          
+          # Check if base branch is develop or main
+          if [ "$BASE_BRANCH" != "develop" ] && [ "$BASE_BRANCH" != "main" ]; then
+            echo "❌ PRs can only be merged into 'develop' or 'main' branches"
+            exit 1
+          fi
+          
+          echo "✅ Valid base branch: $BASE_BRANCH"

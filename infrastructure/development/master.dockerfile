@@ -7,19 +7,21 @@ WORKDIR /app
 # Install system dependencies and Poetry
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
-    && pip install --no-cache-dir poetry \
+    ffmpeg \
+    git \
+    && pip install --no-cache-dir poetry yt-dlp --upgrade \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy dependency files
-COPY apps/singalong-master/pyproject.toml apps/singalong-master/poetry.lock* ./
+COPY pyproject.toml poetry.lock* ./
 
 # Install Python dependencies
 RUN poetry config virtualenvs.create false && \
     poetry install --no-interaction --no-ansi
 
 # Copy application code
-COPY apps/singalong-master ./
+COPY . ./
 
 # Expose port
 EXPOSE 5001

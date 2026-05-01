@@ -1,0 +1,107 @@
+#
+# QA Build & Deploy Entry Point
+#
+# Purpose:
+#   Triggers build and deployment pipeline for RC (release candidate) branches.
+#   Calls the deploy-orchestrator with env=qa.
+#
+# Trigger:
+#   - Push to rc/vX.Y.Z branch
+#
+# What it does:
+#   1. Passes control to deploy-orchestrator.yml with env=qa
+#   2. Orchestrator detects changes vs main branch
+#   3. Conditionally deploys backend/mobile to QA environment
+#   4. Displays summary of results
+#
+# Related Workflows:
+#   • .github/workflows/deploy-orchestrator.yml (core orchestration logic)
+#   • .github/workflows/prod-build.yml (production entry point)
+#
+name: QA Build & Deploy
+
+on:
+  push:
+    branches:
+      - 'rc/v*.*.*'
+
+concurrency:
+  group: qa-build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  detect-changes:
+    name: Detect changed files
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.changes.outputs.backend }}
+      frontend: ${{ steps.changes.outputs.frontend }}
+      android: ${{ steps.changes.outputs.android }}
+      ios: ${{ steps.changes.outputs.ios }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect changed files
+        id: changes
+        run: |
+          # Compare RC branch against main (production)
+          MERGE_BASE=$(git merge-base origin/main HEAD)
+          
+          echo "Comparing against main branch (production):"
+          echo "Merge base: $MERGE_BASE"
+          echo ""
+          
+          # Check if backend files changed
+          if git diff --name-only $MERGE_BASE HEAD | grep -q "^apps/smart-pocket-backend/"; then
+            echo "backend=true" >> $GITHUB_OUTPUT
+            echo "✅ Changes detected in backend files."
+          else
+            echo "backend=false" >> $GITHUB_OUTPUT
+            echo "⊘ No changes detected in backend files."
+          fi
+          
+          # Check if frontend files changed
+          if git diff --name-only $MERGE_BASE HEAD | grep -q "^apps/smart-pocket-web/"; then
+            echo "frontend=true" >> $GITHUB_OUTPUT
+            echo "✅ Changes detected in frontend files."
+          else
+            echo "frontend=false" >> $GITHUB_OUTPUT
+            echo "⊘ No changes detected in frontend files."
+          fi
+          
+          # Check if mobile files changed
+          if git diff --name-only $MERGE_BASE HEAD | grep -q "^apps/smart-pocket-mobile/"; then
+            echo "android=true" >> $GITHUB_OUTPUT
+            echo "ios=true" >> $GITHUB_OUTPUT
+            echo "✅ Changes detected in mobile files."
+          else
+            echo "android=false" >> $GITHUB_OUTPUT
+            echo "ios=false" >> $GITHUB_OUTPUT
+            echo "⊘ No changes detected in mobile files."
+          fi
+
+      - name: Output detection results
+        run: |
+          echo "✅ Detection complete:"
+          echo "- Backend changed: ${{ steps.changes.outputs.backend }}"
+          echo "- Frontend changed: ${{ steps.changes.outputs.frontend }}"
+          echo "- Android changed: ${{ steps.changes.outputs.android }}"
+          echo "- iOS changed: ${{ steps.changes.outputs.ios }}"
+
+  deploy:
+    name: Orchestrate QA Build & Deploy
+    needs: detect-changes
+    uses: ./.github/workflows/deploy-orchestrator.yml
+    with:
+      env: qa
+      backend: ${{ needs.detect-changes.outputs.backend }}
+      frontend: ${{ needs.detect-changes.outputs.frontend }}
+      android: ${{ needs.detect-changes.outputs.android }}
+      ios: ${{ needs.detect-changes.outputs.ios }}
+    secrets: inherit
+    permissions:
+      contents: read
+      packages: write
