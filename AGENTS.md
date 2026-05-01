@@ -1121,6 +1121,64 @@ async def get_song(song_id: str, service: SongService = Depends()):
 
 ---
 
+## 12. Pull Request Guidelines
+
+When creating a Pull Request, follow these steps to ensure clear communication and proper tracking:
+
+### 12.1 PR Title Format
+
+**Format**: Follow Conventional Commits format
+- Examples: `feat: Add user authentication`, `fix: Correct session code validation`, `refactor: Simplify API response structure`
+
+**Process**:
+1. Analyze what changed from current branch vs base branch: `git diff origin/base-branch..current-branch --stat`
+2. Identify the general scope of changes
+3. Write a short, descriptive sentence summarizing the update
+4. Prefix with the appropriate type: `feat`, `fix`, `refactor`, `docs`, `chore`, `ci`
+
+**Guidelines**:
+- Keep title concise (under 70 characters ideal)
+- Describe what was updated in one sentence
+- Use lowercase except for proper nouns
+- Avoid generic titles like "Updates" or "Improvements"
+
+### 12.2 PR Body Format
+
+**Template**: Follow `.github/pull_request_template.md` structure
+
+Required sections:
+- **Summary**: One or two sentences describing the change
+- **Motivation**: Why the change is needed, link any issues
+- **Testing**: How the change was tested, provide steps and results
+- **Release Notes** (optional): Any notes for the release process
+
+**Best Practices**:
+- Be specific and detailed in Motivation and Testing sections
+- Include commands and output where relevant
+- Document any breaking changes clearly
+- Link to related issues or documentation
+
+### 12.3 Example Workflow
+
+```bash
+# 1. Check what changed
+git diff origin/develop..feature-branch --stat
+
+# 2. Create PR title
+# Result: "feat: Implement Master and Node backend services"
+
+# 3. Write PR body following template sections
+# - Summary: One sentence overview
+# - Motivation: Why Master and Node were needed
+# - Testing: docker-compose up, release build tests, etc.
+# - Release Notes: New features and improvements
+
+# 4. Update PR
+gh pr edit 1 --title "feat: ..." --body-file pr-body.md
+```
+
+---
+
 ## Document Version
 
 - **Created**: 2024
