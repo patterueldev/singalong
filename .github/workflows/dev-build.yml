@@ -1,0 +1,206 @@
+#
+# Development Build & Push
+#
+# Purpose:
+#   Automated build and push to GHCR when code is merged to develop branch.
+#   Detects what changed and only rebuilds affected services.
+#
+# Trigger:
+#   - Push to develop branch (PR merge)
+#
+# What it does:
+#   1. Detects changes in master and node services
+#   2. Builds Docker images for changed services
+#   3. Pushes images to GHCR with :dev tag
+#   4. Updates deployment (if applicable)
+#
+# Related Workflows:
+#   • .github/workflows/pr-checks.yml (feature branch checks)
+#   • .github/workflows/pr-master-checks.yml (master service tests)
+#   • .github/workflows/pr-node-checks.yml (node service tests)
+#
+# Notes:
+#   - Runs on every push to develop
+#   - Only builds services with detected changes
+#   - Images tagged as ghcr.io/org/service:dev
+#   - Requires GHCR_TOKEN secret for pushing
+#
+
+name: Development Build & Push
+
+on:
+  push:
+    branches:
+      - develop
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  detect-changes:
+    name: Detect changed services
+    runs-on: ubuntu-latest
+    outputs:
+      master: ${{ steps.changes.outputs.master }}
+      node: ${{ steps.changes.outputs.node }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect changed files
+        id: changes
+        run: |
+          # Get the previous commit on develop branch
+          # For the first push, compare against initial commit
+          if [ "${{ github.event.before }}" != "0000000000000000000000000000000000000000" ]; then
+            PREVIOUS_COMMIT="${{ github.event.before }}"
+          else
+            PREVIOUS_COMMIT="HEAD~1"
+          fi
+
+          echo "Comparing changes between $PREVIOUS_COMMIT and HEAD"
+          echo ""
+
+          # Check if master files changed
+          if git diff --name-only $PREVIOUS_COMMIT HEAD | grep -q "^apps/singalong-master/" || git diff --name-only $PREVIOUS_COMMIT HEAD | grep -q "^infrastructure.*master"; then
+            echo "master=true" >> $GITHUB_OUTPUT
+            echo "✓ Changes detected in master service"
+          else
+            echo "master=false" >> $GITHUB_OUTPUT
+            echo "✗ No changes in master service"
+          fi
+
+          # Check if node files changed
+          if git diff --name-only $PREVIOUS_COMMIT HEAD | grep -q "^apps/singalong-node/" || git diff --name-only $PREVIOUS_COMMIT HEAD | grep -q "^infrastructure.*node"; then
+            echo "node=true" >> $GITHUB_OUTPUT
+            echo "✓ Changes detected in node service"
+          else
+            echo "node=false" >> $GITHUB_OUTPUT
+            echo "✗ No changes in node service"
+          fi
+
+          echo ""
+          echo "Changed files:"
+          git diff --name-only $PREVIOUS_COMMIT HEAD
+
+      - name: Output detection results
+        run: |
+          echo "Detection complete:"
+          echo "- Master changed: ${{ steps.changes.outputs.master }}"
+          echo "- Node changed: ${{ steps.changes.outputs.node }}"
+
+  build-master:
+    name: Build Master Image
+    needs: detect-changes
+    if: needs.detect-changes.outputs.master == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}/singalong-master
+          tags: |
+            type=raw,value=dev
+            type=sha,prefix={{branch}}-
+
+      - name: Build and push Master image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          dockerfile: infrastructure/master.dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=registry,ref=ghcr.io/${{ github.repository }}/singalong-master:dev
+          cache-to: type=inline
+
+      - name: Image pushed
+        run: |
+          echo "✓ Master image built and pushed to GHCR"
+          echo "Image: ghcr.io/${{ github.repository }}/singalong-master:dev"
+
+  build-node:
+    name: Build Node Image
+    needs: detect-changes
+    if: needs.detect-changes.outputs.node == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}/singalong-node
+          tags: |
+            type=raw,value=dev
+            type=sha,prefix={{branch}}-
+
+      - name: Build and push Node image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          dockerfile: infrastructure/node.dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=registry,ref=ghcr.io/${{ github.repository }}/singalong-node:dev
+          cache-to: type=inline
+
+      - name: Image pushed
+        run: |
+          echo "✓ Node image built and pushed to GHCR"
+          echo "Image: ghcr.io/${{ github.repository }}/singalong-node:dev"
+
+  notify:
+    name: Notify Build Complete
+    needs: [detect-changes, build-master, build-node]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Build summary
+        run: |
+          echo "=== Development Build Summary ==="
+          echo "Branch: develop"
+          echo "Commit: ${{ github.sha }}"
+          echo "Author: ${{ github.actor }}"
+          echo ""
+          echo "Services Built:"
+          if [ "${{ needs.detect-changes.outputs.master }}" == "true" ]; then
+            echo "  ✓ Master (ghcr.io/${{ github.repository }}/singalong-master:dev)"
+          else
+            echo "  ✗ Master (no changes)"
+          fi
+          if [ "${{ needs.detect-changes.outputs.node }}" == "true" ]; then
+            echo "  ✓ Node (ghcr.io/${{ github.repository }}/singalong-node:dev)"
+          else
+            echo "  ✗ Node (no changes)"
+          fi
