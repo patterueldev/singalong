@@ -6,6 +6,7 @@ from Master WebSocket endpoint.
 """
 
 import logging
+import asyncio
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -59,6 +60,9 @@ class MasterEventHandlers:
         """
         Handle download completion event from Master.
 
+        When a download completes on Master, automatically trigger a sync
+        on Node to pull the newly downloaded video into local cache.
+
         Event format:
         {
             "video_id": "abc123",
@@ -73,11 +77,61 @@ class MasterEventHandlers:
 
             logger.info(f"[DOWNLOAD COMPLETE] video_id={video_id} | {artist} - {title}")
 
-            # TODO: Trigger catalog sync to download video file to local storage
-            # await trigger_catalog_sync(video_id)
+            # Trigger catalog sync to download video file to local storage
+            # This runs in background so we don't block the event handler
+            try:
+                await MasterEventHandlers._trigger_sync_for_video(video_id)
+            except Exception as sync_error:
+                logger.error(
+                    f"Failed to trigger sync after download: {sync_error}",
+                    exc_info=True
+                )
 
         except Exception as e:
             logger.error(f"Error handling download complete: {e}")
+
+    @staticmethod
+    async def _trigger_sync_for_video(video_id: str) -> None:
+        """
+        Trigger catalog sync on Node to download newly completed video.
+
+        Calls Node's sync endpoint to fetch the video file from Master.
+        Runs asynchronously in background.
+
+        Args:
+            video_id: YouTube video ID that was just downloaded
+        """
+        try:
+            import httpx
+            from app.config import settings
+            from app.services.master_auth_manager import get_access_token
+
+            # Get Node's own JWT token for the sync endpoint
+            access_token = get_access_token()
+            if not access_token:
+                logger.error("Cannot trigger sync: No access token available")
+                return
+
+            # Call local Node sync endpoint
+            # Note: In docker-compose, use service name 'node' for inter-container calls
+            sync_url = "http://node:5002/api/songs/sync"
+            headers = {"Authorization": f"Bearer {access_token}"}
+
+            logger.info(f"[AUTO-SYNC] Triggering sync for newly downloaded video: {video_id}")
+
+            async with httpx.AsyncClient(timeout=10.0) as client:
+                response = await client.post(sync_url, headers=headers)
+                response.raise_for_status()
+
+                result = response.json()
+                logger.info(
+                    f"[AUTO-SYNC] Sync triggered successfully: task_id={result.get('task_id')}"
+                )
+
+        except httpx.HTTPError as http_error:
+            logger.error(f"HTTP error triggering sync: {http_error}")
+        except Exception as e:
+            logger.error(f"Unexpected error triggering sync: {e}", exc_info=True)
 
     @staticmethod
     async def handle_catalog_updated(data: dict[str, Any]) -> None:
