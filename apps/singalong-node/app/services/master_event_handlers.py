@@ -105,7 +105,7 @@ class MasterEventHandlers:
         """
         try:
             from app.services.node_sync_service import NodeSyncService
-            from app.models.db_models import SessionLocal
+            from app.database import SessionLocal
             
             # Create database session for this thread
             db_session = SessionLocal()
