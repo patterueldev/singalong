@@ -115,7 +115,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/${{ github.repository }}/singalong-master
+          images: ghcr.io/${{ github.repository }}/master
           tags: |
             type=raw,value=dev
             type=sha,prefix={{branch}}-
@@ -128,13 +128,13 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=registry,ref=ghcr.io/${{ github.repository }}/singalong-master:dev
+          cache-from: type=registry,ref=ghcr.io/${{ github.repository }}/master:dev
           cache-to: type=inline
 
       - name: Image pushed
         run: |
           echo "✓ Master image built and pushed to GHCR"
-          echo "Image: ghcr.io/${{ github.repository }}/singalong-master:dev"
+          echo "Image: ghcr.io/${{ github.repository }}/master:dev"
 
   build-node:
     name: Build Node Image
@@ -159,7 +159,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/${{ github.repository }}/singalong-node
+          images: ghcr.io/${{ github.repository }}/node
           tags: |
             type=raw,value=dev
             type=sha,prefix={{branch}}-
@@ -172,13 +172,13 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=registry,ref=ghcr.io/${{ github.repository }}/singalong-node:dev
+          cache-from: type=registry,ref=ghcr.io/${{ github.repository }}/node:dev
           cache-to: type=inline
 
       - name: Image pushed
         run: |
           echo "✓ Node image built and pushed to GHCR"
-          echo "Image: ghcr.io/${{ github.repository }}/singalong-node:dev"
+          echo "Image: ghcr.io/${{ github.repository }}/node:dev"
 
   notify:
     name: Notify Build Complete
@@ -195,12 +195,12 @@ jobs:
           echo ""
           echo "Services Built:"
           if [ "${{ needs.detect-changes.outputs.master }}" == "true" ]; then
-            echo "  ✓ Master (ghcr.io/${{ github.repository }}/singalong-master:dev)"
+            echo "  ✓ Master (ghcr.io/${{ github.repository }}/master:dev)"
           else
             echo "  ✗ Master (no changes)"
           fi
           if [ "${{ needs.detect-changes.outputs.node }}" == "true" ]; then
-            echo "  ✓ Node (ghcr.io/${{ github.repository }}/singalong-node:dev)"
+            echo "  ✓ Node (ghcr.io/${{ github.repository }}/node:dev)"
           else
             echo "  ✗ Node (no changes)"
           fi
