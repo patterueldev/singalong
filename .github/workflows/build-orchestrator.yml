@@ -1,0 +1,147 @@
+#
+# Build Orchestrator (Reusable Workflow)
+#
+# Purpose:
+#   Core orchestration logic for building and pushing Docker images.
+#   Detects which services changed and conditionally builds them.
+#   Used by dev-build.yml, qa-build.yml, and prod-build.yml entry points.
+#
+# Trigger:
+#   - Called via workflow_call from entry point workflows
+#
+# Execution Flow:
+#   1. build-master (conditional: if master files changed)
+#      └─ Builds and pushes Master Docker image
+#      └─ Uses env parameter to set image tag (dev|qa|prod)
+#   
+#   2. build-node (conditional: if node files changed)
+#      └─ Builds and pushes Node Docker image
+#      └─ Uses env parameter to set image tag (dev|qa|prod)
+#
+#   3. summary (always)
+#      └─ Displays build results and any failures
+#      └─ Fails if any build failed
+#
+# Key Features:
+#   • Cost-optimized: only builds changed services
+#   • Reusable: accepts env parameter (dev|qa|prod)
+#   • Smart detection: compares against previous commit
+#   • Clear reporting: summary shows what was built
+#
+# Related Workflows:
+#   • .github/workflows/dev-build.yml (develop branch entry point)
+#   • .github/workflows/build-master.yml (master service Docker build)
+#   • .github/workflows/build-node.yml (node service Docker build)
+#
+
+name: Build Orchestrator
+
+on:
+  workflow_call:
+    inputs:
+      env:
+        required: true
+        type: string
+        description: 'Build environment: dev, qa, or prod'
+      master:
+        required: true
+        type: string
+        description: 'Master service files changed: true or false'
+      node:
+        required: true
+        type: string
+        description: 'Node service files changed: true or false'
+
+jobs:
+
+  # Master service Docker build & push
+  build-master:
+    name: Build Master Image
+    uses: ./.github/workflows/build-master.yml
+    with:
+      env: ${{ inputs.env }}
+    if: inputs.master == 'true'
+    secrets: inherit
+    permissions:
+      contents: read
+      packages: write
+
+  # Node service Docker build & push
+  build-node:
+    name: Build Node Image
+    uses: ./.github/workflows/build-node.yml
+    with:
+      env: ${{ inputs.env }}
+    if: inputs.node == 'true'
+    secrets: inherit
+    permissions:
+      contents: read
+      packages: write
+
+  # Summary: display overall build results
+  summary:
+    name: Build Summary
+    runs-on: ubuntu-latest
+    needs: [build-master, build-node]
+    if: always()
+    steps:
+      - name: Check for build failures
+        run: |
+          # Fail summary if any build failed
+          FAILED=false
+          
+          # master-build: only fails if it ran and failed (not if skipped)
+          if [ "${{ needs.build-master.result }}" = "failure" ]; then
+            echo "❌ Master build failed"
+            FAILED=true
+          fi
+          
+          # node-build: only fails if it ran and failed (not if skipped)
+          if [ "${{ needs.build-node.result }}" = "failure" ]; then
+            echo "❌ Node build failed"
+            FAILED=true
+          fi
+          
+          if [ "$FAILED" = "true" ]; then
+            exit 1
+          fi
+
+      - name: Generate Summary
+        run: |
+          ENV_LABEL="${{ inputs.env }}"
+          ENV_UPPER=$(echo $ENV_LABEL | tr '[:lower:]' '[:upper:]')
+          
+          echo "## 🚀 Build Summary ($ENV_UPPER)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Branch**: \`${{ github.ref_name }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment**: \`$ENV_LABEL\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Files Changed" >> $GITHUB_STEP_SUMMARY
+          echo "- Master: ${{ inputs.master }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Node: ${{ inputs.node }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Builds" >> $GITHUB_STEP_SUMMARY
+          
+          # Conditionally show master build
+          if [ "${{ inputs.master }}" = "true" ]; then
+            MASTER_STATUS="${{ needs.build-master.result }}"
+            MASTER_ICON=$([ "$MASTER_STATUS" = "success" ] && echo "✅" || echo "❌")
+            echo "- $MASTER_ICON Master (Docker): $MASTER_STATUS" >> $GITHUB_STEP_SUMMARY
+            if [ "$MASTER_STATUS" = "success" ]; then
+              echo "  - Image: \`ghcr.io/${{ github.repository }}/master:$ENV_LABEL\`" >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "- ⊘ Master: skipped (no changes)" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Conditionally show node build
+          if [ "${{ inputs.node }}" = "true" ]; then
+            NODE_STATUS="${{ needs.build-node.result }}"
+            NODE_ICON=$([ "$NODE_STATUS" = "success" ] && echo "✅" || echo "❌")
+            echo "- $NODE_ICON Node (Docker): $NODE_STATUS" >> $GITHUB_STEP_SUMMARY
+            if [ "$NODE_STATUS" = "success" ]; then
+              echo "  - Image: \`ghcr.io/${{ github.repository }}/node:$ENV_LABEL\`" >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "- ⊘ Node: skipped (no changes)" >> $GITHUB_STEP_SUMMARY
+          fi

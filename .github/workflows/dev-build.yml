@@ -3,27 +3,27 @@
 #
 # Purpose:
 #   Automated build and push to GHCR when code is merged to develop branch.
-#   Detects what changed and only rebuilds affected services.
+#   Detects what changed and delegates to build orchestrator.
 #
 # Trigger:
 #   - Push to develop branch (PR merge)
 #
 # What it does:
 #   1. Detects changes in master and node services
-#   2. Builds Docker images for changed services
-#   3. Pushes images to GHCR with :dev tag
-#   4. Updates deployment (if applicable)
+#   2. Calls build-orchestrator.yml with detected changes
+#   3. Orchestrator builds and pushes images for changed services
+#   4. Images tagged as ghcr.io/org/repo/service:dev
 #
 # Related Workflows:
-#   • .github/workflows/pr-checks.yml (feature branch checks)
-#   • .github/workflows/pr-master-checks.yml (master service tests)
-#   • .github/workflows/pr-node-checks.yml (node service tests)
+#   • .github/workflows/build-orchestrator.yml (core build orchestration)
+#   • .github/workflows/build-master.yml (master service build)
+#   • .github/workflows/build-node.yml (node service build)
 #
 # Notes:
 #   - Runs on every push to develop
 #   - Only builds services with detected changes
-#   - Images tagged as ghcr.io/org/service:dev
-#   - Requires GHCR_TOKEN secret for pushing
+#   - Images tagged with :dev
+#   - Requires GITHUB_TOKEN for GHCR push
 #
 
 name: Development Build & Push
@@ -35,7 +35,6 @@ on:
 
 permissions:
   contents: read
-  packages: write
 
 jobs:
   detect-changes:
@@ -92,115 +91,15 @@ jobs:
           echo "- Master changed: ${{ steps.changes.outputs.master }}"
           echo "- Node changed: ${{ steps.changes.outputs.node }}"
 
-  build-master:
-    name: Build Master Image
+  build:
+    name: Orchestrate Development Build
     needs: detect-changes
-    if: needs.detect-changes.outputs.master == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Log in to GHCR
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Extract metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ghcr.io/${{ github.repository }}/master
-          tags: |
-            type=raw,value=dev
-            type=sha,prefix={{branch}}-
-
-      - name: Build and push Master image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          dockerfile: infrastructure/master.dockerfile
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=registry,ref=ghcr.io/${{ github.repository }}/master:dev
-          cache-to: type=inline
-
-      - name: Image pushed
-        run: |
-          echo "✓ Master image built and pushed to GHCR"
-          echo "Image: ghcr.io/${{ github.repository }}/master:dev"
-
-  build-node:
-    name: Build Node Image
-    needs: detect-changes
-    if: needs.detect-changes.outputs.node == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Log in to GHCR
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Extract metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ghcr.io/${{ github.repository }}/node
-          tags: |
-            type=raw,value=dev
-            type=sha,prefix={{branch}}-
-
-      - name: Build and push Node image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          dockerfile: infrastructure/node.dockerfile
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=registry,ref=ghcr.io/${{ github.repository }}/node:dev
-          cache-to: type=inline
-
-      - name: Image pushed
-        run: |
-          echo "✓ Node image built and pushed to GHCR"
-          echo "Image: ghcr.io/${{ github.repository }}/node:dev"
-
-  notify:
-    name: Notify Build Complete
-    needs: [detect-changes, build-master, build-node]
-    if: always()
-    runs-on: ubuntu-latest
-    steps:
-      - name: Build summary
-        run: |
-          echo "=== Development Build Summary ==="
-          echo "Branch: develop"
-          echo "Commit: ${{ github.sha }}"
-          echo "Author: ${{ github.actor }}"
-          echo ""
-          echo "Services Built:"
-          if [ "${{ needs.detect-changes.outputs.master }}" == "true" ]; then
-            echo "  ✓ Master (ghcr.io/${{ github.repository }}/master:dev)"
-          else
-            echo "  ✗ Master (no changes)"
-          fi
-          if [ "${{ needs.detect-changes.outputs.node }}" == "true" ]; then
-            echo "  ✓ Node (ghcr.io/${{ github.repository }}/node:dev)"
-          else
-            echo "  ✗ Node (no changes)"
-          fi
+    uses: ./.github/workflows/build-orchestrator.yml
+    with:
+      env: dev
+      master: ${{ needs.detect-changes.outputs.master }}
+      node: ${{ needs.detect-changes.outputs.node }}
+    secrets: inherit
+    permissions:
+      contents: read
+      packages: write
