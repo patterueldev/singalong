@@ -444,11 +444,11 @@ def resolve_request_song_download(
                 download_service.set_progress_callback(broadcast_progress)
                 
                 # Hook completion event broadcasting
-                async def broadcast_complete():
+                async def broadcast_complete(video_id: str):
                     """Broadcast download completion to all connected Nodes"""
                     from app.websocket import connection_manager
                     await connection_manager.broadcast("download:complete", {
-                        "video_id": videoId,
+                        "video_id": video_id,
                         "title": title,
                         "artist": artist,
                     })
