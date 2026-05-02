@@ -18,7 +18,6 @@ def get_auth_service() -> AuthService:
     global _auth_service
     import logging
     logger = logging.getLogger(__name__)
-    logger.info("[AuthService] Getting auth service")
     if _auth_service is None:
         logger.info("[AuthService] Creating new AuthService instance")
         _auth_service = AuthService(
@@ -27,7 +26,8 @@ def get_auth_service() -> AuthService:
             access_token_expire_seconds=settings.jwt_access_token_expire_seconds,
             refresh_token_expire_seconds=settings.jwt_refresh_token_expire_seconds,
         )
-        logger.info("[AuthService] AuthService instance created")
+        logger.info(f"[AuthService] AuthService instance created: {id(_auth_service)}")
+    logger.info(f"[AuthService] Returning instance {id(_auth_service)}")
     return _auth_service
 
 
