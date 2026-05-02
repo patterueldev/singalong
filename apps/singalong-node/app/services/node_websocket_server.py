@@ -98,7 +98,7 @@ class WebSocketConnectionManager(IWebSocketConnectionRepository):
                    If None, broadcasts to all
         """
         if session_id not in self.sessions:
-            logger.debug(f"[WS] No clients in session {session_id}, skipping broadcast")
+            logger.info(f"[WS] No clients in session {session_id}, skipping broadcast | available_sessions={list(self.sessions.keys())}")
             return
 
         # Build event message
