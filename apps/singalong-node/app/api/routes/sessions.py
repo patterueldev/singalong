@@ -673,10 +673,12 @@ async def add_to_queue(
         logger.info(f"Added to queue: {song.title} at position {next_position}")
 
         # Broadcast queue update to all connected WebSocket clients
+        logger.info(f"[BROADCAST] About to broadcast queue:updated for session {session.code}")
         try:
             await NodeSessionEventHandlers.broadcast_queue_updated(session.code)
+            logger.info(f"[BROADCAST] Successfully broadcast queue:updated for session {session.code}")
         except Exception as e:
-            logger.warning(f"Failed to broadcast queue update: {str(e)}")
+            logger.warning(f"[BROADCAST] Failed to broadcast queue update: {str(e)}", exc_info=True)
 
         return {
             "queue_id": str(reservation.id),

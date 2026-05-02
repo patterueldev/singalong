@@ -90,7 +90,9 @@ class NodeSessionEventHandlers:
         Args:
             session_id: Session code
         """
+        logger.info(f"[BROADCAST] broadcast_queue_updated called for session {session_id}")
         manager = get_websocket_manager()
+        logger.info(f"[BROADCAST] WebSocket manager obtained: {manager}")
         db = SessionLocal()
 
         try:
@@ -128,6 +130,7 @@ class NodeSessionEventHandlers:
 
             event_data = {"queue": queue}
 
+            logger.info(f"[BROADCAST] Calling manager.broadcast_to_session with {len(queue)} items")
             await manager.broadcast_to_session(session_id, "queue:updated", event_data)
             logger.info(
                 f"[WS] Broadcast queue:updated | session={session_id} | "
