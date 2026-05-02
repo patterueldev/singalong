@@ -65,6 +65,11 @@ async def lifespan(app: FastAPI):
     PlayerManager.create_singleton(valid_keys)
     print(f"Player manager initialized with {len(valid_keys)} valid API key(s)")
     
+    # Initialize WebSocket services (Event Bus, Connection Manager, etc.)
+    from app.services.websocket_service_container import init_websocket_services
+    service_container = init_websocket_services()
+    print("✓ WebSocket services initialized (EventBus, ConnectionManager, BroadcastService)")
+    
     # Initialize WebSocket client for Master communication
     ws_client = get_master_websocket_client()
     ws_client.register_handler("download:progress", MasterEventHandlers.handle_download_progress)

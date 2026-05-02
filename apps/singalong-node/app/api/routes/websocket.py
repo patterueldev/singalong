@@ -5,7 +5,6 @@ import json
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, status
 
 from app.middleware.auth import get_auth_service
-from app.services.node_websocket_server import get_websocket_manager
 
 logger = logging.getLogger(__name__)
 
@@ -154,9 +153,21 @@ async def websocket_session_endpoint(session_id: str, websocket: WebSocket):
         await websocket.close(code=status.WS_1008_POLICY_VIOLATION, reason="Unauthorized")
         return
 
-    # Register connection
-    manager = get_websocket_manager()
+    # Register connection with connection manager
+    from app.services.websocket_service_container import get_service_container
+    container = get_service_container()
+    manager = container.get_connection_manager()
+    event_service = container.get_event_service()
+    event_bus = container.get_event_bus()
+    
     await manager.connect(session_id, websocket, role)
+    
+    # Emit client connected event (will trigger attendee list broadcast)
+    from app.services.event_bus import Event
+    await event_bus.emit(Event.CLIENT_CONNECTED, session_id=session_id, user_id=user_id, role=role)
+    
+    # Send initial state to client
+    await event_service.send_initial_state(session_id, user_id, websocket)
 
     try:
         # Keep connection alive and listen for client messages
@@ -200,6 +211,9 @@ async def websocket_session_endpoint(session_id: str, websocket: WebSocket):
 
     except WebSocketDisconnect:
         await manager.disconnect(session_id, websocket)
+        # Emit client disconnected event
+        from app.services.event_bus import Event
+        await event_bus.emit(Event.CLIENT_DISCONNECTED, session_id=session_id, user_id=user_id)
         logger.info(f"[WS] Client disconnected | session={session_id}")
     except Exception as e:
         logger.error(

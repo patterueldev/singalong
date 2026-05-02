@@ -7,11 +7,18 @@ from typing import Dict, List, Optional, Set
 from datetime import datetime
 from fastapi import WebSocket
 
+from app.services.websocket_repository import IWebSocketConnectionRepository
+
 logger = logging.getLogger(__name__)
 
 
-class WebSocketConnectionManager:
-    """Manages WebSocket connections per session"""
+class WebSocketConnectionManager(IWebSocketConnectionRepository):
+    """
+    Manages WebSocket connections per session.
+    
+    Implements IWebSocketConnectionRepository for testability and abstraction.
+    Tracks connections by session and role for efficient broadcasting.
+    """
 
     def __init__(self):
         # Dict[session_id] -> Set[WebSocket]
@@ -151,7 +158,38 @@ class WebSocketConnectionManager:
         """Get number of connected clients for a session"""
         return len(self.sessions.get(session_id, set()))
 
-    def get_session_clients_by_role(self, session_id: str) -> Dict[str, int]:
+    def get_session_clients(self, session_id: str) -> List[WebSocket]:
+        """Get all active WebSocket clients for a session"""
+        return list(self.sessions.get(session_id, set()))
+
+    def get_session_clients_by_role(
+        self, session_id: str, roles: Optional[List[str]] = None
+    ) -> List[WebSocket]:
+        """
+        Get WebSocket clients by role filter.
+        
+        Args:
+            session_id: Session code
+            roles: List of roles to filter. If None, return all
+            
+        Returns:
+            List of WebSocket connections matching role filter
+        """
+        if roles is None:
+            return self.get_session_clients(session_id)
+        
+        target_websockets = set()
+        for role in roles:
+            target_websockets.update(
+                self.sessions_by_role.get(session_id, {}).get(role, set())
+            )
+        return list(target_websockets)
+
+    def get_active_sessions(self) -> List[str]:
+        """Get all sessions with active connections"""
+        return list(self.sessions.keys())
+
+    def get_session_clients_by_role_count(self, session_id: str) -> Dict[str, int]:
         """Get connected clients grouped by role for a session"""
         result = {}
         for role, ws_set in self.sessions_by_role.get(session_id, {}).items():
@@ -164,7 +202,7 @@ class WebSocketConnectionManager:
         for session_id, websockets in self.sessions.items():
             result[session_id] = {
                 "total_clients": len(websockets),
-                "by_role": self.get_session_clients_by_role(session_id),
+                "by_role": self.get_session_clients_by_role_count(session_id),
             }
         return result
 

@@ -16,6 +16,73 @@ class NodeSessionEventHandlers:
     """Handlers for events originating from Node (player state, queue changes, etc)"""
 
     @staticmethod
+    async def send_initial_state(session_id: str, user_id: str, websocket):
+        """
+        Send initial state to newly connected client (queue, player position, attendees).
+        
+        Args:
+            session_id: Session code
+            user_id: Connected user ID
+            websocket: WebSocket connection to send to
+        """
+        db = SessionLocal()
+        
+        try:
+            # Fetch session
+            session = db.query(SessionModel).filter(SessionModel.code == session_id).first()
+            if not session:
+                logger.warning(f"[WS] Session not found for initial state: {session_id}")
+                return
+            
+            # Get queue
+            reservations = (
+                db.query(Reservation)
+                .filter(
+                    Reservation.session_id == session.id,
+                    Reservation.status == ReservationStatus.ACTIVE,
+                )
+                .order_by(Reservation.order_index.asc())
+                .all()
+            )
+            
+            queue = []
+            for idx, reservation in enumerate(reservations, 1):
+                queue.append(
+                    {
+                        "position": idx,
+                        "song_id": reservation.song_id,
+                        "title": reservation.song.title,
+                        "artist": reservation.song.artist,
+                        "reserved_by": reservation.reserved_by or "Unknown",
+                    }
+                )
+            
+            # Send initial state as single payload
+            initial_state = {
+                "type": "init",
+                "data": {
+                    "session_id": session_id,
+                    "session_title": session.title,
+                    "queue": queue,
+                    "total_reservations": len(queue),
+                }
+            }
+            
+            await websocket.send_json(initial_state)
+            logger.info(
+                f"[WS] Initial state sent | session={session_id} | user={user_id} | "
+                f"queue_size={len(queue)}"
+            )
+        
+        except Exception as e:
+            logger.error(
+                f"[WS] Error sending initial state | session={session_id} | error={str(e)}",
+                exc_info=True
+            )
+        finally:
+            db.close()
+
+    @staticmethod
     async def broadcast_song_playing(
         session_id: str,
         song_id: str,
