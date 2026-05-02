@@ -11,6 +11,7 @@ from sqlalchemy import asc, desc
 from app.database import get_db
 from app.middleware.auth import verify_bearer_token, verify_admin_role
 from app.services.session_service import SessionService
+from app.services.node_session_event_handlers import NodeSessionEventHandlers
 from app.api.dependencies import get_current_user, TokenPayload
 from app.models import db_models
 from app.models.db_models import ReservationStatus
@@ -684,6 +685,9 @@ async def add_to_queue(
 
         logger.info(f"Added to queue: {song.title} at position {next_position}")
 
+        # Broadcast queue update to all connected WebSocket clients
+        await NodeSessionEventHandlers.broadcast_queue_updated(session.code)
+
         return {
             "queue_id": str(reservation.id),
             "song_id": str(reservation.song_id),
@@ -707,7 +711,7 @@ async def add_to_queue(
 async def remove_from_queue(
     session_code: str,
     queue_id: str,
-    admin: dict = Depends(verify_admin_role),
+    user: TokenPayload = Depends(get_current_user),
     db: SQLSession = Depends(get_db),
 ):
     """
@@ -770,6 +774,9 @@ async def remove_from_queue(
         db.commit()
         logger.info(f"Removed from queue {queue_id}, re-numbered {len(higher_reservations)} items")
 
+        # Broadcast queue update to all connected WebSocket clients
+        await NodeSessionEventHandlers.broadcast_queue_updated(session.code)
+
     except HTTPException:
         raise
     except Exception as e:
@@ -783,7 +790,7 @@ async def change_queue_order(
     session_code: str,
     queue_id: str,
     new_position: int = Query(..., ge=1, description="New position in queue"),
-    admin: dict = Depends(verify_admin_role),
+    user: TokenPayload = Depends(get_current_user),
     db: SQLSession = Depends(get_db),
 ) -> dict:
     """
@@ -862,6 +869,9 @@ async def change_queue_order(
 
         db.commit()
         logger.info(f"Moved queue item from position {current_position} to {new_position}")
+
+        # Broadcast queue update to all connected WebSocket clients
+        await NodeSessionEventHandlers.broadcast_queue_updated(session.code)
 
         return {
             "queue_id": queue_id,
