@@ -123,9 +123,11 @@ class WebSocketConnectionManager(IWebSocketConnectionRepository):
 
         # Send to all targets
         disconnected = []
+        sent_count = 0
         for websocket in target_websockets:
             try:
                 await websocket.send_text(payload)
+                sent_count += 1
             except RuntimeError:
                 # Connection closed
                 disconnected.append(websocket)
@@ -134,9 +136,9 @@ class WebSocketConnectionManager(IWebSocketConnectionRepository):
         for websocket in disconnected:
             await self.disconnect(session_id, websocket)
 
-        logger.debug(
+        logger.info(
             f"[WS] Broadcast '{event_type}' to session {session_id} | "
-            f"targets={len(target_websockets)} | "
+            f"sent={sent_count} | targets={len(target_websockets)} | "
             f"roles={roles or 'all'}"
         )
 
