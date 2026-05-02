@@ -18,7 +18,7 @@ class Settings(BaseSettings):
         default="http://localhost:5001", validation_alias="MASTER_URL"
     )
     master_graphql_url: str = Field(
-        default="http://localhost:5001/graphql",
+        default="http://localhost:5001/graphql/",
         validation_alias="MASTER_GRAPHQL_URL",
     )
     # Node's API key for authenticating with Master

@@ -301,7 +301,7 @@ class MasterGraphQLClient:
         }
 
         try:
-            async with httpx.AsyncClient(timeout=self.timeout, follow_redirects=False) as client:
+            async with httpx.AsyncClient(timeout=self.timeout, follow_redirects=True) as client:
                 response = await client.post(
                     self.graphql_url,
                     json=payload,
