@@ -50,10 +50,13 @@ async def lifespan(app: FastAPI):
         print(f"FATAL: Failed to authenticate with Master: {str(e)}")
         raise
     
-    # Initialize admin session 9999
+    # Initialize admin session 9999 and cleanup extra sessions
     db = SessionLocal()
     try:
         ensure_admin_session_exists(db)
+        # Deactivate all sessions except whitelisted ones
+        from app.services.session_init import cleanup_node_sessions
+        cleanup_node_sessions(db, allowed_codes=["9999", "4369"])
     finally:
         db.close()
     
