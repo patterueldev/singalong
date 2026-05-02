@@ -619,24 +619,6 @@ async def add_to_queue(
         if not song:
             raise HTTPException(status_code=404, detail="Song not found or not available")
 
-        # Check if song already reserved in this session (only PENDING or PLAYING)
-        # Allow re-queueing of completed or cancelled songs
-        existing = (
-            db.query(db_models.Reservation)
-            .filter(
-                db_models.Reservation.session_code == session.code,
-                db_models.Reservation.song_id == song_uuid,
-                db_models.Reservation.status.in_([
-                    ReservationStatus.PENDING,
-                    ReservationStatus.PLAYING,
-                ])
-            )
-            .first()
-        )
-
-        if existing:
-            raise HTTPException(status_code=409, detail="Song already reserved in queue")
-
         # Get next position
         max_position = (
             db.query(db_models.Reservation)
