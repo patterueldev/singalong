@@ -30,38 +30,27 @@ class QueueDataService:
         db = SessionLocal()
         
         try:
-            # Fetch session
-            session = db.query(SessionModel).filter(
-                SessionModel.code == session_id
-            ).first()
-            
-            if not session:
-                logger.warning(f"[DataService] Session not found: {session_id}")
-                return {"queue": [], "total": 0}
-            
-            # Fetch active reservations in order
+            # Fetch reservations for this session (pending and playing only)
             reservations = (
                 db.query(Reservation)
                 .filter(
-                    Reservation.session_id == session.id,
-                    Reservation.status == ReservationStatus.ACTIVE,
+                    Reservation.session_code == session_id,
+                    Reservation.status.in_([ReservationStatus.PENDING, ReservationStatus.PLAYING]),
                 )
-                .order_by(Reservation.order_index.asc())
+                .order_by(Reservation.position.asc())
                 .all()
             )
             
             # Format queue
             queue = []
-            for idx, reservation in enumerate(reservations, 1):
+            for reservation in reservations:
                 queue.append(
                     {
-                        "position": idx,
+                        "position": reservation.position,
                         "reservation_id": str(reservation.id),
                         "song_id": str(reservation.song_id),
-                        "title": reservation.song.title,
-                        "artist": reservation.song.artist,
-                        "reserved_by": reservation.reserved_by or "Unknown",
-                        "duration": int(reservation.song.duration) if reservation.song.duration else 0,
+                        "title": reservation.song_title or "Unknown Title",
+                        "reserved_by": reservation.reserved_by_nickname or "Unknown",
                     }
                 )
             

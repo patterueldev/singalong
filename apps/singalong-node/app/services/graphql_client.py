@@ -348,10 +348,19 @@ class MasterGraphQLClient:
         The token is obtained during Node startup via initialize_master_auth().
         This method may refresh the token if it's about to expire.
         """
-        from app.services.master_auth_manager import get_master_auth_manager
-        
-        auth_manager = get_master_auth_manager()
-        self._bearer_token = await auth_manager.get_access_token()
+        try:
+            from app.services.master_auth_manager import get_master_auth_manager
+            
+            auth_manager = get_master_auth_manager()
+            logger.info(f"[GraphQL] Got auth manager: {auth_manager}, access_token set: {bool(auth_manager.access_token)}")
+            self._bearer_token = await auth_manager.get_access_token()
+            logger.info(f"[GraphQL] Got bearer token successfully")
+        except ValueError as e:
+            logger.error(f"[GraphQL] Auth manager error: {str(e)}", exc_info=True)
+            raise
+        except Exception as e:
+            logger.error(f"[GraphQL] Unexpected error getting bearer token: {str(e)}", exc_info=True)
+            raise
 
 
 class GraphQLError(Exception):
