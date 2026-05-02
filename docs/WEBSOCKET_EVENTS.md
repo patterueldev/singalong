@@ -452,76 +452,11 @@ async def handle_catalog_updated(data: dict[str, Any]) -> None:
 
 ---
 
-## 5. Future: Node WebSocket Server (W2.4)
-
-**Planned Endpoint**: `ws://singalong-node:5002/ws/{sessionId}`
-
-**Purpose**: Broadcast real-time session events to connected frontend clients (Admin UI, Controller UI)
-
-### Planned Events (W2.4)
-
-```json
-{
-  "type": "session:ready",
-  "data": {
-    "session_id": "sess-abc123",
-    "admin_name": "Admin Name"
-  }
-}
-```
-
-```json
-{
-  "type": "attendee:joined",
-  "data": {
-    "user_id": "user-xyz",
-    "nickname": "John"
-  }
-}
-```
-
-```json
-{
-  "type": "song:queued",
-  "data": {
-    "reservation_id": "res-123",
-    "song_id": "song-456",
-    "title": "Song Name",
-    "queued_by": "user-xyz",
-    "position": 3
-  }
-}
-```
-
-```json
-{
-  "type": "song:playing",
-  "data": {
-    "song_id": "song-456",
-    "title": "Song Name",
-    "elapsed_seconds": 15,
-    "duration_seconds": 300
-  }
-}
-```
-
-```json
-{
-  "type": "download:progress",
-  "data": {
-    "video_id": "abc123",
-    "progress_percent": 75
-  }
-}
-```
-
-**Status**: Not yet implemented (W2.4 phase)
-
----
-
-## 6. Testing WebSocket Connections
+## 5. Testing WebSocket Connections
 
 ### Test Master WebSocket
+
+**Master Endpoint**: `ws://localhost:5001/ws`
 
 ```bash
 # 1. Get auth token
@@ -569,7 +504,7 @@ curl -X POST http://localhost:5001/graphql/ \
 
 ---
 
-## 7. Debugging WebSocket Issues
+## 6. Debugging WebSocket Issues
 
 ### Node not connecting to Master
 
@@ -624,15 +559,374 @@ logging.basicConfig(level=logging.DEBUG)
 
 ---
 
-## 8. Summary Table
+## 7. Summary Table
 
 | Component | Endpoint | Direction | Events | Status |
 |-----------|----------|-----------|--------|--------|
 | Master WebSocket Server | `ws://master:5001/ws` | Server (broadcast) | `download:progress`, `download:complete`, `catalog:updated`, `system:health` | ✅ Complete (W2.1) |
 | Node WebSocket Client | Connects to Master | Client (listen) | All of above | ✅ Complete (W2.1-W2.3) |
 | Node Event Handlers | Internal | Internal | Process events, trigger sync | ✅ Complete (W2.3) |
-| Node WebSocket Server | `ws://node:5002/ws/{sessionId}` | Server (broadcast) | `session:*`, `attendee:*`, `song:*`, `download:*` | ⏳ Planned (W2.4) |
-| Frontend WebSocket Clients | Connect to Node | Client (listen) | Session/attendee/song/download updates | ⏳ Planned (W2.4) |
+| Node WebSocket Server | `ws://node:5002/ws/{sessionId}` | Server (broadcast) | `song:playing`, `player:position`, `queue:updated`, `download:progress`, `attendee:list` | ✅ Complete (W2.4) |
+| Frontend WebSocket Clients | Connect to Node | Client (listen) | Session/attendee/song/download updates | ⏳ Planned (W2.5) |
+
+---
+
+## 8. Node WebSocket Server (W2.4)
+
+**Endpoint**: `ws://localhost:5002/ws/{session_id}` (or `wss://singalongnode-dev.nicenature.space/ws/{session_id}` for Cloudflare tunnel)
+
+**Purpose**: Broadcast real-time session updates to frontend clients (Admin UI, Controller UI)
+
+### Authentication
+
+Frontend clients must authenticate before connecting:
+
+```
+Authorization: Bearer <access_token>
+```
+
+The JWT token is obtained from one of the Node's auth endpoints:
+- `POST /api/auth/controller` - For attendees
+- `POST /api/auth/admin` - For administrators
+- `POST /api/auth/player` - For players
+
+The same token is used for both HTTP requests and WebSocket connections.
+
+**Connection Example** (Python):
+
+```python
+import asyncio
+import httpx
+import websockets
+
+async def connect_to_node():
+    # 1. Get JWT token
+    async with httpx.AsyncClient() as client:
+        response = await client.post(
+            "http://localhost:5002/api/auth/controller",
+            json={
+                "nickname": "John",
+                "session_id": "0001"
+            }
+        )
+        token = response.json()["access_token"]
+    
+    # 2. Connect WebSocket with Authorization header
+    uri = "ws://localhost:5002/ws/0001"
+    headers = {
+        "Authorization": f"Bearer {token}"
+    }
+    async with websockets.connect(uri, extra_headers=headers) as ws:
+        # Listen for events
+        async for message in ws:
+            print(f"Event: {message}")
+```
+
+**Connection Example** (JavaScript/TypeScript):
+
+```typescript
+async function connectToNode() {
+  // 1. Get JWT token
+  const authResponse = await fetch("http://localhost:5002/api/auth/controller", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      nickname: "John",
+      session_id: "0001"
+    })
+  });
+  const { access_token } = await authResponse.json();
+
+  // 2. Connect WebSocket
+  // Note: Browser WebSocket API doesn't support custom headers directly
+  // Option A: Send token in first message (application-level auth)
+  const ws = new WebSocket("ws://localhost:5002/ws/0001");
+  
+  ws.onopen = () => {
+    // Send token as first message for application-level authentication
+    ws.send(JSON.stringify({
+      type: "auth",
+      token: access_token
+    }));
+  };
+
+  ws.onmessage = (event) => {
+    const message = JSON.parse(event.data);
+    console.log(`Event: ${message.type}`, message.data);
+  };
+}
+```
+
+### Connection Lifecycle
+
+1. **Client initiates WebSocket handshake** with `Authorization: Bearer {token}` header
+2. **Server authenticates JWT token** from header
+3. **Server registers connection** in session group
+4. **Client receives events** as they occur
+5. **Client can send keep-alive pings** (optional)
+6. **Client disconnects** - server cleans up connection
+
+### Events Broadcast by Node WebSocket Server
+
+#### `song:playing` - Song playback started
+
+Sent when a song starts playing in the session.
+
+```json
+{
+  "type": "song:playing",
+  "data": {
+    "song_id": "song-456",
+    "title": "Never Gonna Give You Up",
+    "artist": "Rick Astley",
+    "duration_seconds": 252
+  },
+  "timestamp": "2026-05-02T12:00:00Z"
+}
+```
+
+**Audience**: All clients (admin, controller, player)  
+**Frequency**: Once per song (when playback starts)  
+**Source**: Node player state (triggered by admin action)
+
+#### `player:position` - Current playback position
+
+Sent every 2-5 seconds (configurable) to update playback progress.
+
+```json
+{
+  "type": "player:position",
+  "data": {
+    "elapsed_seconds": 45,
+    "remaining_seconds": 207,
+    "percentage": 17.86
+  },
+  "timestamp": "2026-05-02T12:00:05Z"
+}
+```
+
+**Audience**: All clients  
+**Frequency**: Every 2-5 seconds during playback (configurable via `WS_POSITION_UPDATE_INTERVAL` env var)  
+**Source**: Node player position tracker
+
+**Frontend Implementation Tip**: Interpolate position between updates for smooth progress bar animation.
+
+```typescript
+// Example: Smooth progress bar animation
+let targetPosition = data.elapsed_seconds;
+let startPosition = currentPosition;
+const startTime = Date.now();
+const updateDuration = 2500; // 2.5 seconds (adjust based on actual interval)
+
+function animate() {
+  const elapsed = Date.now() - startTime;
+  const progress = Math.min(elapsed / updateDuration, 1);
+  currentPosition = startPosition + (targetPosition - startPosition) * progress;
+  updateProgressBar(currentPosition);
+  
+  if (progress < 1) {
+    requestAnimationFrame(animate);
+  }
+}
+animate();
+```
+
+#### `queue:updated` - Queue/reservations changed
+
+Sent when reservations are added, removed, or reordered.
+
+```json
+{
+  "type": "queue:updated",
+  "data": {
+    "queue": [
+      {
+        "position": 1,
+        "song_id": "song-1",
+        "title": "Wonderwall",
+        "artist": "Oasis",
+        "reserved_by": "John"
+      },
+      {
+        "position": 2,
+        "song_id": "song-2",
+        "title": "Wish You Were Here",
+        "artist": "Pink Floyd",
+        "reserved_by": "Jane"
+      }
+    ]
+  },
+  "timestamp": "2026-05-02T12:00:00Z"
+}
+```
+
+**Audience**: All clients  
+**Frequency**: On-demand (only when queue changes)  
+**Source**: Node reservation service
+
+#### `download:progress` - Download progress (admin-only)
+
+Sent periodically during song downloads to show progress to admins.
+
+```json
+{
+  "type": "download:progress",
+  "data": {
+    "video_id": "abc123xyz",
+    "progress_percent": 75.5,
+    "title": "Song Title"
+  },
+  "timestamp": "2026-05-02T12:00:00Z"
+}
+```
+
+**Audience**: Admin role only  
+**Frequency**: Periodic updates during download (5-30s intervals depending on file size)  
+**Source**: Master download progress (relayed from Node → Master connection)
+
+#### `attendee:list` - Connected attendees (admin-only)
+
+Sent when clients connect/disconnect to show real-time attendee count.
+
+```json
+{
+  "type": "attendee:list",
+  "data": {
+    "attendees": [
+      {
+        "role": "admin",
+        "count": 1
+      },
+      {
+        "role": "controller",
+        "count": 3
+      }
+    ],
+    "total": 4
+  },
+  "timestamp": "2026-05-02T12:00:00Z"
+}
+```
+
+**Audience**: Admin role only  
+**Frequency**: On-demand (only when clients connect/disconnect)  
+**Source**: Node WebSocket connection manager
+
+### Client-Initiated Messages
+
+Clients can send these optional messages to the WebSocket:
+
+#### Heartbeat (ping/pong)
+
+```json
+{
+  "type": "ping"
+}
+```
+
+Server responds with:
+
+```json
+{
+  "type": "pong"
+}
+```
+
+Use to keep connection alive if no events arrive for extended periods.
+
+#### Token Refresh
+
+```json
+{
+  "type": "auth",
+  "token": "<new_jwt_token>"
+}
+```
+
+Client can refresh authentication without reconnecting (if token is about to expire).
+
+### Configuration
+
+Node WebSocket behavior is controlled by environment variables:
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `WS_POSITION_UPDATE_INTERVAL` | `3` | Seconds between player position updates |
+| `WS_MAX_MESSAGE_QUEUE` | `100` | Maximum messages queued per connection |
+| `WS_HEARTBEAT_TIMEOUT` | `30` | Seconds before closing idle connection |
+
+### Error Handling
+
+**Connection Rejected (403)**:
+```
+Server closes with code 1008 (Policy Violation) if:
+- Authorization header missing
+- Token malformed or invalid format
+- Token signature invalid
+- Token expired
+```
+
+**Connection Dropped**:
+- Clients should implement exponential backoff reconnection
+- Recommended: 1s, 2s, 4s, 8s, 16s (max)
+
+### Implementation Details
+
+**Files**:
+- `apps/singalong-node/app/api/routes/websocket.py` - WebSocket endpoint handler
+- `apps/singalong-node/app/services/node_websocket_server.py` - Connection manager (singleton)
+- `apps/singalong-node/app/services/node_session_event_handlers.py` - Event broadcasting
+
+**Connection Management**:
+
+```python
+# Get the global WebSocket manager
+manager = get_websocket_manager()
+
+# Register new connection
+await manager.connect(session_id, websocket, role)
+
+# Broadcast event to session
+await manager.broadcast_to_session(
+    session_id,
+    event_type="song:playing",
+    data={"song_id": "123", ...},
+    roles=None  # None = all roles, ["admin"] = admin only
+)
+
+# Cleanup on disconnect
+await manager.disconnect(session_id, websocket)
+```
+
+### Testing
+
+**Using Python `websockets` library**:
+
+```bash
+# Install
+pip install websockets
+
+# Test script
+python3 << 'EOF'
+import asyncio
+import json
+import websockets
+
+async def test():
+    # Get token first (manual step)
+    TOKEN = "eyJ..."  # From /api/auth/controller
+    
+    uri = "ws://localhost:5002/ws/0001"
+    headers = {"Authorization": f"Bearer {TOKEN}"}
+    
+    async with websockets.connect(uri, extra_headers=headers) as ws:
+        # Receive one message
+        message = json.loads(await ws.recv())
+        print(f"Received: {message}")
+
+asyncio.run(test())
+EOF
+```
 
 ---
 
@@ -642,10 +936,14 @@ logging.basicConfig(level=logging.DEBUG)
 - **Master Event Broadcasting**: `apps/singalong-master/app/websocket/manager.py`
 - **Node Client**: `apps/singalong-node/app/services/master_websocket_client.py`
 - **Node Event Handlers**: `apps/singalong-node/app/services/master_event_handlers.py`
+- **Node WebSocket Server**: `apps/singalong-node/app/api/routes/websocket.py`
+- **Node Connection Manager**: `apps/singalong-node/app/services/node_websocket_server.py`
+- **Node Session Events**: `apps/singalong-node/app/services/node_session_event_handlers.py`
 - **Node Initialization**: `apps/singalong-node/app/main.py` (lifespan context)
 
 ---
 
-**Document Version**: 1.0  
+**Document Version**: 1.1  
 **Created**: 2026-05-01  
-**Status**: Active (W2.1-W2.3 complete, W2.4 planned)
+**Updated**: 2026-05-02  
+**Status**: Active (W2.1-W2.4 complete)
