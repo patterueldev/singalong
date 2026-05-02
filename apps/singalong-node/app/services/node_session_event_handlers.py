@@ -5,7 +5,6 @@ from typing import Optional, Dict
 from datetime import datetime
 from sqlalchemy.orm import Session as SQLSession
 
-from app.services.node_websocket_server import get_websocket_manager
 from app.models.db_models import Session as SessionModel, Reservation, ReservationStatus
 from app.database import SessionLocal
 
@@ -36,7 +35,9 @@ class NodeSessionEventHandlers:
             artist: Artist name
             duration_seconds: Song duration in seconds
         """
-        manager = get_websocket_manager()
+        from app.services.websocket_service_container import get_service_container
+        container = get_service_container()
+        manager = container.get_connection_manager()
 
         event_data = {
             "song_id": song_id,
@@ -67,7 +68,9 @@ class NodeSessionEventHandlers:
             remaining_seconds: Seconds remaining
             percentage: Percentage complete (0-100)
         """
-        manager = get_websocket_manager()
+        from app.services.websocket_service_container import get_service_container
+        container = get_service_container()
+        manager = container.get_connection_manager()
 
         event_data = {
             "elapsed_seconds": elapsed_seconds,
@@ -91,7 +94,9 @@ class NodeSessionEventHandlers:
             session_id: Session code
         """
         logger.info(f"[BROADCAST] broadcast_queue_updated called for session {session_id}")
-        manager = get_websocket_manager()
+        from app.services.websocket_service_container import get_service_container
+        container = get_service_container()
+        manager = container.get_connection_manager()
         logger.info(f"[BROADCAST] WebSocket manager obtained: {manager}")
         db = SessionLocal()
 
@@ -155,7 +160,9 @@ class NodeSessionEventHandlers:
             progress_percent: Percentage complete (0-100)
             title: Song title
         """
-        manager = get_websocket_manager()
+        from app.services.websocket_service_container import get_service_container
+        container = get_service_container()
+        manager = container.get_connection_manager()
 
         event_data = {
             "video_id": video_id,
@@ -180,7 +187,9 @@ class NodeSessionEventHandlers:
         Args:
             session_id: Session code
         """
-        manager = get_websocket_manager()
+        from app.services.websocket_service_container import get_service_container
+        container = get_service_container()
+        manager = container.get_connection_manager()
 
         # Get connected clients by role for this session
         clients_by_role = manager.get_session_clients_by_role(session_id)
