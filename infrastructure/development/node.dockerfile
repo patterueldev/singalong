@@ -25,5 +25,5 @@ COPY . ./
 # Expose port
 EXPOSE 5002
 
-# Run with hot-reload
-CMD ["poetry", "run", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "5002", "--reload"]
+# Run the application (without reload to preserve global state across processes)
+CMD ["poetry", "run", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "5002"]
