@@ -673,7 +673,10 @@ async def add_to_queue(
         logger.info(f"Added to queue: {song.title} at position {next_position}")
 
         # Broadcast queue update to all connected WebSocket clients
-        await NodeSessionEventHandlers.broadcast_queue_updated(session.code)
+        try:
+            await NodeSessionEventHandlers.broadcast_queue_updated(session.code)
+        except Exception as e:
+            logger.warning(f"Failed to broadcast queue update: {str(e)}")
 
         return {
             "queue_id": str(reservation.id),
@@ -762,7 +765,10 @@ async def remove_from_queue(
         logger.info(f"Removed from queue {queue_id}, re-numbered {len(higher_reservations)} items")
 
         # Broadcast queue update to all connected WebSocket clients
-        await NodeSessionEventHandlers.broadcast_queue_updated(session.code)
+        try:
+            await NodeSessionEventHandlers.broadcast_queue_updated(session.code)
+        except Exception as e:
+            logger.warning(f"Failed to broadcast queue update: {str(e)}")
 
     except HTTPException:
         raise
@@ -858,7 +864,10 @@ async def change_queue_order(
         logger.info(f"Moved queue item from position {current_position} to {new_position}")
 
         # Broadcast queue update to all connected WebSocket clients
-        await NodeSessionEventHandlers.broadcast_queue_updated(session.code)
+        try:
+            await NodeSessionEventHandlers.broadcast_queue_updated(session.code)
+        except Exception as e:
+            logger.warning(f"Failed to broadcast queue update: {str(e)}")
 
         return {
             "queue_id": queue_id,
