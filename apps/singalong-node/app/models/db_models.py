@@ -161,9 +161,6 @@ class Reservation(Base):
     completed_at = Column(DateTime(timezone=True), nullable=True)
     cancelled_at = Column(DateTime(timezone=True), nullable=True)
 
-    # Composite unique constraint - one instance per song per session
-    __table_args__ = (UniqueConstraint('session_code', 'song_id', name='uq_session_song_reservation'),)
-
     def __repr__(self):
         return f"<Reservation {self.position}: {self.song_id} in {self.session_code} ({self.status})>"
 
