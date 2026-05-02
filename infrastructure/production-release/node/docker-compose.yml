@@ -1,0 +1,162 @@
+version: '3.9'
+
+# Production Release - Node Service
+# Uses pre-built Docker images from GitHub Container Registry (GHCR)
+# Includes optional frontend services (Admin, Controller)
+#
+# Setup Instructions:
+# 1. Update IMAGE_TAG to the version you want to deploy
+# 2. Set production environment variables in .env file
+# 3. Ensure PostgreSQL is running and accessible
+# 4. Update MASTER_URL to point to your actual Master service
+# 5. Run: docker-compose up -d
+
+services:
+  # PostgreSQL Database for Node (external service expected)
+  # If you want to manage DB with Docker, uncomment below and update
+  # node-db:
+  #   image: postgres:16-alpine
+  #   container_name: singalong-node-db
+  #   environment:
+  #     POSTGRES_DB: singalong_node
+  #     POSTGRES_USER: ${NODE_DB_USER}
+  #     POSTGRES_PASSWORD: ${NODE_DB_PASSWORD}
+  #   ports:
+  #     - "${NODE_DB_PORT}:5432"
+  #   volumes:
+  #     - node-db-data:/var/lib/postgresql/data
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "pg_isready -U ${NODE_DB_USER} -d singalong_node"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
+  #   networks:
+  #     - singalong-network
+  #   restart: always
+
+  # Singalong Node Service
+  node:
+    image: ghcr.io/patterueldev/singalong-node:${IMAGE_TAG:-latest}
+    container_name: singalong-node
+    # Uncomment if using Docker-managed PostgreSQL
+    # depends_on:
+    #   node-db:
+    #     condition: service_healthy
+
+    environment:
+      # Application Settings
+      DEBUG: "${DEBUG:-False}"
+      PORT: 5002
+      HOST: 0.0.0.0
+
+      # Node Identity
+      NODE_ID: ${NODE_ID}
+
+      # Master Server Configuration
+      MASTER_URL: ${MASTER_URL}
+      MASTER_GRAPHQL_URL: ${MASTER_GRAPHQL_URL}
+      NODE_MASTER_API_KEY: ${NODE_MASTER_API_KEY}
+      MASTER_TIMEOUT: ${MASTER_TIMEOUT:-30}
+
+      # Player API Keys (comma-separated)
+      NODE_PLAYER_API_KEYS: ${NODE_PLAYER_API_KEYS}
+
+      # JWT Configuration
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+      JWT_ALGORITHM: HS256
+      JWT_ACCESS_TOKEN_EXPIRE_SECONDS: ${JWT_ACCESS_TOKEN_EXPIRE_SECONDS:-10800}
+      JWT_REFRESH_TOKEN_EXPIRE_SECONDS: ${JWT_REFRESH_TOKEN_EXPIRE_SECONDS:-604800}
+
+      # Database Configuration
+      # If using external PostgreSQL:
+      DATABASE_URL: ${NODE_DATABASE_URL}
+      # If using Docker-managed PostgreSQL:
+      # DATABASE_URL: postgresql://${NODE_DB_USER}:${NODE_DB_PASSWORD}@node-db:5432/singalong_node
+
+      # OpenAI Configuration (optional)
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+
+    ports:
+      - "${NODE_PORT:-5002}:5002"
+    
+    volumes:
+      # Downloaded videos/songs from Master
+      - ${NODE_VIDEO_PATH:-/var/singalong/node/videos}:/app/videos
+      # Local song database
+      - ${NODE_DATA_PATH:-/var/singalong/node/data}:/app/data
+      # Application logs
+      - ${NODE_LOG_PATH:-/var/singalong/node/logs}:/app/logs
+    
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5002/health').read()"]
+      interval: 30s
+      timeout: 10s
+      start_period: 10s
+      retries: 3
+    
+    networks:
+      - singalong-network
+    
+    restart: always
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ============================================================================
+  # FRONTEND SERVICES (Uncomment when ready to deploy)
+  # ============================================================================
+
+  # Singalong Admin UI - Administrative Dashboard
+  # admin:
+  #   image: ghcr.io/patterueldev/singalong-admin:${IMAGE_TAG:-latest}
+  #   container_name: singalong-admin
+  #   environment:
+  #     VITE_API_BASE_URL: ${ADMIN_API_BASE_URL:-http://localhost:5002}
+  #   ports:
+  #     - "${ADMIN_PORT:-3001}:3001"
+  #   volumes:
+  #     - ${ADMIN_LOG_PATH:-/var/singalong/admin/logs}:/app/logs
+  #   depends_on:
+  #     - node
+  #   networks:
+  #     - singalong-network
+  #   restart: always
+  #   logging:
+  #     driver: "json-file"
+  #     options:
+  #       max-size: "10m"
+  #       max-file: "3"
+
+  # Singalong Controller UI - User-facing Karaoke Interface
+  # controller:
+  #   image: ghcr.io/patterueldev/singalong-controller:${IMAGE_TAG:-latest}
+  #   container_name: singalong-controller
+  #   environment:
+  #     VITE_API_BASE_URL: ${CONTROLLER_API_BASE_URL:-http://localhost:5002}
+  #   ports:
+  #     - "${CONTROLLER_PORT:-3002}:3002"
+  #   volumes:
+  #     - ${CONTROLLER_LOG_PATH:-/var/singalong/controller/logs}:/app/logs
+  #   depends_on:
+  #     - node
+  #   networks:
+  #     - singalong-network
+  #   restart: always
+  #   logging:
+  #     driver: "json-file"
+  #     options:
+  #       max-size: "10m"
+  #       max-file: "3"
+
+# volumes:
+#   node-db-data:
+#     driver: local
+
+networks:
+  singalong-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.25.0.0/16
