@@ -119,7 +119,12 @@ class WebSocketConnectionManager(IWebSocketConnectionRepository):
                 )
         else:
             # Broadcast to all clients
-            target_websockets = self.sessions[session_id]
+            target_websockets = self.sessions.get(session_id, set())
+            logger.debug(
+                f"[WS] Session lookup: session_id={session_id} type={type(session_id)} "
+                f"has_websockets={len(target_websockets)} | "
+                f"all_sessions_keys={list(self.sessions.keys())}"
+            )
 
         # Send to all targets
         disconnected = []
