@@ -54,9 +54,9 @@ async def lifespan(app: FastAPI):
     db = SessionLocal()
     try:
         ensure_admin_session_exists(db)
-        # Deactivate all sessions except whitelisted ones
+        # Deactivate old sessions (>24h) except whitelisted ones
         from app.services.session_init import cleanup_node_sessions
-        cleanup_node_sessions(db, allowed_codes=["9999", "4369"])
+        cleanup_node_sessions(db, allowed_codes=["9999"])
     finally:
         db.close()
     

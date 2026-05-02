@@ -2,7 +2,7 @@
 
 import uuid
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from sqlalchemy.orm import Session as DBSession
 
 from app.models.db_models import Session, SessionStatus
@@ -51,37 +51,45 @@ def init_admin_session(db: DBSession) -> Session:
     return admin_session
 
 
-def cleanup_extra_sessions(db: DBSession, allowed_codes: list = None) -> None:
+def cleanup_extra_sessions(db: DBSession, allowed_codes: list = None, max_age_hours: int = 24) -> None:
     """
-    Deactivate all sessions except those in allowed_codes.
+    Deactivate sessions that are older than max_age_hours, except those in allowed_codes.
     
-    Node should only have specific sessions active (e.g., 9999 for admin, 4369 for testing).
-    All other sessions should be ended.
+    Only sessions created more than max_age_hours ago are ended. Active recent sessions
+    are preserved even if not in the whitelist.
     
     Args:
         db: Database session
-        allowed_codes: List of session codes to keep active (e.g., ["9999", "4369"])
+        allowed_codes: List of session codes to ALWAYS keep active (e.g., ["9999"])
+        max_age_hours: Only end sessions older than this many hours (default: 24)
     """
     if allowed_codes is None:
-        allowed_codes = ["9999", "4369"]
+        allowed_codes = ["9999"]
     
-    # Find all active sessions NOT in allowed_codes
-    extra_sessions = db.query(Session).filter(
+    # Calculate cutoff time (sessions older than this will be cleaned up)
+    cutoff_time = datetime.now(timezone.utc) - timedelta(hours=max_age_hours)
+    
+    # Find active sessions that are:
+    # 1. NOT in allowed_codes (whitelist)
+    # 2. AND created more than max_age_hours ago
+    old_sessions = db.query(Session).filter(
         Session.status == SessionStatus.ACTIVE,
-        ~Session.code.in_(allowed_codes)
+        ~Session.code.in_(allowed_codes),
+        Session.created_at < cutoff_time
     ).all()
     
-    if extra_sessions:
-        logger.info(f"Ending {len(extra_sessions)} non-whitelisted session(s)")
-        for session in extra_sessions:
-            logger.info(f"  - Session {session.code}: {session.title}")
+    if old_sessions:
+        logger.info(f"Ending {len(old_sessions)} old session(s) (older than {max_age_hours}h)")
+        for session in old_sessions:
+            age_hours = (datetime.now(timezone.utc) - session.created_at).total_seconds() / 3600
+            logger.info(f"  - Session {session.code}: {session.title} (age: {age_hours:.1f}h)")
             session.status = SessionStatus.ENDED
             session.ended_at = datetime.now(timezone.utc)
         
         db.commit()
-        print(f"✓ Ended {len(extra_sessions)} extra session(s)")
+        print(f"✓ Ended {len(old_sessions)} old session(s)")
     else:
-        logger.debug("No extra sessions to end")
+        logger.debug(f"No sessions older than {max_age_hours}h to end")
 
 
 def ensure_admin_session_exists(db: DBSession) -> None:
