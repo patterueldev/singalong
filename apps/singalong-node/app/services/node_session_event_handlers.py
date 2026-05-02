@@ -15,72 +15,8 @@ logger = logging.getLogger(__name__)
 class NodeSessionEventHandlers:
     """Handlers for events originating from Node (player state, queue changes, etc)"""
 
-    @staticmethod
-    async def send_initial_state(session_id: str, user_id: str, websocket):
-        """
-        Send initial state to newly connected client (queue, player position, attendees).
-        
-        Args:
-            session_id: Session code
-            user_id: Connected user ID
-            websocket: WebSocket connection to send to
-        """
-        db = SessionLocal()
-        
-        try:
-            # Fetch session
-            session = db.query(SessionModel).filter(SessionModel.code == session_id).first()
-            if not session:
-                logger.warning(f"[WS] Session not found for initial state: {session_id}")
-                return
-            
-            # Get queue
-            reservations = (
-                db.query(Reservation)
-                .filter(
-                    Reservation.session_id == session.id,
-                    Reservation.status == ReservationStatus.ACTIVE,
-                )
-                .order_by(Reservation.order_index.asc())
-                .all()
-            )
-            
-            queue = []
-            for idx, reservation in enumerate(reservations, 1):
-                queue.append(
-                    {
-                        "position": idx,
-                        "song_id": reservation.song_id,
-                        "title": reservation.song.title,
-                        "artist": reservation.song.artist,
-                        "reserved_by": reservation.reserved_by or "Unknown",
-                    }
-                )
-            
-            # Send initial state as single payload
-            initial_state = {
-                "type": "init",
-                "data": {
-                    "session_id": session_id,
-                    "session_title": session.title,
-                    "queue": queue,
-                    "total_reservations": len(queue),
-                }
-            }
-            
-            await websocket.send_json(initial_state)
-            logger.info(
-                f"[WS] Initial state sent | session={session_id} | user={user_id} | "
-                f"queue_size={len(queue)}"
-            )
-        
-        except Exception as e:
-            logger.error(
-                f"[WS] Error sending initial state | session={session_id} | error={str(e)}",
-                exc_info=True
-            )
-        finally:
-            db.close()
+    # Note: send_initial_state() removed - use REST endpoint GET /api/sessions/{id}/state
+    # for initial data load instead. WebSocket now handles updates only.
 
     @staticmethod
     async def broadcast_song_playing(
@@ -166,27 +102,27 @@ class NodeSessionEventHandlers:
                 )
                 return
 
-            # Get all active reservations in order
+            # Get all reservations in order (using correct field names)
             reservations = (
                 db.query(Reservation)
-                .filter(
-                    Reservation.session_id == session.id,
-                    Reservation.status == ReservationStatus.ACTIVE,
-                )
-                .order_by(Reservation.order_index.asc())
+                .filter(Reservation.session_code == session.code)
+                .order_by(Reservation.position.asc())
                 .all()
             )
 
             # Build queue data
             queue = []
-            for idx, reservation in enumerate(reservations, 1):
+            for reservation in reservations:
                 queue.append(
                     {
-                        "position": idx,
-                        "song_id": reservation.song_id,
-                        "title": reservation.song.title,
-                        "artist": reservation.song.artist,
-                        "reserved_by": reservation.reserved_by or "Unknown",
+                        "queue_id": str(reservation.id),
+                        "song_id": str(reservation.song_id),
+                        "song_title": reservation.song_title or "Unknown Song",
+                        "position": reservation.position,
+                        "status": reservation.status.value,
+                        "reserved_by": reservation.reserved_by_nickname or "Unknown",
+                        "reserved_by_id": str(reservation.user_id) if reservation.user_id else None,
+                        "queued_at": reservation.reserved_at.isoformat() if reservation.reserved_at else None,
                     }
                 )
 

@@ -166,8 +166,8 @@ async def websocket_session_endpoint(session_id: str, websocket: WebSocket):
     from app.services.event_bus import Event
     await event_bus.emit(Event.CLIENT_CONNECTED, session_id=session_id, user_id=user_id, role=role)
     
-    # Send initial state to client
-    await event_service.send_initial_state(session_id, user_id, websocket)
+    # Note: Initial state is now loaded via REST endpoint GET /api/sessions/{id}/state
+    # WebSocket handles real-time updates only (queue:updated, player:position, etc.)
 
     try:
         # Keep connection alive and listen for client messages

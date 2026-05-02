@@ -577,6 +577,156 @@ logging.basicConfig(level=logging.DEBUG)
 
 **Purpose**: Broadcast real-time session updates to frontend clients (Admin UI, Controller UI)
 
+### Event Architecture: REST + WebSocket Hybrid Pattern
+
+To optimize performance and UX, Singalong uses a **hybrid approach** for session state:
+
+#### Initial State Load (REST)
+When a user enters the landing page, the frontend fetches the initial session state via **REST** before connecting to WebSocket:
+
+```http
+GET /api/sessions/{session_id}/state
+Authorization: Bearer {access_token}
+```
+
+**Response** (200 OK):
+```json
+{
+  "session": {
+    "code": "9999",
+    "title": "Birthday Party",
+    "vibes": "upbeat",
+    "status": "active",
+    "user_count": 5,
+    "created_at": "2026-05-02T10:00:00Z",
+    "created_by": "admin-uuid",
+    "max_users": 50
+  },
+  "player": {
+    "queue_id": "queue-uuid",
+    "song_id": "song-uuid",
+    "status": "playing",
+    "progress_seconds": 45,
+    "duration_seconds": 240,
+    "started_at": "2026-05-02T10:15:00Z"
+  },
+  "queue": [
+    {
+      "queue_id": "queue-1",
+      "song_id": "song-1",
+      "song_title": "Song Title",
+      "position": 1,
+      "status": "playing",
+      "owner_nickname": "John",
+      "queued_at": "2026-05-02T10:10:00Z"
+    },
+    {
+      "queue_id": "queue-2",
+      "song_id": "song-2",
+      "song_title": "Another Song",
+      "position": 2,
+      "status": "pending",
+      "owner_nickname": "Jane",
+      "queued_at": "2026-05-02T10:12:00Z"
+    }
+  ]
+}
+```
+
+**Benefits**:
+- Faster page load (REST is simpler than WebSocket setup)
+- Reduces network overhead on connection
+- Better error handling for initial state failures
+- Frontend can render immediately while WebSocket connects
+
+#### Real-time Updates (WebSocket)
+After the REST call, the frontend connects to WebSocket to receive **incremental updates only**:
+
+```
+WebSocket Event Stream:
+┌─────────────────────────────────────────────┐
+│ Client Connects → WebSocket /ws/{id}        │
+│                                             │
+│ (No initial state sent - use REST data)     │
+└─────────────────────────────────────────────┘
+           ↓
+┌─────────────────────────────────────────────┐
+│ Listening for changes:                      │
+│ • queue:updated (when song added/removed)   │
+│ • player:position (every 2-5s)              │
+│ • song:playing (when song starts)           │
+│ • etc.                                      │
+└─────────────────────────────────────────────┘
+```
+
+**Frontend Implementation**:
+
+```typescript
+// Step 1: Load initial state via REST
+const response = await fetch(
+  `http://localhost:5002/api/sessions/9999/state`,
+  {
+    headers: { Authorization: `Bearer ${token}` }
+  }
+);
+const { session, player, queue } = await response.json();
+
+// Step 2: Render UI with initial state
+setSessionTitle(session.title);
+setQueue(queue);
+setCurrentSong(player?.song_id ? player : null);
+
+// Step 3: Connect WebSocket for updates
+const ws = new WebSocket("ws://localhost:5002/ws/9999");
+ws.addEventListener("open", () => {
+  ws.send(JSON.stringify({
+    type: "auth",
+    token: access_token
+  }));
+});
+
+ws.addEventListener("message", (event) => {
+  const { type, data } = JSON.parse(event.data);
+  
+  if (type === "queue:updated") {
+    setQueue(data.queue); // Update queue only
+  } else if (type === "player:position") {
+    setPlayerPosition(data.elapsed_seconds); // Update position
+  } else if (type === "song:playing") {
+    setCurrentSong(data); // New song started
+  }
+});
+```
+
+### Architecture Diagram
+
+```
+┌──────────────────────────────────────────────────────────┐
+│            Frontend App (React)                          │
+│ ┌────────────────────────────────────────────────────┐  │
+│ │ Landing Page                                       │  │
+│ └──────────────────────────────────────────────────┬─┘  │
+│                                                    │     │
+│                    REST ❶                    WebSocket ❷
+│                   (Initial)                   (Updates)
+│                     │                             │     │
+└─────────────────────┼─────────────────────────────┼─────┘
+                      │                             │
+                      ▼                             ▼
+            ┌──────────────────┐          ┌──────────────────┐
+            │ Node REST API    │          │ Node WebSocket   │
+            │ GET /state       │          │ Server /ws       │
+            ├──────────────────┤          ├──────────────────┤
+            │ Fetch:           │          │ Broadcast:       │
+            │ • session        │          │ • queue:updated  │
+            │ • player         │          │ • player:position
+            │ • queue          │          │ • song:playing   │
+            │ (All at once)    │          │ • etc.           │
+            │                  │          │ (Only changes)   │
+            └──────────────────┘          └──────────────────┘
+                      ❶                           ❷
+```
+
 ### Authentication
 
 Frontend clients must authenticate before connecting:
