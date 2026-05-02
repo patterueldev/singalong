@@ -16,13 +16,18 @@ _auth_service = None
 def get_auth_service() -> AuthService:
     """Get or initialize the global auth service"""
     global _auth_service
+    import logging
+    logger = logging.getLogger(__name__)
+    logger.info("[AuthService] Getting auth service")
     if _auth_service is None:
+        logger.info("[AuthService] Creating new AuthService instance")
         _auth_service = AuthService(
             api_key=settings.jwt_secret_key,
             algorithm=settings.jwt_algorithm,
             access_token_expire_seconds=settings.jwt_access_token_expire_seconds,
             refresh_token_expire_seconds=settings.jwt_refresh_token_expire_seconds,
         )
+        logger.info("[AuthService] AuthService instance created")
     return _auth_service
 
 
