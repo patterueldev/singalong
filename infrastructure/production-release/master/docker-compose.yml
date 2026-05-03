@@ -1,0 +1,102 @@
+version: '3.9'
+
+# Production Release - Master Service
+# Uses pre-built Docker images from GitHub Container Registry (GHCR)
+# 
+# Setup Instructions:
+# 1. Update IMAGE_TAG to the version you want to deploy
+# 2. Set production environment variables in .env file
+# 3. Ensure PostgreSQL is running and accessible
+# 4. Run: docker-compose up -d
+
+services:
+  # PostgreSQL Database for Master (external service expected)
+  # If you want to manage DB with Docker, uncomment below and update
+  # master-db:
+  #   image: postgres:16-alpine
+  #   container_name: singalong-master-db
+  #   environment:
+  #     POSTGRES_DB: singalong_master
+  #     POSTGRES_USER: ${MASTER_DB_USER}
+  #     POSTGRES_PASSWORD: ${MASTER_DB_PASSWORD}
+  #   ports:
+  #     - "${MASTER_DB_PORT}:5432"
+  #   volumes:
+  #     - master-db-data:/var/lib/postgresql/data
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "pg_isready -U ${MASTER_DB_USER} -d singalong_master"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
+  #   networks:
+  #     - singalong-network
+  #   restart: always
+
+  # Singalong Master Service
+  master:
+    image: ghcr.io/patterueldev/singalong-master:${IMAGE_TAG:-latest}
+    container_name: singalong-master
+    # Uncomment if using Docker-managed PostgreSQL
+    # depends_on:
+    #   master-db:
+    #     condition: service_healthy
+    
+    environment:
+      # Application Settings
+      DEBUG: "${DEBUG:-False}"
+      PORT: 5001
+      HOST: 0.0.0.0
+
+      # API Key for Node authentication
+      MASTER_API_KEY: ${MASTER_API_KEY}
+
+      # JWT Configuration
+      JWT_ALGORITHM: HS256
+      JWT_ACCESS_TOKEN_EXPIRE_SECONDS: ${JWT_ACCESS_TOKEN_EXPIRE_SECONDS:-3600}
+      JWT_REFRESH_TOKEN_EXPIRE_SECONDS: ${JWT_REFRESH_TOKEN_EXPIRE_SECONDS:-604800}
+
+      # User JWT Secret
+      USER_JWT_SECRET: ${USER_JWT_SECRET}
+
+      # Database Configuration
+      # If using external PostgreSQL:
+      DATABASE_URL: ${DATABASE_URL}
+      # If using Docker-managed PostgreSQL:
+      # DATABASE_URL: postgresql://${MASTER_DB_USER}:${MASTER_DB_PASSWORD}@master-db:5432/singalong_master
+
+    ports:
+      - "${MASTER_PORT:-5001}:5001"
+    
+    volumes:
+      # Video storage (ensure this path exists on host)
+      - ${MASTER_VIDEO_PATH:-/var/singalong/master/videos}:/app/videos
+      # Application logs
+      - ${MASTER_LOG_PATH:-/var/singalong/master/logs}:/app/logs
+    
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5001/health').read()"]
+      interval: 30s
+      timeout: 10s
+      start_period: 10s
+      retries: 3
+    
+    networks:
+      - singalong-network
+    
+    restart: always
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+# volumes:
+#   master-db-data:
+#     driver: local
+
+networks:
+  singalong-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.25.0.0/16

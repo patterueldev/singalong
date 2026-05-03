@@ -432,8 +432,30 @@ def resolve_request_song_download(
                     progress=0,
                 )
                 
-                # Download video
+                # Download video with WebSocket progress broadcasting
                 download_service = MasterDownloadService()
+                
+                # Hook WebSocket broadcasting to progress events
+                async def broadcast_progress(progress_data: dict):
+                    """Broadcast download progress to all connected Nodes via WebSocket"""
+                    from app.websocket import connection_manager
+                    await connection_manager.broadcast("download:progress", progress_data)
+                
+                download_service.set_progress_callback(broadcast_progress)
+                
+                # Hook completion event broadcasting
+                async def broadcast_complete(video_id: str):
+                    """Broadcast download completion to all connected Nodes"""
+                    from app.websocket import connection_manager
+                    await connection_manager.broadcast("download:complete", {
+                        "video_id": video_id,
+                        "title": title,
+                        "artist": artist,
+                    })
+                
+                download_service.set_complete_callback(broadcast_complete)
+                
+                # Download video
                 file_path, error_msg = download_service.download_video_sync(
                     video_id=videoId,
                     filename=filename,

@@ -60,6 +60,11 @@ async def create_reservation(
         )
 
         logger.info(f"Reservation created: {reservation.id} (song={request.song_id})")
+        
+        # Emit queue changed event (WebSocket will broadcast to clients)
+        from app.services.event_bus import Event, get_event_bus
+        event_bus = get_event_bus()
+        await event_bus.emit(Event.QUEUE_CHANGED, session_id=session_model.code)
 
         return ReservationResponse(
             id=str(reservation.id),

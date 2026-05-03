@@ -37,6 +37,9 @@ async def lifespan(app: FastAPI):
     from app.database import init_db, SessionLocal
     from app.services.session_init import ensure_admin_session_exists
     from app.services.master_auth_manager import initialize_master_auth
+    from app.services.master_websocket_client import get_master_websocket_client
+    from app.services.master_event_handlers import MasterEventHandlers
+    import asyncio
     
     init_db()  # Initialize database
     
@@ -47,10 +50,13 @@ async def lifespan(app: FastAPI):
         print(f"FATAL: Failed to authenticate with Master: {str(e)}")
         raise
     
-    # Initialize admin session 9999
+    # Initialize admin session 9999 and cleanup extra sessions
     db = SessionLocal()
     try:
         ensure_admin_session_exists(db)
+        # Deactivate old sessions (>24h) except whitelisted ones
+        from app.services.session_init import cleanup_node_sessions
+        cleanup_node_sessions(db, allowed_codes=["9999"])
     finally:
         db.close()
     
@@ -59,9 +65,38 @@ async def lifespan(app: FastAPI):
     PlayerManager.create_singleton(valid_keys)
     print(f"Player manager initialized with {len(valid_keys)} valid API key(s)")
     
+    # Initialize WebSocket services (Event Bus, Connection Manager, etc.)
+    from app.services.websocket_service_container import init_websocket_services
+    service_container = init_websocket_services()
+    print("✓ WebSocket services initialized (EventBus, ConnectionManager, BroadcastService)")
+    
+    # Initialize WebSocket client for Master communication
+    ws_client = get_master_websocket_client()
+    ws_client.register_handler("download:progress", MasterEventHandlers.handle_download_progress)
+    ws_client.register_handler("download:complete", MasterEventHandlers.handle_download_complete)
+    ws_client.register_handler("catalog:updated", MasterEventHandlers.handle_catalog_updated)
+    ws_client.register_handler("system:health", MasterEventHandlers.handle_system_health)
+    
+    # Connect to Master WebSocket and start listening
+    if await ws_client.connect():
+        # Start listening task in background
+        listen_task = asyncio.create_task(ws_client.listen())
+        print("✓ Master WebSocket client initialized and listening")
+    else:
+        print("⚠ Failed to connect to Master WebSocket (will retry)")
+        listen_task = None
+    
     yield
     # Shutdown
     print(f"Shutting down {settings.service_name}")
+    if ws_client:
+        await ws_client.disconnect()
+    if listen_task and not listen_task.done():
+        listen_task.cancel()
+        try:
+            await listen_task
+        except asyncio.CancelledError:
+            pass
 
 
 app = FastAPI(
@@ -72,12 +107,13 @@ app = FastAPI(
 )
 
 # Include routers
-from app.api.routes import auth, sessions, songs, players
+from app.api.routes import auth, sessions, songs, players, websocket
 
 app.include_router(auth.router)
 app.include_router(sessions.router)
 app.include_router(songs.router)
 app.include_router(players.router)
+app.include_router(websocket.router)
 
 
 @app.get("/health", tags=["Health"])

@@ -8,7 +8,7 @@ import os
 import logging
 import asyncio
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Callable
 
 from app.services.yt_dlp_service import YTDLPService
 
@@ -27,7 +27,45 @@ class MasterDownloadService:
         """
         self.output_dir = output_dir
         self.yt_dlp_service = YTDLPService()
+        self.progress_callback: Optional[Callable] = None
+        self.complete_callback: Optional[Callable] = None
         self._ensure_output_dir()
+        
+        # Set the YTDLPService progress callback to our wrapper
+        # This will be called during downloads to emit progress events
+        self.yt_dlp_service.set_progress_callback(self._on_ytdlp_progress)
+    
+    async def _on_ytdlp_progress(self, progress_data: dict) -> None:
+        """
+        Handle progress events from YTDLPService.
+        
+        This is called during downloads with yt-dlp progress information.
+        We emit WebSocket broadcast events here.
+        
+        Args:
+            progress_data: Dict with video_id, status, progress_percent, etc.
+        """
+        if self.progress_callback:
+            try:
+                await self.progress_callback(progress_data)
+            except Exception as e:
+                logger.error(f"Failed to call progress callback: {e}")
+    
+    def set_progress_callback(self, callback: Callable) -> None:
+        """
+        Set callback for download progress events.
+        
+        Callback signature: async def callback(video_id: str, progress: int, step: str)
+        """
+        self.progress_callback = callback
+    
+    def set_complete_callback(self, callback: Callable) -> None:
+        """
+        Set callback for download complete events.
+        
+        Callback signature: async def callback(video_id: str)
+        """
+        self.complete_callback = callback
 
     def _ensure_output_dir(self):
         """Create output directory if it doesn't exist"""
@@ -87,6 +125,13 @@ class MasterDownloadService:
             logger.info(f"    File size: {file_size} bytes ({file_size / 1024 / 1024:.2f} MB)")
             logger.info(f"◀ [ASYNC DOWNLOAD END] Success")
 
+            # Notify completion via callback (WebSocket)
+            if self.complete_callback:
+                try:
+                    await self.complete_callback(video_id)
+                except Exception as e:
+                    logger.error(f"Failed to call complete callback: {e}")
+
             return output_path_result, None
 
         except asyncio.TimeoutError:
@@ -141,6 +186,13 @@ class MasterDownloadService:
             logger.info(f"  ✓ Download complete: {actual_path}")
             logger.info(f"    File size: {file_size} bytes ({file_size / 1024 / 1024:.2f} MB)")
             logger.info(f"◀ [SYNC DOWNLOAD END] Success")
+
+            # Notify completion via callback (WebSocket) - sync version uses asyncio.run
+            if self.complete_callback:
+                try:
+                    asyncio.run(self.complete_callback(video_id))
+                except Exception as e:
+                    logger.error(f"Failed to call complete callback: {e}")
 
             return actual_path, None
 

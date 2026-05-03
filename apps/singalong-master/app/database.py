@@ -7,7 +7,7 @@ from sqlalchemy.orm import declarative_base, sessionmaker
 # Database URL
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./singalong_master.db")
 
-# Create engine with SQLite-specific options
+# Create engine with appropriate driver
 if DATABASE_URL.startswith("sqlite"):
     engine = create_engine(
         DATABASE_URL,
@@ -15,6 +15,9 @@ if DATABASE_URL.startswith("sqlite"):
         echo=os.getenv("DEBUG", "False").lower() == "true",
     )
 else:
+    # Use psycopg (v3) for PostgreSQL - explicitly specify the driver
+    if DATABASE_URL.startswith("postgresql://"):
+        DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+psycopg://", 1)
     engine = create_engine(
         DATABASE_URL,
         echo=os.getenv("DEBUG", "False").lower() == "true",

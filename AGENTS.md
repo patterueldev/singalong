@@ -7,6 +7,7 @@ This document provides comprehensive guidance for AI agents and developers worki
 > - **[IMPLEMENTATION_PHASES.md](docs/IMPLEMENTATION_PHASES.md)**: 10 implementation phases with dependencies, deliverables, and acceptance criteria
 > - **[BACKEND_PHASES.md](docs/BACKEND_PHASES.md)**: Backend API development phases (B1-B8) with detailed endpoint specifications and database schemas
 > - **[API_CONTRACT_AUTHENTICATION.md](docs/API_CONTRACT_AUTHENTICATION.md)**: Authentication contract between services (Node ↔ Master), JWT tokens, API key exchange
+> - **[WEBSOCKET_EVENTS.md](docs/WEBSOCKET_EVENTS.md)**: Real-time WebSocket events, Master broadcasting, Node listening, event handlers
 > - **[ADMIN_UI_SPECIFICATION.md](docs/ADMIN_UI_SPECIFICATION.md)**: Admin session UI layout, 4-panel design, and component specs
 > 
 > **👷 Per-App Documentation**:

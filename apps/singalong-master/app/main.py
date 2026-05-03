@@ -98,8 +98,10 @@ def create_app() -> FastAPI:
 
     # Register routes
     from app.api.routes import router as auth_router
+    from app.api.routes.websocket import router as websocket_router
 
     app.include_router(auth_router)
+    app.include_router(websocket_router)
 
     # GraphQL endpoint
     from app.graphql.schema import schema

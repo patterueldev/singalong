@@ -11,6 +11,7 @@ from sqlalchemy import asc, desc
 from app.database import get_db
 from app.middleware.auth import verify_bearer_token, verify_admin_role
 from app.services.session_service import SessionService
+from app.services.node_session_event_handlers import NodeSessionEventHandlers
 from app.api.dependencies import get_current_user, TokenPayload
 from app.models import db_models
 from app.models.db_models import ReservationStatus
@@ -171,6 +172,14 @@ class PlaybackResponse(BaseModel):
     started_at: Optional[str] = Field(None, description="When playback started")
     paused_at: Optional[str] = Field(None, description="When playback was paused (null if playing)")
     player_id: Optional[str] = Field(None, description="Which player is playing")
+
+
+class SessionStateResponse(BaseModel):
+    """Complete session state response (for initial frontend load)"""
+
+    session: SessionDetailsResponse = Field(..., description="Session metadata")
+    player: Optional[PlaybackResponse] = Field(None, description="Current playback state (null if nothing playing)")
+    queue: list[QueueItemResponse] = Field(default_factory=list, description="Queue items")
 
 
 @router.get("", status_code=200, response_model=dict)
@@ -610,19 +619,6 @@ async def add_to_queue(
         if not song:
             raise HTTPException(status_code=404, detail="Song not found or not available")
 
-        # Check if song already reserved in this session
-        existing = (
-            db.query(db_models.Reservation)
-            .filter(
-                db_models.Reservation.session_code == session.code,
-                db_models.Reservation.song_id == song_uuid,
-            )
-            .first()
-        )
-
-        if existing:
-            raise HTTPException(status_code=409, detail="Song already reserved in this session")
-
         # Get next position
         max_position = (
             db.query(db_models.Reservation)
@@ -676,6 +672,14 @@ async def add_to_queue(
 
         logger.info(f"Added to queue: {song.title} at position {next_position}")
 
+        # Broadcast queue update to all connected WebSocket clients
+        logger.info(f"[BROADCAST] About to broadcast queue:updated for session {session.code} | type={type(session.code).__name__}")
+        try:
+            await NodeSessionEventHandlers.broadcast_queue_updated(session.code)
+            logger.info(f"[BROADCAST] Successfully broadcast queue:updated for session {session.code}")
+        except Exception as e:
+            logger.warning(f"[BROADCAST] Failed to broadcast queue update: {str(e)}", exc_info=True)
+
         return {
             "queue_id": str(reservation.id),
             "song_id": str(reservation.song_id),
@@ -699,7 +703,7 @@ async def add_to_queue(
 async def remove_from_queue(
     session_code: str,
     queue_id: str,
-    admin: dict = Depends(verify_admin_role),
+    user: TokenPayload = Depends(get_current_user),
     db: SQLSession = Depends(get_db),
 ):
     """
@@ -762,6 +766,12 @@ async def remove_from_queue(
         db.commit()
         logger.info(f"Removed from queue {queue_id}, re-numbered {len(higher_reservations)} items")
 
+        # Broadcast queue update to all connected WebSocket clients
+        try:
+            await NodeSessionEventHandlers.broadcast_queue_updated(session.code)
+        except Exception as e:
+            logger.warning(f"Failed to broadcast queue update: {str(e)}")
+
     except HTTPException:
         raise
     except Exception as e:
@@ -775,7 +785,7 @@ async def change_queue_order(
     session_code: str,
     queue_id: str,
     new_position: int = Query(..., ge=1, description="New position in queue"),
-    admin: dict = Depends(verify_admin_role),
+    user: TokenPayload = Depends(get_current_user),
     db: SQLSession = Depends(get_db),
 ) -> dict:
     """
@@ -855,6 +865,12 @@ async def change_queue_order(
         db.commit()
         logger.info(f"Moved queue item from position {current_position} to {new_position}")
 
+        # Broadcast queue update to all connected WebSocket clients
+        try:
+            await NodeSessionEventHandlers.broadcast_queue_updated(session.code)
+        except Exception as e:
+            logger.warning(f"Failed to broadcast queue update: {str(e)}")
+
         return {
             "queue_id": queue_id,
             "position": new_position,
@@ -866,6 +882,182 @@ async def change_queue_order(
         db.rollback()
         logger.error(f"Error changing queue order: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to change queue order")
+
+
+@router.get("/{session_code}/state", response_model=SessionStateResponse)
+async def get_session_state(
+    session_code: str,
+    user: TokenPayload = Depends(get_current_user),
+    db: SQLSession = Depends(get_db),
+) -> SessionStateResponse:
+    """
+    Get complete session state for initial frontend load.
+
+    Combines session metadata, current playback state, and queue.
+    Used by frontend on landing page to populate initial UI state.
+
+    Endpoint: GET /api/sessions/{session_code}/state
+
+    Authorization:
+    - Admin: Can view any session state
+    - Controller: Can view session state
+    - Player: Can view session state
+
+    Returns:
+    - session: Session metadata (title, vibes, status, etc.)
+    - player: Current playback state (null if nothing playing)
+    - queue: Array of queued songs
+
+    Example Response:
+    ```json
+    {
+      "session": {
+        "code": "9999",
+        "title": "Birthday Party",
+        "vibes": "upbeat",
+        "status": "active",
+        "user_count": 5,
+        "created_at": "2026-05-02T10:00:00Z",
+        "created_by": "admin-uuid",
+        "max_users": 50
+      },
+      "player": {
+        "queue_id": "queue-uuid",
+        "song_id": "song-uuid",
+        "status": "playing",
+        "progress_seconds": 45,
+        "duration_seconds": 240,
+        "started_at": "2026-05-02T10:15:00Z"
+      },
+      "queue": [
+        {
+          "queue_id": "queue-1",
+          "song_id": "song-1",
+          "song_title": "Song Title",
+          "position": 1,
+          "status": "playing",
+          "owner_nickname": "John",
+          "queued_at": "2026-05-02T10:10:00Z"
+        },
+        {
+          "queue_id": "queue-2",
+          "song_id": "song-2",
+          "song_title": "Another Song",
+          "position": 2,
+          "status": "pending",
+          "owner_nickname": "Jane",
+          "queued_at": "2026-05-02T10:12:00Z"
+        }
+      ]
+    }
+    ```
+    """
+    try:
+        session = _validate_session_exists(session_code, db)
+
+        # Get session details
+        session_users = db.query(db_models.SessionUser).filter(
+            db_models.SessionUser.session_code == session.code
+        ).all()
+
+        session_details = SessionDetailsResponse(
+            code=session.code,
+            title=session.title,
+            vibes=session.vibes or "",
+            status=session.status,
+            max_users=session.max_users,
+            users=[
+                SessionUserResponse(
+                    user_id=str(su.user_id),
+                    joined_at=su.joined_at.isoformat() if su.joined_at else "",
+                )
+                for su in session_users
+            ],
+            user_count=len(session_users),
+            created_at=session.created_at.isoformat() if session.created_at else "",
+            created_by=str(session.created_by) if session.created_by else "",
+        )
+
+        # Get current playback state
+        playback_data = None
+        playback = db.query(db_models.Playback).filter(
+            db_models.Playback.session_code == session.code
+        ).first()
+
+        if playback and playback.queue_id:
+            # Get song details if available
+            song_data = None
+            if playback.song_id:
+                song = db.query(db_models.Song).filter(db_models.Song.id == playback.song_id).first()
+                if song:
+                    song_data = {
+                        "id": str(song.id),
+                        "title": song.title,
+                        "artist": song.artist,
+                        "duration_seconds": song.duration,
+                    }
+
+            # Calculate progress
+            progress_seconds = 0
+            if playback.started_at:
+                from datetime import datetime, timezone
+                elapsed = (datetime.now(timezone.utc) - playback.started_at).total_seconds()
+                if playback.paused_at:
+                    elapsed = (playback.paused_at - playback.started_at).total_seconds()
+                progress_seconds = int(elapsed)
+
+            # Determine playback status
+            playback_status = "stopped"
+            if playback.paused_at:
+                playback_status = "paused"
+            elif playback.started_at:
+                playback_status = "playing"
+
+            playback_data = PlaybackResponse(
+                queue_id=str(playback.queue_id),
+                song_id=str(playback.song_id) if playback.song_id else None,
+                position=None,
+                status=playback_status,
+                progress_seconds=progress_seconds,
+                duration_seconds=playback.duration_seconds,
+                started_at=playback.started_at.isoformat() if playback.started_at else None,
+                paused_at=playback.paused_at.isoformat() if playback.paused_at else None,
+                player_id=str(playback.player_id) if playback.player_id else None,
+            )
+
+        # Get queue
+        reservations = (
+            db.query(db_models.Reservation)
+            .filter(db_models.Reservation.session_code == session.code)
+            .order_by(asc(db_models.Reservation.position))
+            .all()
+        )
+
+        queue_list = [
+            QueueItemResponse(
+                queue_id=str(r.id),
+                song_id=str(r.song_id),
+                song_title=r.song_title or "Unknown Song",
+                position=r.position,
+                status=r.status.value,
+                owner_nickname=r.reserved_by_nickname,
+                owner_id=str(r.user_id) if r.user_id else None,
+                queued_at=r.reserved_at.isoformat() if r.reserved_at else None,
+            )
+            for r in reservations
+        ]
+
+        return SessionStateResponse(
+            session=session_details,
+            player=playback_data,
+            queue=queue_list,
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception(f"Error getting session state: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to get session state")
 
 
 @router.get("/{session_code}/playback", response_model=Optional[dict])

@@ -1423,4 +1423,66 @@ async def sync_songs_from_master(
     }
 
 
+@router.get("/master/videos/sync", status_code=202)
+async def trigger_sync_from_master(
+    limit: int = Query(100, ge=1, le=1000),
+    offset: int = Query(0, ge=0),
+    db: SQLSession = Depends(get_db),
+    token: dict = Depends(verify_bearer_token),
+) -> dict:
+    """
+    Trigger song sync from Master to Node via GET endpoint.
+
+    This is an alternative to POST /api/songs/sync for compatibility with
+    clients that prefer GET requests or WebSocket event handlers.
+
+    Pulls ACTIVE songs from Master's database, downloads video files,
+    and updates Node's local song database. Runs asynchronously in background.
+
+    Returns immediately (202 Accepted) with task status. Sync continues
+    in background and Node's songbook will be updated as songs complete.
+
+    Query Parameters:
+    - limit: Number of songs to sync per batch (default: 100, max: 1000)
+    - offset: Starting position for pagination (default: 0)
+
+    Returns:
+    {
+        "status": "queued",
+        "message": "Sync started in background",
+        "limit": 100,
+        "offset": 0,
+        "task_id": "optional-task-id-for-future-polling"
+    }
+    """
+    import threading
+
+    from app.services.node_sync_service import NodeSyncService
+
+    def _sync_background():
+        """Run sync in background thread"""
+        db_session = SessionLocal()
+        try:
+            logger.info(f"Background sync started (limit={limit}, offset={offset})")
+            sync_service = NodeSyncService(db_session)
+            # Use asyncio.run() to execute async method in thread
+            result = asyncio.run(sync_service.sync_songs_from_master(limit=limit, offset=offset))
+            logger.info(f"Background sync complete: {result.to_dict()}")
+        except Exception as e:
+            logger.error(f"Background sync failed: {str(e)}", exc_info=True)
+        finally:
+            db_session.close()
+
+    # Start sync in background thread (fire-and-forget for MVP)
+    thread = threading.Thread(target=_sync_background, daemon=True)
+    thread.start()
+
+    task_id = str(uuid.uuid4())
+    return {
+        "status": "queued",
+        "message": "Song sync started in background",
+        "limit": limit,
+        "offset": offset,
+        "task_id": task_id,
+    }
 

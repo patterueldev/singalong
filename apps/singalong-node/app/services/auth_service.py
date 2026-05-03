@@ -42,6 +42,9 @@ class AuthService:
             graphql_url=settings.master_graphql_url,
             timeout=settings.master_timeout,
         )
+        import hashlib
+        api_key_hash = hashlib.sha256(api_key.encode()).hexdigest()[:8]
+        logger.info(f"[AuthService.__init__] Created with api_key_hash={api_key_hash}")
 
     async def authenticate_controller(
         self, nickname: str, session_id: str, node_id: str, db: SQLSession
@@ -390,7 +393,9 @@ class AuthService:
             raise jwt.InvalidTokenError(f"Invalid token: {str(e)}")
 
         # Check service name
-        if payload.get("service_name") != self.service_name:
+        token_service = payload.get("service_name")
+        if token_service != self.service_name:
+            logger.error(f"[validate_token] Service name mismatch: token has '{token_service}', expected '{self.service_name}'")
             raise jwt.InvalidTokenError("Invalid service name in token")
 
         # Calculate expires_in
@@ -399,6 +404,7 @@ class AuthService:
         expires_in = max(0, exp - now)
 
         payload["expires_in"] = expires_in
+        logger.debug(f"[validate_token] Token validated, expires_in={expires_in}s")
         return payload
 
     def _generate_token(

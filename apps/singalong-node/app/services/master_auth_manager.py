@@ -79,7 +79,9 @@ class MasterAuthManager:
             ValueError: If no token is available
             Exception: If token refresh fails
         """
+        logger.info(f"[GetToken] Checking access_token: {bool(self.access_token)}")
         if not self.access_token:
+            logger.error(f"[GetToken] access_token is None!")
             raise ValueError("No access token available. Did you call initialize()?")
 
         # Check if token is about to expire (refresh 5 minutes before expiry)
@@ -133,6 +135,7 @@ def get_master_auth_manager() -> MasterAuthManager:
     global _master_auth_manager
     if _master_auth_manager is None:
         raise RuntimeError("MasterAuthManager not initialized. Did you call initialize_master_auth()?")
+    logger.info(f"[Get] Returning master auth manager: {_master_auth_manager}, access_token set: {bool(_master_auth_manager.access_token)}")
     return _master_auth_manager
 
 
@@ -140,5 +143,7 @@ async def initialize_master_auth(master_url: str, api_key: str) -> MasterAuthMan
     """Initialize the global MasterAuthManager"""
     global _master_auth_manager
     _master_auth_manager = MasterAuthManager(master_url, api_key)
+    logger.info(f"[Init] Created MasterAuthManager instance: {_master_auth_manager}")
     await _master_auth_manager.initialize()
+    logger.info(f"[Init] After initialization, access_token is: {bool(_master_auth_manager.access_token)}")
     return _master_auth_manager
