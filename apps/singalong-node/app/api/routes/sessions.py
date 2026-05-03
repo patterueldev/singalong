@@ -1124,9 +1124,199 @@ async def get_playback_status(
             paused_at=playback.paused_at.isoformat() if playback.paused_at else None,
             player_id=str(playback.player_id) if playback.player_id else None,
         )
-
+    
     except HTTPException:
         raise
     except Exception as e:
         logger.exception(f"Error getting playback status: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to get playback status")
+
+# ============================================================================
+# PLAYER MANAGEMENT ENDPOINTS (P2: Player Discovery)
+# ============================================================================
+
+
+class PlayerInfo(BaseModel):
+    """Player information"""
+    id: str
+    name: str
+    platform: str
+    status: str
+
+
+class SelectPlayerRequest(BaseModel):
+    """Request to select/lock a player to a session"""
+    player_id: str
+
+
+class SelectPlayerResponse(BaseModel):
+    """Response after selecting a player"""
+    success: bool
+    player_id: str
+    player_name: str
+    message: str
+
+
+@router.get("/{session_code}/available-players", response_model=dict)
+async def get_available_players(
+    session_code: str,
+    db: SQLSession = Depends(get_db),
+    token: TokenPayload = Depends(verify_bearer_token),
+) -> dict:
+    """
+    Get list of available players (in discovering state) for a session.
+    
+    Players in "discovering" state are available to be selected.
+    Once a player is locked to a session, it's no longer available.
+    
+    **Response**:
+    ```json
+    {
+      "session_code": "0001",
+      "available_players": [
+        {
+          "id": "player-uuid",
+          "name": "Pat's MacBook",
+          "platform": "macos",
+          "status": "discovering"
+        }
+      ]
+    }
+    ```
+    """
+    try:
+        # Validate session exists
+        session = _validate_session_exists(session_code, db)
+        
+        # Check authorization (admin or session participant)
+        _check_session_authorization(session, token, allow_admin_only=False)
+        
+        # Get available players from discovery manager
+        from app.services.player_discovery_manager import PlayerDiscoveryManager
+        discovery_manager = PlayerDiscoveryManager.get_instance()
+        available_players = discovery_manager.get_available_players()
+        
+        # Filter and format response
+        player_list = [player.to_dict() for player in available_players]
+        
+        logger.info(
+            f"[API] Get available players | session={session_code} | "
+            f"count={len(player_list)}"
+        )
+        
+        return {
+            "session_code": session_code,
+            "available_players": player_list,
+        }
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception(f"Error getting available players: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to get available players")
+
+
+@router.post("/{session_code}/select-player", status_code=200, response_model=SelectPlayerResponse)
+async def select_player(
+    session_code: str,
+    request: SelectPlayerRequest,
+    db: SQLSession = Depends(get_db),
+    token: TokenPayload = Depends(verify_bearer_token),
+) -> SelectPlayerResponse:
+    """
+    Select and lock a player to a session.
+    
+    When an admin selects a player:
+    1. Node sends lock message to player over discovery WebSocket
+    2. Player closes discovery connection, opens playback connection
+    3. Discovery WebSocket server stops (no new player registrations)
+    4. Session transitions to playback mode
+    
+    **Request**:
+    ```json
+    {
+      "player_id": "player-uuid"
+    }
+    ```
+    
+    **Response**:
+    ```json
+    {
+      "success": true,
+      "player_id": "player-uuid",
+      "player_name": "Pat's MacBook",
+      "message": "Player locked to session"
+    }
+    ```
+    """
+    try:
+        # Validate session exists and is active
+        session = _validate_session_exists(session_code, db)
+        if session.status.value != "active":
+            raise HTTPException(
+                status_code=400,
+                detail=f"Session is not active (status: {session.status.value})",
+            )
+        
+        # Check authorization (admin only)
+        _check_session_authorization(session, token, allow_admin_only=True)
+        
+        # Get player from discovery manager
+        from app.services.player_discovery_manager import PlayerDiscoveryManager
+        discovery_manager = PlayerDiscoveryManager.get_instance()
+        
+        player = discovery_manager.get_player(request.player_id)
+        if not player:
+            raise HTTPException(status_code=404, detail="Player not found")
+        
+        if player.status != "discovering":
+            raise HTTPException(
+                status_code=409,
+                detail=f"Player is not available (status: {player.status})",
+            )
+        
+        # Lock player to session
+        discovery_manager.lock_player(request.player_id, session_code)
+        
+        # Update session with player info
+        session.player_id = request.player_id
+        session.player_name = player.name
+        db.commit()
+        
+        # Send lock message to player over WebSocket
+        if player.ws_connection:
+            try:
+                import json
+                lock_message = {
+                    "type": "lock",
+                    "session_code": session_code,
+                    "token": "placeholder-token",  # TODO: Generate real token
+                }
+                await player.ws_connection.send_json(lock_message)
+                logger.info(
+                    f"[API] Lock message sent to player | "
+                    f"player_id={request.player_id} | session={session_code}"
+                )
+            except Exception as e:
+                logger.warning(
+                    f"[API] Failed to send lock message to player | error={str(e)}"
+                )
+                # Don't fail the request if WS send fails
+        
+        logger.info(
+            f"[API] Player selected and locked | player_id={request.player_id} | "
+            f"session={session_code} | player_name={player.name}"
+        )
+        
+        return SelectPlayerResponse(
+            success=True,
+            player_id=request.player_id,
+            player_name=player.name,
+            message="Player locked to session",
+        )
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception(f"Error selecting player: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to select player")

@@ -61,10 +61,18 @@ async def lifespan(app: FastAPI):
     finally:
         db.close()
     
-    # Initialize player manager with valid API keys
-    valid_keys = settings.get_valid_player_api_keys()
-    PlayerManager.create_singleton(valid_keys)
-    print(f"Player manager initialized with {len(valid_keys)} valid API key(s)")
+    # Initialize mDNS broadcaster to announce Node on local network
+    from app.services.mdns_broadcaster import MDNSBroadcaster
+    mdns = MDNSBroadcaster.get_instance()
+    if mdns.broadcast(node_name="Singalong Node", port=settings.port):
+        print("✓ mDNS broadcast started (_singalong-node._tcp.local.)")
+    else:
+        print("⚠ mDNS broadcast failed (players won't auto-discover this node)")
+    
+    # Initialize player discovery manager
+    from app.services.player_discovery_manager import PlayerDiscoveryManager
+    PlayerDiscoveryManager.get_instance()
+    print("✓ Player discovery manager initialized")
     
     # Initialize WebSocket services (Event Bus, Connection Manager, etc.)
     from app.services.websocket_service_container import init_websocket_services
@@ -90,6 +98,12 @@ async def lifespan(app: FastAPI):
     yield
     # Shutdown
     print(f"Shutting down {settings.service_name}")
+    
+    # Stop mDNS broadcast
+    from app.services.mdns_broadcaster import MDNSBroadcaster
+    mdns = MDNSBroadcaster.get_instance()
+    mdns.stop_broadcast()
+    
     if ws_client:
         await ws_client.disconnect()
     if listen_task and not listen_task.done():

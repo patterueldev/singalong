@@ -221,3 +221,315 @@ async def websocket_session_endpoint(session_id: str, websocket: WebSocket):
             exc_info=True,
         )
         await manager.disconnect(session_id, websocket)
+
+
+@router.websocket("/api/player/ws")
+async def websocket_player_discovery_endpoint(websocket: WebSocket):
+    """
+    WebSocket endpoint for player discovery.
+    
+    Players connect here during idle/discovery phase to:
+    1. Register their existence with the Node
+    2. Receive "lock" messages when admin selects them
+    3. Receive playback commands once locked
+    
+    **Protocol**:
+    
+    Player connects and sends:
+    ```json
+    {
+      "type": "register",
+      "name": "Pat's MacBook",
+      "platform": "macos"
+    }
+    ```
+    
+    Node responds with:
+    ```json
+    {
+      "type": "registered",
+      "player_id": "uuid-here"
+    }
+    ```
+    
+    When admin selects player, Node sends:
+    ```json
+    {
+      "type": "lock",
+      "session_code": "0001",
+      "token": "jwt-token-here"
+    }
+    ```
+    
+    Player receives lock and responds:
+    ```json
+    {
+      "type": "locked",
+      "player_id": "uuid-here"
+    }
+    ```
+    
+    Then player closes this discovery connection and opens playback connection
+    to /api/session/{code}/player/ws
+    """
+    await websocket.accept()
+    
+    from app.services.player_discovery_manager import PlayerDiscoveryManager
+    discovery_manager = PlayerDiscoveryManager.get_instance()
+    
+    player_info = None
+    
+    try:
+        # Wait for player registration message
+        data = await websocket.receive_text()
+        try:
+            message = json.loads(data)
+        except json.JSONDecodeError:
+            logger.warning("[Player Discovery] Invalid JSON from player on connect")
+            await websocket.close(code=status.WS_1003_UNSUPPORTED_DATA, reason="Invalid JSON")
+            return
+        
+        if message.get("type") != "register":
+            logger.warning(
+                f"[Player Discovery] First message not register | type={message.get('type')}"
+            )
+            await websocket.close(code=status.WS_1002_PROTOCOL_ERROR, reason="Expected register")
+            return
+        
+        # Extract player info
+        name = message.get("name", "Unknown Player")
+        platform = message.get("platform", "unknown")
+        
+        # Register player
+        player_info = await discovery_manager.register_player(
+            name=name,
+            platform=platform,
+            websocket=websocket,
+        )
+        
+        # Send registered confirmation
+        await websocket.send_json({
+            "type": "registered",
+            "player_id": player_info.player_id,
+        })
+        
+        logger.info(
+            f"[Player Discovery] Player connection established | "
+            f"player_id={player_info.player_id} | name={name} | platform={platform}"
+        )
+        
+        # Keep connection alive and wait for lock message from admin
+        while True:
+            try:
+                data = await websocket.receive_text()
+                message = json.loads(data)
+                msg_type = message.get("type")
+                
+                if msg_type == "ping":
+                    # Heartbeat response
+                    await websocket.send_json({"type": "pong"})
+                
+                elif msg_type == "lock":
+                    # Admin selected this player
+                    session_code = message.get("session_code")
+                    token = message.get("token")
+                    
+                    logger.info(
+                        f"[Player Discovery] Lock message received | "
+                        f"player_id={player_info.player_id} | session={session_code}"
+                    )
+                    
+                    # Update player state to locked
+                    discovery_manager.lock_player(player_info.player_id, session_code)
+                    
+                    # Send lock confirmation
+                    await websocket.send_json({
+                        "type": "locked",
+                        "player_id": player_info.player_id,
+                        "session_code": session_code,
+                        "token": token,
+                    })
+                    
+                    # Close discovery connection (player will open playback connection next)
+                    await websocket.close(code=1000, reason="Locked, switching to playback connection")
+                    logger.info(
+                        f"[Player Discovery] Closed discovery connection | "
+                        f"player_id={player_info.player_id} | session={session_code}"
+                    )
+                    break
+                    
+                else:
+                    logger.debug(
+                        f"[Player Discovery] Unknown message type | "
+                        f"player_id={player_info.player_id} | type={msg_type}"
+                    )
+                    
+            except json.JSONDecodeError:
+                logger.debug(f"[Player Discovery] Invalid JSON from player")
+    
+    except WebSocketDisconnect:
+        if player_info:
+            await discovery_manager.unregister_player(player_info.player_id)
+            logger.info(
+                f"[Player Discovery] Player disconnected | "
+                f"player_id={player_info.player_id} | name={player_info.name}"
+            )
+    
+    except Exception as e:
+        if player_info:
+            await discovery_manager.unregister_player(player_info.player_id)
+        logger.error(
+            f"[Player Discovery] WebSocket error | error={str(e)}",
+            exc_info=True,
+        )
+
+
+@router.websocket("/api/session/{session_code}/player/ws")
+async def websocket_player_playback_endpoint(session_code: str, websocket: WebSocket):
+    """
+    WebSocket endpoint for player playback connection.
+    
+    After player is locked to a session, player opens this connection for:
+    1. Receiving playback commands (play, pause, seek)
+    2. Sending playback state updates (progress, finished)
+    
+    **Authentication**: Player must send token from lock message in first message
+    
+    **Protocol**:
+    
+    Player sends:
+    ```json
+    {
+      "type": "auth",
+      "token": "jwt-token-from-lock-message"
+    }
+    ```
+    
+    Node responds:
+    ```json
+    {
+      "type": "authenticated"
+    }
+    ```
+    
+    Then bidirectional communication:
+    
+    Node → Player (playback commands):
+    ```json
+    {
+      "type": "play",
+      "song_id": "song-id",
+      "url": "file:///path/to/video.mp4"
+    }
+    ```
+    
+    Player → Node (status updates):
+    ```json
+    {
+      "type": "status",
+      "state": "playing",
+      "elapsed_seconds": 45,
+      "total_seconds": 180
+    }
+    ```
+    """
+    await websocket.accept()
+    
+    from app.services.player_discovery_manager import PlayerDiscoveryManager
+    discovery_manager = PlayerDiscoveryManager.get_instance()
+    
+    player_info = discovery_manager.get_session_player(session_code)
+    
+    if not player_info:
+        logger.warning(
+            f"[Player Playback] No locked player for session | session={session_code}"
+        )
+        await websocket.close(code=status.WS_1008_POLICY_VIOLATION, reason="No player locked")
+        return
+    
+    # Update player connection to this new WS
+    player_info.ws_connection = websocket
+    
+    logger.info(
+        f"[Player Playback] Playback connection established | "
+        f"player_id={player_info.player_id} | session={session_code}"
+    )
+    
+    try:
+        # Wait for authentication
+        data = await websocket.receive_text()
+        try:
+            message = json.loads(data)
+        except json.JSONDecodeError:
+            logger.warning(f"[Player Playback] Invalid JSON on auth | session={session_code}")
+            await websocket.close(code=status.WS_1003_UNSUPPORTED_DATA, reason="Invalid JSON")
+            return
+        
+        if message.get("type") != "auth":
+            logger.warning(
+                f"[Player Playback] First message not auth | session={session_code} | "
+                f"type={message.get('type')}"
+            )
+            await websocket.close(code=status.WS_1002_PROTOCOL_ERROR, reason="Expected auth")
+            return
+        
+        # TODO: Validate token from auth message
+        # For now, just accept it
+        
+        # Send authenticated confirmation
+        await websocket.send_json({
+            "type": "authenticated",
+            "session_code": session_code,
+        })
+        
+        logger.info(
+            f"[Player Playback] Player authenticated | "
+            f"player_id={player_info.player_id} | session={session_code}"
+        )
+        
+        # Listen for player messages
+        while True:
+            data = await websocket.receive_text()
+            try:
+                message = json.loads(data)
+                msg_type = message.get("type")
+                
+                if msg_type == "ping":
+                    await websocket.send_json({"type": "pong"})
+                
+                elif msg_type == "status":
+                    # Player reporting playback status
+                    state = message.get("state")  # playing, paused, stopped
+                    elapsed = message.get("elapsed_seconds")
+                    total = message.get("total_seconds")
+                    
+                    logger.debug(
+                        f"[Player Playback] Status update | player_id={player_info.player_id} | "
+                        f"state={state} | elapsed={elapsed}/{total}"
+                    )
+                    # TODO: Broadcast this status to session clients
+                    
+                else:
+                    logger.debug(
+                        f"[Player Playback] Unknown message type | "
+                        f"player_id={player_info.player_id} | type={msg_type}"
+                    )
+                    
+            except json.JSONDecodeError:
+                logger.debug(f"[Player Playback] Invalid JSON from player | session={session_code}")
+    
+    except WebSocketDisconnect:
+        logger.info(
+            f"[Player Playback] Player disconnected | "
+            f"player_id={player_info.player_id} | session={session_code}"
+        )
+        # TODO: Unlock player and update session
+        # TODO: Notify admin that player disconnected
+    
+    except Exception as e:
+        logger.error(
+            f"[Player Playback] WebSocket error | "
+            f"player_id={player_info.player_id} | error={str(e)}",
+            exc_info=True,
+        )
+

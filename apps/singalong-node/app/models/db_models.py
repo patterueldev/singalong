@@ -106,9 +106,13 @@ class Session(Base):
     status = Column(SQLEnum(SessionStatus), nullable=False, default=SessionStatus.ACTIVE)
     created_at = Column(DateTime(timezone=True), nullable=False, default=utc_now)
     ended_at = Column(DateTime(timezone=True), nullable=True)
+    
+    # Player tracking for playback
+    player_id = Column(String(255), nullable=True, index=True)  # Player instance ID (e.g., UUID or name)
+    player_name = Column(String(255), nullable=True)  # Human-readable player name (e.g., "Pat's MacBook")
 
     def __repr__(self):
-        return f"<Session {self.code}: {self.title} ({self.status})>"
+        return f"<Session {self.code}: {self.title} ({self.status}) [player: {self.player_name}]>"
 
 
 class SessionUser(Base):
