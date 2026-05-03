@@ -8,8 +8,10 @@ settings:
 targets:
   SingalongPlayer:
     type: application
-    platform: iOS
-    deploymentTarget: "16.0"
+    platform: [iOS, macOS]
+    deploymentTarget:
+      iOS: "16.0"
+      macOS: "13.0"
     sources:
       - path: SingalongPlayer
         includes:

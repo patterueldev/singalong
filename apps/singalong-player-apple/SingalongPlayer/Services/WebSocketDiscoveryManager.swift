@@ -40,7 +40,7 @@ actor WebSocketDiscoveryManager {
         onConnectionStatusChanged?(node.id, .connecting)
         
         // Send registration message
-        let playerName = UIDevice.current.name
+        let playerName = getDeviceName()
         let platform = getPlatformName()
         let registerMessage = PlayerMessage.register(name: playerName, platform: platform)
         
@@ -87,7 +87,7 @@ actor WebSocketDiscoveryManager {
     // MARK: - Private Methods
     
     private func receiveMessages(fromNodeId nodeId: String) async {
-        guard let connection = activeConnections[nodeId] else { return }
+        guard activeConnections[nodeId] != nil else { return }
         
         let decoder = JSONDecoder()
         
@@ -129,6 +129,18 @@ actor WebSocketDiscoveryManager {
                 break
             }
         }
+    }
+    
+    private func getDeviceName() -> String {
+        #if os(macOS)
+        return Host.current().localizedName ?? "Mac Player"
+        #elseif os(iOS)
+        return UIDevice.current.name
+        #elseif os(tvOS)
+        return UIDevice.current.name
+        #else
+        return "Singalong Player"
+        #endif
     }
     
     private func getPlatformName() -> String {
