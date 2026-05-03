@@ -90,41 +90,47 @@ class PlayerAppState: ObservableObject {
     // MARK: - Private Methods
     
     private func setupCallbacks() {
-        // Set up mDNS callbacks
+        // Set up mDNS callbacks using Task to avoid actor isolation issues
         Task {
-            await mdnsService.onNodesUpdated = { [weak self] nodes in
+            // Note: Callbacks are called from their respective actors/threads,
+            // so we wrap UI updates in DispatchQueue.main.async
+            let mdns = mdnsService
+            await mdns.setCallback(onNodesUpdated: { [weak self] nodes in
                 DispatchQueue.main.async {
                     self?.discoveredNodes = nodes
                 }
-            }
+            })
             
-            await mdnsService.onNodeRemoved = { [weak self] node in
+            await mdns.setCallback(onNodeRemoved: { [weak self] node in
                 DispatchQueue.main.async {
                     self?.activeConnections.removeValue(forKey: node.id)
                     if self?.selectedNodeId == node.id {
                         self?.selectedNodeId = nil
                     }
                 }
-            }
+            })
         }
         
         // Set up WebSocket callbacks
-        wsManager.onConnectionStatusChanged = { [weak self] nodeId, status in
-            DispatchQueue.main.async {
-                self?.activeConnections[nodeId] = status
-            }
-        }
-        
-        wsManager.onMessageReceived = { [weak self] nodeId, message in
-            DispatchQueue.main.async {
-                self?.handleNodeMessage(message, fromNodeId: nodeId)
-            }
-        }
-        
-        wsManager.onConnectionClosed = { [weak self] nodeId in
-            DispatchQueue.main.async {
-                self?.activeConnections.removeValue(forKey: nodeId)
-            }
+        let ws = wsManager
+        Task {
+            await ws.setCallback(onConnectionStatusChanged: { [weak self] nodeId, status in
+                DispatchQueue.main.async {
+                    self?.activeConnections[nodeId] = status
+                }
+            })
+            
+            await ws.setCallback(onMessageReceived: { [weak self] nodeId, message in
+                DispatchQueue.main.async {
+                    self?.handleNodeMessage(message, fromNodeId: nodeId)
+                }
+            })
+            
+            await ws.setCallback(onConnectionClosed: { [weak self] nodeId in
+                DispatchQueue.main.async {
+                    self?.activeConnections.removeValue(forKey: nodeId)
+                }
+            })
         }
     }
     

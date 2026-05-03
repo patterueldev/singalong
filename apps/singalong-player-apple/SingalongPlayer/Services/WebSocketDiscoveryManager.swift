@@ -1,4 +1,7 @@
 import Foundation
+#if os(iOS) || os(tvOS)
+import UIKit
+#endif
 
 /// Manages WebSocket connections to discovered nodes in the discovery phase
 actor WebSocketDiscoveryManager {
@@ -84,6 +87,21 @@ actor WebSocketDiscoveryManager {
         return activeConnections[nodeId]?.status
     }
     
+    /// Set the onConnectionStatusChanged callback
+    func setCallback(onConnectionStatusChanged: @escaping (String, NodeConnectionStatus) -> Void) {
+        self.onConnectionStatusChanged = onConnectionStatusChanged
+    }
+    
+    /// Set the onMessageReceived callback
+    func setCallback(onMessageReceived: @escaping (String, NodeMessage) -> Void) {
+        self.onMessageReceived = onMessageReceived
+    }
+    
+    /// Set the onConnectionClosed callback
+    func setCallback(onConnectionClosed: @escaping (String) -> Void) {
+        self.onConnectionClosed = onConnectionClosed
+    }
+    
     // MARK: - Private Methods
     
     private func receiveMessages(fromNodeId nodeId: String) async {
@@ -133,7 +151,7 @@ actor WebSocketDiscoveryManager {
     
     private func getDeviceName() -> String {
         #if os(macOS)
-        return Host.current().localizedName ?? "Mac Player"
+        return (try? Host.current().localizedName) ?? "Mac Player"
         #elseif os(iOS)
         return UIDevice.current.name
         #elseif os(tvOS)

@@ -46,6 +46,16 @@ actor MDNSDiscoveryService: NSObject, NetServiceBrowserDelegate {
         return discoveredNodes[id]
     }
     
+    /// Set the onNodesUpdated callback
+    func setCallback(onNodesUpdated: @escaping ([DiscoveredNode]) -> Void) {
+        self.onNodesUpdated = onNodesUpdated
+    }
+    
+    /// Set the onNodeRemoved callback
+    func setCallback(onNodeRemoved: @escaping (DiscoveredNode) -> Void) {
+        self.onNodeRemoved = onNodeRemoved
+    }
+    
     // MARK: - NetServiceBrowserDelegate
     
     nonisolated func netServiceBrowser(

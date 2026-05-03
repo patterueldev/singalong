@@ -275,7 +275,9 @@ struct ManualSetupSheet: View {
                         .background(Color(red: 0.110, green: 0.114, blue: 0.141))
                         .cornerRadius(8)
                         .foregroundColor(.white)
+                        #if os(iOS)
                         .textInputAutocapitalization(.never)
+                        #endif
                 }
                 .padding(.horizontal, 24)
                 
