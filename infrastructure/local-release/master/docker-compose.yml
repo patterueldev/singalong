@@ -1,63 +1,44 @@
 version: '3.9'
 
 services:
-  # PostgreSQL Database for Master
   master-db:
     image: postgres:16-alpine
     container_name: singalong-master-db
     environment:
-      POSTGRES_DB: singalong_master
-      POSTGRES_USER: master_user
-      POSTGRES_PASSWORD: master_password_dev
-    ports:
-      - "5432:5432"
+      POSTGRES_DB: ${DB_NAME:-singalong_master}
+      POSTGRES_USER: ${DB_USER:-master_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
     volumes:
       - master-db-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U master_user -d singalong_master"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-master_user} -d ${DB_NAME:-singalong_master}"]
       interval: 10s
       timeout: 5s
       retries: 5
     networks:
-      - singalong-network
+      - singalong-master-network
+    restart: unless-stopped
 
-  # Singalong Master Service
   master:
     build:
       context: ../../../apps/singalong-master
-      dockerfile: ../../../infrastructure/release/master.dockerfile
+      dockerfile: ../../infrastructure/release/master.dockerfile
     container_name: singalong-master
     depends_on:
       master-db:
         condition: service_healthy
     environment:
-      # Application Settings
-      DEBUG: "False"
+      DEBUG: ${DEBUG:-False}
       PORT: 5001
-      HOST: 0.0.0.0
-
-      # API Key for Node authentication
-      # IMPORTANT: Change this in production
-      MASTER_API_KEY: dev-key-production-secret-1234567890,dev-key-production-secret-player-1234567890
-
-      # JWT Configuration
+      HOST: 127.0.0.1
+      MASTER_API_KEY: ${MASTER_API_KEY}
       JWT_ALGORITHM: HS256
       JWT_ACCESS_TOKEN_EXPIRE_SECONDS: "3600"
       JWT_REFRESH_TOKEN_EXPIRE_SECONDS: "604800"
-
-      # User JWT Secret
-      # IMPORTANT: Change this in production
-      USER_JWT_SECRET: dev-user-jwt-secret-change-in-production
-
-      # Database Configuration
-      DATABASE_URL: postgresql://master_user:master_password_dev@master-db:5432/singalong_master
-
-    ports:
-      - "5001:5001"
+      USER_JWT_SECRET: ${USER_JWT_SECRET}
+      DATABASE_URL: postgresql://${DB_USER:-master_user}:${DB_PASSWORD}@master-db:5432/${DB_NAME:-singalong_master}
     volumes:
-      # Video storage
       - master-videos:/app/videos
-      # Application logs
       - master-logs:/app/logs
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5001/health').read()"]
@@ -66,7 +47,22 @@ services:
       start_period: 10s
       retries: 3
     networks:
-      - singalong-network
+      - singalong-master-network
+    restart: unless-stopped
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: singalong-cloudflared
+    command: 
+      - tunnel
+      - --no-autoupdate
+      - run
+      - --token
+      - ${CLOUDFLARED_TOKEN}
+    depends_on:
+      - master
+    networks:
+      - singalong-master-network
     restart: unless-stopped
 
 volumes:
@@ -78,5 +74,5 @@ volumes:
     driver: local
 
 networks:
-  singalong-network:
+  singalong-master-network:
     driver: bridge
