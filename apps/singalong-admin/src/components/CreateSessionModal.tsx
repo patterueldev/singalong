@@ -1,13 +1,12 @@
 import { useState } from 'react'
-import { useSessions } from '../hooks/useSessions'
 import './Modals.css'
 
 interface CreateSessionModalProps {
   onClose: () => void
+  onCreateSession: (title: string, vibes?: string) => Promise<void>
 }
 
-export function CreateSessionModal({ onClose }: CreateSessionModalProps) {
-  const { createSession } = useSessions()
+export function CreateSessionModal({ onClose, onCreateSession }: CreateSessionModalProps) {
   const [title, setTitle] = useState('')
   const [vibes, setVibes] = useState('')
   const [error, setError] = useState('')
@@ -21,7 +20,7 @@ export function CreateSessionModal({ onClose }: CreateSessionModalProps) {
     }
     setIsLoading(true)
     try {
-      await createSession(title, vibes || undefined)
+      await onCreateSession(title, vibes || undefined)
       onClose()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create session')

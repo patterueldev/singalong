@@ -6,13 +6,19 @@ import './SessionsPanel.css'
 interface SessionsPanelProps {
   sessions: Session[]
   onSelectSession: (code: string) => Promise<void>
+  onCreateSession: (title: string, vibes?: string) => Promise<void>
 }
 
-export function SessionsPanel({ sessions, onSelectSession }: SessionsPanelProps) {
+export function SessionsPanel({ sessions, onSelectSession, onCreateSession }: SessionsPanelProps) {
   const [showCreateModal, setShowCreateModal] = useState(false)
 
   const handleSelectSession = async (code: string) => {
     await onSelectSession(code)
+  }
+
+  const handleCreateSession = async (title: string, vibes?: string) => {
+    await onCreateSession(title, vibes)
+    setShowCreateModal(false)
   }
 
   return (
@@ -51,7 +57,12 @@ export function SessionsPanel({ sessions, onSelectSession }: SessionsPanelProps)
         </div>
       )}
 
-      {showCreateModal && <CreateSessionModal onClose={() => setShowCreateModal(false)} />}
+      {showCreateModal && (
+        <CreateSessionModal
+          onClose={() => setShowCreateModal(false)}
+          onCreateSession={handleCreateSession}
+        />
+      )}
     </div>
   )
 }
