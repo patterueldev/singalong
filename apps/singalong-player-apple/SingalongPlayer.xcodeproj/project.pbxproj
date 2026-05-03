@@ -175,7 +175,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = "com.nicenature.singalong-player";
+				PRODUCT_BUNDLE_IDENTIFIER = dev.patteruel.singalong.player;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -311,7 +311,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = "com.nicenature.singalong-player";
+				PRODUCT_BUNDLE_IDENTIFIER = dev.patteruel.singalong.player;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};

@@ -1,6 +1,6 @@
 name: SingalongPlayer
-organizationName: Nicenature
-bundleIdPrefix: com.nicenature
+organizationName: Patteruel
+bundleIdPrefix: dev.patteruel
 
 settings:
   SWIFT_VERSION: 5.9
@@ -22,7 +22,7 @@ targets:
       path: SingalongPlayer/Info.plist
       useBaseLocalizationAsUnderscore: true
     settings:
-      PRODUCT_BUNDLE_IDENTIFIER: com.nicenature.singalong-player
+      PRODUCT_BUNDLE_IDENTIFIER: dev.patteruel.singalong.player
       DEVELOPMENT_TEAM: ""
       CODE_SIGN_STYLE: Automatic
       INFOPLIST_FILE: SingalongPlayer/Info.plist
