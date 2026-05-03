@@ -38,9 +38,8 @@ services:
       USER_JWT_SECRET: ${USER_JWT_SECRET}
       DATABASE_URL: postgresql://${DB_USER:-master_user}:${DB_PASSWORD}@master-db:5432/${DB_NAME:-singalong_master}
     volumes:
-      - ./data/master/videos:/app/videos
-      - ./data/master/logs:/app/logs
-      - ./data/master:/app/data
+      - ./data/master/videos:/data/master/videos
+      - ./data/master/logs:/data/master/logs
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5001/health').read()"]
       interval: 30s
