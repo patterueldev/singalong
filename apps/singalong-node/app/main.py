@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
+from starlette.middleware.cors import CORSMiddleware
 
 from app.config import settings
 from app.database import init_db
@@ -104,6 +105,20 @@ app = FastAPI(
     description="Local karaoke server for singalong system",
     version="0.1.0",
     lifespan=lifespan,
+)
+
+# Configure CORS using middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:3001",
+        "http://localhost:3002",
+        "https://singalongadmin-dev.nicenature.space",
+        "https://singalongcontroller-dev.nicenature.space",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # Include routers
