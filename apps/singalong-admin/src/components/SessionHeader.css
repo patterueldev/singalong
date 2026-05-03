@@ -1,0 +1,96 @@
+.session-header {
+  background: #1f2937;
+  border-bottom: 1px solid #374151;
+  padding: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.session-info h2 {
+  color: #f3f4f6;
+  font-size: 24px;
+  margin: 0 0 12px 0;
+  font-weight: 700;
+}
+
+.session-meta {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.code-badge,
+.vibes-badge,
+.attendees-badge,
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  background: #111827;
+  color: #9ca3af;
+  border: 1px solid #374151;
+}
+
+.vibes-badge {
+  color: #c084fc;
+  border-color: #a855f7;
+}
+
+.attendees-badge {
+  color: #6ee7b7;
+  border-color: #10b981;
+}
+
+.status-badge.active {
+  color: #6ee7b7;
+  background: rgba(16, 185, 129, 0.1);
+  border-color: #10b981;
+}
+
+.status-badge.ended {
+  color: #f87171;
+  background: rgba(239, 68, 68, 0.1);
+  border-color: #ef4444;
+}
+
+.session-controls {
+  display: flex;
+  gap: 8px;
+}
+
+.btn {
+  padding: 10px 16px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-secondary {
+  background: #374151;
+  color: #f3f4f6;
+}
+
+.btn-secondary:hover {
+  background: #4b5563;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.btn-danger {
+  background: #ef4444;
+  color: white;
+}
+
+.btn-danger:hover {
+  background: #dc2626;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+}
