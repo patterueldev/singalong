@@ -17,6 +17,7 @@ python-dotenv = "^1.0.0"
 PyJWT = "^2.8.1"
 python-multipart = "^0.0.7"
 sqlalchemy = "^2.0.0"
+psycopg = {extras = ["binary"], version = "^3.0.0"}
 ariadne = "^0.21.0"
 bcrypt = "^4.1.0"
 passlib = "^1.7.4"

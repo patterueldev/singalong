@@ -95,7 +95,7 @@ class UserSessionHistory(Base):
     joined_at = Column(DateTime(timezone=True), nullable=False, default=utc_now)
     left_at = Column(DateTime(timezone=True), nullable=True)
 
-    __table_args__ = (UniqueConstraint("user_id", "node_id", "session_id", name="uq_user_node_session"),)
+    __table_args__ = (UniqueConstraint("user_id", "node_id", "session_id", name="uq_session_history_user"),)
 
     def __repr__(self):
         return f"<UserSessionHistory {self.user_id} @ {self.node_id}:{self.session_id}>"
