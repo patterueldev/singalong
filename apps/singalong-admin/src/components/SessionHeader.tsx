@@ -11,11 +11,11 @@ export function SessionHeader({ session }: SessionHeaderProps) {
   return (
     <header className="session-header">
       <div className="session-info">
-        <h2>{session.name}</h2>
+        <h2>{session.title}</h2>
         <div className="session-meta">
           <span className="code-badge">Code: {session.code}</span>
           <span className="vibes-badge">{session.vibes || 'Vibes: All'}</span>
-          <span className="attendees-badge">👥 {session.attendee_count} attendees</span>
+          <span className="attendees-badge">👥 {session.user_count} attendees</span>
           <span className={`status-badge ${session.status}`}>
             {statusBadge} {session.status}
           </span>

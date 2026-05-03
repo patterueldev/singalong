@@ -33,10 +33,10 @@ export function useSessions() {
   }, [refreshSessions])
 
   const createSession = useCallback(
-    async (name: string, vibes?: string) => {
+    async (title: string, vibes?: string) => {
       setState((prev) => ({ ...prev, isLoading: true, error: null }))
       try {
-        const newSession = await sessionService.createSession(name, vibes)
+        const newSession = await sessionService.createSession(title, vibes)
         setState((prev) => ({
           ...prev,
           sessions: [...prev.sessions, newSession],
@@ -52,10 +52,10 @@ export function useSessions() {
     []
   )
 
-  const selectSession = useCallback(async (id: string) => {
+  const selectSession = useCallback(async (code: string) => {
     setState((prev) => ({ ...prev, isLoading: true, error: null }))
     try {
-      const session = await sessionService.getSession(id)
+      const session = await sessionService.getSession(code)
       setState((prev) => ({ ...prev, currentSession: session, isLoading: false }))
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to load session'
@@ -63,15 +63,15 @@ export function useSessions() {
     }
   }, [])
 
-  const endSession = useCallback(async (id: string) => {
+  const endSession = useCallback(async (code: string) => {
     setState((prev) => ({ ...prev, isLoading: true, error: null }))
     try {
-      await sessionService.endSession(id)
+      await sessionService.endSession(code)
       setState((prev) => ({
         ...prev,
-        sessions: prev.sessions.map((s) => (s.id === id ? { ...s, status: 'ended' } : s)),
+        sessions: prev.sessions.map((s) => (s.code === code ? { ...s, status: 'ended' } : s)),
         currentSession:
-          prev.currentSession?.id === id
+          prev.currentSession?.code === code
             ? { ...prev.currentSession, status: 'ended' }
             : prev.currentSession,
         isLoading: false,

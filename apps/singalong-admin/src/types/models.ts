@@ -7,15 +7,14 @@ export interface User {
 }
 
 export interface Session {
-  id: string
-  name: string
-  code: string
-  status: 'active' | 'ended'
-  vibes?: string
-  player_count: number
-  attendee_count: number
+  code: string // 4-digit session code
+  title: string
+  vibes: string
+  max_users: number
+  status: 'active' | 'paused' | 'ended'
   created_at: string
-  created_by?: string
+  created_by: string
+  user_count: number
 }
 
 export interface Playback {
@@ -33,7 +32,7 @@ export interface Player {
   id: string
   name: string
   hostname?: string
-  status: 'idle' | 'playing' | 'offline'
+  status: 'idle' | 'playing' | 'offline' | 'online'
 }
 
 export interface AuthResponse {
@@ -41,9 +40,11 @@ export interface AuthResponse {
   token_type: string
 }
 
-export interface SessionsResponse {
+export interface SessionsListResponse {
   sessions: Session[]
   total: number
+  offset: number
+  limit: number
 }
 
 export interface ErrorResponse {

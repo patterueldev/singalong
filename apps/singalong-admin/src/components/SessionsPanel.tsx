@@ -12,8 +12,8 @@ export function SessionsPanel({ sessions }: SessionsPanelProps) {
   const { selectSession } = useSessions()
   const [showCreateModal, setShowCreateModal] = useState(false)
 
-  const handleSelectSession = async (sessionId: string) => {
-    await selectSession(sessionId)
+  const handleSelectSession = async (code: string) => {
+    await selectSession(code)
   }
 
   return (
@@ -32,18 +32,18 @@ export function SessionsPanel({ sessions }: SessionsPanelProps) {
       ) : (
         <div className="sessions-list">
           {sessions.map((session) => (
-            <div key={session.id} className="session-card">
+            <div key={session.code} className="session-card">
               <div className="session-card-info">
-                <h3>{session.name}</h3>
+                <h3>{session.title}</h3>
                 <p>{session.vibes || 'No vibes'}</p>
                 <span className={`status ${session.status}`}>{session.status}</span>
               </div>
               <div className="session-card-meta">
-                <span>{session.attendee_count} attendees</span>
+                <span>{session.user_count} attendees</span>
               </div>
               <button
                 className="btn btn-primary"
-                onClick={() => handleSelectSession(session.id)}
+                onClick={() => handleSelectSession(session.code)}
               >
                 Select
               </button>

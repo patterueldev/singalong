@@ -1,32 +1,42 @@
 import api from './authService'
-import type { Session, SessionsResponse } from '../types/models'
+import type { Session } from '../types/models'
+
+interface SessionsListResponse {
+  sessions: Session[]
+  total: number
+  offset: number
+  limit: number
+}
 
 export const sessionService = {
   async getSessions(): Promise<Session[]> {
-    const response = await api.get<SessionsResponse>('/api/admin/sessions')
+    const response = await api.get<SessionsListResponse>('/api/sessions')
     return response.data.sessions
   },
 
-  async createSession(name: string, vibes?: string): Promise<Session> {
-    const response = await api.post<Session>('/api/admin/sessions', {
-      name,
-      vibes,
+  async createSession(title: string, vibes?: string): Promise<Session> {
+    const response = await api.post<Session>('/api/sessions', {
+      title,
+      vibes: vibes || '',
+      max_users: 0,
     })
     return response.data
   },
 
-  async getSession(id: string): Promise<Session> {
-    const response = await api.get<Session>(`/api/admin/sessions/${id}`)
+  async getSession(code: string): Promise<Session> {
+    const response = await api.get<Session>(`/api/sessions/${code}`)
     return response.data
   },
 
-  async endSession(id: string): Promise<void> {
-    await api.post(`/api/admin/sessions/${id}/end`)
+  async endSession(code: string): Promise<void> {
+    await api.put(`/api/sessions/${code}`, {
+      status: 'ended',
+    })
   },
 
-  async updateSession(id: string, name: string, vibes?: string): Promise<Session> {
-    const response = await api.put<Session>(`/api/admin/sessions/${id}`, {
-      name,
+  async updateSession(code: string, title: string, vibes?: string): Promise<Session> {
+    const response = await api.put<Session>(`/api/sessions/${code}`, {
+      title,
       vibes,
     })
     return response.data
