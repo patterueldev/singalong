@@ -1,3 +1,4 @@
+import { useCallback } from 'react'
 import { Sidebar } from '../components/Sidebar'
 import { SessionsPanel } from '../components/SessionsPanel'
 import { SessionHeader } from '../components/SessionHeader'
@@ -9,6 +10,14 @@ import './Dashboard.css'
 export function DashboardPage() {
   const { sessions, currentSession, selectSession, createSession } = useSessions()
 
+  // Wrapper to convert Promise<Session> to Promise<void>
+  const handleCreateSession = useCallback(
+    async (title: string, vibes?: string) => {
+      await createSession(title, vibes)
+    },
+    [createSession]
+  )
+
   if (!currentSession && sessions.length === 0) {
     return (
       <div className="dashboard-container">
@@ -17,7 +26,7 @@ export function DashboardPage() {
           <SessionsPanel
             sessions={sessions}
             onSelectSession={selectSession}
-            onCreateSession={createSession}
+            onCreateSession={handleCreateSession}
           />
         </main>
       </div>
@@ -32,7 +41,7 @@ export function DashboardPage() {
           <SessionsPanel
             sessions={sessions}
             onSelectSession={selectSession}
-            onCreateSession={createSession}
+            onCreateSession={handleCreateSession}
           />
         ) : (
           <>

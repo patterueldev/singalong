@@ -32,7 +32,8 @@ export interface Player {
   id: string
   name: string
   hostname?: string
-  status: 'idle' | 'playing' | 'offline' | 'online'
+  platform?: string
+  status: 'idle' | 'playing' | 'offline' | 'online' | 'discovering' | 'connecting' | 'connected'
 }
 
 export interface AuthResponse {

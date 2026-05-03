@@ -4,7 +4,8 @@ import { PlayerSelectionModal } from './PlayerSelectionModal'
 import './PlaybackPanel.css'
 
 export function PlaybackPanel() {
-  const { nowPlaying, assignedPlayer, availablePlayers, play, pause } = usePlayback()
+  const { nowPlaying, assignedPlayer, availablePlayers, isLoading, selectPlayer, play, pause } =
+    usePlayback()
   const [showPlayerModal, setShowPlayerModal] = useState(false)
 
   const progressPercent =
@@ -69,6 +70,9 @@ export function PlaybackPanel() {
         <div className="player-info">
           <span className="player-label">Assigned Player:</span>
           <span className="player-name">{assignedPlayer?.name || 'None Selected'}</span>
+          {assignedPlayer?.platform && (
+            <span className="player-platform">({assignedPlayer.platform})</span>
+          )}
         </div>
         <button className="btn-select-player" onClick={() => setShowPlayerModal(true)}>
           {assignedPlayer ? 'Change Player' : 'Select Player'}
@@ -80,6 +84,8 @@ export function PlaybackPanel() {
           availablePlayers={availablePlayers}
           assignedPlayer={assignedPlayer}
           onClose={() => setShowPlayerModal(false)}
+          onSelectPlayer={selectPlayer}
+          isLoading={isLoading}
         />
       )}
     </div>

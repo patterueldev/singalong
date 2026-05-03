@@ -5,12 +5,23 @@ interface PlayerSelectionModalProps {
   availablePlayers: Player[]
   assignedPlayer: Player | null
   onClose: () => void
+  onSelectPlayer: (playerId: string) => void
+  isLoading?: boolean
 }
 
 export function PlayerSelectionModal({
   availablePlayers,
+  assignedPlayer,
   onClose,
+  onSelectPlayer,
+  isLoading = false,
 }: PlayerSelectionModalProps) {
+  const handleSelectPlayer = (playerId: string) => {
+    onSelectPlayer(playerId)
+    // Close modal after selection
+    onClose()
+  }
+
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
@@ -37,9 +48,18 @@ export function PlayerSelectionModal({
                     <div className="player-name-modal">{player.name}</div>
                     <div className="player-status" data-status={player.status}>
                       {player.status}
+                      {player.platform && ` (${player.platform})`}
                     </div>
                   </div>
-                  <button className="player-select-btn">Select</button>
+                  <button
+                    className={`player-select-btn ${
+                      assignedPlayer?.id === player.id ? 'selected' : ''
+                    }`}
+                    onClick={() => handleSelectPlayer(player.id)}
+                    disabled={isLoading}
+                  >
+                    {assignedPlayer?.id === player.id ? '✓' : 'Select'}
+                  </button>
                 </div>
               ))}
             </div>
@@ -47,7 +67,7 @@ export function PlayerSelectionModal({
         </div>
 
         <div className="modal-footer">
-          <button className="btn-cancel" onClick={onClose}>
+          <button className="btn-cancel" onClick={onClose} disabled={isLoading}>
             Close
           </button>
         </div>
