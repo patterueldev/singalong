@@ -7,14 +7,14 @@ import { useSessions } from '../hooks/useSessions'
 import './Dashboard.css'
 
 export function DashboardPage() {
-  const { sessions, currentSession } = useSessions()
+  const { sessions, currentSession, selectSession } = useSessions()
 
   if (!currentSession && sessions.length === 0) {
     return (
       <div className="dashboard-container">
         <Sidebar />
         <main className="dashboard-main">
-          <SessionsPanel sessions={sessions} />
+          <SessionsPanel sessions={sessions} onSelectSession={selectSession} />
         </main>
       </div>
     )
@@ -25,7 +25,7 @@ export function DashboardPage() {
       <Sidebar />
       <main className="dashboard-main">
         {!currentSession ? (
-          <SessionsPanel sessions={sessions} />
+          <SessionsPanel sessions={sessions} onSelectSession={selectSession} />
         ) : (
           <>
             <SessionHeader session={currentSession} />

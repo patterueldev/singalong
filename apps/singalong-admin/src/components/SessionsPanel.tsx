@@ -1,19 +1,18 @@
 import { useState } from 'react'
-import { useSessions } from '../hooks/useSessions'
 import type { Session } from '../types/models'
 import { CreateSessionModal } from './CreateSessionModal'
 import './SessionsPanel.css'
 
 interface SessionsPanelProps {
   sessions: Session[]
+  onSelectSession: (code: string) => Promise<void>
 }
 
-export function SessionsPanel({ sessions }: SessionsPanelProps) {
-  const { selectSession } = useSessions()
+export function SessionsPanel({ sessions, onSelectSession }: SessionsPanelProps) {
   const [showCreateModal, setShowCreateModal] = useState(false)
 
   const handleSelectSession = async (code: string) => {
-    await selectSession(code)
+    await onSelectSession(code)
   }
 
   return (
