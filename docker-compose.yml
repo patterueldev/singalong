@@ -5,23 +5,24 @@ version: '3.8'
 
 services:
   # Master Service - Central server for video storage and data management
-  master:
-    build:
-      context: ./apps/singalong-master
-      dockerfile: ../../infrastructure/development/master.dockerfile
-    container_name: singalong-master
-    ports:
-      - "5001:5001"
-    volumes:
-      - ./apps/singalong-master:/app
-      - ./data/master:/data/master  # Mount master video storage
-      - /app/__pycache__  # Exclude pycache from volume mount
-    environment:
-      - ENVIRONMENT=development
-      - DEBUG=true
-      - MASTER_API_KEY=${MASTER_API_KEY}
-    networks:
-      - singalong-network
+  # Uncomment if developing master locally
+  # master:
+  #   build:
+  #     context: ./apps/singalong-master
+  #     dockerfile: ../../infrastructure/development/master.dockerfile
+  #   container_name: singalong-master
+  #   ports:
+  #     - "5001:5001"
+  #   volumes:
+  #     - ./apps/singalong-master:/app
+  #     - ./data/master:/data/master  # Mount master video storage
+  #     - /app/__pycache__  # Exclude pycache from volume mount
+  #   environment:
+  #     - ENVIRONMENT=development
+  #     - DEBUG=true
+  #     - MASTER_API_KEY=${MASTER_API_KEY}
+  #   networks:
+  #     - singalong-network
 
   # Node Service - Local karaoke server
   node:
@@ -33,11 +34,12 @@ services:
       - "5002:5002"
     volumes:
       - ./apps/singalong-node:/app
-      - ./data/node:/data/node  # Mount node video storage
+      - ./data/node:/data/node  # Mount node video storage and database
       - ./data/master/videos:/data/master/videos  # Access master videos for streaming (B3 MVP)
       - /app/__pycache__  # Exclude pycache from volume mount
     environment:
       - ENVIRONMENT=development
+      - DATABASE_URL=sqlite:////data/node/singalong_node.db
       - MASTER_URL=${MASTER_PUBLIC_URL:-https://singalongmaster-dev.nicenature.space}
       - MASTER_GRAPHQL_URL=${MASTER_PUBLIC_URL:-https://singalongmaster-dev.nicenature.space}/graphql/
       - NODE_MASTER_API_KEY=${NODE_MASTER_API_KEY:-dev-key}
