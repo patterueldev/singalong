@@ -60,7 +60,7 @@ services:
       - ./apps/singalong-admin:/app
       - /app/node_modules  # Exclude node_modules from volume mount
     environment:
-      - VITE_NODE_URL=${VITE_NODE_URL:-http://localhost:5002}
+      - VITE_NODE_URL=https://singalongnode-dev.nicenature.space
       - ENVIRONMENT=development
       - WATCHPACK_POLLING=true  # Enable polling for file changes
     networks:

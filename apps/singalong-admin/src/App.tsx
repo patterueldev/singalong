@@ -1,20 +1,24 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
+import { LoginPage } from './pages/Login'
+import { DashboardPage } from './pages/Dashboard'
+import { ProtectedRoute } from './components/ProtectedRoute'
 import './App.css'
 
 function App() {
   return (
     <Router>
-      <div className="app">
-        <header className="app-header">
-          <h1>Singalong Admin</h1>
-          <p>Node Management & Song Control</p>
-        </header>
-        <main className="app-main">
-          <Routes>
-            <Route path="/" element={<div>Welcome to Singalong Admin</div>} />
-          </Routes>
-        </main>
-      </div>
+      <Routes>
+        <Route path="/login" element={<LoginPage />} />
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute>
+              <DashboardPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+      </Routes>
     </Router>
   )
 }
