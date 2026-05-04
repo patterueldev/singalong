@@ -129,19 +129,6 @@ struct NodeCard: View {
     let status: NodeConnectionStatus
     @Environment(\.scenePhase) var scenePhase
     
-    var statusIcon: String {
-        switch status {
-        case .connecting:
-            return "hourglass"
-        case .waiting:
-            return "checkmark.circle"
-        case .reconnecting:
-            return "arrow.clockwise"
-        case .locked:
-            return "lock.fill"
-        }
-    }
-    
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
@@ -162,33 +149,11 @@ struct NodeCard: View {
                 
                 Spacer()
                 
-                VStack(alignment: .trailing, spacing: 4) {
-                    Text(status.displayText)
-                        .font(.caption)
-                        .fontWeight(.semibold)
-                        .foregroundColor(status.statusColor)
-                    
-                    HStack(spacing: 4) {
-                        Image(systemName: statusIcon)
-                            .font(.caption2)
-                        
-                        switch status {
-                        case .connecting:
-                            Text("Establishing...")
-                                .font(.caption2)
-                        case .waiting:
-                            Text("Ready")
-                                .font(.caption2)
-                        case .reconnecting(let attempt):
-                            Text("Attempt \(attempt)")
-                                .font(.caption2)
-                        case .locked:
-                            Text("Active")
-                                .font(.caption2)
-                        }
-                    }
+                // Status text only - no secondary text
+                Text(status.displayText)
+                    .font(.caption)
+                    .fontWeight(.semibold)
                     .foregroundColor(status.statusColor)
-                }
             }
         }
         .padding(16)

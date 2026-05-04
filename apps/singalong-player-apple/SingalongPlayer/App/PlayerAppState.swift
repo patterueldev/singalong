@@ -23,6 +23,7 @@ class PlayerAppState: ObservableObject {
     
     private let mdnsService = MDNSDiscoveryService.shared
     private let wsManager = WebSocketDiscoveryManager.shared
+    private var callbacksConfigured = false
     
     // MARK: - Initialization
     
@@ -38,6 +39,11 @@ class PlayerAppState: ObservableObject {
     
     /// Set up WebSocket callbacks asynchronously on the actor
     private func setupWebSocketCallbacksAsync() async {
+        guard !callbacksConfigured else {
+            print("[PlayerApp] WebSocket callbacks already configured, skipping")
+            return
+        }
+        
         let ws = wsManager
         await ws.setCallback(onConnectionStatusChanged: { [weak self] nodeId, status in
             print("[PlayerApp] ✓ STATUS CALLBACK FIRED: nodeId=\(nodeId), status=\(status.displayText)")
@@ -59,6 +65,7 @@ class PlayerAppState: ObservableObject {
             }
         })
         
+        callbacksConfigured = true
         print("[PlayerApp] ✓ WebSocket callbacks configured")
     }
     
