@@ -26,4 +26,4 @@ COPY . ./
 EXPOSE 5002
 
 # Run the application (without reload to preserve global state across processes)
-CMD ["poetry", "run", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "5002"]
+CMD ["sh", "-c", "PYTHONUNBUFFERED=1 poetry run uvicorn app.main:app --host 0.0.0.0 --port 5002 --workers 1"]

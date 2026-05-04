@@ -18,5 +18,35 @@
 	<string>1.0</string>
 	<key>CFBundleVersion</key>
 	<string>1</string>
+	<!-- Required for mDNS/Bonjour discovery -->
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>Singalong Player needs access to your local network to discover and connect to Singalong Nodes.</string>
+	<key>NSBonjourServices</key>
+	<array>
+		<string>_singalong-node._tcp</string>
+	</array>
+	<!-- Allow HTTP connections for local network (development) -->
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+		<key>NSExceptionDomains</key>
+		<dict>
+			<key>thursday.local</key>
+			<dict>
+				<key>NSIncludesSubdomains</key>
+				<true/>
+				<key>NSTemporaryExceptionAllowsInsecureHTTPLoads</key>
+				<true/>
+			</dict>
+			<key>localhost</key>
+			<dict>
+				<key>NSIncludesSubdomains</key>
+				<true/>
+				<key>NSTemporaryExceptionAllowsInsecureHTTPLoads</key>
+				<true/>
+			</dict>
+		</dict>
+	</dict>
 </dict>
 </plist>

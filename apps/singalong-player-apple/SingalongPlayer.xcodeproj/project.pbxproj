@@ -28,7 +28,7 @@
 		0CCEEA18A46C4FA24A610EB3 /* WebSocketMessages.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebSocketMessages.swift; sourceTree = "<group>"; };
 		3155F2B07FDE8426070F076A /* DiscoveredNode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiscoveredNode.swift; sourceTree = "<group>"; };
 		3BA2A223ACDBBFF46C240A5B /* IdleScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IdleScreen.swift; sourceTree = "<group>"; };
-		53ECE693D58289F4510ADF56 /* SingalongPlayer.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = SingalongPlayer.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		53ECE693D58289F4510ADF56 /* SingalongPlayer.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SingalongPlayer.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		5993DBC40D979A9BE918D799 /* WebSocketDiscoveryManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebSocketDiscoveryManager.swift; sourceTree = "<group>"; };
 		66BBABFA4D1566DBF19FAB41 /* PlayerAppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerAppState.swift; sourceTree = "<group>"; };
 		8822BF7ECE2737F71CE2B7EB /* MDNSDiscoveryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MDNSDiscoveryService.swift; sourceTree = "<group>"; };
@@ -150,7 +150,6 @@
 						ProvisioningStyle = Automatic;
 					};
 					C283307138DD6F87B469AB7B = {
-						DevelopmentTeam = "";
 						ProvisioningStyle = Automatic;
 					};
 				};
@@ -314,7 +313,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = 2ZL598ZSDC;
 				INFOPLIST_FILE = SingalongPlayer/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -388,7 +387,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = 2ZL598ZSDC;
 				INFOPLIST_FILE = SingalongPlayer/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = (

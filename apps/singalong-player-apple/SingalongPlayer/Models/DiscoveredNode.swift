@@ -11,8 +11,22 @@ struct DiscoveredNode: Identifiable, Hashable {
     
     /// Full WebSocket URL for discovery endpoint
     var discoveryWSURL: URL? {
-        guard let ip = ipAddress else { return nil }
-        return URL(string: "ws://\(ip):\(port)/api/player/ws")
+        // Prefer hostname (resolves to IPv4), fall back to IP if needed
+        // mDNS returns hostName with trailing dot, so strip it
+        let hostWithoutDot = host.hasSuffix(".") ? String(host.dropLast()) : host
+        let target = !hostWithoutDot.isEmpty ? hostWithoutDot : ipAddress
+        guard let target = target, !target.isEmpty else { 
+            print("[DiscoveredNode] No valid target: host='\(host)' ipAddress='\(ipAddress ?? "nil")'")
+            return nil 
+        }
+        
+        let urlString = "ws://\(target):\(port)/api/player/ws"
+        print("[DiscoveredNode] Generated URL: \(urlString)")
+        let url = URL(string: urlString)
+        if url == nil {
+            print("[DiscoveredNode] ✗ Failed to create URL from: \(urlString)")
+        }
+        return url
     }
     
     func hash(into hasher: inout Hasher) {

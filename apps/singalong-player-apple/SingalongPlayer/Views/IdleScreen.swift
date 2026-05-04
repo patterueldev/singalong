@@ -47,7 +47,7 @@ struct IdleScreen: View {
                             .font(.system(size: 48))
                             .foregroundColor(Color(red: 0.612, green: 0.639, blue: 0.686))
                         
-                        Text("No Nodes Found")
+                        Text("Waiting for Nodes")
                             .font(.headline)
                             .foregroundColor(.white)
                         
@@ -63,14 +63,7 @@ struct IdleScreen: View {
                     ScrollView {
                         VStack(spacing: 12) {
                             ForEach(appState.discoveredNodes) { node in
-                                NodeCard(
-                                    node: node,
-                                    status: appState.activeConnections[node.id] ?? .disconnected,
-                                    isSelected: appState.selectedNodeId == node.id,
-                                    onConnect: {
-                                        appState.connectToNode(node)
-                                    }
-                                )
+                                NodeCard(node: node, status: appState.activeConnections[node.id] ?? .disconnected)
                             }
                         }
                         .padding(.horizontal, 24)
@@ -98,27 +91,8 @@ struct IdleScreen: View {
                     .padding(.horizontal, 24)
                 }
                 
-                // Control buttons
-                VStack(spacing: 12) {
-                    // Refresh button
-                    Button(action: {
-                        appState.stopDiscovery()
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                            appState.startDiscovery()
-                        }
-                    }) {
-                        HStack {
-                            Image(systemName: "arrow.clockwise")
-                            Text("Refresh")
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 12)
-                        .background(Color(red: 0.753, green: 0.522, blue: 0.992)) // #c084fc
-                        .foregroundColor(.white)
-                        .cornerRadius(8)
-                    }
-                    
-                    // Manual setup button (low-key)
+                // Control buttons - Manual Setup ONLY
+                VStack {
                     #if os(iOS) || os(macOS) || os(tvOS)
                     Button(action: { showManualSetup = true }) {
                         Text("Manual Setup")
@@ -133,9 +107,6 @@ struct IdleScreen: View {
         }
         .onAppear {
             appState.startDiscovery()
-        }
-        .onDisappear {
-            appState.stopDiscovery()
         }
         .sheet(isPresented: $showManualSetup) {
             ManualSetupSheet(
@@ -153,8 +124,7 @@ struct NodeCard: View {
     
     let node: DiscoveredNode
     let status: NodeConnectionStatus
-    let isSelected: Bool
-    let onConnect: () -> Void
+    @Environment(\.scenePhase) var scenePhase
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -167,10 +137,9 @@ struct NodeCard: View {
                     HStack(spacing: 8) {
                         Image(systemName: "network")
                             .font(.caption)
-                        Text(node.ipAddress ?? "Unknown")
+                        Text(node.host)
                             .font(.caption)
-                        Text(":\(node.port)")
-                            .font(.caption)
+                            .lineLimit(1)
                     }
                     .foregroundColor(Color(red: 0.612, green: 0.639, blue: 0.686)) // #9ca3af
                 }
@@ -183,28 +152,25 @@ struct NodeCard: View {
                         .fontWeight(.semibold)
                         .foregroundColor(statusColor(for: status))
                     
-                    if isSelected {
+                    if status == .connected || status == .locked {
                         HStack(spacing: 4) {
                             Circle()
-                                .fill(Color(red: 0.753, green: 0.522, blue: 0.992)) // #c084fc
+                                .fill(Color.green)
                                 .frame(width: 8, height: 8)
-                            Text("Locked")
+                            Text("Connected")
                                 .font(.caption2)
                         }
-                        .foregroundColor(Color(red: 0.753, green: 0.522, blue: 0.992))
+                        .foregroundColor(.green)
+                    } else if status == .connecting {
+                        HStack(spacing: 4) {
+                            Circle()
+                                .fill(Color.yellow)
+                                .frame(width: 8, height: 8)
+                            Text("Waiting...")
+                                .font(.caption2)
+                        }
+                        .foregroundColor(.yellow)
                     }
-                }
-            }
-            
-            if status == .disconnected {
-                Button(action: onConnect) {
-                    Text("Connect")
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 8)
-                        .background(Color(red: 0.753, green: 0.522, blue: 0.992)) // #c084fc
-                        .foregroundColor(.white)
-                        .cornerRadius(6)
-                        .font(.caption)
                 }
             }
         }
@@ -214,10 +180,18 @@ struct NodeCard: View {
         .overlay(
             RoundedRectangle(cornerRadius: 12)
                 .stroke(
-                    isSelected ? Color(red: 0.753, green: 0.522, blue: 0.992) : Color.clear,
+                    status == .connected ? Color(red: 0.753, green: 0.522, blue: 0.992) : Color.clear,
                     lineWidth: 2
                 )
         )
+        .onAppear {
+            // Auto-connect when node is discovered
+            if status == .disconnected {
+                // Trigger connection through app state
+                let appState = PlayerAppState.shared
+                appState.connectToNode(node)
+            }
+        }
     }
     
     private func statusColor(for status: NodeConnectionStatus) -> Color {

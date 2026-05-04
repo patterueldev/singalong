@@ -40,8 +40,8 @@ services:
     environment:
       - ENVIRONMENT=development
       - DATABASE_URL=sqlite:////data/node/singalong_node.db
-      - MASTER_URL=${MASTER_PUBLIC_URL:-https://singalongmaster-dev.nicenature.space}
-      - MASTER_GRAPHQL_URL=${MASTER_PUBLIC_URL:-https://singalongmaster-dev.nicenature.space}/graphql/
+      - MASTER_URL=${MASTER_PUBLIC_URL:-https://singalong-master-development.nicenature.space}
+      - MASTER_GRAPHQL_URL=${MASTER_PUBLIC_URL:-https://singalong-master-development.nicenature.space}/graphql/
       - NODE_MASTER_API_KEY=${NODE_MASTER_API_KEY:-dev-key}
       - OPENAI_API_KEY=${OPENAI_KEY}
     networks:
@@ -60,7 +60,7 @@ services:
       - ./apps/singalong-admin:/app
       - /app/node_modules  # Exclude node_modules from volume mount
     environment:
-      - VITE_NODE_URL=https://singalongnode-dev.nicenature.space
+      - VITE_NODE_URL=${VITE_NODE_URL:-https://singalongnode-dev.nicenature.space}
       - ENVIRONMENT=development
       - WATCHPACK_POLLING=true  # Enable polling for file changes
     networks:
@@ -81,7 +81,7 @@ services:
       - ./apps/singalong-controller:/app
       - /app/node_modules  # Exclude node_modules from volume mount
     environment:
-      - VITE_API_BASE_URL=${VITE_NODE_URL:-http://localhost:5002}
+      - VITE_API_BASE_URL=${VITE_NODE_URL:-https://singalongnode-dev.nicenature.space}
       - ENVIRONMENT=development
       - WATCHPACK_POLLING=true  # Enable polling for file changes
     networks:

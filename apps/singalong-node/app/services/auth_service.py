@@ -154,8 +154,10 @@ class AuthService:
         Raises:
             ValueError: If Master GraphQL authentication fails
         """
+        logger.info(f"[AuthService] authenticate_admin called with username={username}, graphql_client={self.graphql_client}")
         try:
             # Call Master GraphQL to authenticate admin
+            logger.info(f"[AuthService] Calling graphql_client.authenticate_admin()...")
             response = await self.graphql_client.authenticate_admin(
                 username=username,
                 password=password,

@@ -5,6 +5,8 @@ import Foundation
 @MainActor
 class PlayerAppState: ObservableObject {
     
+    static let shared = PlayerAppState()
+    
     // MARK: - Published Properties
     
     @Published var discoveredNodes: [DiscoveredNode] = []
@@ -32,21 +34,30 @@ class PlayerAppState: ObservableObject {
     
     /// Start discovery of local nodes
     func startDiscovery() {
-        guard !isDiscovering else { return }
+        guard !isDiscovering else { 
+            print("[PlayerApp] Discovery already running, skipping start")
+            return 
+        }
         isDiscovering = true
         errorMessage = nil
-        print("[PlayerApp] Starting discovery...")
+        print("[PlayerApp] ===== STARTING DISCOVERY =====")
+        print("[PlayerApp] isDiscovering: \(isDiscovering)")
         
         Task {
+            print("[PlayerApp] Calling mdnsService.startDiscovery()...")
             await mdnsService.startDiscovery()
+            print("[PlayerApp] mdnsService.startDiscovery() returned")
         }
     }
     
     /// Stop discovery
     func stopDiscovery() {
+        print("[PlayerApp] ===== STOPPING DISCOVERY =====")
         isDiscovering = false
         Task {
+            print("[PlayerApp] Calling mdnsService.stopDiscovery()...")
             await mdnsService.stopDiscovery()
+            print("[PlayerApp] mdnsService.stopDiscovery() returned")
         }
     }
     

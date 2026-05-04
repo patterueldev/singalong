@@ -58,6 +58,20 @@ class Settings(BaseSettings):
         default="550e8400-e29b-41d4-a716-446655440000", validation_alias="NODE_ID"
     )
 
+    # mDNS Broadcasting configuration
+    mdns_broadcast_enabled: bool = Field(
+        default=True, validation_alias="MDNS_BROADCAST_ENABLED"
+    )
+    mdns_service_name: str = Field(
+        default="Singalong Node", validation_alias="MDNS_SERVICE_NAME"
+    )
+    mdns_service_type: str = Field(
+        default="_singalong-node._tcp", validation_alias="MDNS_SERVICE_TYPE"
+    )
+    mdns_broadcast_port: int = Field(
+        default=5002, validation_alias="MDNS_BROADCAST_PORT"
+    )
+
     model_config = {"env_file": ".env", "case_sensitive": False, "extra": "ignore"}
 
     def get_valid_player_api_keys(self) -> list[str]:

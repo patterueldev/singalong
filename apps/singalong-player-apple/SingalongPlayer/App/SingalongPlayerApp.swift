@@ -9,6 +9,9 @@ struct SingalongPlayerApp: App {
         WindowGroup {
             IdleScreen(appState: appState)
                 .preferredColorScheme(.dark)
+                .onAppear {
+                    print("[SingalongPlayerApp] App appeared")
+                }
         }
     }
 }

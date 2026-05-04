@@ -1,3 +1,4 @@
+import Darwin
 import Foundation
 import Network
 
@@ -8,7 +9,8 @@ actor MDNSDiscoveryService: NSObject, NetServiceBrowserDelegate {
     
     private let serviceBrowser: NetServiceBrowser
     private var discoveredNodes: [String: DiscoveredNode] = [:]
-    private var serviceResolver: NetServiceDelegate?
+    private var activeResolvers: [String: MDNSServiceResolver] = [:]  // Keep resolvers alive
+    private var activeServices: [String: NetService] = [:]  // ALSO keep NetService objects alive
     
     // MARK: - Properties
     var onNodesUpdated: (([DiscoveredNode]) -> Void)?
@@ -24,6 +26,10 @@ actor MDNSDiscoveryService: NSObject, NetServiceBrowserDelegate {
     
     /// Start scanning for Singalong Nodes
     func startDiscovery() {
+        print("[mDNS] ===== STARTING mDNS DISCOVERY =====")
+        print("[mDNS] Service type: _singalong-node._tcp")
+        print("[mDNS] Domain: local.")
+        print("[mDNS] Browser delegate set and search started")
         serviceBrowser.delegate = self
         serviceBrowser.searchForServices(ofType: "_singalong-node._tcp", inDomain: "local.")
         print("[mDNS] Started scanning for _singalong-node._tcp services")
@@ -33,6 +39,8 @@ actor MDNSDiscoveryService: NSObject, NetServiceBrowserDelegate {
     func stopDiscovery() {
         serviceBrowser.stop()
         discoveredNodes.removeAll()
+        activeResolvers.removeAll()
+        activeServices.removeAll()
         print("[mDNS] Stopped scanning")
     }
     
@@ -63,11 +71,25 @@ actor MDNSDiscoveryService: NSObject, NetServiceBrowserDelegate {
         didFind netService: NetService,
         moreComing: Bool
     ) {
-        print("[mDNS] Found service: \(netService.name) on \(netService.hostName ?? "unknown")")
+        print("[mDNS] ✓ Found service: '\(netService.name)' on '\(netService.hostName ?? "unknown")'")
+        print("[mDNS]   - Port: \(netService.port)")
+        print("[mDNS]   - More coming: \(moreComing)")
         
-        // Resolve the service to get IP address
-        netService.delegate = MDNSServiceResolver(discoveryService: self)
-        netService.resolve(withTimeout: 5.0)
+        // Create resolver and keep it alive
+        let resolver = MDNSServiceResolver(discoveryService: self, serviceId: netService.name)
+        netService.delegate = resolver
+        
+        Task {
+            // Store BOTH the resolver and the NetService to keep them alive
+            await self.storeResolver(resolver, forService: netService.name)
+            await self.storeService(netService, forId: netService.name)
+        }
+        
+        // Small delay to allow service to fully populate
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+            print("[mDNS] Resolving service '\(netService.name)' (timeout 10s)...")
+            netService.resolve(withTimeout: 10.0)
+        }
     }
     
     nonisolated func netServiceBrowser(
@@ -75,7 +97,7 @@ actor MDNSDiscoveryService: NSObject, NetServiceBrowserDelegate {
         didRemove netService: NetService,
         moreComing: Bool
     ) {
-        print("[mDNS] Service removed: \(netService.name)")
+        print("[mDNS] ✗ Service removed: \(netService.name)")
         
         Task {
             await self.removeNode(withId: netService.name)
@@ -86,14 +108,37 @@ actor MDNSDiscoveryService: NSObject, NetServiceBrowserDelegate {
         _ browser: NetServiceBrowser,
         didNotSearch errorDict: [String : NSNumber]
     ) {
-        print("[mDNS] Error during search: \(errorDict)")
+        print("[mDNS] ✗ ERROR during search: \(errorDict)")
+        if let errorCode = errorDict[NetService.errorCode] {
+            print("[mDNS]   Error code: \(errorCode)")
+        }
     }
     
     // MARK: - Internal Methods
     
+    fileprivate func storeResolver(_ resolver: MDNSServiceResolver, forService serviceId: String) async {
+        activeResolvers[serviceId] = resolver
+        print("[mDNS] Stored resolver for: \(serviceId)")
+    }
+    
+    fileprivate func removeResolver(forService serviceId: String) async {
+        activeResolvers.removeValue(forKey: serviceId)
+        print("[mDNS] Removed resolver for: \(serviceId)")
+    }
+    
+    fileprivate func storeService(_ service: NetService, forId serviceId: String) async {
+        activeServices[serviceId] = service
+        print("[mDNS] Stored NetService for: \(serviceId)")
+    }
+    
+    fileprivate func removeService(forId serviceId: String) async {
+        activeServices.removeValue(forKey: serviceId)
+        print("[mDNS] Removed NetService for: \(serviceId)")
+    }
+    
     func addNode(_ node: DiscoveredNode) {
         discoveredNodes[node.id] = node
-        print("[mDNS] Added node: \(node.name) at \(node.ipAddress ?? "unknown"):\(node.port)")
+        print("[mDNS] ✓ Added node: '\(node.name)' at \(node.ipAddress ?? "unknown"):\(node.port)")
         onNodeAdded?(node)
         notifyUpdate()
     }
@@ -114,6 +159,7 @@ actor MDNSDiscoveryService: NSObject, NetServiceBrowserDelegate {
     
     private func notifyUpdate() {
         let nodes = getDiscoveredNodes()
+        print("[mDNS] Updated node list: \(nodes.count) node(s) discovered")
         onNodesUpdated?(nodes)
     }
 }
@@ -122,41 +168,125 @@ actor MDNSDiscoveryService: NSObject, NetServiceBrowserDelegate {
 private class MDNSServiceResolver: NSObject, NetServiceDelegate {
     
     let discoveryService: MDNSDiscoveryService
+    let serviceId: String
     
-    init(discoveryService: MDNSDiscoveryService) {
+    init(discoveryService: MDNSDiscoveryService, serviceId: String) {
         self.discoveryService = discoveryService
+        self.serviceId = serviceId
+        super.init()
+        print("[mDNS] Created resolver for service: '\(serviceId)'")
     }
     
     func netServiceDidResolveAddress(_ sender: NetService) {
+        print("[mDNS] ✓ netServiceDidResolveAddress called for: '\(sender.name)'")
         guard let addresses = sender.addresses, !addresses.isEmpty else {
-            print("[mDNS] Could not resolve addresses for \(sender.name)")
+            print("[mDNS] ✗ Could not resolve addresses for '\(sender.name)' - addresses array empty")
+            cleanup()
             return
         }
         
-        // Extract IPv4 address from sockaddr
-        if let ipAddress = extractIPAddress(from: addresses[0]) {
-            let port = Int(sender.port)
-            
-            let node = DiscoveredNode(
-                id: sender.name,
-                name: sender.name.replacingOccurrences(of: "._singalong-node._tcp.", with: ""),
-                host: sender.hostName ?? sender.name,
-                port: port,
-                ipAddress: ipAddress,
-                discoveredAt: Date()
-            )
-            
-            Task {
-                await discoveryService.addNode(node)
+        print("[mDNS] ✓ Got \(addresses.count) address(es) for '\(sender.name)'")
+        
+        // Try to extract IPv4 from any of the addresses
+        var ipAddress: String?
+        for (index, addressData) in addresses.enumerated() {
+            print("[mDNS]   Address \(index):", terminator: "")
+            if let extracted = extractIPAddress(from: addressData) {
+                ipAddress = extracted
+                print("[mDNS]     ✓ FOUND: \(extracted)")
+                break  // Found IPv4, stop searching
             }
+        }
+        
+        // If no IPv4 found, try to resolve the hostname manually
+        if ipAddress == nil {
+            print("[mDNS] No IPv4 in addresses array, trying manual DNS resolution...")
+            if let hostName = sender.hostName {
+                print("[mDNS] Resolving hostname: \(hostName)")
+                ipAddress = resolveHostname(hostName)
+            }
+        }
+        
+        guard let ipAddress = ipAddress else {
+            print("[mDNS] ✗✗ FAILED: No IPv4 address found in mDNS or DNS")
+            cleanup()
+            sender.stop()
+            return
+        }
+        
+        let port = Int(sender.port)
+        print("[mDNS] ✓ Port from service: \(port)")
+        
+        let node = DiscoveredNode(
+            id: sender.name,
+            name: sender.name.replacingOccurrences(of: "._singalong-node._tcp.", with: ""),
+            host: sender.hostName ?? sender.name,
+            port: port,
+            ipAddress: ipAddress,
+            discoveredAt: Date()
+        )
+        
+        print("[mDNS] ✓ Successfully resolved: \(ipAddress):\(port)")
+        
+        Task {
+            await discoveryService.addNode(node)
+            await discoveryService.removeResolver(forService: self.serviceId)
+            await discoveryService.removeService(forId: self.serviceId)
         }
         
         sender.stop()
     }
     
+    private func resolveHostname(_ hostname: String) -> String? {
+        var hints = addrinfo()
+        hints.ai_family = AF_INET  // IPv4 only
+        hints.ai_socktype = SOCK_STREAM
+        
+        var result: UnsafeMutablePointer<addrinfo>?
+        
+        let status = getaddrinfo(hostname, nil, &hints, &result)
+        guard status == 0, let info = result else {
+            print("[mDNS]   DNS resolution failed for '\(hostname)'")
+            return nil
+        }
+        
+        defer { freeaddrinfo(result) }
+        
+        var current = info
+        while true {
+            if current.pointee.ai_family == AF_INET,
+               let sockaddr = current.pointee.ai_addr {
+                let addr = UnsafeRawPointer(sockaddr).assumingMemoryBound(to: sockaddr_in.self).pointee
+                var ip = addr.sin_addr
+                
+                let ipString = String(cString: inet_ntoa(ip))
+                print("[mDNS]   ✓ Resolved '\(hostname)' to \(ipString) via DNS")
+                return ipString
+            }
+            
+            if current.pointee.ai_next == nil { break }
+            current = current.pointee.ai_next!
+        }
+        
+        print("[mDNS]   No IPv4 found for '\(hostname)' in DNS")
+        return nil
+    }
+    
     func netService(_ sender: NetService, didNotResolve errorDict: [String : NSNumber]) {
-        print("[mDNS] Could not resolve service \(sender.name): \(errorDict)")
+        print("[mDNS] ✗ Could not resolve service '\(sender.name)'")
+        print("[mDNS]   Error dict: \(errorDict)")
+        if let errorCode = errorDict[NetService.errorCode] {
+            print("[mDNS]   Error code: \(errorCode)")
+        }
+        cleanup()
         sender.stop()
+    }
+    
+    private func cleanup() {
+        Task {
+            await discoveryService.removeResolver(forService: serviceId)
+            await discoveryService.removeService(forId: serviceId)
+        }
     }
     
     private func extractIPAddress(from addressData: Data) -> String? {
@@ -166,13 +296,36 @@ private class MDNSServiceResolver: NSObject, NetServiceDelegate {
             let rawBytes = buffer.baseAddress!.assumingMemoryBound(to: UInt8.self)
             let sa_family = rawBytes.pointee
             
-            // AF_INET = 2 (IPv4)
+            print("[mDNS]     Data length: \(addressData.count), Family: \(sa_family)", terminator: "")
+            
+            // AF_INET = 2 (IPv4), AF_INET6 = 30 (IPv6), AF_LINK = 18 (link layer)
             if sa_family == 2 {
+                // IPv4: sockaddr_in structure
                 let octets = (rawBytes + 4).pointee
                 let ips = (rawBytes + 5).pointee
                 let ipa = (rawBytes + 6).pointee
                 let ipa2 = (rawBytes + 7).pointee
                 ipAddress = "\(octets).\(ips).\(ipa).\(ipa2)"
+                print(" -> IPv4: \(ipAddress!)")
+            } else if sa_family == 30 || sa_family == 28 {
+                // IPv6: sockaddr_in6 structure (family 30 or 28 depending on iOS version)
+                print(" -> IPv6: ", terminator: "")
+                var ipv6Parts: [String] = []
+                
+                // IPv6 address starts at offset 8 in sockaddr_in6
+                for i in stride(from: 8, to: 24, by: 2) {
+                    let byte1 = (rawBytes + i).pointee
+                    let byte2 = (rawBytes + i + 1).pointee
+                    let value = UInt16(byte1) << 8 | UInt16(byte2)
+                    ipv6Parts.append(String(format: "%x", value))
+                }
+                
+                ipAddress = ipv6Parts.joined(separator: ":")
+                print("\(ipAddress!)")
+            } else if sa_family == 18 {
+                print(" -> AF_LINK/MAC address (skipping)")
+            } else {
+                print(" -> Unknown family \(sa_family) (skipping)")
             }
         }
         

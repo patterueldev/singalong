@@ -61,14 +61,7 @@ async def lifespan(app: FastAPI):
     finally:
         db.close()
     
-    # Initialize mDNS broadcaster to announce Node on local network
-    from app.services.mdns_broadcaster import MDNSBroadcaster
-    mdns = MDNSBroadcaster.get_instance()
-    if mdns.broadcast(node_name="Singalong Node", port=settings.port):
-        print("✓ mDNS broadcast started (_singalong-node._tcp.local.)")
-    else:
-        print("⚠ mDNS broadcast failed (players won't auto-discover this node)")
-    
+
     # Initialize player discovery manager
     from app.services.player_discovery_manager import PlayerDiscoveryManager
     PlayerDiscoveryManager.get_instance()
@@ -95,14 +88,35 @@ async def lifespan(app: FastAPI):
         print("⚠ Failed to connect to Master WebSocket (will retry)")
         listen_task = None
     
+    # Initialize mDNS broadcasting if enabled
+    mdns_bridge_service = None
+    if settings.mdns_broadcast_enabled:
+        try:
+            from app.services.mdns.bridge import MDNSBridgeService
+            from app.services.mdns.broadcaster import MDNSBroadcaster
+            
+            broadcaster = MDNSBroadcaster(
+                service_name=settings.mdns_service_name,
+                service_type=settings.mdns_service_type,
+                port=settings.mdns_broadcast_port,
+            )
+            mdns_bridge_service = MDNSBridgeService(broadcaster)
+            node_url = f"http://localhost:{settings.port}"
+            mdns_bridge_service.start(node_url)
+            print("✓ mDNS broadcasting initialized")
+        except Exception as e:
+            print(f"⚠ Failed to initialize mDNS broadcasting: {e}")
+    
     yield
     # Shutdown
     print(f"Shutting down {settings.service_name}")
     
-    # Stop mDNS broadcast
-    from app.services.mdns_broadcaster import MDNSBroadcaster
-    mdns = MDNSBroadcaster.get_instance()
-    mdns.stop_broadcast()
+    # Stop mDNS broadcasting
+    if mdns_bridge_service:
+        try:
+            mdns_bridge_service.stop()
+        except Exception as e:
+            print(f"⚠ Error stopping mDNS broadcasting: {e}")
     
     if ws_client:
         await ws_client.disconnect()
