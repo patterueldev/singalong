@@ -37,28 +37,21 @@ export function DashboardPage() {
     <div className="dashboard-container">
       <Sidebar />
       <main className="dashboard-main">
-      <>
-            <SessionHeader session={currentSession} />
-            <div className="dashboard-panels">
-              <div className="panel top-left">
-                <PlaybackPanel />
-              </div>
-              <div className="panel top-right">
-                <DownloadsPanel />
-              </div>
-              <div className="panel bottom-left">
-                <QueuePanel />
-              </div>
-              <div className="panel bottom-right">
-                <AttendeesPanel />
-              </div>
-            </div>
-          </>
-        )}
-      </main>
-    </div>
-  )
-}
+        <SessionHeader session={currentSession} />
+        <div className="dashboard-panels">
+          <div className="panel top-left">
+            <PlaybackPanel />
+          </div>
+          <div className="panel top-right">
+            <DownloadsPanel />
+          </div>
+          <div className="panel bottom-left">
+            <QueuePanel />
+          </div>
+          <div className="panel bottom-right">
+            <AttendeesPanel />
+          </div>
+        </div>
       </main>
     </div>
   )
