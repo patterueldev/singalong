@@ -28,6 +28,13 @@ class PlayerAppState: ObservableObject {
     init() {
         print("[PlayerApp] === INIT CALLED ===")
         print("[PlayerApp] callbacksConfigured at init: \(callbacksConfigured)")
+        
+        // Restore persisted player ID if available
+        if let savedPlayerId = UserDefaults.standard.string(forKey: "player_id") {
+            self.playerId = savedPlayerId
+            print("[PlayerApp] Restored player ID from UserDefaults: \(savedPlayerId)")
+        }
+        
         // Set up mDNS callbacks first (synchronously setup)
         setupCallbacks()
         
@@ -140,10 +147,26 @@ class PlayerAppState: ObservableObject {
         // This will be implemented in next phase (P2.7)
     }
     
+    /// Handle player selected message from node
+    private func handlePlayerSelectedMessage(sessionCode: String, sessionTitle: String, fromNodeId nodeId: String) {
+        self.lockedSessionCode = sessionCode
+        print("[PlayerApp] ✓ Player selected for session \(sessionCode) ('\(sessionTitle)') by admin")
+        print("[PlayerApp] ✓ Now transitioning to main screen...")
+        print("[PlayerApp] ✓ Stopping discovery and mDNS listening...")
+        
+        // Stop discovering other nodes since we're now locked
+        Task {
+            await mdnsService.stopDiscovery()
+            print("[PlayerApp] ✓ mDNS discovery stopped")
+        }
+    }
+    
     /// Handle registration response from node
     func handleRegisteredMessage(playerId: String, fromNodeId nodeId: String) {
         self.playerId = playerId
-        print("[PlayerApp] Registered with player ID: \(playerId)")
+        // Persist player ID so it survives app restarts
+        UserDefaults.standard.set(playerId, forKey: "player_id")
+        print("[PlayerApp] Registered with player ID: \(playerId) (persisted to UserDefaults)")
     }
     
     // MARK: - Private Methods
@@ -178,6 +201,9 @@ class PlayerAppState: ObservableObject {
         switch message {
         case .registered(let playerId):
             handleRegisteredMessage(playerId: playerId, fromNodeId: nodeId)
+            
+        case .playerSelected(let sessionCode, let sessionTitle):
+            handlePlayerSelectedMessage(sessionCode: sessionCode, sessionTitle: sessionTitle, fromNodeId: nodeId)
             
         case .lock(let sessionCode, let token):
             handleLockMessage(sessionCode: sessionCode, token: token, fromNodeId: nodeId)

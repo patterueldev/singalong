@@ -39,10 +39,11 @@ services:
       - /app/__pycache__  # Exclude pycache from volume mount
     environment:
       - ENVIRONMENT=development
+      - DEBUG=${DEBUG:-True}
       - DATABASE_URL=sqlite:////data/node/singalong_node.db
       - MASTER_URL=${MASTER_PUBLIC_URL:-https://singalong-master-development.nicenature.space}
       - MASTER_GRAPHQL_URL=${MASTER_PUBLIC_URL:-https://singalong-master-development.nicenature.space}/graphql/
-      - NODE_MASTER_API_KEY=${NODE_MASTER_API_KEY:-dev-key}
+      - NODE_MASTER_API_KEY=${NODE_MASTER_API_KEY:-dev-key-production-secret-1234567890}
       - OPENAI_API_KEY=${OPENAI_KEY}
     networks:
       - singalong-network

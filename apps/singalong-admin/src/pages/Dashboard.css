@@ -28,6 +28,7 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 
 .dashboard-panels .panel.top-left {

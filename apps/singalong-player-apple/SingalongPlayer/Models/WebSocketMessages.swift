@@ -68,6 +68,7 @@ enum PlayerMessage: Codable {
 /// Messages received from Node by Player
 enum NodeMessage: Codable {
     case registered(playerId: String)
+    case playerSelected(sessionCode: String, sessionTitle: String)
     case lock(sessionCode: String, token: String)
     case pong
     case error(code: String, message: String)
@@ -76,6 +77,7 @@ enum NodeMessage: Codable {
         case type
         case playerId = "player_id"
         case sessionCode = "session_code"
+        case sessionTitle = "session_title"
         case token
         case code
         case message
@@ -83,6 +85,7 @@ enum NodeMessage: Codable {
     
     private enum MessageType: String, Codable {
         case registered
+        case playerSelected = "player_selected"
         case lock
         case pong
         case error
@@ -95,6 +98,10 @@ enum NodeMessage: Codable {
         case .registered(let playerId):
             try container.encode(MessageType.registered, forKey: .type)
             try container.encode(playerId, forKey: .playerId)
+        case .playerSelected(let sessionCode, let sessionTitle):
+            try container.encode(MessageType.playerSelected, forKey: .type)
+            try container.encode(sessionCode, forKey: .sessionCode)
+            try container.encode(sessionTitle, forKey: .sessionTitle)
         case .lock(let sessionCode, let token):
             try container.encode(MessageType.lock, forKey: .type)
             try container.encode(sessionCode, forKey: .sessionCode)
@@ -116,6 +123,10 @@ enum NodeMessage: Codable {
         case .registered:
             let playerId = try container.decode(String.self, forKey: .playerId)
             self = .registered(playerId: playerId)
+        case .playerSelected:
+            let sessionCode = try container.decode(String.self, forKey: .sessionCode)
+            let sessionTitle = try container.decode(String.self, forKey: .sessionTitle)
+            self = .playerSelected(sessionCode: sessionCode, sessionTitle: sessionTitle)
         case .lock:
             let sessionCode = try container.decode(String.self, forKey: .sessionCode)
             let token = try container.decode(String.self, forKey: .token)

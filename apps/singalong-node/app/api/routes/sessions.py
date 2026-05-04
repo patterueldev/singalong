@@ -143,6 +143,8 @@ class SessionDetailsResponse(BaseModel):
     user_count: int = Field(default=0, description="Current user count")
     created_at: str = Field(..., description="Creation timestamp")
     created_by: str = Field(..., description="Creator user ID")
+    player_id: Optional[str] = Field(None, description="Locked player ID (None if not assigned)")
+    player_name: Optional[str] = Field(None, description="Locked player name (None if not assigned)")
 
 
 class QueueItemResponse(BaseModel):
@@ -364,6 +366,8 @@ async def get_session_details(
             user_count=user_count,
             created_at=session.created_at.isoformat(),
             created_by=str(session.created_by),
+            player_id=session.player_id,
+            player_name=session.player_name,
         )
 
     except HTTPException:

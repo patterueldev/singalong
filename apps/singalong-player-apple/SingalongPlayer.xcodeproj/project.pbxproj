@@ -12,6 +12,8 @@
 		319953E8B9B3164D132D3AF6 /* DiscoveredNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3155F2B07FDE8426070F076A /* DiscoveredNode.swift */; };
 		3892F5EEE459FB2C420FEAE5 /* MDNSDiscoveryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8822BF7ECE2737F71CE2B7EB /* MDNSDiscoveryService.swift */; };
 		3A5AD52E465CC78F1E557B18 /* WebSocketDiscoveryManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5993DBC40D979A9BE918D799 /* WebSocketDiscoveryManager.swift */; };
+		563569B520B8FE21E7DAAEE4 /* MainScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD72A7C8E7DB90E9EA5E9026 /* MainScreen.swift */; };
+		58D50C94E1EE7F3B921CB093 /* MainScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD72A7C8E7DB90E9EA5E9026 /* MainScreen.swift */; };
 		634030D679B8FE8CA37B0404 /* WebSocketMessages.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0CCEEA18A46C4FA24A610EB3 /* WebSocketMessages.swift */; };
 		6416DC02F0EB9AAF9ED6678D /* SingalongPlayerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05812F00D52E585386894093 /* SingalongPlayerApp.swift */; };
 		64DC30FB807BF346C60FDB6C /* WebSocketMessages.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0CCEEA18A46C4FA24A610EB3 /* WebSocketMessages.swift */; };
@@ -28,11 +30,12 @@
 		0CCEEA18A46C4FA24A610EB3 /* WebSocketMessages.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebSocketMessages.swift; sourceTree = "<group>"; };
 		3155F2B07FDE8426070F076A /* DiscoveredNode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiscoveredNode.swift; sourceTree = "<group>"; };
 		3BA2A223ACDBBFF46C240A5B /* IdleScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IdleScreen.swift; sourceTree = "<group>"; };
-		53ECE693D58289F4510ADF56 /* SingalongPlayer.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SingalongPlayer.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		53ECE693D58289F4510ADF56 /* SingalongPlayer.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = SingalongPlayer.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		5993DBC40D979A9BE918D799 /* WebSocketDiscoveryManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebSocketDiscoveryManager.swift; sourceTree = "<group>"; };
 		66BBABFA4D1566DBF19FAB41 /* PlayerAppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerAppState.swift; sourceTree = "<group>"; };
 		8822BF7ECE2737F71CE2B7EB /* MDNSDiscoveryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MDNSDiscoveryService.swift; sourceTree = "<group>"; };
 		8E5D96AC617ADA10DD62D3C0 /* SingalongPlayer.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SingalongPlayer.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		AD72A7C8E7DB90E9EA5E9026 /* MainScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainScreen.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -86,6 +89,7 @@
 			isa = PBXGroup;
 			children = (
 				3BA2A223ACDBBFF46C240A5B /* IdleScreen.swift */,
+				AD72A7C8E7DB90E9EA5E9026 /* MainScreen.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -150,6 +154,7 @@
 						ProvisioningStyle = Automatic;
 					};
 					C283307138DD6F87B469AB7B = {
+						DevelopmentTeam = "";
 						ProvisioningStyle = Automatic;
 					};
 				};
@@ -182,6 +187,7 @@
 				319953E8B9B3164D132D3AF6 /* DiscoveredNode.swift in Sources */,
 				CFF2688049F8EDA5A8D06C16 /* IdleScreen.swift in Sources */,
 				9B317C1C59E8EF7BBFD15A4E /* MDNSDiscoveryService.swift in Sources */,
+				58D50C94E1EE7F3B921CB093 /* MainScreen.swift in Sources */,
 				8309997933A0F6EE1B9F3B88 /* PlayerAppState.swift in Sources */,
 				DC786CA921F6B02B2E2E6B06 /* SingalongPlayerApp.swift in Sources */,
 				3A5AD52E465CC78F1E557B18 /* WebSocketDiscoveryManager.swift in Sources */,
@@ -196,6 +202,7 @@
 				05F201F49681303494899EB7 /* DiscoveredNode.swift in Sources */,
 				70E06E46AEFBA9D116D541D8 /* IdleScreen.swift in Sources */,
 				3892F5EEE459FB2C420FEAE5 /* MDNSDiscoveryService.swift in Sources */,
+				563569B520B8FE21E7DAAEE4 /* MainScreen.swift in Sources */,
 				C6360303B7634DB7913DA5A6 /* PlayerAppState.swift in Sources */,
 				6416DC02F0EB9AAF9ED6678D /* SingalongPlayerApp.swift in Sources */,
 				0833A57F0255F7FEBA5CB590 /* WebSocketDiscoveryManager.swift in Sources */,
@@ -313,7 +320,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = 2ZL598ZSDC;
+				DEVELOPMENT_TEAM = "";
 				INFOPLIST_FILE = SingalongPlayer/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -387,7 +394,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = 2ZL598ZSDC;
+				DEVELOPMENT_TEAM = "";
 				INFOPLIST_FILE = SingalongPlayer/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = (

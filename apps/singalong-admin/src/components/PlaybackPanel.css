@@ -207,11 +207,12 @@
 }
 
 .btn-select-player {
-  padding: 10px;
-  background: #374151;
-  color: #f3f4f6;
-  border: 1px solid #4b5563;
-  border-radius: 6px;
+  padding: 10px 0;
+  background: none;
+  color: #c084fc;
+  border: none;
+  border-bottom: 2px solid #c084fc;
+  border-radius: 0;
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
@@ -219,7 +220,8 @@
 }
 
 .btn-select-player:hover {
-  background: #4b5563;
-  border-color: #6b7280;
-  transform: translateY(-1px);
+  background: none;
+  border-color: #e9d5ff;
+  color: #e9d5ff;
+  transform: translateY(0);
 }

@@ -318,3 +318,159 @@ async def list_players(
     except Exception as e:
         logger.exception(f"Error listing players: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to list players")
+
+
+# ============================================================================
+# ADMIN ENDPOINTS - Player Discovery and Selection (Admin Only)
+# ============================================================================
+
+
+@router.get("/available", response_model=dict)
+async def get_available_players(
+    admin_token: dict = Depends(verify_admin),
+) -> dict:
+    """
+    Get list of all available players (in discovering state) globally.
+    
+    Admin only endpoint. Returns players that are currently discovering
+    (not locked to any session).
+    
+    **Response**:
+    ```json
+    {
+      "available_players": [
+        {
+          "id": "player-uuid",
+          "name": "Pat's MacBook",
+          "platform": "macos",
+          "status": "discovering"
+        }
+      ],
+      "count": 1
+    }
+    ```
+    """
+    try:
+        from app.services.player_discovery_manager import PlayerDiscoveryManager
+        discovery_manager = PlayerDiscoveryManager.get_instance()
+        available_players = discovery_manager.get_available_players()
+        
+        player_list = [player.to_dict() for player in available_players]
+        
+        logger.info(
+            f"[API] Get available players (admin) | count={len(player_list)}"
+        )
+        
+        return {
+            "available_players": player_list,
+            "count": len(player_list),
+        }
+    
+    except Exception as e:
+        logger.exception(f"Error getting available players: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to get available players")
+
+
+@router.post("/select", response_model=dict, status_code=200)
+async def select_player(
+    player_id: str,
+    session_code: str,
+    admin_token: dict = Depends(verify_admin),
+) -> dict:
+    """
+    Lock a player to a session (admin only).
+    
+    Admin selects an available player and locks them to a specific session.
+    
+    **Query Parameters**:
+    - `player_id`: UUID of the player to select
+    - `session_code`: 4-digit session code (0000-9999)
+    
+    **Response**:
+    ```json
+    {
+      "success": true,
+      "player_id": "player-uuid",
+      "player_name": "Pat's MacBook",
+      "session_code": "0001",
+      "message": "Player locked to session"
+    }
+    ```
+    """
+    try:
+        from app.services.player_discovery_manager import PlayerDiscoveryManager
+        from sqlalchemy.orm import Session as SQLSession
+        from app.database import SessionLocal
+        from app.models import db_models
+        import json
+        
+        discovery_manager = PlayerDiscoveryManager.get_instance()
+        
+        # Get player by ID
+        player = discovery_manager.get_player(player_id)
+        if not player:
+            raise HTTPException(status_code=404, detail="Player not found")
+        
+        # Validate session exists
+        db = SessionLocal()
+        try:
+            session = db.query(db_models.Session).filter(
+                db_models.Session.code == session_code
+            ).first()
+            if not session:
+                raise HTTPException(status_code=404, detail="Session not found")
+            
+            # Lock player to session
+            discovery_manager.lock_player(player_id, session_code)
+            
+            # UPDATE session record in database with player info
+            session.player_id = player_id
+            session.player_name = player.name
+            db.commit()
+            logger.info(
+                f"[API] Updated session database | session={session_code} | "
+                f"player_id={player_id} | player_name={player.name}"
+            )
+        finally:
+            db.close()
+        
+        # Stop mDNS broadcast now that a player is locked
+        from app.services.mdns_broadcaster import MDNSBroadcaster
+        MDNSBroadcaster.get_instance().stop_broadcast()
+        logger.info("[API] Stopped mDNS broadcast - player locked to session")
+        
+        # Send WebSocket notification to the player that they've been selected
+        if player.ws_connection:
+            try:
+                selection_message = {
+                    "type": "player_selected",
+                    "session_code": session_code,
+                    "session_title": session.title,
+                    "message": f"You've been selected for session '{session.title}' (Code: {session_code})"
+                }
+                await player.ws_connection.send_json(selection_message)
+                logger.info(
+                    f"[API] Sent player_selected notification | player={player_id} | session={session_code}"
+                )
+            except Exception as e:
+                logger.warning(
+                    f"[API] Failed to send player_selected notification | player={player_id} | error={str(e)}"
+                )
+        
+        logger.info(
+            f"[API] Player selected for session | player={player_id} | session={session_code}"
+        )
+        
+        return {
+            "success": True,
+            "player_id": player_id,
+            "player_name": player.name,
+            "session_code": session_code,
+            "message": "Player locked to session",
+        }
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception(f"Error selecting player: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to select player")

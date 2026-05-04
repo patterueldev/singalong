@@ -42,6 +42,8 @@ export function useSessions() {
           sessions: [...prev.sessions, newSession],
           isLoading: false,
         }))
+        // Refresh to sync with server state
+        await refreshSessions()
         return newSession
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Failed to create session'
@@ -49,7 +51,7 @@ export function useSessions() {
         throw err
       }
     },
-    []
+    [refreshSessions]
   )
 
   const selectSession = useCallback(async (code: string) => {

@@ -1,9 +1,15 @@
 import { useState } from 'react'
+import type { Session } from '../types/models'
 import { usePlayback } from '../hooks/usePlayback'
 import { PlayerSelectionModal } from './PlayerSelectionModal'
 import './PlaybackPanel.css'
 
-export function PlaybackPanel() {
+interface PlaybackPanelProps {
+  currentSession?: Session | null
+  onOpenPlayerDiscovery?: () => void
+}
+
+export function PlaybackPanel({ currentSession, onOpenPlayerDiscovery }: PlaybackPanelProps) {
   const { nowPlaying, assignedPlayer, availablePlayers, isLoading, selectPlayer, play, pause } =
     usePlayback()
   const [showPlayerModal, setShowPlayerModal] = useState(false)
@@ -74,7 +80,7 @@ export function PlaybackPanel() {
             <span className="player-platform">({assignedPlayer.platform})</span>
           )}
         </div>
-        <button className="btn-select-player" onClick={() => setShowPlayerModal(true)}>
+        <button className="btn-select-player" onClick={() => onOpenPlayerDiscovery?.()}>
           {assignedPlayer ? 'Change Player' : 'Select Player'}
         </button>
       </div>

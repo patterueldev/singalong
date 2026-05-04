@@ -37,6 +37,8 @@ class MasterAuthManager:
             Exception: If token exchange fails
         """
         logger.info(f"Exchanging API key for JWT tokens with Master")
+        logger.info(f"Master URL: {self.master_url}")
+        logger.info(f"Timeout: {self.timeout}s")
         logger.debug(f"Using API key: '{self.api_key}'")
         try:
             async with httpx.AsyncClient(timeout=self.timeout) as client:

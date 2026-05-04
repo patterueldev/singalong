@@ -1,14 +1,18 @@
-import { useCallback } from 'react'
+import { useCallback, useState } from 'react'
 import { Sidebar } from '../components/Sidebar'
 import { SessionsPanel } from '../components/SessionsPanel'
 import { SessionHeader } from '../components/SessionHeader'
 import { PlaybackPanel } from '../components/PlaybackPanel'
-import { DownloadsPanel, QueuePanel, AttendeesPanel } from '../components/PlaceholderPanels'
+import { DownloadsPanel, QueuePanel } from '../components/PlaceholderPanels'
+import { SelectPlayerModal } from '../components/SelectPlayerModal'
 import { useSessions } from '../hooks/useSessions'
+import { usePlayback } from '../hooks/usePlayback'
 import './Dashboard.css'
 
 export function DashboardPage() {
   const { sessions, currentSession, selectSession, createSession } = useSessions()
+  const { refreshPlayback } = usePlayback()
+  const [showPlayerSelection, setShowPlayerSelection] = useState(false)
 
   // Wrapper to convert Promise<Session> to Promise<void>
   const handleCreateSession = useCallback(
@@ -18,7 +22,7 @@ export function DashboardPage() {
     [createSession]
   )
 
-  if (!currentSession && (!sessions || sessions.length === 0)) {
+  if (!currentSession) {
     return (
       <div className="dashboard-container">
         <Sidebar />
@@ -40,7 +44,7 @@ export function DashboardPage() {
         <SessionHeader session={currentSession} />
         <div className="dashboard-panels">
           <div className="panel top-left">
-            <PlaybackPanel />
+            <PlaybackPanel currentSession={currentSession} onOpenPlayerDiscovery={() => setShowPlayerSelection(true)} />
           </div>
           <div className="panel top-right">
             <DownloadsPanel />
@@ -49,9 +53,20 @@ export function DashboardPage() {
             <QueuePanel />
           </div>
           <div className="panel bottom-right">
-            <AttendeesPanel />
+            <div className="placeholder-panel">
+              <h3>Players</h3>
+              <p>Active players connected to this session will appear here...</p>
+            </div>
           </div>
         </div>
+
+        {showPlayerSelection && (
+          <SelectPlayerModal
+            sessionCode={currentSession.code}
+            onClose={() => setShowPlayerSelection(false)}
+            onPlayerSelected={refreshPlayback}
+          />
+        )}
       </main>
     </div>
   )

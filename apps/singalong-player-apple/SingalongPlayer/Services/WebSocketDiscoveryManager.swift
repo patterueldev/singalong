@@ -180,13 +180,14 @@ actor WebSocketDiscoveryManager {
                 if let connection = activeConnections[nodeId],
                    connection.retryAttempt < connection.maxRetryAttempts {
                     await retryConnection(nodeId: nodeId)
+                    return  // Exit after retry is handled (retryConnection continues the loop)
                 } else {
                     activeConnections[nodeId]?.status = .reconnecting(attemptNumber: activeConnections[nodeId]?.retryAttempt ?? 0)
                     onConnectionStatusChanged?(nodeId, .reconnecting(attemptNumber: activeConnections[nodeId]?.retryAttempt ?? 0))
                     onConnectionClosed?(nodeId)
                     activeConnections.removeValue(forKey: nodeId)
+                    return  // Exit when max retries exceeded
                 }
-                break
             }
         }
     }
@@ -219,11 +220,31 @@ actor WebSocketDiscoveryManager {
         }
         
         // Build WebSocket URL - need to reconstruct since we don't have the DiscoveredNode anymore
-        // Use the original URL from the current request
-        guard let originalURL = connection.webSocketTask.currentRequest?.url,
-              originalURL.scheme == "ws" || originalURL.scheme == "wss" else {
-            print("[WS Discovery] ✗ Cannot retry: invalid or missing WebSocket URL")
-            print("[WS Discovery]   Original URL: \(connection.webSocketTask.currentRequest?.url?.absoluteString ?? "nil")")
+        guard let originalURL = connection.webSocketTask.currentRequest?.url else {
+            print("[WS Discovery] ✗ Cannot retry: missing URL from current request")
+            activeConnections[nodeId]?.status = .reconnecting(attemptNumber: nextAttempt)
+            onConnectionStatusChanged?(nodeId, .reconnecting(attemptNumber: nextAttempt))
+            activeConnections.removeValue(forKey: nodeId)
+            return
+        }
+        
+        // Convert http/https schemes to ws/wss for WebSocket task
+        var wsURL = originalURL
+        if originalURL.scheme == "http" {
+            var components = URLComponents(url: originalURL, resolvingAgainstBaseURL: false)
+            components?.scheme = "ws"
+            wsURL = components?.url ?? originalURL
+        } else if originalURL.scheme == "https" {
+            var components = URLComponents(url: originalURL, resolvingAgainstBaseURL: false)
+            components?.scheme = "wss"
+            wsURL = components?.url ?? originalURL
+        }
+        
+        // Validate the final URL has proper scheme
+        guard wsURL.scheme == "ws" || wsURL.scheme == "wss" else {
+            print("[WS Discovery] ✗ Cannot retry: URL scheme is not ws/wss")
+            print("[WS Discovery]   Original URL: \(originalURL.absoluteString)")
+            print("[WS Discovery]   Converted URL: \(wsURL.absoluteString)")
             activeConnections[nodeId]?.status = .reconnecting(attemptNumber: nextAttempt)
             onConnectionStatusChanged?(nodeId, .reconnecting(attemptNumber: nextAttempt))
             activeConnections.removeValue(forKey: nodeId)
@@ -231,7 +252,7 @@ actor WebSocketDiscoveryManager {
         }
         
         let newSession = URLSession(configuration: .default)
-        let newWebSocketTask = newSession.webSocketTask(with: originalURL)
+        let newWebSocketTask = newSession.webSocketTask(with: wsURL)
         
         activeConnections[nodeId]?.webSocketTask = newWebSocketTask
         print("[WS Discovery] Resuming WebSocket task for retry...")

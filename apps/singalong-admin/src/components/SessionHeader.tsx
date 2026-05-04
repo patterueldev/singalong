@@ -6,6 +6,10 @@ interface SessionHeaderProps {
 }
 
 export function SessionHeader({ session }: SessionHeaderProps) {
+  if (!session) {
+    return null
+  }
+
   const statusBadge = session.status === 'active' ? '🟢' : '⚪'
 
   return (

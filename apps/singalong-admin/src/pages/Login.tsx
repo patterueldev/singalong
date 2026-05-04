@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
-import api from '../services/authService'
 import './Login.css'
 
 export function LoginPage() {
@@ -9,8 +8,6 @@ export function LoginPage() {
   const { login, isLoading, error } = useAuth()
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
-  const [devLoading, setDevLoading] = useState(false)
-  const [devError, setDevError] = useState<string | null>(null)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -19,20 +16,6 @@ export function LoginPage() {
       navigate('/dashboard')
     } catch {
       // Error is displayed via the error state
-    }
-  }
-
-  const handleDevLogin = async () => {
-    setDevLoading(true)
-    setDevError(null)
-    try {
-      const response = await api.post('/api/auth/admin-dev')
-      localStorage.setItem('admin_access_token', response.data.access_token)
-      navigate('/dashboard')
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Dev login failed (make sure DEBUG=True)'
-      setDevError(message)
-      setDevLoading(false)
     }
   }
 
@@ -80,14 +63,6 @@ export function LoginPage() {
 
         <div className="login-footer">
           <p>For development: use username "admin", password "admin123"</p>
-          {devError && <div className="form-error">{devError}</div>}
-          <button 
-            onClick={handleDevLogin} 
-            disabled={devLoading || isLoading}
-            className="dev-button"
-          >
-            {devLoading ? 'Dev Logging in...' : 'Dev Login (DEBUG only)'}
-          </button>
         </div>
       </div>
     </div>
