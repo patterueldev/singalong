@@ -192,7 +192,10 @@ actor WebSocketDiscoveryManager {
     }
     
     private func retryConnection(nodeId: String) async {
-        guard let connection = activeConnections[nodeId] else { return }
+        guard let connection = activeConnections[nodeId] else {
+            print("[WS Discovery] Node \(nodeId) already removed from activeConnections, cancelling retry")
+            return
+        }
         
         let nextAttempt = connection.retryAttempt + 1
         activeConnections[nodeId]?.retryAttempt = nextAttempt
@@ -209,10 +212,26 @@ actor WebSocketDiscoveryManager {
         // Wait before retrying
         try? await Task.sleep(nanoseconds: UInt64(actualDelay * 1_000_000_000))
         
-        // Reconnect
-        guard let connection = activeConnections[nodeId] else { return }
+        // Check if node still exists after sleep (might have been removed)
+        guard let connection = activeConnections[nodeId] else {
+            print("[WS Discovery] Node \(nodeId) was removed during retry sleep, cancelling")
+            return
+        }
+        
+        // Build WebSocket URL - need to reconstruct since we don't have the DiscoveredNode anymore
+        // Use the original URL from the current request
+        guard let originalURL = connection.webSocketTask.currentRequest?.url,
+              originalURL.scheme == "ws" || originalURL.scheme == "wss" else {
+            print("[WS Discovery] ✗ Cannot retry: invalid or missing WebSocket URL")
+            print("[WS Discovery]   Original URL: \(connection.webSocketTask.currentRequest?.url?.absoluteString ?? "nil")")
+            activeConnections[nodeId]?.status = .reconnecting(attemptNumber: nextAttempt)
+            onConnectionStatusChanged?(nodeId, .reconnecting(attemptNumber: nextAttempt))
+            activeConnections.removeValue(forKey: nodeId)
+            return
+        }
+        
         let newSession = URLSession(configuration: .default)
-        let newWebSocketTask = newSession.webSocketTask(with: connection.webSocketTask.currentRequest?.url ?? URL(string: "ws://localhost:5002")!)
+        let newWebSocketTask = newSession.webSocketTask(with: originalURL)
         
         activeConnections[nodeId]?.webSocketTask = newWebSocketTask
         print("[WS Discovery] Resuming WebSocket task for retry...")

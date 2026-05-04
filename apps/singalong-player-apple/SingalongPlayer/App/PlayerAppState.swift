@@ -165,6 +165,11 @@ class PlayerAppState: ObservableObject {
                         self?.selectedNodeId = nil
                     }
                 }
+                
+                // Disconnect from WebSocket when node is removed from mDNS
+                Task {
+                    await self?.wsManager.disconnect(fromNodeId: node.id)
+                }
             })
         }
     }
