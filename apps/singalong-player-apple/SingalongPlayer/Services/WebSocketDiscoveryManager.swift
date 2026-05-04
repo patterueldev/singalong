@@ -150,6 +150,7 @@ actor WebSocketDiscoveryManager {
                         // Update connection status based on message type
                         if case .registered = nodeMessage {
                             activeConnections[nodeId]?.status = .waiting
+                            print("[WS Discovery] Calling onConnectionStatusChanged callback with nodeId=\(nodeId), status=.waiting")
                             onConnectionStatusChanged?(nodeId, .waiting)
                             print("[WS Discovery] ✓ Player registered successfully - now waiting for admin selection")
                         }

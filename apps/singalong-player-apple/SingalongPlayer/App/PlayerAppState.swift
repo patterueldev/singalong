@@ -27,7 +27,39 @@ class PlayerAppState: ObservableObject {
     // MARK: - Initialization
     
     init() {
+        // Set up mDNS callbacks first (synchronously setup)
         setupCallbacks()
+        
+        // Then set up WebSocket callbacks asynchronously but immediately
+        Task {
+            await self.setupWebSocketCallbacksAsync()
+        }
+    }
+    
+    /// Set up WebSocket callbacks asynchronously on the actor
+    private func setupWebSocketCallbacksAsync() async {
+        let ws = wsManager
+        await ws.setCallback(onConnectionStatusChanged: { [weak self] nodeId, status in
+            print("[PlayerApp] ✓ STATUS CALLBACK FIRED: nodeId=\(nodeId), status=\(status.displayText)")
+            DispatchQueue.main.async {
+                print("[PlayerApp] ✓ Updating activeConnections[\(nodeId)] = \(status.displayText)")
+                self?.activeConnections[nodeId] = status
+            }
+        })
+        
+        await ws.setCallback(onMessageReceived: { [weak self] nodeId, message in
+            DispatchQueue.main.async {
+                self?.handleNodeMessage(message, fromNodeId: nodeId)
+            }
+        })
+        
+        await ws.setCallback(onConnectionClosed: { [weak self] nodeId in
+            DispatchQueue.main.async {
+                self?.activeConnections.removeValue(forKey: nodeId)
+            }
+        })
+        
+        print("[PlayerApp] ✓ WebSocket callbacks configured")
     }
     
     // MARK: - Public Methods
@@ -101,10 +133,8 @@ class PlayerAppState: ObservableObject {
     // MARK: - Private Methods
     
     private func setupCallbacks() {
-        // Set up mDNS callbacks using Task to avoid actor isolation issues
+        // Set up mDNS callbacks
         Task {
-            // Note: Callbacks are called from their respective actors/threads,
-            // so we wrap UI updates in DispatchQueue.main.async
             let mdns = mdnsService
             await mdns.setCallback(onNodesUpdated: { [weak self] nodes in
                 DispatchQueue.main.async {
@@ -118,28 +148,6 @@ class PlayerAppState: ObservableObject {
                     if self?.selectedNodeId == node.id {
                         self?.selectedNodeId = nil
                     }
-                }
-            })
-        }
-        
-        // Set up WebSocket callbacks
-        let ws = wsManager
-        Task {
-            await ws.setCallback(onConnectionStatusChanged: { [weak self] nodeId, status in
-                DispatchQueue.main.async {
-                    self?.activeConnections[nodeId] = status
-                }
-            })
-            
-            await ws.setCallback(onMessageReceived: { [weak self] nodeId, message in
-                DispatchQueue.main.async {
-                    self?.handleNodeMessage(message, fromNodeId: nodeId)
-                }
-            })
-            
-            await ws.setCallback(onConnectionClosed: { [weak self] nodeId in
-                DispatchQueue.main.async {
-                    self?.activeConnections.removeValue(forKey: nodeId)
                 }
             })
         }
