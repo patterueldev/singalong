@@ -34,7 +34,7 @@ struct IdleScreen: View {
                         .fill(appState.isDiscovering ? Color(red: 0.753, green: 0.522, blue: 0.992) : Color.gray) // #c084fc
                         .frame(width: 12, height: 12)
                     
-                    Text(appState.isDiscovering ? "Scanning network..." : "No nodes found")
+                    Text(appState.discoveredNodes.isEmpty ? "No nodes found" : "\(appState.discoveredNodes.count) node(s) found")
                         .font(.caption)
                         .foregroundColor(Color(red: 0.612, green: 0.639, blue: 0.686))
                 }
@@ -63,7 +63,10 @@ struct IdleScreen: View {
                     ScrollView {
                         VStack(spacing: 12) {
                             ForEach(appState.discoveredNodes) { node in
-                                NodeCard(node: node, status: appState.activeConnections[node.id] ?? .disconnected)
+                                NodeCard(
+                                    node: node,
+                                    status: appState.activeConnections[node.id] ?? .connecting
+                                )
                             }
                         }
                         .padding(.horizontal, 24)
@@ -126,6 +129,19 @@ struct NodeCard: View {
     let status: NodeConnectionStatus
     @Environment(\.scenePhase) var scenePhase
     
+    var statusIcon: String {
+        switch status {
+        case .connecting:
+            return "hourglass"
+        case .waiting:
+            return "checkmark.circle"
+        case .reconnecting:
+            return "arrow.clockwise"
+        case .locked:
+            return "lock.fill"
+        }
+    }
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
@@ -138,7 +154,7 @@ struct NodeCard: View {
                         Image(systemName: "network")
                             .font(.caption)
                         Text(node.host)
-                            .font(.caption)
+                            .font(.caption2)
                             .lineLimit(1)
                     }
                     .foregroundColor(Color(red: 0.612, green: 0.639, blue: 0.686)) // #9ca3af
@@ -147,30 +163,31 @@ struct NodeCard: View {
                 Spacer()
                 
                 VStack(alignment: .trailing, spacing: 4) {
-                    Text(status.rawValue)
+                    Text(status.displayText)
                         .font(.caption)
                         .fontWeight(.semibold)
-                        .foregroundColor(statusColor(for: status))
+                        .foregroundColor(status.statusColor)
                     
-                    if status == .connected || status == .locked {
-                        HStack(spacing: 4) {
-                            Circle()
-                                .fill(Color.green)
-                                .frame(width: 8, height: 8)
-                            Text("Connected")
+                    HStack(spacing: 4) {
+                        Image(systemName: statusIcon)
+                            .font(.caption2)
+                        
+                        switch status {
+                        case .connecting:
+                            Text("Establishing...")
+                                .font(.caption2)
+                        case .waiting:
+                            Text("Ready")
+                                .font(.caption2)
+                        case .reconnecting(let attempt):
+                            Text("Attempt \(attempt)")
+                                .font(.caption2)
+                        case .locked:
+                            Text("Active")
                                 .font(.caption2)
                         }
-                        .foregroundColor(.green)
-                    } else if status == .connecting {
-                        HStack(spacing: 4) {
-                            Circle()
-                                .fill(Color.yellow)
-                                .frame(width: 8, height: 8)
-                            Text("Waiting...")
-                                .font(.caption2)
-                        }
-                        .foregroundColor(.yellow)
                     }
+                    .foregroundColor(status.statusColor)
                 }
             }
         }
@@ -180,32 +197,16 @@ struct NodeCard: View {
         .overlay(
             RoundedRectangle(cornerRadius: 12)
                 .stroke(
-                    status == .connected ? Color(red: 0.753, green: 0.522, blue: 0.992) : Color.clear,
+                    status == .locked ? Color(red: 0.753, green: 0.522, blue: 0.992) : Color.clear,
                     lineWidth: 2
                 )
         )
         .onAppear {
             // Auto-connect when node is discovered
-            if status == .disconnected {
-                // Trigger connection through app state
+            if case .connecting = status {
                 let appState = PlayerAppState.shared
                 appState.connectToNode(node)
             }
-        }
-    }
-    
-    private func statusColor(for status: NodeConnectionStatus) -> Color {
-        switch status {
-        case .disconnected:
-            return Color(red: 0.612, green: 0.639, blue: 0.686) // gray
-        case .connecting:
-            return .yellow
-        case .connected:
-            return .green
-        case .locked:
-            return Color(red: 0.753, green: 0.522, blue: 0.992) // purple
-        case .error:
-            return .red
         }
     }
 }

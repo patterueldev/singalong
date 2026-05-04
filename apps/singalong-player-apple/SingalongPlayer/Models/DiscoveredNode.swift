@@ -1,4 +1,5 @@
 import Foundation
+import SwiftUI
 
 /// Represents a discovered Singalong Node on the local network
 struct DiscoveredNode: Identifiable, Hashable {
@@ -39,12 +40,37 @@ struct DiscoveredNode: Identifiable, Hashable {
 }
 
 /// Connection status of a discovered node
-enum NodeConnectionStatus: String, CaseIterable {
-    case disconnected = "Disconnected"
-    case connecting = "Connecting..."
-    case connected = "Connected"
-    case locked = "Locked"
-    case error = "Error"
+enum NodeConnectionStatus: Equatable {
+    case connecting                    // Establishing initial WebSocket connection
+    case waiting                       // Connected, waiting for admin selection
+    case reconnecting(attemptNumber: Int)  // Retrying after connection failure
+    case locked                        // Admin selected this node
+    
+    var displayText: String {
+        switch self {
+        case .connecting:
+            return "Connecting"
+        case .waiting:
+            return "Waiting for selection"
+        case .reconnecting(let attempt):
+            return "Reconnecting (\(attempt))"
+        case .locked:
+            return "Selected"
+        }
+    }
+    
+    var statusColor: Color {
+        switch self {
+        case .connecting:
+            return Color.yellow
+        case .waiting:
+            return Color.green
+        case .reconnecting:
+            return Color.orange
+        case .locked:
+            return Color(red: 0.753, green: 0.522, blue: 0.992) // purple
+        }
+    }
 }
 
 /// Model for a player-node connection
