@@ -18,13 +18,13 @@ export function DashboardPage() {
     [createSession]
   )
 
-  if (!currentSession && sessions.length === 0) {
+  if (!currentSession && (!sessions || sessions.length === 0)) {
     return (
       <div className="dashboard-container">
         <Sidebar />
         <main className="dashboard-main">
           <SessionsPanel
-            sessions={sessions}
+            sessions={sessions || []}
             onSelectSession={selectSession}
             onCreateSession={handleCreateSession}
           />
@@ -37,14 +37,7 @@ export function DashboardPage() {
     <div className="dashboard-container">
       <Sidebar />
       <main className="dashboard-main">
-        {!currentSession ? (
-          <SessionsPanel
-            sessions={sessions}
-            onSelectSession={selectSession}
-            onCreateSession={handleCreateSession}
-          />
-        ) : (
-          <>
+      <>
             <SessionHeader session={currentSession} />
             <div className="dashboard-panels">
               <div className="panel top-left">
@@ -62,6 +55,10 @@ export function DashboardPage() {
             </div>
           </>
         )}
+      </main>
+    </div>
+  )
+}
       </main>
     </div>
   )
