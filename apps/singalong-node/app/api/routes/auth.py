@@ -206,3 +206,41 @@ async def refresh_tokens(
             detail=f"Invalid refresh token: {str(e)}",
         )
 
+
+
+@router.post("/admin-dev", response_model=TokenResponse, status_code=201)
+async def authenticate_admin_dev(db: Session = Depends(get_db)) -> TokenResponse:
+    """
+    **DEVELOPMENT ONLY** - Bypass admin authentication for testing
+    
+    This endpoint is only available in development mode (DEBUG=True).
+    It returns a valid admin token without requiring Master auth.
+    
+    **DO NOT USE IN PRODUCTION**
+    """
+    if not settings.debug:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Dev endpoint only available in DEBUG mode",
+        )
+    
+    auth_service = get_auth_service()
+    
+    try:
+        access_token, refresh_token, role, access_expires, refresh_expires = (
+            auth_service.create_admin_token(node_id=settings.node_id)
+        )
+        
+        return TokenResponse(
+            access_token=access_token,
+            refresh_token=refresh_token,
+            token_type="bearer",
+            expires_in=access_expires,
+            refresh_expires_in=refresh_expires,
+            role=role,
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to create dev token: {str(e)}",
+        )

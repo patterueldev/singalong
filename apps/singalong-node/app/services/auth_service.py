@@ -439,3 +439,42 @@ class AuthService:
         token = jwt.encode(payload, self.api_key, algorithm=self.algorithm)
         return token
 
+
+    def create_admin_token(self, node_id: str) -> tuple[str, str, str, int, int]:
+        """
+        **DEVELOPMENT ONLY** - Create admin token without authentication
+        
+        Used for testing the admin dashboard in development mode.
+        Do not use in production!
+        
+        Args:
+            node_id: Node UUID
+            
+        Returns:
+            Tuple of (access_token, refresh_token, role, access_expires_in, refresh_expires_in)
+        """
+        import uuid
+        user_id = str(uuid.uuid4())
+        role = "admin"
+        
+        access_token = self._generate_token(
+            user_id=user_id,
+            role=role,
+            token_type="access",
+            expires_in_seconds=self.access_token_expire_seconds,
+        )
+        
+        refresh_token = self._generate_token(
+            user_id=user_id,
+            role=role,
+            token_type="refresh",
+            expires_in_seconds=self.refresh_token_expire_seconds,
+        )
+        
+        return (
+            access_token,
+            refresh_token,
+            role,
+            self.access_token_expire_seconds,
+            self.refresh_token_expire_seconds,
+        )
