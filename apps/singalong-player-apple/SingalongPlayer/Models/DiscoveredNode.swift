@@ -49,11 +49,11 @@ enum NodeConnectionStatus: Equatable {
     var displayText: String {
         switch self {
         case .connecting:
-            return "Connecting"
+            return "Connecting..."
         case .waiting:
-            return "Waiting for selection"
+            return "Waiting..."
         case .reconnecting(let attempt):
-            return "Reconnecting (\(attempt))"
+            return "Reconnecting (\(attempt))..."
         case .locked:
             return "Selected"
         }
