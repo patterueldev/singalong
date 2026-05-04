@@ -200,9 +200,9 @@ actor WebSocketDiscoveryManager {
         let nextAttempt = connection.retryAttempt + 1
         activeConnections[nodeId]?.retryAttempt = nextAttempt
         
-        // Calculate exponential backoff: 1s, 2s, 4s, 8s, etc.
+        // Calculate exponential backoff: 1s, 2s, 4s, then stay at 4s
         let backoffDelay = connection.initialBackoffSeconds * pow(2.0, Double(nextAttempt - 1))
-        let maxBackoff = 30.0  // Cap at 30 seconds
+        let maxBackoff = 4.0  // Cap at 4 seconds
         let actualDelay = min(backoffDelay, maxBackoff)
         
         print("[WS Discovery] Retrying connection to \(connection.nodeName) (attempt \(nextAttempt)/\(connection.maxRetryAttempts)) in \(String(format: "%.1f", actualDelay))s")
