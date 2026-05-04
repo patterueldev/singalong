@@ -63,9 +63,11 @@ struct IdleScreen: View {
                     ScrollView {
                         VStack(spacing: 12) {
                             ForEach(appState.discoveredNodes) { node in
+                                let status = appState.activeConnections[node.id] ?? .connecting
                                 NodeCard(
                                     node: node,
-                                    status: appState.activeConnections[node.id] ?? .connecting
+                                    status: status,
+                                    appState: appState
                                 )
                             }
                         }
@@ -127,6 +129,7 @@ struct NodeCard: View {
     
     let node: DiscoveredNode
     let status: NodeConnectionStatus
+    let appState: PlayerAppState
     @Environment(\.scenePhase) var scenePhase
     
     var body: some View {
@@ -169,7 +172,7 @@ struct NodeCard: View {
         .onAppear {
             // Auto-connect when node is discovered
             if case .connecting = status {
-                let appState = PlayerAppState.shared
+                print("[NodeCard] Auto-connecting to \(node.name)")
                 appState.connectToNode(node)
             }
         }

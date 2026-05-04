@@ -5,8 +5,6 @@ import Foundation
 @MainActor
 class PlayerAppState: ObservableObject {
     
-    static let shared = PlayerAppState()
-    
     // MARK: - Published Properties
     
     @Published var discoveredNodes: [DiscoveredNode] = []
@@ -28,28 +26,39 @@ class PlayerAppState: ObservableObject {
     // MARK: - Initialization
     
     init() {
+        print("[PlayerApp] === INIT CALLED ===")
+        print("[PlayerApp] callbacksConfigured at init: \(callbacksConfigured)")
         // Set up mDNS callbacks first (synchronously setup)
         setupCallbacks()
         
         // Then set up WebSocket callbacks asynchronously but immediately
         Task {
+            print("[PlayerApp] >>> Spawning setupWebSocketCallbacksAsync task")
             await self.setupWebSocketCallbacksAsync()
         }
     }
     
     /// Set up WebSocket callbacks asynchronously on the actor
     private func setupWebSocketCallbacksAsync() async {
+        print("[PlayerApp] >>> setupWebSocketCallbacksAsync CALLED, callbacksConfigured=\(callbacksConfigured)")
         guard !callbacksConfigured else {
             print("[PlayerApp] WebSocket callbacks already configured, skipping")
             return
         }
         
+        print("[PlayerApp] >>> Setting up callbacks...")
         let ws = wsManager
         await ws.setCallback(onConnectionStatusChanged: { [weak self] nodeId, status in
             print("[PlayerApp] ✓ STATUS CALLBACK FIRED: nodeId=\(nodeId), status=\(status.displayText)")
+            print("[PlayerApp] >>> Before DispatchQueue.main.async")
             DispatchQueue.main.async {
-                print("[PlayerApp] ✓ Updating activeConnections[\(nodeId)] = \(status.displayText)")
-                self?.activeConnections[nodeId] = status
+                print("[PlayerApp] >>> Inside DispatchQueue.main.async")
+                print("[PlayerApp] ✓ Before update: activeConnections=\(self?.activeConnections ?? [:])")
+                var updated = self?.activeConnections ?? [:]
+                updated[nodeId] = status
+                print("[PlayerApp] ✓ After mutation, before assignment: updated=\(updated)")
+                self?.activeConnections = updated
+                print("[PlayerApp] ✓ After assignment: activeConnections=\(self?.activeConnections ?? [:])")
             }
         })
         
