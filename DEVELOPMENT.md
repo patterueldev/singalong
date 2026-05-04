@@ -25,6 +25,16 @@ docker-compose down
 - Node API: http://localhost:5002
 - Controller: http://localhost:3002
 
+**Important: .env Configuration**
+The `.env` file is git-ignored (for security) but must be configured for local development:
+
+```
+VITE_NODE_URL=http://localhost:5002
+VITE_MASTER_URL=http://localhost:5001
+```
+
+If you see Admin making requests to a remote domain (e.g., `singalong-dev.nicenature.space/node1`) instead of `localhost:5002`, it means `.env` still has production URLs. Update it to point to localhost.
+
 ---
 
 ## DO NOT:
