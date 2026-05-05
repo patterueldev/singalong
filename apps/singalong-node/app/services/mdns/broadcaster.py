@@ -1,8 +1,6 @@
 """mDNS service broadcasting via zeroconf (cross-platform)."""
 import logging
 import socket
-import threading
-import time
 from typing import Optional
 
 from zeroconf import IPVersion, ServiceInfo, Zeroconf
@@ -87,38 +85,18 @@ class MDNSBroadcaster(BroadcasterInterface):
             logger.info(f"  Hostname: {hostname}.local.")
             logger.info(f"  IPv4: {local_ip}")
 
-            # Start zeroconf in a background thread to avoid event loop issues
-            # Zeroconf expects isolated threading context
-            def register_in_thread():
-                try:
-                    # Create Zeroconf instance in the thread
-                    self.zeroconf = Zeroconf(
-                        ip_version=IPVersion.V4Only,
-                        interfaces=["0.0.0.0"],
-                    )
-                    # Register service
-                    self.zeroconf.register_service(
-                        self.service_info,
-                        allow_name_change=True,
-                    )
-                    self._is_broadcasting = True
-                    logger.info(
-                        f"✓ mDNS broadcast started | "
-                        f"service={self.service_name} | "
-                        f"port={self.port} | "
-                        f"host={hostname}.local. | "
-                        f"ip={local_ip}"
-                    )
-                except Exception as e:
-                    logger.error(f"Error registering mDNS in thread: {e}", exc_info=True)
-                    self._is_broadcasting = False
-            
-            # Start registration in daemon thread
-            thread = threading.Thread(target=register_in_thread, daemon=True)
-            thread.start()
-            
-            # Brief wait to allow registration to start
-            time.sleep(0.5)
+            # Start zeroconf and register service
+            self.zeroconf = Zeroconf(ip_version=IPVersion.V4Only)
+            self.zeroconf.register_service(self.service_info)
+            self._is_broadcasting = True
+
+            logger.info(
+                f"✓ mDNS broadcast started | "
+                f"service={self.service_name} | "
+                f"port={self.port} | "
+                f"host={hostname}.local. | "
+                f"ip={local_ip}"
+            )
             return True
 
         except Exception as e:
