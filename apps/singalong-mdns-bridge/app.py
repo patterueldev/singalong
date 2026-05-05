@@ -1,10 +1,10 @@
-"""mDNS bridge application - advertises Node service via mDNS using dns-sd"""
+"""mDNS bridge application - advertises Node service via mDNS (pure Python, OS-agnostic)"""
 import logging
 import os
 import signal
 import socket
-import subprocess
 import time
+from zeroconf import InterfaceChoice, ServiceInfo, Zeroconf
 
 # Configure logging
 logging.basicConfig(
@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 
 class MDNSBridge:
-    """Advertises Singalong Node service via mDNS using system dns-sd"""
+    """Advertises Singalong Node service via mDNS using zeroconf (pure Python)"""
 
     def __init__(
         self,
@@ -28,7 +28,8 @@ class MDNSBridge:
         self.node_port = node_port
         self.service_name = service_name
         self.service_type = service_type
-        self.process = None
+        self.zeroconf = None
+        self.service_info = None
 
     def _get_host_ip(self):
         """Get the actual host IP address (not loopback)"""
@@ -44,7 +45,7 @@ class MDNSBridge:
             return "127.0.0.1"
 
     def start(self):
-        """Start mDNS broadcasting using dns-sd"""
+        """Start mDNS broadcasting using zeroconf"""
         try:
             # Determine the IP to advertise
             if self.node_host in ("localhost", "127.0.0.1"):
@@ -62,49 +63,32 @@ class MDNSBridge:
             logger.info(f"  Node host: {self.node_host} → {advertise_ip}")
             logger.info(f"  Node port: {self.node_port}")
 
-            # Build dns-sd command
-            # dns-sd -R <Name> <Type> <Domain> <Port> [<TXT>...]
-            cmd = [
-                "dns-sd",
-                "-R",
-                self.service_name,
-                self.service_type,
-                "local.",
-                str(self.node_port),
-                f"address={advertise_ip}",
-            ]
+            # Create service info with the advertised IP
+            service_name_with_type = f"{self.service_name}.{self.service_type}.local."
+            ip_bytes = socket.inet_aton(advertise_ip)
 
-            logger.info(f"Running: {' '.join(cmd)}")
-
-            # Start dns-sd process - inherit stdout/stderr so we see debug info
-            self.process = subprocess.Popen(
-                cmd,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                text=True,
-                bufsize=1,
+            self.service_info = ServiceInfo(
+                name=service_name_with_type,
+                type_=f"{self.service_type}.local.",
+                port=self.node_port,
+                addresses=[ip_bytes],
+                properties={
+                    "version": "0.1.0",
+                    "description": "Singalong Node Service",
+                },
             )
 
-            # Monitor process in background and log output
-            import threading
-            def log_output():
-                try:
-                    for line in self.process.stdout:
-                        if line.strip():
-                            logger.debug(f"dns-sd: {line.rstrip()}")
-                except Exception:
-                    pass
+            # Initialize Zeroconf with Default interfaces
+            # This skips loopback and uses actual network interfaces
+            # Works on macOS, Linux, Windows - OS-agnostic
+            logger.info("Initializing Zeroconf with default network interfaces...")
+            self.zeroconf = Zeroconf(interfaces=InterfaceChoice.Default)
 
-            monitor_thread = threading.Thread(target=log_output, daemon=True)
-            monitor_thread.start()
+            logger.info("Registering service with mDNS...")
+            self.zeroconf.register_service(self.service_info)
 
-            # Give dns-sd a moment to start
+            # Give it a moment to register
             time.sleep(0.5)
-
-            # Check if process is still alive
-            if self.process.poll() is not None:
-                logger.error("dns-sd process exited immediately. Check logs above.")
-                return False
 
             logger.info(
                 f"✓ mDNS bridge started | "
@@ -114,11 +98,6 @@ class MDNSBridge:
             )
             return True
 
-        except FileNotFoundError:
-            logger.error(
-                "dns-sd command not found. On non-macOS systems, install avahi or similar."
-            )
-            return False
         except Exception as e:
             logger.error(f"Failed to start mDNS bridge: {e}", exc_info=True)
             return False
@@ -126,13 +105,9 @@ class MDNSBridge:
     def stop(self):
         """Stop mDNS broadcasting"""
         try:
-            if self.process:
-                self.process.terminate()
-                try:
-                    self.process.wait(timeout=2)
-                except subprocess.TimeoutExpired:
-                    self.process.kill()
-                    self.process.wait()
+            if self.service_info and self.zeroconf:
+                self.zeroconf.unregister_service(self.service_info)
+                self.zeroconf.close()
                 logger.info("✓ mDNS bridge stopped")
         except Exception as e:
             logger.error(f"Error stopping mDNS bridge: {e}")

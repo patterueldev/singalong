@@ -10,6 +10,7 @@ package-mode = false
 [tool.poetry.dependencies]
 python = "^3.10"
 python-dotenv = "^1.0.0"
+zeroconf = "^0.148.0"
 
 [tool.poetry.group.dev.dependencies]
 black = "^23.12.0"
