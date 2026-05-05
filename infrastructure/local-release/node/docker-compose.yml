@@ -26,8 +26,8 @@ services:
   # Singalong Node Service (using SQLite, includes embedded React Admin UI)
   node:
     build:
-      context: ../../../apps/singalong-node
-      dockerfile: ../../infrastructure/release/node.dockerfile
+      context: ../../../  # Project root to access both apps
+      dockerfile: infrastructure/release/node.dockerfile
     container_name: singalong-node
     environment:
       - ENVIRONMENT=development

@@ -120,23 +120,32 @@ app = FastAPI(
 import os
 from pathlib import Path
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 
 admin_static_path = Path(__file__).parent / "static" / "admin"
 if admin_static_path.exists():
-    from fastapi.responses import FileResponse
-    
     @app.get("/admin", include_in_schema=False)
     async def admin_root():
         """Redirect /admin to /admin/"""
-        return FileResponse(admin_static_path / "index.html", media_type="text/html")
+        from fastapi.responses import RedirectResponse
+        return RedirectResponse(url="/admin/", status_code=301)
     
     @app.get("/admin/", include_in_schema=False)
     async def admin_index():
         """Serve admin UI"""
         return FileResponse(admin_static_path / "index.html", media_type="text/html")
     
-    # Mount static files (assets, etc.)
-    app.mount("/admin", StaticFiles(directory=str(admin_static_path)), name="admin")
+    @app.get("/admin/{full_path:path}", include_in_schema=False)
+    async def admin_static(full_path: str):
+        """Serve static assets and handle SPA routing"""
+        file_path = admin_static_path / full_path
+        
+        # Check if exact file exists
+        if file_path.exists() and file_path.is_file():
+            return FileResponse(file_path)
+        
+        # For any non-existent path (e.g., React routes), serve index.html for SPA
+        return FileResponse(admin_static_path / "index.html", media_type="text/html")
 
 # Include routers
 from app.api.routes import auth, sessions, songs, players, websocket

@@ -20,6 +20,8 @@ COPY apps/singalong-admin/src ./src
 COPY apps/singalong-admin/index.html ./
 COPY apps/singalong-admin/vite.config.ts ./
 COPY apps/singalong-admin/tsconfig.json ./
+COPY apps/singalong-admin/tsconfig.app.json ./
+COPY apps/singalong-admin/tsconfig.node.json ./
 COPY apps/singalong-admin/eslint.config.js ./
 
 # Build for production
@@ -40,14 +42,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy dependency files
-COPY pyproject.toml poetry.lock* ./
+COPY apps/singalong-node/pyproject.toml apps/singalong-node/poetry.lock* ./
 
 # Install Python dependencies
 RUN poetry config virtualenvs.create false && \
     poetry install --no-interaction --no-ansi --only main
 
 # Copy application code
-COPY . ./
+COPY apps/singalong-node/ .
 
 # Stage 3: Runtime
 FROM python:3.11-slim
