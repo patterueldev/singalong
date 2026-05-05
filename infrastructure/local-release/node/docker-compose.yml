@@ -1,6 +1,31 @@
 version: '3.9'
 
+# Local Release - Node Group with Nginx Reverse Proxy
+# Architecture:
+#   Nginx (8080)
+#   ├── /api/*   → singalong-node:5002
+#   └── /admin/* → singalong-admin:3001
+#
+# Access via: http://localhost:8080/admin
+
 services:
+  # Nginx Reverse Proxy - Gateway for the Node group
+  nginx:
+    build:
+      context: /Users/pat/Projects/PAT/singalong
+      dockerfile: /Users/pat/Projects/PAT/singalong/infrastructure/local-release/nginx.dockerfile
+    container_name: singalong-nginx
+    ports:
+      - "8080:8080"
+    volumes:
+      - /Users/pat/Projects/PAT/singalong/infrastructure/local-release/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      - singalong-network
+    depends_on:
+      - node
+      - admin
+    restart: unless-stopped
+
   # PostgreSQL Database for Node
   node-db:
     image: postgres:16-alpine
@@ -63,8 +88,7 @@ services:
       # OpenAI Configuration for song metadata enhancement (optional)
       OPENAI_API_KEY: ""
 
-    ports:
-      - "5002:5002"
+    # No direct port exposure - accessed through Nginx gateway at /api
     volumes:
       # Downloaded videos/songs from Master
       - node-videos:/app/videos
@@ -82,10 +106,6 @@ services:
       - singalong-network
     restart: unless-stopped
 
-  # ============================================================================
-  # FRONTEND SERVICES (Commented for now, uncomment when ready to deploy)
-  # ============================================================================
-
   # Singalong Admin UI - Administrative Dashboard
   admin:
     build:
@@ -93,9 +113,9 @@ services:
       dockerfile: /Users/pat/Projects/PAT/singalong/infrastructure/release/admin.dockerfile
     container_name: singalong-admin
     environment:
-      VITE_API_BASE_URL: http://localhost:5002
-    ports:
-      - "3001:3001"
+      # Admin accesses Node API through Nginx gateway (relative path)
+      VITE_API_BASE_URL: /api
+    # No direct port exposure - accessed through Nginx at /admin
     depends_on:
       - node
     networks:
@@ -109,9 +129,8 @@ services:
   #     dockerfile: /Users/pat/Projects/PAT/singalong/infrastructure/release/controller.dockerfile
   #   container_name: singalong-controller
   #   environment:
-  #     VITE_API_BASE_URL: http://localhost:5002
-  #   ports:
-  #     - "3002:3002"
+  #     VITE_API_BASE_URL: /api
+  #   # No direct port exposure - accessed through Nginx at /controller
   #   depends_on:
   #     - node
   #   networks:
