@@ -66,7 +66,7 @@ jobs:
       - name: Build and push Node image
         uses: docker/build-push-action@v5
         with:
-          context: ./apps/singalong-node
+          context: .
           file: ./infrastructure/release/node.dockerfile
           platforms: linux/amd64,linux/arm64
           push: true

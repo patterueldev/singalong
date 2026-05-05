@@ -4,7 +4,7 @@
 # Includes embedded React admin UI
 #
 # Stage 1: Build React Admin UI
-FROM node:20-alpine as admin-builder
+FROM node:20-alpine AS admin-builder
 
 WORKDIR /build/admin
 
@@ -28,7 +28,7 @@ COPY apps/singalong-admin/eslint.config.js ./
 RUN yarn build
 
 # Stage 2: Python Builder
-FROM python:3.11-slim as python-builder
+FROM python:3.11-slim AS python-builder
 
 WORKDIR /build
 
