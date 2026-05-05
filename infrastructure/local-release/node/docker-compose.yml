@@ -42,8 +42,7 @@ services:
     # No direct port exposure - accessed through Nginx gateway at /api
     volumes:
       # Data mounts only (no app code bind mount)
-      - ./data/node:/data/node  # Node database and storage
-      - ./data/node/videos:/data/node/videos  # Videos available on this node for streaming
+      - ./data/node:/data/node  # Node database and storage (includes videos)
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5002/health').read()"]
       interval: 30s
