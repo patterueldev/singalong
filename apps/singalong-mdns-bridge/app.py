@@ -21,14 +21,14 @@ class MDNSBridge:
     def __init__(
         self,
         node_host: str = "localhost",
-        node_port: int = 5002,
+        gateway_port: int = 80,
         service_name: str = "Singalong Node",
         service_type: str = "_singalong-node._tcp",
         health_check_enabled: bool = True,
         health_check_timeout: int = 30,
     ):
         self.node_host = node_host
-        self.node_port = node_port
+        self.gateway_port = gateway_port  # Port that Nginx/gateway listens on
         self.service_name = service_name
         self.service_type = service_type
         self.health_check_enabled = health_check_enabled
@@ -50,16 +50,14 @@ class MDNSBridge:
             return "127.0.0.1"
 
     def _check_node_health(self) -> bool:
-        """Check if Node service is healthy by calling its /health endpoint"""
+        """Check if Node service is healthy by calling its /api/health through Nginx gateway"""
         if not self.health_check_enabled:
             return True
 
         try:
-            # Determine the URL to check
-            if self.node_host in ("localhost", "127.0.0.1"):
-                check_url = f"http://localhost:{self.node_port}/health"
-            else:
-                check_url = f"http://{self.node_host}:{self.node_port}/health"
+            # Always check through Nginx gateway (port 80) for consistency
+            # Nginx routes /api/* to Node service
+            check_url = "http://localhost/api/health"
 
             # Check health with timeout
             response = httpx.get(check_url, timeout=self.health_check_timeout)
@@ -99,16 +97,16 @@ class MDNSBridge:
             logger.info(f"  Service: {self.service_name}")
             logger.info(f"  Type: {self.service_type}.local.")
             logger.info(f"  Node host: {self.node_host} → {advertise_ip}")
-            logger.info(f"  Node port: {self.node_port}")
+            logger.info(f"  Gateway port: {self.gateway_port} (Nginx)")
 
-            # Create service info with the advertised IP
+            # Create service info with the advertised IP and gateway port
             service_name_with_type = f"{self.service_name}.{self.service_type}.local."
             ip_bytes = socket.inet_aton(advertise_ip)
 
             self.service_info = ServiceInfo(
                 name=service_name_with_type,
                 type_=f"{self.service_type}.local.",
-                port=self.node_port,
+                port=self.gateway_port,  # Advertise Nginx gateway port
                 addresses=[ip_bytes],
                 properties={
                     "version": "0.1.0",
@@ -131,7 +129,7 @@ class MDNSBridge:
             logger.info(
                 f"✓ mDNS bridge started | "
                 f"service={self.service_name} | "
-                f"port={self.node_port} | "
+                f"gateway_port={self.gateway_port} | "
                 f"ip={advertise_ip}"
             )
             return True
@@ -155,13 +153,13 @@ def main():
     """Main entry point"""
     # Configuration from environment
     node_host = os.getenv("NODE_HOST", "localhost")
-    node_port = int(os.getenv("NODE_PORT", "5002"))
+    gateway_port = int(os.getenv("GATEWAY_PORT", "80"))  # Nginx gateway port
     service_name = os.getenv("MDNS_SERVICE_NAME", "Singalong Node")
     service_type = os.getenv("MDNS_SERVICE_TYPE", "_singalong-node._tcp")
 
     bridge = MDNSBridge(
         node_host=node_host,
-        node_port=node_port,
+        gateway_port=gateway_port,
         service_name=service_name,
         service_type=service_type,
     )

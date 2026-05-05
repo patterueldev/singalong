@@ -36,7 +36,8 @@ services:
       context: ./apps/singalong-node
       dockerfile: ../../infrastructure/development/node.dockerfile
     container_name: singalong-node
-    # No direct port exposure - accessed through Nginx at /api
+    # No direct port exposure - accessed through Nginx gateway at /api
+    # (mDNS bridge runs natively and checks health via Nginx, then advertises port 80)
     volumes:
       - ./apps/singalong-node:/app
       - ./data/node:/data/node  # Mount node video storage and database
