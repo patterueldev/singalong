@@ -28,15 +28,16 @@
 
 name: Development Build & Push
 
-# on:
-#   pull_request:
-#     branches:
-#       - develop
-
+# TODO: Temporary trigger on pull_request for testing, switch to push after validation
 on:
-  push:
+  pull_request:
     branches:
       - develop
+
+# on:
+#   push:
+#     branches:
+#       - develop
 
 permissions:
   contents: read
