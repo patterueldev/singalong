@@ -28,7 +28,7 @@ services:
   node:
     build:
       context: ../../../apps/singalong-node
-      dockerfile: ../../infrastructure/development/node.dockerfile
+      dockerfile: ../../infrastructure/release/node.dockerfile
     container_name: singalong-node
     environment:
       - ENVIRONMENT=development
@@ -41,12 +41,8 @@ services:
 
     # No direct port exposure - accessed through Nginx gateway at /api
     volumes:
-      # Bind mount local app code
-      - ../../../apps/singalong-node:/app
-      # Local data directory
+      # Data mounts only (no app code bind mount)
       - ./data/node:/data/node
-      # Exclude pycache from volume mount
-      - /app/__pycache__
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5002/health').read()"]
       interval: 30s
