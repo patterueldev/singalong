@@ -5,7 +5,7 @@ echo "Starting Singalong mDNS Bridge..."
 
 # Set defaults (can be overridden via environment)
 export NODE_HOST=${NODE_HOST:-localhost}
-export GATEWAY_PORT=${GATEWAY_PORT:-80}  # Nginx gateway port
+export GATEWAY_PORT=${GATEWAY_PORT:-8080}  # Nginx gateway port
 export HEALTH_POLL_INTERVAL=${HEALTH_POLL_INTERVAL:-5}  # Seconds between health checks
 export MDNS_SERVICE_NAME=${MDNS_SERVICE_NAME:-"Singalong Node"}
 export MDNS_SERVICE_TYPE=${MDNS_SERVICE_TYPE:-"_singalong-node._tcp"}

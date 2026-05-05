@@ -20,7 +20,7 @@ services:
       dockerfile: infrastructure/development/nginx.dockerfile
     container_name: singalong-nginx
     ports:
-      - "80:80"
+      - "8080:8080"
     volumes:
       - ./infrastructure/development/nginx.conf:/etc/nginx/conf.d/default.conf:ro
     networks:

@@ -21,7 +21,7 @@ class MDNSBridge:
     def __init__(
         self,
         node_host: str = "localhost",
-        gateway_port: int = 80,
+        gateway_port: int = 8080,
         service_name: str = "Singalong Node",
         service_type: str = "_singalong-node._tcp",
         health_check_enabled: bool = True,
@@ -70,9 +70,9 @@ class MDNSBridge:
             return True
 
         try:
-            # Always check through Nginx gateway (port 80) for consistency
+            # Always check through Nginx gateway (port 8080) for consistency
             # Nginx routes /api/* to Node service
-            check_url = "http://localhost/api/health"
+            check_url = "http://localhost:8080/api/health"
 
             # Check health with timeout
             response = httpx.get(check_url, timeout=self.health_check_timeout)
