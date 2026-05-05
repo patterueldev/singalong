@@ -34,11 +34,11 @@ COPY --from=builder /build/dist /usr/share/nginx/html
 RUN chown -R nginx:nginx /usr/share/nginx/html
 
 # Expose port
-EXPOSE 3001
+EXPOSE 80
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD wget -q -O /dev/null http://localhost:3001/ || exit 1
+    CMD wget -q -O /dev/null http://localhost:80/ || exit 1
 
 # Start Nginx
 CMD ["nginx", "-g", "daemon off;"]
