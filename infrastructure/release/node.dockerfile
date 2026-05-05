@@ -44,9 +44,14 @@ COPY --from=builder /usr/local /usr/local
 # Copy application code from builder
 COPY --from=builder /build .
 
+# Create data and logs directories that need to exist for volumes
+# Make them world-writable for bind-mounted directories
+RUN mkdir -p /data/node && chmod 777 /data/node
+
 # Create non-root user for security
 RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
-USER appuser
+# TODO: Switch to appuser when database permissions are fully resolved
+# USER appuser
 
 # Expose port
 EXPOSE 5002

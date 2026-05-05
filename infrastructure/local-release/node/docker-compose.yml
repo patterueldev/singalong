@@ -12,13 +12,13 @@ services:
   # Nginx Reverse Proxy - Gateway for the Node group
   nginx:
     build:
-      context: /Users/pat/Projects/PAT/singalong
-      dockerfile: /Users/pat/Projects/PAT/singalong/infrastructure/local-release/nginx.dockerfile
+      context: ../..
+      dockerfile: infrastructure/local-release/nginx.dockerfile
     container_name: singalong-nginx
     ports:
       - "8080:8080"
     volumes:
-      - /Users/pat/Projects/PAT/singalong/infrastructure/local-release/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ../nginx.conf:/etc/nginx/conf.d/default.conf:ro
     networks:
       - singalong-network
     depends_on:
@@ -30,7 +30,7 @@ services:
   node:
     build:
       context: ../../../apps/singalong-node
-      dockerfile: /Users/pat/Projects/PAT/singalong/infrastructure/release/node.dockerfile
+      dockerfile: ../../release/node.dockerfile
     container_name: singalong-node
     environment:
       # Application Settings
@@ -58,19 +58,15 @@ services:
       JWT_REFRESH_TOKEN_EXPIRE_SECONDS: "604800"
 
       # Database Configuration (SQLite)
-      DATABASE_URL: sqlite:///./app/data/singalong_node.db
+      DATABASE_URL: sqlite:////data/node/singalong_node.db
 
       # OpenAI Configuration for song metadata enhancement (optional)
       OPENAI_API_KEY: ""
 
     # No direct port exposure - accessed through Nginx gateway at /api
     volumes:
-      # Downloaded videos/songs from Master
-      - node-videos:/app/videos
-      # Local song database
-      - node-data:/app/data
-      # Application logs
-      - node-logs:/app/logs
+      # Bind-mount local data directory (isolated from root)
+      - ./data/node:/data/node
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5002/health').read()"]
       interval: 30s
@@ -85,7 +81,7 @@ services:
   admin:
     build:
       context: ../../../apps/singalong-admin
-      dockerfile: /Users/pat/Projects/PAT/singalong/infrastructure/release/admin.dockerfile
+      dockerfile: ../../release/admin.dockerfile
     container_name: singalong-admin
     environment:
       # Admin accesses Node API through Nginx gateway (relative path)
@@ -101,7 +97,7 @@ services:
   # controller:
   #   build:
   #     context: ../../../apps/singalong-controller
-  #     dockerfile: /Users/pat/Projects/PAT/singalong/infrastructure/release/controller.dockerfile
+  #     dockerfile: ../../release/controller.dockerfile
   #   container_name: singalong-controller
   #   environment:
   #     VITE_API_BASE_URL: /api
@@ -112,13 +108,7 @@ services:
   #     - singalong-network
   #   restart: unless-stopped
 
-volumes:
-  node-videos:
-    driver: local
-  node-data:
-    driver: local
-  node-logs:
-    driver: local
+volumes: {}
 
 networks:
   singalong-network:

@@ -1,0 +1,6 @@
+# Local data mounts (isolated from root)
+data/
+
+# Environment files (if any local overrides)
+.env.local
+
