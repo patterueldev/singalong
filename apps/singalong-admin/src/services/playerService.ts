@@ -26,7 +26,7 @@ export const playerService = {
    * Get list of available players (discovering/waiting for session)
    */
   async getAvailablePlayers(): Promise<AvailablePlayer[]> {
-    const response = await api.get<GetAvailablePlayersResponse>('/api/players/available')
+    const response = await api.get<GetAvailablePlayersResponse>('/players/available')
     return response.data.available_players || []
   },
 
@@ -36,7 +36,7 @@ export const playerService = {
    * @param sessionCode - 4-digit session code (e.g., "0001")
    */
   async selectPlayer(playerId: string, sessionCode: string): Promise<SelectPlayerResponse> {
-    const response = await api.post<SelectPlayerResponse>('/api/players/select', null, {
+    const response = await api.post<SelectPlayerResponse>('/players/select', null, {
       params: {
         player_id: playerId,
         session_code: sessionCode,

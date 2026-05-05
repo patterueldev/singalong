@@ -10,12 +10,12 @@ interface SessionsListResponse {
 
 export const sessionService = {
   async getSessions(): Promise<Session[]> {
-    const response = await api.get<SessionsListResponse>('/api/sessions')
+    const response = await api.get<SessionsListResponse>('/sessions')
     return response.data.sessions
   },
 
   async createSession(title: string, vibes?: string): Promise<Session> {
-    const response = await api.post<Session>('/api/sessions', {
+    const response = await api.post<Session>('/sessions', {
       title,
       vibes: vibes || '',
       max_users: 0,
@@ -24,18 +24,18 @@ export const sessionService = {
   },
 
   async getSession(code: string): Promise<Session> {
-    const response = await api.get<Session>(`/api/sessions/${code}`)
+    const response = await api.get<Session>(`/sessions/${code}`)
     return response.data
   },
 
   async endSession(code: string): Promise<void> {
-    await api.put(`/api/sessions/${code}`, {
+    await api.put(`/sessions/${code}`, {
       status: 'ended',
     })
   },
 
   async updateSession(code: string, title: string, vibes?: string): Promise<Session> {
-    const response = await api.put<Session>(`/api/sessions/${code}`, {
+    const response = await api.put<Session>(`/sessions/${code}`, {
       title,
       vibes,
     })

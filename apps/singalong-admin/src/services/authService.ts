@@ -22,7 +22,7 @@ api.interceptors.request.use((config) => {
 
 export const authService = {
   async login(username: string, password: string): Promise<string> {
-    const response = await api.post<AuthResponse>('/api/auth/admin', {
+    const response = await api.post<AuthResponse>('/auth/admin', {
       username,
       password,
     })
