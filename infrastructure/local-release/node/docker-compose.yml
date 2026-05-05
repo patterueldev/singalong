@@ -28,7 +28,7 @@ services:
   node:
     build:
       context: ../../../apps/singalong-node
-      dockerfile: ../../development/node.dockerfile
+      dockerfile: ../../infrastructure/development/node.dockerfile
     container_name: singalong-node
     environment:
       - ENVIRONMENT=development
@@ -41,10 +41,12 @@ services:
 
     # No direct port exposure - accessed through Nginx gateway at /api
     volumes:
-      - ./apps/singalong-node:/app
-      - ./data/node:/data/node  # Mount node video storage and database
-      - ./data/master/videos:/data/master/videos  # Access master videos for streaming (B3 MVP)
-      - /app/__pycache__  # Exclude pycache from volume mount
+      # Bind mount local app code
+      - ../../../apps/singalong-node:/app
+      # Local data directory
+      - ./data/node:/data/node
+      # Exclude pycache from volume mount
+      - /app/__pycache__
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5002/health').read()"]
       interval: 30s
@@ -59,7 +61,7 @@ services:
   admin:
     build:
       context: ../../../apps/singalong-admin
-      dockerfile: ../../release/admin.dockerfile
+      dockerfile: ../../infrastructure/release/admin.dockerfile
     container_name: singalong-admin
     environment:
       # Admin accesses Node API through Nginx gateway (relative path)
@@ -75,7 +77,7 @@ services:
   # controller:
   #   build:
   #     context: ../../../apps/singalong-controller
-  #     dockerfile: ../../release/controller.dockerfile
+  #     dockerfile: ../../../../infrastructure/release/controller.dockerfile
   #   container_name: singalong-controller
   #   environment:
   #     VITE_API_BASE_URL: /api
