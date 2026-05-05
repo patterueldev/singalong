@@ -2,36 +2,41 @@ version: '3.8'
 
 # Docker Compose configuration for Singalong development environment
 # Provides hot-reload development setup for all services
+#
+# Node Group Architecture (with Nginx reverse proxy):
+#   Nginx (port 80)
+#   ├── /api/*        → singalong-node:5002
+#   ├── /admin/*      → singalong-admin:3001
+#   └── /controller/* → singalong-controller:3002
+#
+# Services communicate internally (Nginx to backends)
+# External access is through Nginx on port 80
 
 services:
-  # Master Service - Central server for video storage and data management
-  # Uncomment if developing master locally
-  # master:
-  #   build:
-  #     context: ./apps/singalong-master
-  #     dockerfile: ../../infrastructure/development/master.dockerfile
-  #   container_name: singalong-master
-  #   ports:
-  #     - "5001:5001"
-  #   volumes:
-  #     - ./apps/singalong-master:/app
-  #     - ./data/master:/data/master  # Mount master video storage
-  #     - /app/__pycache__  # Exclude pycache from volume mount
-  #   environment:
-  #     - ENVIRONMENT=development
-  #     - DEBUG=true
-  #     - MASTER_API_KEY=${MASTER_API_KEY}
-  #   networks:
-  #     - singalong-network
+  # Nginx Reverse Proxy - Gateway for the Node group
+  nginx:
+    build:
+      context: .
+      dockerfile: infrastructure/development/nginx.dockerfile
+    container_name: singalong-nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./infrastructure/development/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      - singalong-network
+    depends_on:
+      - node
+      - admin
+    restart: unless-stopped
 
-  # Node Service - Local karaoke server
+  # Node Service - Local karaoke server (API backend)
   node:
     build:
       context: ./apps/singalong-node
       dockerfile: ../../infrastructure/development/node.dockerfile
     container_name: singalong-node
-    ports:
-      - "5002:5002"
+    # No direct port exposure - accessed through Nginx at /api
     volumes:
       - ./apps/singalong-node:/app
       - ./data/node:/data/node  # Mount node video storage and database
@@ -55,13 +60,13 @@ services:
       context: .
       dockerfile: infrastructure/development/admin.dockerfile
     container_name: singalong-admin
-    ports:
-      - "3001:3001"
+    # No direct port exposure - accessed through Nginx at /admin
     volumes:
       - ./apps/singalong-admin:/app
       - /app/node_modules  # Exclude node_modules from volume mount
     environment:
-      - VITE_NODE_URL=${VITE_NODE_URL:-http://localhost:5002}
+      # Admin accesses Node API through Nginx gateway (relative path)
+      - VITE_API_BASE_URL=/api
       - ENVIRONMENT=development
       - WATCHPACK_POLLING=true  # Enable polling for file changes
     networks:
@@ -76,13 +81,13 @@ services:
       context: .
       dockerfile: infrastructure/development/controller.dockerfile
     container_name: singalong-controller
-    ports:
-      - "3002:3002"
+    # No direct port exposure - accessed through Nginx at /controller
     volumes:
       - ./apps/singalong-controller:/app
       - /app/node_modules  # Exclude node_modules from volume mount
     environment:
-      - VITE_API_BASE_URL=${VITE_NODE_URL:-http://localhost:5002}
+      # Controller accesses Node API through Nginx gateway (relative path)
+      - VITE_API_BASE_URL=/api
       - ENVIRONMENT=development
       - WATCHPACK_POLLING=true  # Enable polling for file changes
     networks:
