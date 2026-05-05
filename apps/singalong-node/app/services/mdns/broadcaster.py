@@ -1,4 +1,5 @@
 """mDNS service broadcasting via zeroconf (cross-platform)."""
+import asyncio
 import logging
 import socket
 from typing import Optional
@@ -85,9 +86,21 @@ class MDNSBroadcaster(BroadcasterInterface):
             logger.info(f"  Hostname: {hostname}.local.")
             logger.info(f"  IPv4: {local_ip}")
 
-            # Start zeroconf and register service
+            # Start zeroconf with larger timeouts for async registration
             self.zeroconf = Zeroconf(ip_version=IPVersion.V4Only)
-            self.zeroconf.register_service(self.service_info)
+            
+            # Register service asynchronously to avoid blocking
+            try:
+                loop = asyncio.get_running_loop()
+                # We're in an async context, register async
+                task = asyncio.create_task(
+                    self.zeroconf.async_register_service(self.service_info, allow_name_change=True)
+                )
+                # Don't await here - just schedule it
+            except RuntimeError:
+                # No running event loop - register synchronously with timeout
+                self.zeroconf.register_service(self.service_info, allow_name_change=True)
+            
             self._is_broadcasting = True
 
             logger.info(
@@ -108,7 +121,16 @@ class MDNSBroadcaster(BroadcasterInterface):
         """Stop broadcasting mDNS service."""
         try:
             if self.service_info and self.zeroconf:
-                self.zeroconf.unregister_service(self.service_info)
+                try:
+                    loop = asyncio.get_running_loop()
+                    # We're in an async context
+                    task = asyncio.create_task(
+                        self.zeroconf.async_unregister_service(self.service_info)
+                    )
+                except RuntimeError:
+                    # No running event loop - unregister synchronously
+                    self.zeroconf.unregister_service(self.service_info)
+                
                 self.zeroconf.close()
                 self._is_broadcasting = False
                 logger.info("✓ mDNS broadcast stopped")
