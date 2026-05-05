@@ -3,39 +3,21 @@ version: '3.8'
 # Docker Compose configuration for Singalong development environment
 # Provides hot-reload development setup for all services
 #
-# Node Group Architecture (with Nginx reverse proxy):
-#   Nginx (port 80)
-#   ├── /api/*        → singalong-node:5002
-#   ├── /admin/*      → singalong-admin:3001
-#   └── /controller/* → singalong-controller:3002
+# Services Architecture (separate ports - no reverse proxy):
+#   Admin UI:  localhost:3001 (React/Vite dev server)
+#   Node API:  localhost:5002 (FastAPI backend)
 #
-# Services communicate internally (Nginx to backends)
-# External access is through Nginx on port 80
+# For release: Admin is embedded in Node image, served from /admin on Node's port
 
 services:
-  # Nginx Reverse Proxy - Gateway for the Node group
-  nginx:
-    image: nginx:1.25-alpine
-    container_name: singalong-nginx
-    ports:
-      - "8080:8080"
-    volumes:
-      - ./infrastructure/development/nginx.conf:/etc/nginx/conf.d/default.conf:ro
-    networks:
-      - singalong-network
-    depends_on:
-      - node
-      - admin
-    restart: unless-stopped
-
   # Node Service - Local karaoke server (API backend)
   node:
     build:
       context: ./apps/singalong-node
       dockerfile: ../../infrastructure/development/node.dockerfile
     container_name: singalong-node
-    # No direct port exposure - accessed through Nginx gateway at /api
-    # (mDNS bridge runs natively and checks health via Nginx, then advertises port 80)
+    ports:
+      - "8080:5002"
     volumes:
       - ./apps/singalong-node:/app
       - ./data/node:/data/node  # Mount node video storage and database
@@ -58,13 +40,14 @@ services:
       context: ./apps/singalong-admin
       dockerfile: ../../infrastructure/development/admin.dockerfile
     container_name: singalong-admin
-    # No direct port exposure - accessed through Nginx at /admin
+    ports:
+      - "3001:3001"
     volumes:
       - ./apps/singalong-admin:/app
       - /app/node_modules  # Exclude node_modules from volume mount
     environment:
-      # Admin accesses Node API through Nginx gateway (relative path)
-      - VITE_API_BASE_URL=/api
+      # Admin accesses Node API directly at localhost:8080
+      - VITE_API_BASE_URL=http://localhost:8080/api
       - ENVIRONMENT=development
       - WATCHPACK_POLLING=true  # Enable polling for file changes
     networks:
