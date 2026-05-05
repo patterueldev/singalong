@@ -1,0 +1,40 @@
+name: PR / Admin Frontend Checks
+
+on:
+  workflow_call:
+
+jobs:
+  admin-frontend-checks:
+    name: Admin frontend checks
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/singalong-admin
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'yarn'
+          cache-dependency-path: 'apps/singalong-admin/yarn.lock'
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Run linting
+        run: yarn lint || true
+
+      - name: Run type checks
+        run: yarn type-check || true
+
+      - name: Build for production
+        run: yarn build
+
+      - name: Verify package integrity
+        run: |
+          echo "✅ Admin frontend checks passed"

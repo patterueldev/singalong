@@ -1,15 +1,13 @@
 import { useState } from 'react'
-import type { Session } from '../types/models'
 import { usePlayback } from '../hooks/usePlayback'
 import { PlayerSelectionModal } from './PlayerSelectionModal'
 import './PlaybackPanel.css'
 
 interface PlaybackPanelProps {
-  currentSession?: Session | null
   onOpenPlayerDiscovery?: () => void
 }
 
-export function PlaybackPanel({ currentSession, onOpenPlayerDiscovery }: PlaybackPanelProps) {
+export function PlaybackPanel({ onOpenPlayerDiscovery }: PlaybackPanelProps) {
   const { nowPlaying, assignedPlayer, availablePlayers, isLoading, selectPlayer, play, pause } =
     usePlayback()
   const [showPlayerModal, setShowPlayerModal] = useState(false)

@@ -5,7 +5,7 @@ FROM node:20-alpine
 WORKDIR /app
 
 # Copy dependency files
-COPY apps/singalong-admin/package.json apps/singalong-admin/yarn.lock* apps/singalong-admin/package-lock.json* ./
+COPY package.json yarn.lock* package-lock.json* ./
 
 # Install dependencies
 RUN if [ -f yarn.lock ]; then \

@@ -4,9 +4,16 @@ import { DashboardPage } from './pages/Dashboard'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import './App.css'
 
+// Get basename from environment: use /admin/ for production builds, / for dev
+// In production, import.meta.env.BASE_URL will be '/admin/'
+// In dev, Vite serves from root so it's '/'
+const basename = import.meta.env.BASE_URL.endsWith('/') 
+  ? import.meta.env.BASE_URL.slice(0, -1) 
+  : import.meta.env.BASE_URL
+
 function App() {
   return (
-    <Router>
+    <Router basename={basename}>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route

@@ -88,25 +88,6 @@ async def lifespan(app: FastAPI):
         print("⚠ Failed to connect to Master WebSocket (will retry)")
         listen_task = None
     
-    # Initialize mDNS broadcasting if enabled
-    mdns_bridge_service = None
-    if settings.mdns_broadcast_enabled:
-        try:
-            from app.services.mdns.bridge import MDNSBridgeService
-            from app.services.mdns.broadcaster import MDNSBroadcaster
-            
-            broadcaster = MDNSBroadcaster(
-                service_name=settings.mdns_service_name,
-                service_type=settings.mdns_service_type,
-                port=settings.mdns_broadcast_port,
-            )
-            mdns_bridge_service = MDNSBridgeService(broadcaster)
-            node_url = f"http://localhost:{settings.port}"
-            mdns_bridge_service.start(node_url)
-            print("✓ mDNS broadcasting initialized")
-        except Exception as e:
-            print(f"⚠ Failed to initialize mDNS broadcasting: {e}")
-    
     yield
     # Shutdown
     print(f"Shutting down {settings.service_name}")
@@ -135,14 +116,45 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# Include routers
+# Mount static admin UI files
+import os
+from pathlib import Path
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+
+admin_static_path = Path(__file__).parent / "static" / "admin"
+if admin_static_path.exists():
+    @app.get("/admin", include_in_schema=False)
+    async def admin_root():
+        """Redirect /admin to /admin/"""
+        from fastapi.responses import RedirectResponse
+        return RedirectResponse(url="/admin/", status_code=301)
+    
+    @app.get("/admin/", include_in_schema=False)
+    async def admin_index():
+        """Serve admin UI"""
+        return FileResponse(admin_static_path / "index.html", media_type="text/html")
+    
+    @app.get("/admin/{full_path:path}", include_in_schema=False)
+    async def admin_static(full_path: str):
+        """Serve static assets and handle SPA routing"""
+        file_path = admin_static_path / full_path
+        
+        # Check if exact file exists
+        if file_path.exists() and file_path.is_file():
+            return FileResponse(file_path)
+        
+        # For any non-existent path (e.g., React routes), serve index.html for SPA
+        return FileResponse(admin_static_path / "index.html", media_type="text/html")
+
+# Include routers with /api prefix
 from app.api.routes import auth, sessions, songs, players, websocket
 
-app.include_router(auth.router)
-app.include_router(sessions.router)
-app.include_router(songs.router)
-app.include_router(players.router)
-app.include_router(websocket.router)
+app.include_router(auth.router, prefix="/api")
+app.include_router(sessions.router, prefix="/api")
+app.include_router(songs.router, prefix="/api")
+app.include_router(players.router, prefix="/api")
+app.include_router(websocket.router, prefix="/api")
 
 
 # CORS middleware
@@ -184,6 +196,7 @@ async def cors_middleware(request, call_next):
 
 
 @app.get("/health", tags=["Health"])
+@app.get("/api/health", tags=["Health"])
 async def health_check() -> JSONResponse:
     """Health check endpoint"""
     return JSONResponse(

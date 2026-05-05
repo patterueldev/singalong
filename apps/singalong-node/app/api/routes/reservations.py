@@ -18,7 +18,7 @@ from app.models.db_models import Reservation, Song
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api/sessions", tags=["Reservations"])
+router = APIRouter(prefix="/sessions", tags=["Reservations"])
 
 
 @router.post("/{session_id}/reservations", status_code=201, response_model=ReservationResponse)

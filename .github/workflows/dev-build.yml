@@ -28,11 +28,6 @@
 
 name: Development Build & Push
 
-# on:
-#   pull_request:
-#     branches:
-#       - develop
-
 on:
   push:
     branches:
@@ -48,6 +43,7 @@ jobs:
     outputs:
       master: ${{ steps.changes.outputs.master }}
       node: ${{ steps.changes.outputs.node }}
+      admin: ${{ steps.changes.outputs.admin }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -100,6 +96,15 @@ jobs:
             echo "✗ No changes in node service"
           fi
 
+          # Check if admin files changed
+          if git diff --name-only $PREVIOUS_COMMIT $CURRENT_COMMIT | grep -q "^apps/singalong-admin/" || git diff --name-only $PREVIOUS_COMMIT $CURRENT_COMMIT | grep -q "^infrastructure.*admin"; then
+            echo "admin=true" >> $GITHUB_OUTPUT
+            echo "✓ Changes detected in admin service"
+          else
+            echo "admin=false" >> $GITHUB_OUTPUT
+            echo "✗ No changes in admin service"
+          fi
+
           echo ""
           echo "Changed files:"
           git diff --name-only $PREVIOUS_COMMIT HEAD
@@ -109,6 +114,7 @@ jobs:
           echo "Detection complete:"
           echo "- Master changed: ${{ steps.changes.outputs.master }}"
           echo "- Node changed: ${{ steps.changes.outputs.node }}"
+          echo "- Admin changed: ${{ steps.changes.outputs.admin }}"
 
   build:
     name: Orchestrate Development Build
@@ -118,6 +124,7 @@ jobs:
       env: dev
       master: ${{ needs.detect-changes.outputs.master }}
       node: ${{ needs.detect-changes.outputs.node }}
+      admin: ${{ needs.detect-changes.outputs.admin }}
     secrets: inherit
     permissions:
       contents: read

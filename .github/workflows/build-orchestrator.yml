@@ -51,6 +51,10 @@ on:
         required: true
         type: string
         description: 'Node service files changed: true or false'
+      admin:
+        required: true
+        type: string
+        description: 'Admin service files changed: true or false'
 
 jobs:
 
@@ -72,7 +76,7 @@ jobs:
     uses: ./.github/workflows/build-node.yml
     with:
       env: ${{ inputs.env }}
-    if: inputs.node == 'true'
+    if: inputs.node == 'true' || inputs.admin == 'true'  # Build node if either node or admin changed (admin is part of node image)
     secrets: inherit
     permissions:
       contents: read
@@ -102,6 +106,12 @@ jobs:
             FAILED=true
           fi
           
+          # admin-build: only fails if it ran and failed (not if skipped)
+          if [ "${{ needs.build-admin.result }}" = "failure" ]; then
+            echo "❌ Admin build failed"
+            FAILED=true
+          fi
+          
           if [ "$FAILED" = "true" ]; then
             exit 1
           fi
@@ -119,6 +129,7 @@ jobs:
           echo "### Files Changed" >> $GITHUB_STEP_SUMMARY
           echo "- Master: ${{ inputs.master }}" >> $GITHUB_STEP_SUMMARY
           echo "- Node: ${{ inputs.node }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Admin: ${{ inputs.admin }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Builds" >> $GITHUB_STEP_SUMMARY
           
@@ -144,4 +155,16 @@ jobs:
             fi
           else
             echo "- ⊘ Node: skipped (no changes)" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Conditionally show admin build
+          if [ "${{ inputs.admin }}" = "true" ]; then
+            ADMIN_STATUS="${{ needs.build-admin.result }}"
+            ADMIN_ICON=$([ "$ADMIN_STATUS" = "success" ] && echo "✅" || echo "❌")
+            echo "- $ADMIN_ICON Admin (Docker): $ADMIN_STATUS" >> $GITHUB_STEP_SUMMARY
+            if [ "$ADMIN_STATUS" = "success" ]; then
+              echo "  - Image: \`ghcr.io/${{ github.repository }}/admin:$ENV_LABEL\`" >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "- ⊘ Admin: skipped (no changes)" >> $GITHUB_STEP_SUMMARY
           fi

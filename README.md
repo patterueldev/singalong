@@ -150,6 +150,57 @@ yarn dev
 
 ---
 
+## Installing singalong-mdns-bridge (macOS)
+
+The **singalong-mdns-bridge** service enables local network discovery of your Singalong Node via mDNS (Bonjour). This allows you to access the system using `thursday.local` instead of IP addresses.
+
+### Prerequisites
+
+- **macOS 10.12+**
+- **Homebrew** (install from https://brew.sh)
+
+### Installation
+
+1. **Add the Singalong Homebrew tap:**
+   ```bash
+   brew tap patterueldev/singalong https://github.com/patterueldev/singalong.git
+   ```
+
+2. **Install the mdns-bridge service:**
+   ```bash
+   brew install singalong-mdns-bridge
+   ```
+
+3. **Start the service:**
+   ```bash
+   brew services start singalong-mdns-bridge
+   ```
+
+4. **Verify the service is running:**
+   ```bash
+   brew services list | grep singalong
+   # Should show: singalong-mdns-bridge  started  pat  ~/Library/LaunchAgents/homebrew.mxcl.singalong-mdns-bridge.plist
+   ```
+
+### Configuration
+
+The service looks for a running Node at `localhost:8080` and broadcasts it via mDNS. Ensure your Node is running before starting the bridge.
+
+### Uninstalling
+
+```bash
+# Stop the service
+brew services stop singalong-mdns-bridge
+
+# Uninstall
+brew uninstall singalong-mdns-bridge
+
+# Remove the tap
+brew untap patterueldev/singalong
+```
+
+---
+
 ## Service Details
 
 | Service | Type | Port | Technology | Purpose |

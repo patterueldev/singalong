@@ -2,40 +2,25 @@ version: '3.8'
 
 # Docker Compose configuration for Singalong development environment
 # Provides hot-reload development setup for all services
+#
+# Services Architecture (separate ports - no reverse proxy):
+#   Admin UI:  localhost:3001 (React/Vite dev server)
+#   Node API:  localhost:5002 (FastAPI backend)
+#
+# For release: Admin is embedded in Node image, served from /admin on Node's port
 
 services:
-  # Master Service - Central server for video storage and data management
-  # Uncomment if developing master locally
-  # master:
-  #   build:
-  #     context: ./apps/singalong-master
-  #     dockerfile: ../../infrastructure/development/master.dockerfile
-  #   container_name: singalong-master
-  #   ports:
-  #     - "5001:5001"
-  #   volumes:
-  #     - ./apps/singalong-master:/app
-  #     - ./data/master:/data/master  # Mount master video storage
-  #     - /app/__pycache__  # Exclude pycache from volume mount
-  #   environment:
-  #     - ENVIRONMENT=development
-  #     - DEBUG=true
-  #     - MASTER_API_KEY=${MASTER_API_KEY}
-  #   networks:
-  #     - singalong-network
-
-  # Node Service - Local karaoke server
+  # Node Service - Local karaoke server (API backend)
   node:
     build:
       context: ./apps/singalong-node
       dockerfile: ../../infrastructure/development/node.dockerfile
     container_name: singalong-node
     ports:
-      - "5002:5002"
+      - "8080:5002"
     volumes:
       - ./apps/singalong-node:/app
       - ./data/node:/data/node  # Mount node video storage and database
-      - ./data/master/videos:/data/master/videos  # Access master videos for streaming (B3 MVP)
       - /app/__pycache__  # Exclude pycache from volume mount
     environment:
       - ENVIRONMENT=development
@@ -52,8 +37,8 @@ services:
   # Admin Dashboard - React/Vite frontend for administrators
   admin:
     build:
-      context: .
-      dockerfile: infrastructure/development/admin.dockerfile
+      context: ./apps/singalong-admin
+      dockerfile: ../../infrastructure/development/admin.dockerfile
     container_name: singalong-admin
     ports:
       - "3001:3001"
@@ -61,7 +46,8 @@ services:
       - ./apps/singalong-admin:/app
       - /app/node_modules  # Exclude node_modules from volume mount
     environment:
-      - VITE_NODE_URL=${VITE_NODE_URL:-http://localhost:5002}
+      # Admin accesses Node API directly at localhost:8080
+      - VITE_API_BASE_URL=http://localhost:8080/api
       - ENVIRONMENT=development
       - WATCHPACK_POLLING=true  # Enable polling for file changes
     networks:
@@ -71,25 +57,45 @@ services:
     restart: unless-stopped
 
   # Controller - React/Vite frontend for karaoke control
-  controller:
-    build:
-      context: .
-      dockerfile: infrastructure/development/controller.dockerfile
-    container_name: singalong-controller
-    ports:
-      - "3002:3002"
-    volumes:
-      - ./apps/singalong-controller:/app
-      - /app/node_modules  # Exclude node_modules from volume mount
-    environment:
-      - VITE_API_BASE_URL=${VITE_NODE_URL:-http://localhost:5002}
-      - ENVIRONMENT=development
-      - WATCHPACK_POLLING=true  # Enable polling for file changes
-    networks:
-      - singalong-network
-    depends_on:
-      - node
-    restart: unless-stopped
+  # controller:
+  #   build:
+  #     context: .
+  #     dockerfile: infrastructure/development/controller.dockerfile
+  #   container_name: singalong-controller
+  #   # No direct port exposure - accessed through Nginx at /controller
+  #   volumes:
+  #     - ./apps/singalong-controller:/app
+  #     - /app/node_modules  # Exclude node_modules from volume mount
+  #   environment:
+  #     # Controller accesses Node API through Nginx gateway (relative path)
+  #     - VITE_API_BASE_URL=/api
+  #     - ENVIRONMENT=development
+  #     - WATCHPACK_POLLING=true  # Enable polling for file changes
+  #   networks:
+  #     - singalong-network
+  #   depends_on:
+  #     - node
+  #   restart: unless-stopped
+
+  # mDNS Bridge - DISABLED on macOS (Docker + Lima = isolated network)
+  # To start bridge on macOS, run: cd apps/singalong-mdns-bridge && bash run.sh
+  # For Linux deployment: Uncomment below and it will use network_mode: host correctly
+  # See: MDNS_CONSTRAINT_DOCUMENTATION.md for full explanation
+  # 
+  # mdns-bridge:
+  #   build:
+  #     context: ./apps/singalong-mdns-bridge
+  #     dockerfile: ../../infrastructure/development/mdns-bridge.dockerfile
+  #   container_name: singalong-mdns-bridge
+  #   network_mode: host  # Required for mDNS multicast to reach the host (Linux only)
+  #   environment:
+  #     - NODE_HOST=localhost  # Host localhost (when Node is on bridge network)
+  #     - NODE_PORT=5002
+  #     - ENVIRONMENT=development
+  #     - DEBUG=${DEBUG:-True}
+  #   restart: unless-stopped
+  #   depends_on:
+  #     - node
 
   cloudflared:
     image: cloudflare/cloudflared:latest
