@@ -91,6 +91,22 @@ services:
       - node
     restart: unless-stopped
 
+  # mDNS Bridge - Advertises Node service via mDNS on host network
+  mdns-bridge:
+    build:
+      context: .
+      dockerfile: infrastructure/development/mdns-bridge.dockerfile
+    container_name: singalong-mdns-bridge
+    network_mode: host  # Required for mDNS multicast to reach macOS host
+    environment:
+      - NODE_HOST=localhost  # Docker host localhost (when Node is on bridge network)
+      - NODE_PORT=5002
+      - MDNS_SERVICE_NAME=Singalong Node
+      - MDNS_SERVICE_TYPE=_singalong-node._tcp
+    restart: unless-stopped
+    depends_on:
+      - node
+
   cloudflared:
     image: cloudflare/cloudflared:latest
     container_name: singalong-cloudflared
