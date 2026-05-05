@@ -15,9 +15,7 @@ version: '3.8'
 services:
   # Nginx Reverse Proxy - Gateway for the Node group
   nginx:
-    build:
-      context: .
-      dockerfile: infrastructure/development/nginx.dockerfile
+    image: nginx:1.25-alpine
     container_name: singalong-nginx
     ports:
       - "8080:8080"
