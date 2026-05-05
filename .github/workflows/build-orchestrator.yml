@@ -76,19 +76,7 @@ jobs:
     uses: ./.github/workflows/build-node.yml
     with:
       env: ${{ inputs.env }}
-    if: inputs.node == 'true'
-    secrets: inherit
-    permissions:
-      contents: read
-      packages: write
-
-  # Admin service Docker build & push
-  build-admin:
-    name: Build Admin Image
-    uses: ./.github/workflows/build-admin.yml
-    with:
-      env: ${{ inputs.env }}
-    if: inputs.admin == 'true'
+    if: inputs.node == 'true' || inputs.admin == 'true'  # Build node if either node or admin changed (admin is part of node image)
     secrets: inherit
     permissions:
       contents: read
@@ -98,7 +86,7 @@ jobs:
   summary:
     name: Build Summary
     runs-on: ubuntu-latest
-    needs: [build-master, build-node, build-admin]
+    needs: [build-master, build-node]
     if: always()
     steps:
       - name: Check for build failures
