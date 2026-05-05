@@ -30,8 +30,8 @@ services:
     depends_on:
       node-db:
         condition: service_healthy
-      master:
-        condition: service_healthy
+      # master:  # Uncomment if running master service
+      #   condition: service_healthy
     environment:
       # Application Settings
       DEBUG: "False"
@@ -87,40 +87,36 @@ services:
   # ============================================================================
 
   # Singalong Admin UI - Administrative Dashboard
-  # admin:
-  #   build:
-  #     context: ../../../apps/singalong-admin
-  #     dockerfile: Dockerfile
-  #   container_name: singalong-admin
-  #   environment:
-  #     VITE_API_BASE_URL: http://localhost:5002
-  #   ports:
-  #     - "3001:3001"
-  #   volumes:
-  #     - admin-logs:/app/logs
-  #   depends_on:
-  #     - node
-  #   networks:
-  #     - singalong-network
-  #   restart: unless-stopped
+  admin:
+    build:
+      context: ../../../
+      dockerfile: infrastructure/release/admin.dockerfile
+    container_name: singalong-admin
+    environment:
+      VITE_API_BASE_URL: http://localhost:5002
+    ports:
+      - "3001:3001"
+    depends_on:
+      - node
+    networks:
+      - singalong-network
+    restart: unless-stopped
 
   # Singalong Controller UI - User-facing Karaoke Interface
-  # controller:
-  #   build:
-  #     context: ../../../apps/singalong-controller
-  #     dockerfile: Dockerfile
-  #   container_name: singalong-controller
-  #   environment:
-  #     VITE_API_BASE_URL: http://localhost:5002
-  #   ports:
-  #     - "3002:3002"
-  #   volumes:
-  #     - controller-logs:/app/logs
-  #   depends_on:
-  #     - node
-  #   networks:
-  #     - singalong-network
-  #   restart: unless-stopped
+  controller:
+    build:
+      context: ../../../
+      dockerfile: infrastructure/release/controller.dockerfile
+    container_name: singalong-controller
+    environment:
+      VITE_API_BASE_URL: http://localhost:5002
+    ports:
+      - "3002:3002"
+    depends_on:
+      - node
+    networks:
+      - singalong-network
+    restart: unless-stopped
 
 volumes:
   node-db-data:
@@ -131,10 +127,6 @@ volumes:
     driver: local
   node-logs:
     driver: local
-  # admin-logs:
-  #   driver: local
-  # controller-logs:
-  #   driver: local
 
 networks:
   singalong-network:
