@@ -1,0 +1,49 @@
+name: PR / Frontend Build Checks
+
+on:
+  workflow_call:
+
+jobs:
+  vite-check:
+    name: Vite frontend checks
+    runs-on: ubuntu-latest
+    env:
+      CI: true
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+          cache-dependency-path: apps/smart-pocket-web/package-lock.json
+      
+      - name: Install dependencies
+        working-directory: apps/smart-pocket-web
+        run: npm ci
+
+      - name: Run lint (if configured)
+        working-directory: apps/smart-pocket-web
+        run: npm run lint --if-present || true
+      
+      - name: Run unit tests
+        working-directory: apps/smart-pocket-web
+        run: npm test -- --coverage --passWithNoTests || true
+      
+      - name: Build frontend
+        working-directory: apps/smart-pocket-web
+        run: npm run build
+      
+      - name: Verify build output
+        working-directory: apps/smart-pocket-web
+        run: |
+          if [ ! -d "dist" ]; then
+            echo "❌ Build failed: dist directory not created"
+            exit 1
+          fi
+          echo "✅ Build successful: dist directory created"
+          ls -la dist/ | head -20

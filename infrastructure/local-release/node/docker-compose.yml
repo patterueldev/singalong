@@ -1,0 +1,141 @@
+version: '3.9'
+
+services:
+  # PostgreSQL Database for Node
+  node-db:
+    image: postgres:16-alpine
+    container_name: singalong-node-db
+    environment:
+      POSTGRES_DB: singalong_node
+      POSTGRES_USER: node_user
+      POSTGRES_PASSWORD: node_password_dev
+    ports:
+      - "5433:5432"
+    volumes:
+      - node-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U node_user -d singalong_node"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - singalong-network
+
+  # Singalong Node Service
+  node:
+    build:
+      context: ../../../apps/singalong-node
+      dockerfile: ../../../infrastructure/release/node.dockerfile
+    container_name: singalong-node
+    depends_on:
+      node-db:
+        condition: service_healthy
+      master:
+        condition: service_healthy
+    environment:
+      # Application Settings
+      DEBUG: "False"
+      PORT: 5002
+      HOST: 0.0.0.0
+
+      # Node Identity
+      NODE_ID: 550e8400-e29b-41d4-a716-446655440000
+
+      # Master Server Configuration
+      # When running separate VMs, change to actual Master IP/hostname
+      MASTER_URL: http://master:5001
+      MASTER_GRAPHQL_URL: http://master:5001/graphql/
+      NODE_MASTER_API_KEY: dev-key-production-secret-1234567890
+      MASTER_TIMEOUT: 30
+
+      # Player API Keys (comma-separated) for player device registration
+      NODE_PLAYER_API_KEYS: dev-key-production-secret-player-1234567890,dev-key-production-secret-player-0987654321
+
+      # JWT Configuration
+      JWT_SECRET_KEY: dev-secret-key-change-in-production
+      JWT_ALGORITHM: HS256
+      JWT_ACCESS_TOKEN_EXPIRE_SECONDS: "10800"
+      JWT_REFRESH_TOKEN_EXPIRE_SECONDS: "604800"
+
+      # Database Configuration
+      DATABASE_URL: postgresql://node_user:node_password_dev@node-db:5432/singalong_node
+
+      # OpenAI Configuration for song metadata enhancement (optional)
+      OPENAI_API_KEY: ""
+
+    ports:
+      - "5002:5002"
+    volumes:
+      # Downloaded videos/songs from Master
+      - node-videos:/app/videos
+      # Local song database
+      - node-data:/app/data
+      # Application logs
+      - node-logs:/app/logs
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5002/health').read()"]
+      interval: 30s
+      timeout: 10s
+      start_period: 10s
+      retries: 3
+    networks:
+      - singalong-network
+    restart: unless-stopped
+
+  # ============================================================================
+  # FRONTEND SERVICES (Commented for now, uncomment when ready to deploy)
+  # ============================================================================
+
+  # Singalong Admin UI - Administrative Dashboard
+  # admin:
+  #   build:
+  #     context: ../../../apps/singalong-admin
+  #     dockerfile: Dockerfile
+  #   container_name: singalong-admin
+  #   environment:
+  #     VITE_API_BASE_URL: http://localhost:5002
+  #   ports:
+  #     - "3001:3001"
+  #   volumes:
+  #     - admin-logs:/app/logs
+  #   depends_on:
+  #     - node
+  #   networks:
+  #     - singalong-network
+  #   restart: unless-stopped
+
+  # Singalong Controller UI - User-facing Karaoke Interface
+  # controller:
+  #   build:
+  #     context: ../../../apps/singalong-controller
+  #     dockerfile: Dockerfile
+  #   container_name: singalong-controller
+  #   environment:
+  #     VITE_API_BASE_URL: http://localhost:5002
+  #   ports:
+  #     - "3002:3002"
+  #   volumes:
+  #     - controller-logs:/app/logs
+  #   depends_on:
+  #     - node
+  #   networks:
+  #     - singalong-network
+  #   restart: unless-stopped
+
+volumes:
+  node-db-data:
+    driver: local
+  node-videos:
+    driver: local
+  node-data:
+    driver: local
+  node-logs:
+    driver: local
+  # admin-logs:
+  #   driver: local
+  # controller-logs:
+  #   driver: local
+
+networks:
+  singalong-network:
+    driver: bridge

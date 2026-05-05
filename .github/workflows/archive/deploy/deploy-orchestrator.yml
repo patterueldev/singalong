@@ -1,0 +1,212 @@
+#
+# Deploy Orchestrator (Reusable Workflow)
+#
+# Purpose:
+#   Core orchestration logic for building and deploying applications.
+#   Detects which projects changed and conditionally deploys them.
+#   Used by qa-build.yml and prod-build.yml entry points.
+#
+# Trigger:
+#   - Called via workflow_call from entry point workflows
+#
+# Execution Flow:
+#   1. detect-changes (always)
+#      └─ Compares against main branch (production)
+#      └─ Outputs: backend=true/false, mobile=true/false
+#   
+#   2. deploy-backend (conditional: if backend files changed)
+#      └─ Builds and pushes Docker image
+#      └─ Uses env parameter to set tag (qa|prod)
+#   
+#   3. deploy-android (conditional: if mobile files changed)
+#      └─ Builds APK and uploads to artifact storage
+#      └─ Uses env parameter to set build profile
+#   
+#   4. deploy-ios (conditional: if mobile files changed)
+#      └─ Builds IPA and uploads to AltStore Source Manager
+#      └─ Uses env parameter to set app scheme/workspace
+#
+#   5. summary (always)
+#      └─ Displays deployment results and any failures
+#      └─ Fails if any deployment failed
+#
+# Key Features:
+#   • Cost-optimized: only deploys changed projects
+#   • Reusable: accepts env parameter (qa or prod)
+#   • Smart detection: compares against main branch
+#   • Clear reporting: summary shows what was deployed
+#
+# Related Workflows:
+#   • .github/workflows/qa-build.yml (RC branch entry point)
+#   • .github/workflows/prod-build.yml (main branch entry point)
+#   • .github/workflows/deploy-backend.yml (backend Docker deployment)
+#   • .github/workflows/deploy-android.yml (Android APK build)
+#   • .github/workflows/deploy-ios.yml (iOS IPA build)
+#
+name: Deploy Orchestrator
+
+on:
+  workflow_call:
+    inputs:
+      env:
+        required: true
+        type: string
+        description: 'Deployment environment: qa or prod'
+      backend:
+        required: true
+        type: string
+        description: 'Backend files changed: true or false'
+      frontend:
+        required: true
+        type: string
+        description: 'Frontend files changed: true or false'
+      android:
+        required: true
+        type: string
+        description: 'Mobile files changed: true or false'
+      ios:
+        required: true
+        type: string
+        description: 'Mobile files changed: true or false'
+
+jobs:
+
+  # Backend Docker build & push
+  deploy-backend:
+    name: Deploy Backend (Docker)
+    uses: ./.github/workflows/deploy-backend.yml
+    with:
+      env: ${{ inputs.env }}
+    if: inputs.backend == 'true'
+    secrets: inherit
+    permissions:
+      contents: read
+      packages: write
+
+  # Frontend Docker build & push
+  deploy-frontend:
+    name: Deploy Frontend (Docker)
+    uses: ./.github/workflows/deploy-frontend.yml
+    with:
+      env: ${{ inputs.env }}
+    if: inputs.frontend == 'true'
+    secrets: inherit
+    permissions:
+      contents: read
+      packages: write
+
+  # Android APK build
+  deploy-android:
+    name: Deploy Android (APK)
+    uses: ./.github/workflows/deploy-android.yml
+    with:
+      env: ${{ inputs.env }}
+    if: inputs.android == 'true'
+    secrets: inherit
+
+  # iOS IPA build
+  deploy-ios:
+    name: Deploy iOS (IPA)
+    uses: ./.github/workflows/deploy-ios.yml
+    with:
+      env: ${{ inputs.env }}
+    if: inputs.ios == 'true'
+    secrets: inherit
+
+  # Summary: display overall deployment results
+  summary:
+    name: Build & Deploy Summary
+    runs-on: ubuntu-latest
+    needs: [deploy-backend, deploy-frontend, deploy-android, deploy-ios]
+    if: always()
+    steps:
+      - name: Check for deployment failures
+        run: |
+          # Fail summary if any deployment failed
+          FAILED=false
+          
+          # backend-deploy: only fails if it ran and failed (not if skipped)
+          if [ "${{ needs.deploy-backend.result }}" = "failure" ]; then
+            echo "❌ Backend deployment failed"
+            FAILED=true
+          fi
+          
+          # frontend-deploy: only fails if it ran and failed (not if skipped)
+          if [ "${{ needs.deploy-frontend.result }}" = "failure" ]; then
+            echo "❌ Frontend deployment failed"
+            FAILED=true
+          fi
+          
+          # android-deploy: only fails if it ran and failed (not if skipped)
+          if [ "${{ needs.deploy-android.result }}" = "failure" ]; then
+            echo "❌ Android deployment failed"
+            FAILED=true
+          fi
+          
+          # ios-deploy: only fails if it ran and failed (not if skipped)
+          if [ "${{ needs.deploy-ios.result }}" = "failure" ]; then
+            echo "❌ iOS deployment failed"
+            FAILED=true
+          fi
+          
+          if [ "$FAILED" = "true" ]; then
+            exit 1
+          fi
+
+      - name: Generate Summary
+        run: |
+          ENV_LABEL="${{ inputs.env }}"
+          ENV_UPPER=$(echo $ENV_LABEL | tr '[:lower:]' '[:upper:]')
+          
+          echo "## 🚀 Build & Deploy Summary ($ENV_UPPER)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Branch**: \`${{ github.ref_name }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment**: \`$ENV_LABEL\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Files Changed" >> $GITHUB_STEP_SUMMARY
+          echo "- Backend: ${{ inputs.backend }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Frontend: ${{ inputs.frontend }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Android: ${{ inputs.android }}" >> $GITHUB_STEP_SUMMARY
+          echo "- iOS: ${{ inputs.ios }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Deployments" >> $GITHUB_STEP_SUMMARY
+          
+          # Conditionally show backend deployment
+          if [ "${{ inputs.backend }}" = "true" ]; then
+            BACKEND_STATUS="${{ needs.deploy-backend.result }}"
+            BACKEND_ICON=$([ "$BACKEND_STATUS" = "success" ] && echo "✅" || echo "❌")
+            TAG=$( [ "$ENV_LABEL" = "prod" ] && echo "latest" || echo "staging" )
+            echo "- $BACKEND_ICON Backend (Docker): $BACKEND_STATUS" >> $GITHUB_STEP_SUMMARY
+            if [ "$BACKEND_STATUS" = "success" ]; then
+              echo "  - Image: \`ghcr.io/${{ github.repository }}/backend:$TAG\`" >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "- ⊘ Backend: skipped (no changes)" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Conditionally show frontend deployment
+          if [ "${{ inputs.frontend }}" = "true" ]; then
+            FRONTEND_STATUS="${{ needs.deploy-frontend.result }}"
+            FRONTEND_ICON=$([ "$FRONTEND_STATUS" = "success" ] && echo "✅" || echo "❌")
+            TAG=$( [ "$ENV_LABEL" = "prod" ] && echo "latest" || echo "staging" )
+            echo "- $FRONTEND_ICON Frontend (Docker): $FRONTEND_STATUS" >> $GITHUB_STEP_SUMMARY
+            if [ "$FRONTEND_STATUS" = "success" ]; then
+              echo "  - Image: \`ghcr.io/${{ github.repository }}/frontend:$TAG\`" >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "- ⊘ Frontend: skipped (no changes)" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Conditionally show mobile deployments
+          if [ "${{ inputs.android }}" = "true" ]; then
+            ANDROID_STATUS="${{ needs.deploy-android.result }}"
+            ANDROID_ICON=$([ "$ANDROID_STATUS" = "success" ] && echo "✅" || echo "❌")
+            echo "- $ANDROID_ICON Android (APK): $ANDROID_STATUS" >> $GITHUB_STEP_SUMMARY
+            
+            IOS_STATUS="${{ needs.deploy-ios.result }}"
+            IOS_ICON=$([ "$IOS_STATUS" = "success" ] && echo "✅" || echo "❌")
+            echo "- $IOS_ICON iOS (IPA): $IOS_STATUS" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- ⊘ Android (APK): skipped (no changes)" >> $GITHUB_STEP_SUMMARY
+            echo "- ⊘ iOS (IPA): skipped (no changes)" >> $GITHUB_STEP_SUMMARY
+          fi

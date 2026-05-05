@@ -1,0 +1,444 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		05F201F49681303494899EB7 /* DiscoveredNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3155F2B07FDE8426070F076A /* DiscoveredNode.swift */; };
+		0833A57F0255F7FEBA5CB590 /* WebSocketDiscoveryManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5993DBC40D979A9BE918D799 /* WebSocketDiscoveryManager.swift */; };
+		319953E8B9B3164D132D3AF6 /* DiscoveredNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3155F2B07FDE8426070F076A /* DiscoveredNode.swift */; };
+		3892F5EEE459FB2C420FEAE5 /* MDNSDiscoveryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8822BF7ECE2737F71CE2B7EB /* MDNSDiscoveryService.swift */; };
+		3A5AD52E465CC78F1E557B18 /* WebSocketDiscoveryManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5993DBC40D979A9BE918D799 /* WebSocketDiscoveryManager.swift */; };
+		563569B520B8FE21E7DAAEE4 /* MainScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD72A7C8E7DB90E9EA5E9026 /* MainScreen.swift */; };
+		58D50C94E1EE7F3B921CB093 /* MainScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD72A7C8E7DB90E9EA5E9026 /* MainScreen.swift */; };
+		634030D679B8FE8CA37B0404 /* WebSocketMessages.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0CCEEA18A46C4FA24A610EB3 /* WebSocketMessages.swift */; };
+		6416DC02F0EB9AAF9ED6678D /* SingalongPlayerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05812F00D52E585386894093 /* SingalongPlayerApp.swift */; };
+		64DC30FB807BF346C60FDB6C /* WebSocketMessages.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0CCEEA18A46C4FA24A610EB3 /* WebSocketMessages.swift */; };
+		70E06E46AEFBA9D116D541D8 /* IdleScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3BA2A223ACDBBFF46C240A5B /* IdleScreen.swift */; };
+		8309997933A0F6EE1B9F3B88 /* PlayerAppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66BBABFA4D1566DBF19FAB41 /* PlayerAppState.swift */; };
+		9B317C1C59E8EF7BBFD15A4E /* MDNSDiscoveryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8822BF7ECE2737F71CE2B7EB /* MDNSDiscoveryService.swift */; };
+		C6360303B7634DB7913DA5A6 /* PlayerAppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66BBABFA4D1566DBF19FAB41 /* PlayerAppState.swift */; };
+		CFF2688049F8EDA5A8D06C16 /* IdleScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3BA2A223ACDBBFF46C240A5B /* IdleScreen.swift */; };
+		DC786CA921F6B02B2E2E6B06 /* SingalongPlayerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05812F00D52E585386894093 /* SingalongPlayerApp.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		05812F00D52E585386894093 /* SingalongPlayerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SingalongPlayerApp.swift; sourceTree = "<group>"; };
+		0CCEEA18A46C4FA24A610EB3 /* WebSocketMessages.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebSocketMessages.swift; sourceTree = "<group>"; };
+		3155F2B07FDE8426070F076A /* DiscoveredNode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiscoveredNode.swift; sourceTree = "<group>"; };
+		3BA2A223ACDBBFF46C240A5B /* IdleScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IdleScreen.swift; sourceTree = "<group>"; };
+		53ECE693D58289F4510ADF56 /* SingalongPlayer.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = SingalongPlayer.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		5993DBC40D979A9BE918D799 /* WebSocketDiscoveryManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebSocketDiscoveryManager.swift; sourceTree = "<group>"; };
+		66BBABFA4D1566DBF19FAB41 /* PlayerAppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerAppState.swift; sourceTree = "<group>"; };
+		8822BF7ECE2737F71CE2B7EB /* MDNSDiscoveryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MDNSDiscoveryService.swift; sourceTree = "<group>"; };
+		8E5D96AC617ADA10DD62D3C0 /* SingalongPlayer.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SingalongPlayer.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		AD72A7C8E7DB90E9EA5E9026 /* MainScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainScreen.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		13C6B0D4FBAA49A1FD9B9159 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				53ECE693D58289F4510ADF56 /* SingalongPlayer.app */,
+				8E5D96AC617ADA10DD62D3C0 /* SingalongPlayer.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		3FBB8B6D54179E7D2403765A = {
+			isa = PBXGroup;
+			children = (
+				8738BEEB9E445C8133BE3DF0 /* SingalongPlayer */,
+				13C6B0D4FBAA49A1FD9B9159 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		691FB3E29D1D0EEA016D2199 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				66BBABFA4D1566DBF19FAB41 /* PlayerAppState.swift */,
+				05812F00D52E585386894093 /* SingalongPlayerApp.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		85BD6932EFB3F65DC9ECE76A /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				3155F2B07FDE8426070F076A /* DiscoveredNode.swift */,
+				0CCEEA18A46C4FA24A610EB3 /* WebSocketMessages.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		8738BEEB9E445C8133BE3DF0 /* SingalongPlayer */ = {
+			isa = PBXGroup;
+			children = (
+				691FB3E29D1D0EEA016D2199 /* App */,
+				85BD6932EFB3F65DC9ECE76A /* Models */,
+				C485458C06060C72D8B0FCD3 /* Services */,
+				9D7A6876E449663E0B76E0C4 /* Views */,
+			);
+			path = SingalongPlayer;
+			sourceTree = "<group>";
+		};
+		9D7A6876E449663E0B76E0C4 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				3BA2A223ACDBBFF46C240A5B /* IdleScreen.swift */,
+				AD72A7C8E7DB90E9EA5E9026 /* MainScreen.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		C485458C06060C72D8B0FCD3 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				8822BF7ECE2737F71CE2B7EB /* MDNSDiscoveryService.swift */,
+				5993DBC40D979A9BE918D799 /* WebSocketDiscoveryManager.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		7747C642D14EE229B52BF123 /* SingalongPlayer_macOS */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B407E329AA36692316E43FB7 /* Build configuration list for PBXNativeTarget "SingalongPlayer_macOS" */;
+			buildPhases = (
+				8C180FB02564879A8225566C /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = SingalongPlayer_macOS;
+			packageProductDependencies = (
+			);
+			productName = SingalongPlayer_macOS;
+			productReference = 8E5D96AC617ADA10DD62D3C0 /* SingalongPlayer.app */;
+			productType = "com.apple.product-type.application";
+		};
+		C283307138DD6F87B469AB7B /* SingalongPlayer_iOS */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B1B6DAAEDC2743FBAE32BFEE /* Build configuration list for PBXNativeTarget "SingalongPlayer_iOS" */;
+			buildPhases = (
+				6A60663BD5AA9E7E138BB002 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = SingalongPlayer_iOS;
+			packageProductDependencies = (
+			);
+			productName = SingalongPlayer_iOS;
+			productReference = 53ECE693D58289F4510ADF56 /* SingalongPlayer.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		F8AF34DEE0F4F0FC09B2EB52 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					7747C642D14EE229B52BF123 = {
+						DevelopmentTeam = "";
+						ProvisioningStyle = Automatic;
+					};
+					C283307138DD6F87B469AB7B = {
+						DevelopmentTeam = "";
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = 9FB3D5EF9D31DFEE82DCB621 /* Build configuration list for PBXProject "SingalongPlayer" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 3FBB8B6D54179E7D2403765A;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 13C6B0D4FBAA49A1FD9B9159 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				C283307138DD6F87B469AB7B /* SingalongPlayer_iOS */,
+				7747C642D14EE229B52BF123 /* SingalongPlayer_macOS */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		6A60663BD5AA9E7E138BB002 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				319953E8B9B3164D132D3AF6 /* DiscoveredNode.swift in Sources */,
+				CFF2688049F8EDA5A8D06C16 /* IdleScreen.swift in Sources */,
+				9B317C1C59E8EF7BBFD15A4E /* MDNSDiscoveryService.swift in Sources */,
+				58D50C94E1EE7F3B921CB093 /* MainScreen.swift in Sources */,
+				8309997933A0F6EE1B9F3B88 /* PlayerAppState.swift in Sources */,
+				DC786CA921F6B02B2E2E6B06 /* SingalongPlayerApp.swift in Sources */,
+				3A5AD52E465CC78F1E557B18 /* WebSocketDiscoveryManager.swift in Sources */,
+				64DC30FB807BF346C60FDB6C /* WebSocketMessages.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		8C180FB02564879A8225566C /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				05F201F49681303494899EB7 /* DiscoveredNode.swift in Sources */,
+				70E06E46AEFBA9D116D541D8 /* IdleScreen.swift in Sources */,
+				3892F5EEE459FB2C420FEAE5 /* MDNSDiscoveryService.swift in Sources */,
+				563569B520B8FE21E7DAAEE4 /* MainScreen.swift in Sources */,
+				C6360303B7634DB7913DA5A6 /* PlayerAppState.swift in Sources */,
+				6416DC02F0EB9AAF9ED6678D /* SingalongPlayerApp.swift in Sources */,
+				0833A57F0255F7FEBA5CB590 /* WebSocketDiscoveryManager.swift in Sources */,
+				634030D679B8FE8CA37B0404 /* WebSocketMessages.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		0BA84F9DD030F205C4EFFFEF /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = "";
+				INFOPLIST_FILE = SingalongPlayer/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				PRODUCT_BUNDLE_IDENTIFIER = dev.patteruel.singalong.player;
+				PRODUCT_NAME = SingalongPlayer;
+				SDKROOT = macosx;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		33B95A7FD7B5A2514428EF64 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.9;
+			};
+			name = Debug;
+		};
+		44CF990FC490000FC986CF69 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = "";
+				INFOPLIST_FILE = SingalongPlayer/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				PRODUCT_BUNDLE_IDENTIFIER = dev.patteruel.singalong.player;
+				PRODUCT_NAME = SingalongPlayer;
+				SDKROOT = macosx;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		CEE52D0AF351D8B639BBB585 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = "";
+				INFOPLIST_FILE = SingalongPlayer/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = dev.patteruel.singalong.player;
+				PRODUCT_NAME = SingalongPlayer;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		DA779A8BDBDC263452527FEA /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.9;
+			};
+			name = Release;
+		};
+		EB08EDC07151F1CCD8C306A8 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = "";
+				INFOPLIST_FILE = SingalongPlayer/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = dev.patteruel.singalong.player;
+				PRODUCT_NAME = SingalongPlayer;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		9FB3D5EF9D31DFEE82DCB621 /* Build configuration list for PBXProject "SingalongPlayer" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				33B95A7FD7B5A2514428EF64 /* Debug */,
+				DA779A8BDBDC263452527FEA /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		B1B6DAAEDC2743FBAE32BFEE /* Build configuration list for PBXNativeTarget "SingalongPlayer_iOS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				EB08EDC07151F1CCD8C306A8 /* Debug */,
+				CEE52D0AF351D8B639BBB585 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		B407E329AA36692316E43FB7 /* Build configuration list for PBXNativeTarget "SingalongPlayer_macOS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				44CF990FC490000FC986CF69 /* Debug */,
+				0BA84F9DD030F205C4EFFFEF /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = F8AF34DEE0F4F0FC09B2EB52 /* Project object */;
+}

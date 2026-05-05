@@ -1,0 +1,23 @@
+.placeholder-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  color: #6b7280;
+  text-align: center;
+  width: 100%;
+}
+
+.placeholder-panel h3 {
+  color: #9ca3af;
+  font-size: 16px;
+  margin: 0 0 12px 0;
+  font-weight: 600;
+}
+
+.placeholder-panel p {
+  margin: 0;
+  font-size: 14px;
+  color: #6b7280;
+}

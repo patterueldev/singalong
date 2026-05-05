@@ -1,0 +1,93 @@
+name: Android - Build & Deploy
+
+on:
+  workflow_call:
+    inputs:
+      env:
+        required: true
+        type: string
+        description: 'Deployment environment: qa or prod'
+
+jobs:
+  build-android:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.VERSION }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+      
+      - name: Extract version from package.json
+        id: version
+        working-directory: apps/smart-pocket-mobile
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "📦 Building release version: $VERSION"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: 'npm'
+          cache-dependency-path: 'apps/smart-pocket-mobile/package-lock.json'
+
+      - name: Setup Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Restore Gradle Cache
+        uses: gradle/gradle-build-action@v3
+        with:
+          cache-read-only: false
+
+      - name: Install dependencies
+        working-directory: apps/smart-pocket-mobile
+        run: npm ci
+
+      - name: Decode Android Keystore
+        working-directory: apps/smart-pocket-mobile
+        run: |
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > release.keystore
+          echo "✅ release.keystore created from base64 secret"
+
+      - name: Create credentials.json
+        working-directory: apps/smart-pocket-mobile
+        run: |
+          cat > credentials.json << EOF
+          {
+            "android": {
+              "keystore": {
+                "keystorePath": "release.keystore",
+                "keystorePassword": "${{ secrets.ANDROID_KEYSTORE_PASSWORD }}",
+                "keyAlias": "${{ secrets.ANDROID_KEY_ALIAS }}",
+                "keyPassword": "${{ secrets.ANDROID_KEY_PASSWORD }}"
+              }
+            }
+          }
+          EOF
+          echo "✅ credentials.json created for EAS Build"
+
+      - name: Build Android APK with EAS Build
+        working-directory: apps/smart-pocket-mobile
+        env:
+          NODE_ENV: production
+          ANDROID_HOME: ${{ env.ANDROID_HOME }}
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          PROFILE=${{ inputs.env == 'prod' && 'production' || 'quality' }}
+          # --cache-key ensures cache across builds, --json for structured output
+          npx eas-cli build --platform android --profile $PROFILE --local --non-interactive --output=./app-production.apk
+          echo "✅ APK built successfully with profile: $PROFILE"
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v6
+        with:
+          name: SmartPocket-${{ inputs.env }}-v${{ steps.version.outputs.VERSION }}.apk
+          path: apps/smart-pocket-mobile/app-production.apk
+          retention-days: 30

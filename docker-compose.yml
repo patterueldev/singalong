@@ -1,0 +1,109 @@
+version: '3.8'
+
+# Docker Compose configuration for Singalong development environment
+# Provides hot-reload development setup for all services
+
+services:
+  # Master Service - Central server for video storage and data management
+  # Uncomment if developing master locally
+  # master:
+  #   build:
+  #     context: ./apps/singalong-master
+  #     dockerfile: ../../infrastructure/development/master.dockerfile
+  #   container_name: singalong-master
+  #   ports:
+  #     - "5001:5001"
+  #   volumes:
+  #     - ./apps/singalong-master:/app
+  #     - ./data/master:/data/master  # Mount master video storage
+  #     - /app/__pycache__  # Exclude pycache from volume mount
+  #   environment:
+  #     - ENVIRONMENT=development
+  #     - DEBUG=true
+  #     - MASTER_API_KEY=${MASTER_API_KEY}
+  #   networks:
+  #     - singalong-network
+
+  # Node Service - Local karaoke server
+  node:
+    build:
+      context: ./apps/singalong-node
+      dockerfile: ../../infrastructure/development/node.dockerfile
+    container_name: singalong-node
+    ports:
+      - "5002:5002"
+    volumes:
+      - ./apps/singalong-node:/app
+      - ./data/node:/data/node  # Mount node video storage and database
+      - ./data/master/videos:/data/master/videos  # Access master videos for streaming (B3 MVP)
+      - /app/__pycache__  # Exclude pycache from volume mount
+    environment:
+      - ENVIRONMENT=development
+      - DEBUG=${DEBUG:-True}
+      - DATABASE_URL=sqlite:////data/node/singalong_node.db
+      - MASTER_URL=${MASTER_PUBLIC_URL:-https://singalong-master-development.nicenature.space}
+      - MASTER_GRAPHQL_URL=${MASTER_PUBLIC_URL:-https://singalong-master-development.nicenature.space}/graphql/
+      - NODE_MASTER_API_KEY=${NODE_MASTER_API_KEY:-dev-key-production-secret-1234567890}
+      - OPENAI_API_KEY=${OPENAI_KEY}
+    networks:
+      - singalong-network
+    restart: unless-stopped
+
+  # Admin Dashboard - React/Vite frontend for administrators
+  admin:
+    build:
+      context: .
+      dockerfile: infrastructure/development/admin.dockerfile
+    container_name: singalong-admin
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./apps/singalong-admin:/app
+      - /app/node_modules  # Exclude node_modules from volume mount
+    environment:
+      - VITE_NODE_URL=${VITE_NODE_URL:-http://localhost:5002}
+      - ENVIRONMENT=development
+      - WATCHPACK_POLLING=true  # Enable polling for file changes
+    networks:
+      - singalong-network
+    depends_on:
+      - node
+    restart: unless-stopped
+
+  # Controller - React/Vite frontend for karaoke control
+  controller:
+    build:
+      context: .
+      dockerfile: infrastructure/development/controller.dockerfile
+    container_name: singalong-controller
+    ports:
+      - "3002:3002"
+    volumes:
+      - ./apps/singalong-controller:/app
+      - /app/node_modules  # Exclude node_modules from volume mount
+    environment:
+      - VITE_API_BASE_URL=${VITE_NODE_URL:-http://localhost:5002}
+      - ENVIRONMENT=development
+      - WATCHPACK_POLLING=true  # Enable polling for file changes
+    networks:
+      - singalong-network
+    depends_on:
+      - node
+    restart: unless-stopped
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: singalong-cloudflared
+    command: 
+      - tunnel
+      - --no-autoupdate
+      - run
+      - --token
+      - ${CLOUDFLARED_TOKEN}
+    restart: unless-stopped
+    networks:
+      - singalong-network
+
+networks:
+  singalong-network:
+    driver: bridge

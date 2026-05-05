@@ -1,0 +1,70 @@
+version: '3.9'
+
+services:
+  master-db:
+    image: postgres:16-alpine
+    container_name: singalong-master-db
+    environment:
+      POSTGRES_DB: ${DB_NAME:-singalong_master}
+      POSTGRES_USER: ${DB_USER:-master_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - ./data/master/db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-master_user} -d ${DB_NAME:-singalong_master}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - singalong-master-network
+    restart: unless-stopped
+
+  master:
+    build:
+      context: ../../../apps/singalong-master
+      dockerfile: ../../infrastructure/release/master.dockerfile
+    container_name: singalong-master
+    depends_on:
+      master-db:
+        condition: service_healthy
+    environment:
+      DEBUG: ${DEBUG:-False}
+      PORT: 5001
+      HOST: 127.0.0.1
+      MASTER_API_KEY: ${MASTER_API_KEY}
+      JWT_ALGORITHM: HS256
+      JWT_ACCESS_TOKEN_EXPIRE_SECONDS: "3600"
+      JWT_REFRESH_TOKEN_EXPIRE_SECONDS: "604800"
+      USER_JWT_SECRET: ${USER_JWT_SECRET}
+      DATABASE_URL: postgresql://${DB_USER:-master_user}:${DB_PASSWORD}@master-db:5432/${DB_NAME:-singalong_master}
+    volumes:
+      - ./data/master/videos:/data/master/videos
+      - ./data/master/logs:/data/master/logs
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5001/health').read()"]
+      interval: 30s
+      timeout: 10s
+      start_period: 10s
+      retries: 3
+    networks:
+      - singalong-master-network
+    restart: unless-stopped
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: singalong-cloudflared
+    command: 
+      - tunnel
+      - --no-autoupdate
+      - run
+      - --token
+      - ${CLOUDFLARED_TOKEN}
+    depends_on:
+      - master
+    networks:
+      - singalong-master-network
+    restart: unless-stopped
+
+networks:
+  singalong-master-network:
+    driver: bridge
