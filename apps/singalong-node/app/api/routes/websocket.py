@@ -252,7 +252,7 @@ async def websocket_player_discovery_endpoint(websocket: WebSocket):
     }
     ```
     
-    When admin selects player, Node sends:
+    When admin selects player via POST /api/players/select, Node sends:
     ```json
     {
       "type": "lock",
@@ -261,11 +261,12 @@ async def websocket_player_discovery_endpoint(websocket: WebSocket):
     }
     ```
     
-    Player receives lock and responds:
+    Player receives lock, acknowledges with:
     ```json
     {
       "type": "locked",
-      "player_id": "uuid-here"
+      "player_id": "uuid-here",
+      "session_code": "0001"
     }
     ```
     
@@ -329,32 +330,17 @@ async def websocket_player_discovery_endpoint(websocket: WebSocket):
                     # Heartbeat response
                     await websocket.send_json({"type": "pong"})
                 
-                elif msg_type == "lock":
-                    # Admin selected this player
-                    session_code = message.get("session_code")
-                    token = message.get("token")
-                    
+                elif msg_type == "locked":
+                    # Player acknowledged lock, closing discovery connection
                     logger.info(
-                        f"[Player Discovery] Lock message received | "
-                        f"player_id={player_info.player_id} | session={session_code}"
+                        f"[Player Discovery] Player acknowledged lock | "
+                        f"player_id={player_info.player_id} | session={message.get('session_code')}"
                     )
-                    
-                    # Update player state to locked
-                    discovery_manager.lock_player(player_info.player_id, session_code)
-                    
-                    # Send lock confirmation
-                    await websocket.send_json({
-                        "type": "locked",
-                        "player_id": player_info.player_id,
-                        "session_code": session_code,
-                        "token": token,
-                    })
-                    
                     # Close discovery connection (player will open playback connection next)
                     await websocket.close(code=1000, reason="Locked, switching to playback connection")
                     logger.info(
-                        f"[Player Discovery] Closed discovery connection | "
-                        f"player_id={player_info.player_id} | session={session_code}"
+                        f"[Player Discovery] Closed discovery connection after lock | "
+                        f"player_id={player_info.player_id}"
                     )
                     break
                     

@@ -434,22 +434,31 @@ async def select_player(
         finally:
             db.close()
         
-        # Send WebSocket notification to the player that they've been selected
+        # Send lock message to player so they know they've been selected
         if player.ws_connection:
             try:
-                selection_message = {
-                    "type": "player_selected",
+                # Generate JWT token for the playback connection
+                from app.middleware.auth import get_auth_service
+                auth_service = get_auth_service()
+                playback_token = auth_service._generate_token(
+                    user_id=str(player_id),
+                    role="player",
+                    token_type="access",
+                    expires_in_seconds=3600
+                )
+                
+                lock_message = {
+                    "type": "lock",
                     "session_code": session_code,
-                    "session_title": session.title,
-                    "message": f"You've been selected for session '{session.title}' (Code: {session_code})"
+                    "token": playback_token,
                 }
-                await player.ws_connection.send_json(selection_message)
+                await player.ws_connection.send_json(lock_message)
                 logger.info(
-                    f"[API] Sent player_selected notification | player={player_id} | session={session_code}"
+                    f"[API] Sent lock message to player | player={player_id} | session={session_code}"
                 )
             except Exception as e:
                 logger.warning(
-                    f"[API] Failed to send player_selected notification | player={player_id} | error={str(e)}"
+                    f"[API] Failed to send lock message to player | player={player_id} | error={str(e)}"
                 )
         
         logger.info(
