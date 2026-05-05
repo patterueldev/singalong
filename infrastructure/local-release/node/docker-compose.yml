@@ -32,7 +32,8 @@ services:
     container_name: singalong-node
     environment:
       # Application Settings
-      DEBUG: "False"
+      ENVIRONMENT: development
+      DEBUG: ${DEBUG:-True}
       PORT: 5002
       HOST: 0.0.0.0
 
@@ -40,10 +41,9 @@ services:
       NODE_ID: 550e8400-e29b-41d4-a716-446655440000
 
       # Master Server Configuration
-      # When running separate VMs, change to actual Master IP/hostname
-      MASTER_URL: http://master:5001
-      MASTER_GRAPHQL_URL: http://master:5001/graphql/
-      NODE_MASTER_API_KEY: dev-key-production-secret-1234567890
+      MASTER_URL: ${MASTER_PUBLIC_URL:-https://singalong-master-development.nicenature.space}
+      MASTER_GRAPHQL_URL: ${MASTER_PUBLIC_URL:-https://singalong-master-development.nicenature.space}/graphql/
+      NODE_MASTER_API_KEY: ${NODE_MASTER_API_KEY:-dev-key-production-secret-1234567890}
       MASTER_TIMEOUT: 30
 
       # Player API Keys (comma-separated) for player device registration
@@ -59,7 +59,7 @@ services:
       DATABASE_URL: sqlite:////data/node/singalong_node.db
 
       # OpenAI Configuration for song metadata enhancement (optional)
-      OPENAI_API_KEY: ""
+      OPENAI_API_KEY: ${OPENAI_KEY:-}
 
     # No direct port exposure - accessed through Nginx gateway at /api
     volumes:
