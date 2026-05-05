@@ -1,9 +1,9 @@
-"""mDNS service broadcasting via system dns-sd (macOS)."""
+"""mDNS service broadcasting via zeroconf (cross-platform)."""
 import logging
 import socket
-import subprocess
-import time
 from typing import Optional
+
+from zeroconf import IPVersion, ServiceInfo, Zeroconf
 
 from app.services.mdns.interfaces import BroadcasterInterface
 
@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 class MDNSBroadcaster(BroadcasterInterface):
-    """Broadcasts Singalong Node via system dns-sd (macOS)."""
+    """Broadcasts Singalong Node via zeroconf (macOS, Linux, Windows)."""
 
     def __init__(
         self,
@@ -29,11 +29,12 @@ class MDNSBroadcaster(BroadcasterInterface):
         self.service_name = service_name
         self.service_type = service_type
         self.port = port
-        self.process: Optional[subprocess.Popen] = None
+        self.zeroconf: Optional[Zeroconf] = None
+        self.service_info: Optional[ServiceInfo] = None
         self._is_broadcasting = False
 
     def start(self, node_url: str) -> bool:
-        """Start broadcasting mDNS service via dns-sd command.
+        """Start broadcasting mDNS service via zeroconf.
         
         Args:
             node_url: URL of the Node service (used for validation, not in broadcast)
@@ -62,78 +63,53 @@ class MDNSBroadcaster(BroadcasterInterface):
             except Exception:
                 hostname = "singalong"
 
-            host_target = f"{hostname}.local."
+            # Create ServiceInfo with proper hostname format
+            service_name_with_type = f"{self.service_name}.{self.service_type}.local."
+            
+            self.service_info = ServiceInfo(
+                name=service_name_with_type,
+                type_=f"{self.service_type}.local.",
+                port=self.port,
+                addresses=[socket.inet_aton(local_ip)],
+                server=f"{hostname}.local.",
+                properties={
+                    "version": "0.1.0",
+                    "description": "Singalong Node Service",
+                },
+            )
 
-            # Use dns-sd command which registers with system mDNSResponder
-            # This ensures IPv4 A records are properly advertised to all clients
-            cmd = [
-                "dns-sd",
-                "-R",
-                self.service_name,
-                self.service_type,
-                "local.",
-                str(self.port),
-                host_target,
-            ]
-
-            logger.info(f"Starting mDNS broadcast with dns-sd")
+            logger.info(f"Starting mDNS broadcast with zeroconf")
             logger.info(f"  Service: {self.service_name}")
             logger.info(f"  Type: {self.service_type}.local.")
             logger.info(f"  Port: {self.port}")
-            logger.info(f"  Hostname: {host_target}")
+            logger.info(f"  Hostname: {hostname}.local.")
             logger.info(f"  IPv4: {local_ip}")
 
-            # Start the process
-            self.process = subprocess.Popen(
-                cmd,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True,
-                bufsize=1,
+            # Start zeroconf and register service
+            self.zeroconf = Zeroconf(ip_version=IPVersion.V4Only)
+            self.zeroconf.register_service(self.service_info)
+            self._is_broadcasting = True
+
+            logger.info(
+                f"✓ mDNS broadcast started | "
+                f"service={self.service_name} | "
+                f"port={self.port} | "
+                f"host={hostname}.local. | "
+                f"ip={local_ip}"
             )
+            return True
 
-            # Give dns-sd time to register
-            time.sleep(1)
-
-            # Check if process is still running
-            if self.process.poll() is None:
-                self._is_broadcasting = True
-                logger.info(
-                    f"✓ mDNS broadcast started | "
-                    f"service={self.service_name} | "
-                    f"port={self.port} | "
-                    f"host={host_target} | "
-                    f"ip={local_ip}"
-                )
-                return True
-            else:
-                # Process exited - check stdout/stderr
-                stdout = self.process.stdout.read() if self.process.stdout else ""
-                stderr = self.process.stderr.read() if self.process.stderr else ""
-                logger.error(f"dns-sd process failed immediately")
-                logger.error(f"stdout: {stdout}")
-                logger.error(f"stderr: {stderr}")
-                self._is_broadcasting = False
-                return False
-
-        except FileNotFoundError:
-            logger.error("dns-sd command not found. Make sure you're on macOS.")
-            self._is_broadcasting = False
-            return False
         except Exception as e:
-            logger.error(f"Failed to start mDNS broadcast: {e}")
+            logger.error(f"Failed to start mDNS broadcast: {e}", exc_info=True)
             self._is_broadcasting = False
             return False
 
     def stop(self):
         """Stop broadcasting mDNS service."""
         try:
-            if self.process:
-                self.process.terminate()
-                try:
-                    self.process.wait(timeout=2)
-                except subprocess.TimeoutExpired:
-                    self.process.kill()
+            if self.service_info and self.zeroconf:
+                self.zeroconf.unregister_service(self.service_info)
+                self.zeroconf.close()
                 self._is_broadcasting = False
                 logger.info("✓ mDNS broadcast stopped")
         except Exception as e:
@@ -147,3 +123,4 @@ class MDNSBroadcaster(BroadcasterInterface):
     def __del__(self):
         """Cleanup on deletion."""
         self.stop()
+
