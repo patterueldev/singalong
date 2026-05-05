@@ -7,7 +7,7 @@ import './App.css';
 
 function App() {
   return (
-    <Router>
+    <Router basename="/controller">
       <div className="app">
         <nav className="navbar">
           <h1>{import.meta.env.VITE_APP_TITLE || 'Singalong Controller'}</h1>
