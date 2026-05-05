@@ -31,35 +31,13 @@ services:
       dockerfile: ../../release/node.dockerfile
     container_name: singalong-node
     environment:
-      # Application Settings
-      ENVIRONMENT: development
-      DEBUG: ${DEBUG:-True}
-      PORT: 5002
-      HOST: 0.0.0.0
-
-      # Node Identity
-      NODE_ID: 550e8400-e29b-41d4-a716-446655440000
-
-      # Master Server Configuration
-      MASTER_URL: ${MASTER_PUBLIC_URL:-https://singalong-master-development.nicenature.space}
-      MASTER_GRAPHQL_URL: ${MASTER_PUBLIC_URL:-https://singalong-master-development.nicenature.space}/graphql/
-      NODE_MASTER_API_KEY: ${NODE_MASTER_API_KEY:-dev-key-production-secret-1234567890}
-      MASTER_TIMEOUT: 30
-
-      # Player API Keys (comma-separated) for player device registration
-      NODE_PLAYER_API_KEYS: dev-key-production-secret-player-1234567890,dev-key-production-secret-player-0987654321
-
-      # JWT Configuration
-      JWT_SECRET_KEY: dev-secret-key-change-in-production
-      JWT_ALGORITHM: HS256
-      JWT_ACCESS_TOKEN_EXPIRE_SECONDS: "10800"
-      JWT_REFRESH_TOKEN_EXPIRE_SECONDS: "604800"
-
-      # Database Configuration (SQLite)
-      DATABASE_URL: sqlite:////data/node/singalong_node.db
-
-      # OpenAI Configuration for song metadata enhancement (optional)
-      OPENAI_API_KEY: ${OPENAI_KEY:-}
+      - ENVIRONMENT=development
+      - DEBUG=${DEBUG:-True}
+      - DATABASE_URL=sqlite:////data/node/singalong_node.db
+      - MASTER_URL=${MASTER_PUBLIC_URL:-https://singalong-master-development.nicenature.space}
+      - MASTER_GRAPHQL_URL=${MASTER_PUBLIC_URL:-https://singalong-master-development.nicenature.space}/graphql/
+      - NODE_MASTER_API_KEY=${NODE_MASTER_API_KEY:-dev-key-production-secret-1234567890}
+      - OPENAI_API_KEY=${OPENAI_KEY}
 
     # No direct port exposure - accessed through Nginx gateway at /api
     volumes:
