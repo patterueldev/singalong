@@ -17,7 +17,6 @@ export default defineConfig({
       host: 'localhost',
       port: 3001,
       protocol: 'ws',
-      path: '/admin/__vite_ping',
     },
     allowedHosts: [
       'localhost',
