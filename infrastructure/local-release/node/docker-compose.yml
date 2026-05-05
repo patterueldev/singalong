@@ -4,7 +4,7 @@ version: '3.9'
 # Architecture:
 #   Nginx (8080)
 #   ├── /api/*   → singalong-node:5002
-#   └── /admin/* → singalong-admin:3001
+#   └── /admin/* → singalong-node:5002 (serves embedded React UI + API)
 #
 # Access via: http://localhost:8080/admin
 
@@ -21,10 +21,9 @@ services:
       - singalong-network
     depends_on:
       - node
-      - admin
     restart: unless-stopped
 
-  # Singalong Node Service (using SQLite)
+  # Singalong Node Service (using SQLite, includes embedded React Admin UI)
   node:
     build:
       context: ../../../apps/singalong-node
@@ -39,7 +38,7 @@ services:
       - NODE_MASTER_API_KEY=${NODE_MASTER_API_KEY:-dev-key-production-secret-1234567890}
       - OPENAI_API_KEY=${OPENAI_KEY}
 
-    # No direct port exposure - accessed through Nginx gateway at /api
+    # No direct port exposure - accessed through Nginx gateway at /api and /admin
     volumes:
       # Data mounts only (no app code bind mount)
       - ./data/node:/data/node  # Node database and storage (includes videos)
@@ -49,22 +48,6 @@ services:
       timeout: 10s
       start_period: 10s
       retries: 3
-    networks:
-      - singalong-network
-    restart: unless-stopped
-
-  # Singalong Admin UI - Administrative Dashboard
-  admin:
-    build:
-      context: ../../../apps/singalong-admin
-      dockerfile: ../../infrastructure/release/admin.dockerfile
-    container_name: singalong-admin
-    environment:
-      # Admin accesses Node API through Nginx gateway (relative path)
-      VITE_API_BASE_URL: /api
-    # No direct port exposure - accessed through Nginx at /admin
-    depends_on:
-      - node
     networks:
       - singalong-network
     restart: unless-stopped

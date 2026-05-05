@@ -116,6 +116,28 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# Mount static admin UI files
+import os
+from pathlib import Path
+from fastapi.staticfiles import StaticFiles
+
+admin_static_path = Path(__file__).parent / "static" / "admin"
+if admin_static_path.exists():
+    from fastapi.responses import FileResponse
+    
+    @app.get("/admin", include_in_schema=False)
+    async def admin_root():
+        """Redirect /admin to /admin/"""
+        return FileResponse(admin_static_path / "index.html", media_type="text/html")
+    
+    @app.get("/admin/", include_in_schema=False)
+    async def admin_index():
+        """Serve admin UI"""
+        return FileResponse(admin_static_path / "index.html", media_type="text/html")
+    
+    # Mount static files (assets, etc.)
+    app.mount("/admin", StaticFiles(directory=str(admin_static_path)), name="admin")
+
 # Include routers
 from app.api.routes import auth, sessions, songs, players, websocket
 

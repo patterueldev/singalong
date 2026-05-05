@@ -1,10 +1,32 @@
 # Singalong Node Service - Release Dockerfile
 #
 # Multi-stage build for production deployment
-# Optimized for smaller image size and faster startup
+# Includes embedded React admin UI
 #
-# Stage 1: Builder
-FROM python:3.11-slim as builder
+# Stage 1: Build React Admin UI
+FROM node:20-alpine as admin-builder
+
+WORKDIR /build/admin
+
+# Copy admin package files
+COPY apps/singalong-admin/package.json apps/singalong-admin/yarn.lock* ./
+
+# Install dependencies
+RUN yarn install --frozen-lockfile
+
+# Copy admin source code
+COPY apps/singalong-admin/public ./public
+COPY apps/singalong-admin/src ./src
+COPY apps/singalong-admin/index.html ./
+COPY apps/singalong-admin/vite.config.ts ./
+COPY apps/singalong-admin/tsconfig.json ./
+COPY apps/singalong-admin/eslint.config.js ./
+
+# Build for production
+RUN yarn build
+
+# Stage 2: Python Builder
+FROM python:3.11-slim as python-builder
 
 WORKDIR /build
 
@@ -27,7 +49,7 @@ RUN poetry config virtualenvs.create false && \
 # Copy application code
 COPY . ./
 
-# Stage 2: Runtime
+# Stage 3: Runtime
 FROM python:3.11-slim
 
 WORKDIR /app
@@ -38,11 +60,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy installed dependencies from builder
-COPY --from=builder /usr/local /usr/local
+# Copy installed dependencies from python builder
+COPY --from=python-builder /usr/local /usr/local
 
-# Copy application code from builder
-COPY --from=builder /build .
+# Copy application code from python builder
+COPY --from=python-builder /build .
+
+# Copy built React admin UI from admin builder
+COPY --from=admin-builder /build/admin/dist ./app/static/admin
 
 # Create data and logs directories that need to exist for volumes
 # Make them world-writable for bind-mounted directories
