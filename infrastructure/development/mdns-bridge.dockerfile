@@ -11,9 +11,9 @@ RUN apt-get update && apt-get install -y \
 RUN pip install poetry
 
 # Copy project files
-COPY apps/singalong-mdns-bridge/pyproject.toml ./
-COPY apps/singalong-mdns-bridge/app.py ./
-COPY apps/singalong-mdns-bridge/run.sh ./
+COPY pyproject.toml ./
+COPY app.py ./
+COPY run.sh ./
 
 # Install dependencies
 RUN poetry install --only main

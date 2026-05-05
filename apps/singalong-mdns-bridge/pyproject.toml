@@ -11,6 +11,7 @@ package-mode = false
 python = "^3.10"
 python-dotenv = "^1.0.0"
 zeroconf = "^0.148.0"
+httpx = "^0.24.0"
 
 [tool.poetry.group.dev.dependencies]
 black = "^23.12.0"

@@ -4,6 +4,7 @@ import os
 import signal
 import socket
 import time
+import httpx
 from zeroconf import InterfaceChoice, ServiceInfo, Zeroconf
 
 # Configure logging
@@ -23,11 +24,15 @@ class MDNSBridge:
         node_port: int = 5002,
         service_name: str = "Singalong Node",
         service_type: str = "_singalong-node._tcp",
+        health_check_enabled: bool = True,
+        health_check_timeout: int = 30,
     ):
         self.node_host = node_host
         self.node_port = node_port
         self.service_name = service_name
         self.service_type = service_type
+        self.health_check_enabled = health_check_enabled
+        self.health_check_timeout = health_check_timeout
         self.zeroconf = None
         self.service_info = None
 
@@ -44,9 +49,42 @@ class MDNSBridge:
             # Fallback to localhost if we can't determine IP
             return "127.0.0.1"
 
+    def _check_node_health(self) -> bool:
+        """Check if Node service is healthy by calling its /health endpoint"""
+        if not self.health_check_enabled:
+            return True
+
+        try:
+            # Determine the URL to check
+            if self.node_host in ("localhost", "127.0.0.1"):
+                check_url = f"http://localhost:{self.node_port}/health"
+            else:
+                check_url = f"http://{self.node_host}:{self.node_port}/health"
+
+            # Check health with timeout
+            response = httpx.get(check_url, timeout=self.health_check_timeout)
+            is_healthy = response.status_code == 200
+            
+            if is_healthy:
+                logger.info(f"✓ Node health check passed: {check_url}")
+            else:
+                logger.warning(
+                    f"✗ Node health check failed: {check_url} "
+                    f"(status={response.status_code})"
+                )
+            return is_healthy
+        except Exception as e:
+            logger.warning(f"✗ Node health check error: {e}")
+            return False
+
     def start(self):
         """Start mDNS broadcasting using zeroconf"""
         try:
+            # Check Node health before advertising
+            if not self._check_node_health():
+                logger.error("Node is not healthy. Cannot advertise service.")
+                return False
+
             # Determine the IP to advertise
             if self.node_host in ("localhost", "127.0.0.1"):
                 advertise_ip = self._get_host_ip()

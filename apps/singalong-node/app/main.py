@@ -88,25 +88,6 @@ async def lifespan(app: FastAPI):
         print("⚠ Failed to connect to Master WebSocket (will retry)")
         listen_task = None
     
-    # Initialize mDNS broadcasting if enabled
-    mdns_bridge_service = None
-    if settings.mdns_broadcast_enabled:
-        try:
-            from app.services.mdns.bridge import MDNSBridgeService
-            from app.services.mdns.broadcaster import MDNSBroadcaster
-            
-            broadcaster = MDNSBroadcaster(
-                service_name=settings.mdns_service_name,
-                service_type=settings.mdns_service_type,
-                port=settings.mdns_broadcast_port,
-            )
-            mdns_bridge_service = MDNSBridgeService(broadcaster)
-            node_url = f"http://localhost:{settings.port}"
-            mdns_bridge_service.start(node_url)
-            print("✓ mDNS broadcasting initialized")
-        except Exception as e:
-            print(f"⚠ Failed to initialize mDNS broadcasting: {e}")
-    
     yield
     # Shutdown
     print(f"Shutting down {settings.service_name}")
