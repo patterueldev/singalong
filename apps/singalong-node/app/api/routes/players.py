@@ -434,11 +434,6 @@ async def select_player(
         finally:
             db.close()
         
-        # Stop mDNS broadcast now that a player is locked
-        from app.services.mdns_broadcaster import MDNSBroadcaster
-        MDNSBroadcaster.get_instance().stop_broadcast()
-        logger.info("[API] Stopped mDNS broadcast - player locked to session")
-        
         # Send WebSocket notification to the player that they've been selected
         if player.ws_connection:
             try:
