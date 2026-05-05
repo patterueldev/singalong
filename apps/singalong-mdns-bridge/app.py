@@ -70,9 +70,9 @@ class MDNSBridge:
             return True
 
         try:
-            # Always check through Nginx gateway (port 8080) for consistency
+            # Always check through Nginx gateway for consistency
             # Nginx routes /api/* to Node service
-            check_url = "http://localhost:8080/api/health"
+            check_url = f"http://localhost:{self.gateway_port}/api/health"
 
             # Check health with timeout
             response = httpx.get(check_url, timeout=self.health_check_timeout)
