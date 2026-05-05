@@ -36,6 +36,7 @@ Thumbs.db
 .xcodeproj/*.xcworkspace/xcuserdata/
 *.playground/playground.xcworkspace/xcuserdata/
 *.swiftpm/xcode/package.xcworkspace/xcuserdata/
+*.xcuserstate
 
 # Logs
 *.log
