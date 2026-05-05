@@ -3,17 +3,20 @@
 # Multi-stage build for production deployment
 # Optimized for smaller image size using Node.js + Vite
 #
+# Build context: repository root (/)
+# Usage: docker build -f infrastructure/release/admin.dockerfile -t singalong-admin . (from repo root)
+#
 # Stage 1: Builder
-FROM node:20-alpine as builder
+FROM node:20-alpine AS builder
 
 WORKDIR /build
 
 # Install dependencies
-COPY package.json yarn.lock ./
+COPY apps/singalong-admin/package.json apps/singalong-admin/yarn.lock ./
 RUN yarn install --frozen-lockfile --production=false
 
 # Copy application code
-COPY . ./
+COPY apps/singalong-admin ./
 
 # Build React app with Vite
 RUN yarn build
@@ -25,20 +28,13 @@ FROM nginx:1.25-alpine
 RUN rm /etc/nginx/conf.d/default.conf
 
 # Copy custom nginx config for SPA routing
-COPY admin-nginx.conf /etc/nginx/conf.d/default.conf
+COPY infrastructure/release/admin-nginx.conf /etc/nginx/conf.d/default.conf
 
 # Copy built app from builder
 COPY --from=builder /build/dist /usr/share/nginx/html
 
-# Create non-root user for security
-RUN addgroup -g 1000 nginx && \
-    adduser -D -u 1000 -G nginx nginx && \
-    chown -R nginx:nginx /usr/share/nginx/html && \
-    chown -R nginx:nginx /var/cache/nginx && \
-    chown -R nginx:nginx /var/log/nginx && \
-    touch /var/run/nginx.pid && \
-    chown -R nginx:nginx /var/run/nginx.pid
-USER nginx
+# Set permissions for nginx user (already exists in nginx image)
+RUN chown -R nginx:nginx /usr/share/nginx/html
 
 # Expose port
 EXPOSE 3001

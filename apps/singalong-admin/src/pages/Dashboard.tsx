@@ -44,7 +44,7 @@ export function DashboardPage() {
         <SessionHeader session={currentSession} />
         <div className="dashboard-panels">
           <div className="panel top-left">
-            <PlaybackPanel currentSession={currentSession} onOpenPlayerDiscovery={() => setShowPlayerSelection(true)} />
+            <PlaybackPanel onOpenPlayerDiscovery={() => setShowPlayerSelection(true)} />
           </div>
           <div className="panel top-right">
             <DownloadsPanel />

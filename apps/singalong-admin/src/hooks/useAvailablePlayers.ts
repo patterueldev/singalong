@@ -21,7 +21,7 @@ export function useAvailablePlayers(): UseAvailablePlayersReturn {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [selectingPlayerId, setSelectingPlayerId] = useState<string | null>(null)
-  const refreshIntervalRef = useRef<NodeJS.Timeout | null>(null)
+  const refreshIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   // Fetch available players
   const refreshPlayers = useCallback(async () => {
