@@ -26,37 +26,12 @@ services:
       - admin
     restart: unless-stopped
 
-  # PostgreSQL Database for Node
-  node-db:
-    image: postgres:16-alpine
-    container_name: singalong-node-db
-    environment:
-      POSTGRES_DB: singalong_node
-      POSTGRES_USER: node_user
-      POSTGRES_PASSWORD: node_password_dev
-    ports:
-      - "5433:5432"
-    volumes:
-      - node-db-data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U node_user -d singalong_node"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - singalong-network
-
-  # Singalong Node Service
+  # Singalong Node Service (using SQLite)
   node:
     build:
       context: ../../../apps/singalong-node
       dockerfile: /Users/pat/Projects/PAT/singalong/infrastructure/release/node.dockerfile
     container_name: singalong-node
-    depends_on:
-      node-db:
-        condition: service_healthy
-      # master:  # Uncomment if running master service
-      #   condition: service_healthy
     environment:
       # Application Settings
       DEBUG: "False"
@@ -82,8 +57,8 @@ services:
       JWT_ACCESS_TOKEN_EXPIRE_SECONDS: "10800"
       JWT_REFRESH_TOKEN_EXPIRE_SECONDS: "604800"
 
-      # Database Configuration
-      DATABASE_URL: postgresql://node_user:node_password_dev@node-db:5432/singalong_node
+      # Database Configuration (SQLite)
+      DATABASE_URL: sqlite:///./app/data/singalong_node.db
 
       # OpenAI Configuration for song metadata enhancement (optional)
       OPENAI_API_KEY: ""
@@ -138,8 +113,6 @@ services:
   #   restart: unless-stopped
 
 volumes:
-  node-db-data:
-    driver: local
   node-videos:
     driver: local
   node-data:
