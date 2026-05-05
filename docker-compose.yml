@@ -56,8 +56,8 @@ services:
   # Admin Dashboard - React/Vite frontend for administrators
   admin:
     build:
-      context: .
-      dockerfile: infrastructure/development/admin.dockerfile
+      context: ./apps/singalong-admin
+      dockerfile: ../../infrastructure/development/admin.dockerfile
     container_name: singalong-admin
     # No direct port exposure - accessed through Nginx at /admin
     volumes:
@@ -75,25 +75,25 @@ services:
     restart: unless-stopped
 
   # Controller - React/Vite frontend for karaoke control
-  controller:
-    build:
-      context: .
-      dockerfile: infrastructure/development/controller.dockerfile
-    container_name: singalong-controller
-    # No direct port exposure - accessed through Nginx at /controller
-    volumes:
-      - ./apps/singalong-controller:/app
-      - /app/node_modules  # Exclude node_modules from volume mount
-    environment:
-      # Controller accesses Node API through Nginx gateway (relative path)
-      - VITE_API_BASE_URL=/api
-      - ENVIRONMENT=development
-      - WATCHPACK_POLLING=true  # Enable polling for file changes
-    networks:
-      - singalong-network
-    depends_on:
-      - node
-    restart: unless-stopped
+  # controller:
+  #   build:
+  #     context: .
+  #     dockerfile: infrastructure/development/controller.dockerfile
+  #   container_name: singalong-controller
+  #   # No direct port exposure - accessed through Nginx at /controller
+  #   volumes:
+  #     - ./apps/singalong-controller:/app
+  #     - /app/node_modules  # Exclude node_modules from volume mount
+  #   environment:
+  #     # Controller accesses Node API through Nginx gateway (relative path)
+  #     - VITE_API_BASE_URL=/api
+  #     - ENVIRONMENT=development
+  #     - WATCHPACK_POLLING=true  # Enable polling for file changes
+  #   networks:
+  #     - singalong-network
+  #   depends_on:
+  #     - node
+  #   restart: unless-stopped
 
   # mDNS Bridge - DISABLED on macOS (Docker + Lima = isolated network)
   # To start bridge on macOS, run: cd apps/singalong-mdns-bridge && bash run.sh
