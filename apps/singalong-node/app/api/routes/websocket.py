@@ -223,7 +223,7 @@ async def websocket_session_endpoint(session_id: str, websocket: WebSocket):
         await manager.disconnect(session_id, websocket)
 
 
-@router.websocket("/api/player/ws")
+@router.websocket("/player/ws")
 async def websocket_player_discovery_endpoint(websocket: WebSocket):
     """
     WebSocket endpoint for player discovery.
@@ -384,7 +384,7 @@ async def websocket_player_discovery_endpoint(websocket: WebSocket):
         )
 
 
-@router.websocket("/api/session/{session_code}/player/ws")
+@router.websocket("/session/{session_code}/player/ws")
 async def websocket_player_playback_endpoint(session_code: str, websocket: WebSocket):
     """
     WebSocket endpoint for player playback connection.
