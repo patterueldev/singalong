@@ -53,6 +53,17 @@ class MDNSBridge:
             # Fallback to localhost if we can't determine IP
             return "127.0.0.1"
 
+    def _get_hostname(self):
+        """Get the machine's hostname (e.g., thursday.local)"""
+        try:
+            hostname = socket.gethostname()
+            # Ensure .local suffix for mDNS
+            if not hostname.endswith(".local"):
+                hostname = f"{hostname}.local"
+            return hostname
+        except Exception:
+            return "singalong-node.local"  # Fallback
+
     def _check_node_health(self) -> bool:
         """Check if Node service is healthy by calling its /api/health through Nginx gateway"""
         if not self.health_check_enabled:
@@ -169,7 +180,11 @@ class MDNSBridge:
             logger.info(f"  Node host: {self.node_host} → {advertise_ip}")
             logger.info(f"  Gateway port: {self.gateway_port} (Nginx)")
 
-            # Create service info with the advertised IP and gateway port
+            # Get the machine hostname (e.g., thursday.local)
+            machine_hostname = self._get_hostname()
+            logger.info(f"  Machine hostname: {machine_hostname}")
+
+            # Create service info with the advertised IP, gateway port, and hostname
             service_name_with_type = f"{self.service_name}.{self.service_type}.local."
             ip_bytes = socket.inet_aton(advertise_ip)
 
@@ -177,10 +192,12 @@ class MDNSBridge:
                 name=service_name_with_type,
                 type_=f"{self.service_type}.local.",
                 port=self.gateway_port,  # Advertise Nginx gateway port
+                server=machine_hostname,  # Advertise machine hostname (e.g., thursday.local)
                 addresses=[ip_bytes],
                 properties={
                     "version": "0.1.0",
                     "description": "Singalong Node Service",
+                    "hostname": machine_hostname,
                 },
             )
 
