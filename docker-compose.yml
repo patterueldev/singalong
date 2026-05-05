@@ -92,20 +92,12 @@ services:
     restart: unless-stopped
 
   # mDNS Bridge - Advertises Node service via mDNS on host network
-  mdns-bridge:
-    build:
-      context: .
-      dockerfile: infrastructure/development/mdns-bridge.dockerfile
-    container_name: singalong-mdns-bridge
-    network_mode: host  # Required for mDNS multicast to reach macOS host
-    environment:
-      - NODE_HOST=localhost  # Docker host localhost (when Node is on bridge network)
-      - NODE_PORT=5002
-      - MDNS_SERVICE_NAME=Singalong Node
-      - MDNS_SERVICE_TYPE=_singalong-node._tcp
-    restart: unless-stopped
-    depends_on:
-      - node
+  # mDNS Bridge - Runs on host machine (not in Docker)
+  # See: apps/singalong-mdns-bridge/README.md
+  # To start: cd apps/singalong-mdns-bridge && bash run.sh
+  # 
+  # NOTE: Bridge must run on host (macOS) to reach actual LAN.
+  # Docker + Lima creates isolated network (10.0.2.0/24) that Linux LAN cannot reach.
 
   cloudflared:
     image: cloudflare/cloudflared:latest
