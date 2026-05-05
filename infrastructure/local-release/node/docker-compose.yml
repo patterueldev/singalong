@@ -25,7 +25,7 @@ services:
   node:
     build:
       context: ../../../apps/singalong-node
-      dockerfile: ../../../infrastructure/release/node.dockerfile
+      dockerfile: /Users/pat/Projects/PAT/singalong/infrastructure/release/node.dockerfile
     container_name: singalong-node
     depends_on:
       node-db:
@@ -89,8 +89,8 @@ services:
   # Singalong Admin UI - Administrative Dashboard
   admin:
     build:
-      context: ../../../
-      dockerfile: infrastructure/release/admin.dockerfile
+      context: ../../../apps/singalong-admin
+      dockerfile: /Users/pat/Projects/PAT/singalong/infrastructure/release/admin.dockerfile
     container_name: singalong-admin
     environment:
       VITE_API_BASE_URL: http://localhost:5002
@@ -103,20 +103,20 @@ services:
     restart: unless-stopped
 
   # Singalong Controller UI - User-facing Karaoke Interface
-  controller:
-    build:
-      context: ../../../
-      dockerfile: infrastructure/release/controller.dockerfile
-    container_name: singalong-controller
-    environment:
-      VITE_API_BASE_URL: http://localhost:5002
-    ports:
-      - "3002:3002"
-    depends_on:
-      - node
-    networks:
-      - singalong-network
-    restart: unless-stopped
+  # controller:
+  #   build:
+  #     context: ../../../apps/singalong-controller
+  #     dockerfile: /Users/pat/Projects/PAT/singalong/infrastructure/release/controller.dockerfile
+  #   container_name: singalong-controller
+  #   environment:
+  #     VITE_API_BASE_URL: http://localhost:5002
+  #   ports:
+  #     - "3002:3002"
+  #   depends_on:
+  #     - node
+  #   networks:
+  #     - singalong-network
+  #   restart: unless-stopped
 
 volumes:
   node-db-data:

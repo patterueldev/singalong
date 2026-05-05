@@ -3,20 +3,17 @@
 # Multi-stage build for production deployment
 # Optimized for smaller image size using Node.js + Vite
 #
-# Build context: repository root (/)
-# Usage: docker build -f infrastructure/release/controller.dockerfile -t singalong-controller . (from repo root)
-#
 # Stage 1: Builder
 FROM node:20-alpine AS builder
 
 WORKDIR /build
 
 # Install dependencies
-COPY apps/singalong-controller/package.json apps/singalong-controller/yarn.lock ./
+COPY package.json yarn.lock ./
 RUN yarn install --frozen-lockfile --production=false
 
 # Copy application code
-COPY apps/singalong-controller ./
+COPY . ./
 
 # Build React app with Vite
 RUN yarn build
@@ -28,7 +25,7 @@ FROM nginx:1.25-alpine
 RUN rm /etc/nginx/conf.d/default.conf
 
 # Copy custom nginx config for SPA routing
-COPY infrastructure/release/controller-nginx.conf /etc/nginx/conf.d/default.conf
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 # Copy built app from builder
 COPY --from=builder /build/dist /usr/share/nginx/html
