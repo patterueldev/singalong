@@ -147,14 +147,14 @@ if admin_static_path.exists():
         # For any non-existent path (e.g., React routes), serve index.html for SPA
         return FileResponse(admin_static_path / "index.html", media_type="text/html")
 
-# Include routers
+# Include routers with /api prefix
 from app.api.routes import auth, sessions, songs, players, websocket
 
-app.include_router(auth.router)
-app.include_router(sessions.router)
-app.include_router(songs.router)
-app.include_router(players.router)
-app.include_router(websocket.router)
+app.include_router(auth.router, prefix="/api")
+app.include_router(sessions.router, prefix="/api")
+app.include_router(songs.router, prefix="/api")
+app.include_router(players.router, prefix="/api")
+app.include_router(websocket.router, prefix="/api")
 
 
 # CORS middleware
@@ -196,6 +196,7 @@ async def cors_middleware(request, call_next):
 
 
 @app.get("/health", tags=["Health"])
+@app.get("/api/health", tags=["Health"])
 async def health_check() -> JSONResponse:
     """Health check endpoint"""
     return JSONResponse(
