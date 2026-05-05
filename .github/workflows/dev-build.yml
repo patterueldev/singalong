@@ -28,16 +28,10 @@
 
 name: Development Build & Push
 
-# TODO: Temporarily trigger on pull_request to test detection logic, switch to push after validation
 on:
-  pull_request:
+  push:
     branches:
       - develop
-
-# on:
-#   push:
-#     branches:
-#       - develop
 
 permissions:
   contents: read
@@ -114,11 +108,6 @@ jobs:
           echo ""
           echo "Changed files:"
           git diff --name-only $PREVIOUS_COMMIT HEAD
-
-          # TODO: Temporarily set all to true for testing, remove after validation
-          echo "master=true" >> $GITHUB_OUTPUT
-          echo "node=true" >> $GITHUB_OUTPUT
-          echo "admin=true" >> $GITHUB_OUTPUT
 
       - name: Output detection results
         run: |
