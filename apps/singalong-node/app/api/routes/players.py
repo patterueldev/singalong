@@ -9,7 +9,7 @@ from app.middleware.auth import verify_bearer_token
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api/players", tags=["Players"])
+router = APIRouter(prefix="/players", tags=["Players"])
 
 
 class PlayerRegisterRequest(BaseModel):

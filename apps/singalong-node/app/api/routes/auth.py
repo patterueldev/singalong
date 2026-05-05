@@ -15,7 +15,7 @@ from app.models.schemas import (
     TokenResponse,
 )
 
-router = APIRouter(prefix="/api/auth", tags=["Authentication"])
+router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 
 @router.post("/controller", response_model=TokenResponse, status_code=201)

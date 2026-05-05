@@ -37,7 +37,7 @@ from app.middleware.auth import verify_bearer_token
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api/songs", tags=["Songs"])
+router = APIRouter(prefix="/songs", tags=["Songs"])
 
 
 def get_db():

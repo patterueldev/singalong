@@ -18,7 +18,7 @@ from app.models.db_models import ReservationStatus
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api/sessions", tags=["Sessions"])
+router = APIRouter(prefix="/sessions", tags=["Sessions"])
 
 
 # ============================================================================
