@@ -26,6 +26,7 @@ class MDNSBridge:
         service_type: str = "_singalong-node._tcp",
         health_check_enabled: bool = True,
         health_check_timeout: int = 30,
+        health_poll_interval: int = 5,
     ):
         self.node_host = node_host
         self.gateway_port = gateway_port  # Port that Nginx/gateway listens on
@@ -33,8 +34,11 @@ class MDNSBridge:
         self.service_type = service_type
         self.health_check_enabled = health_check_enabled
         self.health_check_timeout = health_check_timeout
+        self.health_poll_interval = health_poll_interval  # Seconds between health checks
         self.zeroconf = None
         self.service_info = None
+        self.is_registered = False  # Track registration state
+        self.should_run = True  # Control flag for polling loop
 
     def _get_host_ip(self):
         """Get the actual host IP address (not loopback)"""
@@ -75,15 +79,81 @@ class MDNSBridge:
             logger.warning(f"✗ Node health check error: {e}")
             return False
 
-    def start(self):
-        """Start mDNS broadcasting using zeroconf"""
+    def _register_service(self):
+        """Register the service with mDNS"""
+        if self.is_registered:
+            return
+        
         try:
-            # Check Node health before advertising
-            if not self._check_node_health():
-                logger.error("Node is not healthy. Cannot advertise service.")
-                return False
+            logger.info("Registering service with mDNS...")
+            self.zeroconf.register_service(self.service_info)
+            time.sleep(0.5)
+            self.is_registered = True
+            logger.info(f"✓ Service registered: {self.service_name}")
+        except Exception as e:
+            # NonUniqueNameException is expected if service is being re-registered
+            if "NonUniqueNameException" in str(type(e)):
+                logger.warning(
+                    f"Service already registered or name conflict: {self.service_name}. "
+                    f"Retrying in next poll cycle."
+                )
+            else:
+                logger.error(f"Failed to register service: {e}", exc_info=True)
+            self.is_registered = False
 
-            # Determine the IP to advertise
+    def _unregister_service(self):
+        """Unregister the service from mDNS"""
+        if not self.is_registered:
+            return
+        
+        try:
+            logger.info("Unregistering service from mDNS...")
+            self.zeroconf.unregister_service(self.service_info)
+            self.is_registered = False
+            logger.info(f"✓ Service unregistered: {self.service_name}")
+        except Exception as e:
+            logger.error(f"Failed to unregister service: {e}")
+
+    def _initialize_zeroconf(self):
+        """Initialize Zeroconf instance (one-time setup)"""
+        if self.zeroconf is not None:
+            return
+        
+        try:
+            logger.info("Initializing Zeroconf with default network interfaces...")
+            self.zeroconf = Zeroconf(interfaces=InterfaceChoice.Default)
+        except Exception as e:
+            logger.error(f"Failed to initialize Zeroconf: {e}")
+            raise
+
+    def _polling_loop(self):
+        """Continuously check Node health and manage service registration"""
+        logger.info(
+            f"Starting health polling loop (interval: {self.health_poll_interval}s)"
+        )
+        
+        while self.should_run:
+            try:
+                is_healthy = self._check_node_health()
+                
+                if is_healthy and not self.is_registered:
+                    # Node came online - register service
+                    self._register_service()
+                elif not is_healthy and self.is_registered:
+                    # Node went offline - unregister service
+                    self._unregister_service()
+                
+                # Sleep before next check
+                time.sleep(self.health_poll_interval)
+                
+            except Exception as e:
+                logger.error(f"Error in polling loop: {e}")
+                time.sleep(self.health_poll_interval)
+
+    def start(self):
+        """Start mDNS bridge with continuous health polling"""
+        try:
+            # Determine the IP to advertise (once at startup)
             if self.node_host in ("localhost", "127.0.0.1"):
                 advertise_ip = self._get_host_ip()
             else:
@@ -114,24 +184,18 @@ class MDNSBridge:
                 },
             )
 
-            # Initialize Zeroconf with Default interfaces
-            # This skips loopback and uses actual network interfaces
-            # Works on macOS, Linux, Windows - OS-agnostic
-            logger.info("Initializing Zeroconf with default network interfaces...")
-            self.zeroconf = Zeroconf(interfaces=InterfaceChoice.Default)
-
-            logger.info("Registering service with mDNS...")
-            self.zeroconf.register_service(self.service_info)
-
-            # Give it a moment to register
-            time.sleep(0.5)
+            # Initialize Zeroconf
+            self._initialize_zeroconf()
 
             logger.info(
-                f"✓ mDNS bridge started | "
+                f"✓ mDNS bridge initialized | "
                 f"service={self.service_name} | "
                 f"gateway_port={self.gateway_port} | "
                 f"ip={advertise_ip}"
             )
+            
+            # Start polling loop - this will block indefinitely
+            self._polling_loop()
             return True
 
         except Exception as e:
@@ -139,12 +203,14 @@ class MDNSBridge:
             return False
 
     def stop(self):
-        """Stop mDNS broadcasting"""
+        """Stop mDNS bridge and clean up"""
+        self.should_run = False  # Signal polling loop to stop
         try:
-            if self.service_info and self.zeroconf:
-                self.zeroconf.unregister_service(self.service_info)
+            if self.is_registered and self.service_info and self.zeroconf:
+                self._unregister_service()
+            if self.zeroconf:
                 self.zeroconf.close()
-                logger.info("✓ mDNS bridge stopped")
+            logger.info("✓ mDNS bridge stopped")
         except Exception as e:
             logger.error(f"Error stopping mDNS bridge: {e}")
 
@@ -156,18 +222,15 @@ def main():
     gateway_port = int(os.getenv("GATEWAY_PORT", "80"))  # Nginx gateway port
     service_name = os.getenv("MDNS_SERVICE_NAME", "Singalong Node")
     service_type = os.getenv("MDNS_SERVICE_TYPE", "_singalong-node._tcp")
+    health_poll_interval = int(os.getenv("HEALTH_POLL_INTERVAL", "5"))
 
     bridge = MDNSBridge(
         node_host=node_host,
         gateway_port=gateway_port,
         service_name=service_name,
         service_type=service_type,
+        health_poll_interval=health_poll_interval,
     )
-
-    # Start mDNS bridge
-    if not bridge.start():
-        logger.error("Failed to start mDNS bridge")
-        return 1
 
     # Handle graceful shutdown
     def signal_handler(sig, frame):
@@ -178,14 +241,18 @@ def main():
     signal.signal(signal.SIGTERM, signal_handler)
     signal.signal(signal.SIGINT, signal_handler)
 
-    # Keep running
-    logger.info("mDNS bridge running. Press Ctrl+C to stop.")
+    # Start mDNS bridge (polling loop runs indefinitely)
+    logger.info("mDNS bridge starting with continuous health polling...")
     try:
-        signal.pause()
+        bridge.start()  # This blocks until signal_handler is called
     except KeyboardInterrupt:
         logger.info("Shutting down...")
         bridge.stop()
         return 0
+    except Exception as e:
+        logger.error(f"Fatal error: {e}", exc_info=True)
+        bridge.stop()
+        return 1
 
 
 if __name__ == "__main__":
