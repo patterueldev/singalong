@@ -1,5 +1,6 @@
-import axios from 'axios'
+import axios, { AxiosError } from 'axios'
 import type { AuthResponse } from '../types/models'
+import type { InternalAxiosRequestConfig } from 'axios'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api'
 const ACCESS_TOKEN_KEY = 'admin_access_token'
@@ -7,6 +8,10 @@ const REFRESH_TOKEN_KEY = 'admin_refresh_token'
 const TOKEN_EXPIRY_KEY = 'admin_token_expiry'
 
 let refreshTokenPromise: Promise<boolean> | null = null
+
+interface CustomAxiosRequestConfig extends InternalAxiosRequestConfig {
+  _retry?: boolean
+}
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -23,6 +28,69 @@ api.interceptors.request.use((config) => {
   }
   return config
 })
+
+// Handle 401 errors with automatic token refresh
+api.interceptors.response.use(
+  (response) => response,
+  async (error: AxiosError) => {
+    const originalRequest = error.config as CustomAxiosRequestConfig
+
+    // Only handle 401 errors
+    if (error.response?.status !== 401) {
+      return Promise.reject(error)
+    }
+
+    // Prevent infinite loop: don't retry the refresh endpoint itself
+    if (originalRequest?.url?.includes('/auth/refresh')) {
+      // Refresh token is invalid, clear everything and redirect to login
+      clearTokens()
+      window.location.href = '/login'
+      return Promise.reject(error)
+    }
+
+    // Prevent multiple retries of the same request
+    if (originalRequest._retry) {
+      // Already tried to refresh and retry, give up
+      clearTokens()
+      window.location.href = '/login'
+      return Promise.reject(error)
+    }
+
+    originalRequest._retry = true
+
+    try {
+      // Attempt to refresh the token
+      const refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY)
+      
+      if (!refreshToken) {
+        // No refresh token available
+        window.location.href = '/login'
+        return Promise.reject(error)
+      }
+
+      const response = await api.post('/auth/refresh', {
+        refresh_token: refreshToken,
+      })
+
+      const { access_token, refresh_token, expires_in } = response.data
+
+      // Update tokens in localStorage
+      localStorage.setItem(ACCESS_TOKEN_KEY, access_token)
+      localStorage.setItem(REFRESH_TOKEN_KEY, refresh_token)
+      const expiryTime = Date.now() + expires_in * 1000
+      localStorage.setItem(TOKEN_EXPIRY_KEY, expiryTime.toString())
+
+      // Retry the original request with new token
+      originalRequest.headers.Authorization = `Bearer ${access_token}`
+      return api(originalRequest)
+    } catch {
+      // Refresh failed, redirect to login
+      clearTokens()
+      window.location.href = '/login'
+      return Promise.reject(error)
+    }
+  }
+)
 
 export const authService = {
   async login(username: string, password: string): Promise<string> {
