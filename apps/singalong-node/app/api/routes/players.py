@@ -1,6 +1,7 @@
 """Player registration and management endpoints"""
 
 import logging
+import asyncio
 from typing import Optional
 from fastapi import APIRouter, HTTPException, Depends, Header
 from pydantic import BaseModel, Field
@@ -333,7 +334,8 @@ async def get_available_players(
     Get list of all available players (in discovering state) globally.
     
     Admin only endpoint. Returns players that are currently discovering
-    (not locked to any session).
+    (not locked to any session). Performs health check to verify each
+    player's WebSocket connection is still alive.
     
     **Response**:
     ```json
@@ -355,10 +357,55 @@ async def get_available_players(
         discovery_manager = PlayerDiscoveryManager.get_instance()
         available_players = discovery_manager.get_available_players()
         
-        player_list = [player.to_dict() for player in available_players]
+        # Health check: verify each player's WebSocket connection is alive
+        # by sending a ping and waiting for response
+        healthy_players = []
+        PING_TIMEOUT_SECONDS = 2.0
+        
+        for player in available_players:
+            try:
+                # Try to send ping with timeout
+                if player.ws_connection:
+                    await asyncio.wait_for(
+                        player.ws_connection.send_json({"type": "ping"}),
+                        timeout=PING_TIMEOUT_SECONDS
+                    )
+                    healthy_players.append(player)
+                    logger.debug(
+                        f"[Health Check] Player ping successful | "
+                        f"player_id={player.player_id[:8]}...{player.player_id[-4:]} | "
+                        f"name={player.name}"
+                    )
+                else:
+                    # No WebSocket connection stored, remove from memory
+                    await discovery_manager.unregister_player(player.player_id)
+                    logger.warning(
+                        f"[Health Check] Player has no WebSocket connection | "
+                        f"player_id={player.player_id[:8]}...{player.player_id[-4:]} | "
+                        f"name={player.name} | removed"
+                    )
+            except asyncio.TimeoutError:
+                # Player didn't respond to ping in time, connection is dead
+                await discovery_manager.unregister_player(player.player_id)
+                logger.warning(
+                    f"[Health Check] Player ping timeout | "
+                    f"player_id={player.player_id[:8]}...{player.player_id[-4:]} | "
+                    f"name={player.name} | removed"
+                )
+            except Exception as e:
+                # Player connection error, remove from memory
+                await discovery_manager.unregister_player(player.player_id)
+                logger.warning(
+                    f"[Health Check] Player ping failed | "
+                    f"player_id={player.player_id[:8]}...{player.player_id[-4:]} | "
+                    f"name={player.name} | error={str(e)} | removed"
+                )
+        
+        player_list = [player.to_dict() for player in healthy_players]
         
         logger.info(
-            f"[API] Get available players (admin) | count={len(player_list)}"
+            f"[API] Get available players (admin) | checked={len(available_players)} | "
+            f"healthy={len(player_list)}"
         )
         
         return {
