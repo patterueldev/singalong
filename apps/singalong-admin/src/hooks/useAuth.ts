@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { authService, getToken } from '../services/authService'
 
 export interface AuthState {
@@ -31,9 +31,30 @@ export function useAuth() {
     setState({ isAuthenticated: false, isLoading: false, error: null })
   }, [])
 
+  // Auto-refresh token before expiry
+  useEffect(() => {
+    const refreshInterval = setInterval(async () => {
+      if (authService.shouldRefreshToken()) {
+        try {
+          const success = await authService.refreshToken()
+          if (!success) {
+            // Refresh failed, logout the user
+            setState({ isAuthenticated: false, isLoading: false, error: null })
+          }
+        } catch (err) {
+          // Silent failure - next API call will handle 401
+          console.debug('Token refresh failed:', err)
+        }
+      }
+    }, 60000) // Check every minute
+
+    return () => clearInterval(refreshInterval)
+  }, [])
+
   return {
     ...state,
     login,
     logout,
   }
 }
+
