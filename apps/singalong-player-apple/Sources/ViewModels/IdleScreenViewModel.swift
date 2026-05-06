@@ -39,6 +39,35 @@ final class IdleScreenViewModel: ObservableObject {
             self.activeConnections = updated
             print("[IdleScreenViewModel] ✓ @Published property reassigned, UI should update")
         }
+        
+        print("[IdleScreenViewModel] Setting up onPlayerLocked callback...")
+        discoveryCoordinator.onPlayerLocked = { [weak self] sessionCode, token in
+            print("[IdleScreenViewModel] 🔔 PLAYER LOCKED CALLBACK: sessionCode=\(sessionCode)")
+            guard let self = self else {
+                print("[IdleScreenViewModel] ⚠️ Self was deallocated, callback not executed")
+                return
+            }
+            
+            // Store session info for playback phase
+            print("[IdleScreenViewModel] Storing session code and token for playback phase")
+            
+            // Find the connected node ID to send acknowledgment
+            // For now, find the first (and should be only) connected node
+            if let connectedNodeId = self.activeConnections.first(where: { $0.value == .waiting })?.key {
+                print("[IdleScreenViewModel] Sending acknowledgment for node: \(connectedNodeId)")
+                Task {
+                    await self.discoveryCoordinator.acknowledgePlayerLocked(
+                        nodeId: connectedNodeId,
+                        sessionCode: sessionCode
+                    )
+                }
+            }
+            
+            // Transition to locked phase
+            self.currentPhase = .locked
+            print("[IdleScreenViewModel] ✓ Player locked to session: \(sessionCode)")
+        }
+        
         print("[IdleScreenViewModel] ✓ Callback setup complete")
     }
     

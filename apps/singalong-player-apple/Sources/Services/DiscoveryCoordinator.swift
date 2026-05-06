@@ -12,6 +12,7 @@ class DiscoveryCoordinator {
     var onNodeDiscovered: ((DiscoveredNode) -> Void)?
     var onNodeSelected: (() -> Void)?
     var onConnectionStatusChanged: ((String, NodeConnectionStatus) -> Void)?
+    var onPlayerLocked: ((String, String) -> Void)?  // (sessionCode, token)
     
     // MARK: - Initialization
     
@@ -28,6 +29,17 @@ class DiscoveryCoordinator {
             await webSocketManager.setOnConnectionStatusChanged { [weak self] nodeId, status in
                 self?.onConnectionStatusChanged?(nodeId, status)
             }
+            
+            // Set up message callback to handle lock messages
+            await webSocketManager.setCallback(onMessageReceived: { [weak self] nodeId, message in
+                print("[DiscoveryCoordinator] Received message from \(nodeId): \(message)")
+                
+                if case .lock(let sessionCode, let token) = message {
+                    print("[DiscoveryCoordinator] Player locked to session: \(sessionCode)")
+                    // Notify that player has been locked
+                    self?.onPlayerLocked?(sessionCode, token)
+                }
+            })
         }
     }
     
@@ -57,6 +69,27 @@ class DiscoveryCoordinator {
         // Connect to the selected node via WebSocket
         try await webSocketManager.connect(to: node)
         print("[DiscoveryCoordinator] ✓ webSocketManager.connect() completed")
+    }
+    
+    func acknowledgePlayerLocked(nodeId: String, sessionCode: String) async {
+        print("[DiscoveryCoordinator] Acknowledging player locked for session: \(sessionCode)")
+        
+        let playerId = PlayerIdentityService.shared.playerId
+        do {
+            let message = PlayerMessage.locked(playerId: playerId)
+            try await webSocketManager.send(message: message, toNodeId: nodeId)
+            print("[DiscoveryCoordinator] ✓ Sent locked acknowledgment")
+            
+            // Close discovery connection after acknowledgment
+            await closeDiscoveryConnection(for: nodeId)
+        } catch {
+            print("[DiscoveryCoordinator] ✗ Failed to send locked acknowledgment: \(error)")
+        }
+    }
+    
+    private func closeDiscoveryConnection(for nodeId: String) async {
+        print("[DiscoveryCoordinator] Closing discovery connection for: \(nodeId)")
+        await webSocketManager.disconnect(fromNodeId: nodeId)
     }
     
     func deselectNode() async {
