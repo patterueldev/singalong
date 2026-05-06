@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(tags=["WebSocket"])
 
 
-@router.websocket("/ws/{session_id}")
+@router.websocket("/ws/session/{session_id}")
 async def websocket_session_endpoint(session_id: str, websocket: WebSocket):
     """
     WebSocket endpoint for session updates
@@ -37,7 +37,7 @@ async def websocket_session_endpoint(session_id: str, websocket: WebSocket):
       -H "Content-Type: application/json" \\
       -d '{"nickname":"Test","session_id":"1234"}' | jq -r '.access_token')
 
-    websocat -H "Authorization: Bearer $TOKEN" "ws://localhost:5002/ws/1234"
+    websocat -H "Authorization: Bearer $TOKEN" "ws://localhost:5002/ws/session/1234"
     ```
 
     **Example (JavaScript/TypeScript)**:
@@ -223,7 +223,7 @@ async def websocket_session_endpoint(session_id: str, websocket: WebSocket):
         await manager.disconnect(session_id, websocket)
 
 
-@router.websocket("/player/ws")
+@router.websocket("/ws/player/discovery")
 async def websocket_player_discovery_endpoint(websocket: WebSocket):
     """
     WebSocket endpoint for player discovery.
@@ -271,7 +271,7 @@ async def websocket_player_discovery_endpoint(websocket: WebSocket):
     ```
     
     Then player closes this discovery connection and opens playback connection
-    to /api/session/{code}/player/ws
+    to /ws/player/session/{code}
     """
     await websocket.accept()
     
@@ -374,7 +374,7 @@ async def websocket_player_discovery_endpoint(websocket: WebSocket):
         )
 
 
-@router.websocket("/session/{session_code}/player/ws")
+@router.websocket("/ws/player/session/{session_code}")
 async def websocket_player_playback_endpoint(session_code: str, websocket: WebSocket):
     """
     WebSocket endpoint for player playback connection.

@@ -21,7 +21,7 @@ struct DiscoveredNode: Identifiable, Hashable {
             return nil 
         }
         
-        let urlString = "ws://\(target):\(port)/api/player/ws"
+        let urlString = "ws://\(target):\(port)/ws/player/discovery"
         print("[DiscoveredNode] Generated URL: \(urlString)")
         let url = URL(string: urlString)
         if url == nil {

@@ -12,7 +12,7 @@ struct DiscoveredNode: Identifiable, Hashable {
     /// Full WebSocket URL for discovery endpoint
     var discoveryWSURL: URL? {
         guard let ip = ipAddress else { return nil }
-        return URL(string: "ws://\(ip):\(port)/api/player/ws")
+        return URL(string: "ws://\(ip):\(port)/ws/player/discovery")
     }
     
     func hash(into hasher: inout Hasher) {
