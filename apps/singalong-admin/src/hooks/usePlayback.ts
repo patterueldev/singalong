@@ -45,7 +45,7 @@ export function usePlayback(isPlayerModalOpen: boolean = false) {
     const fetchAssignedPlayer = async () => {
       try {
         const playerResponse = await api.get(
-          `/api/sessions/${currentSession.code}/player`
+          `/sessions/${currentSession.code}/player`
         )
         const playerData = playerResponse.data
         
@@ -171,7 +171,7 @@ export function usePlayback(isPlayerModalOpen: boolean = false) {
 
         // Fetch the assigned player from the dedicated endpoint to confirm
         const playerResponse = await api.get(
-          `/api/sessions/${currentSession.code}/player`
+          `/sessions/${currentSession.code}/player`
         )
         const playerData = playerResponse.data
         
