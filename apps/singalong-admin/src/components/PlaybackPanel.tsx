@@ -16,6 +16,7 @@ export function PlaybackPanel({ onOpenPlayerDiscovery }: PlaybackPanelProps) {
   const { currentSession } = useSessions()
   const [assignedPlayer, setAssignedPlayer] = useState<Player | null>(null)
   const [showPlayerModal, setShowPlayerModal] = useState(false)
+  const [isDisconnecting, setIsDisconnecting] = useState(false)
 
   // Fetch assigned player from session on mount and when session changes
   useEffect(() => {
@@ -57,6 +58,31 @@ export function PlaybackPanel({ onOpenPlayerDiscovery }: PlaybackPanelProps) {
       clearInterval(pollInterval)
     }
   }, [currentSession?.code])
+
+  const handleDisconnectClick = async () => {
+    if (!assignedPlayer || !currentSession?.code) return
+
+    const confirmed = window.confirm(
+      `Are you sure you want to disconnect "${assignedPlayer.name}" from this session?\n\nYou will need to re-enable discovery and select a new player.`
+    )
+
+    if (!confirmed) return
+
+    setIsDisconnecting(true)
+    try {
+      await api.post(`/sessions/${currentSession.code}/disconnect-player`)
+      setAssignedPlayer(null)
+      console.log('[PlaybackPanel] Player disconnected successfully')
+      // Automatically open player selection to re-enable discovery
+      onOpenPlayerDiscovery?.()
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : 'Failed to disconnect player'
+      console.error('[PlaybackPanel] Disconnect error:', errorMsg)
+      alert(`Failed to disconnect player: ${errorMsg}`)
+    } finally {
+      setIsDisconnecting(false)
+    }
+  }
 
   const progressPercent =
     nowPlaying.duration > 0 ? (nowPlaying.elapsed / nowPlaying.duration) * 100 : 0
@@ -124,8 +150,12 @@ export function PlaybackPanel({ onOpenPlayerDiscovery }: PlaybackPanelProps) {
             <span className="player-platform">({assignedPlayer.platform})</span>
           )}
         </div>
-        <button className="btn-select-player" onClick={() => onOpenPlayerDiscovery?.()}>
-          {assignedPlayer ? 'Disconnect' : 'Select Player'}
+        <button 
+          className="btn-select-player" 
+          onClick={assignedPlayer ? handleDisconnectClick : () => onOpenPlayerDiscovery?.()}
+          disabled={isDisconnecting}
+        >
+          {isDisconnecting ? 'Disconnecting...' : (assignedPlayer ? 'Disconnect' : 'Select Player')}
         </button>
       </div>
 
