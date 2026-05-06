@@ -12,7 +12,7 @@ import './Dashboard.css'
 export function DashboardPage() {
   const { sessions, currentSession, selectSession, createSession } = useSessions()
   const [showPlayerSelection, setShowPlayerSelection] = useState(false)
-  const { refreshPlayback } = usePlayback(showPlayerSelection)
+  const { refreshPlayback, selectPlayer } = usePlayback(showPlayerSelection)
 
   console.log('[DashboardPage] Rendering with currentSession:', currentSession?.code, 'showPlayerSelection:', showPlayerSelection)
 
@@ -25,8 +25,11 @@ export function DashboardPage() {
   )
 
   const handlePlayerSelected = useCallback(async () => {
+    console.log('[DashboardPage.handlePlayerSelected] Called')
     await refreshPlayback()
+    console.log('[DashboardPage.handlePlayerSelected] refreshPlayback completed')
     setShowPlayerSelection(false)
+    console.log('[DashboardPage.handlePlayerSelected] Modal closed')
   }, [refreshPlayback])
 
   if (!currentSession) {
@@ -73,6 +76,7 @@ export function DashboardPage() {
             onClose={() => setShowPlayerSelection(false)}
             onPlayerSelected={handlePlayerSelected}
             isOpen={showPlayerSelection}
+            onSelectPlayer={selectPlayer}
           />
         )}
       </main>

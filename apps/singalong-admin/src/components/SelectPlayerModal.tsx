@@ -7,25 +7,39 @@ interface SelectPlayerModalProps {
   onClose: () => void
   onPlayerSelected?: () => Promise<void>
   isOpen?: boolean
+  onSelectPlayer?: (playerId: string) => Promise<void>
 }
 
-export function SelectPlayerModal({ sessionCode, onClose, onPlayerSelected, isOpen = true }: SelectPlayerModalProps) {
+export function SelectPlayerModal({ sessionCode, onClose, onPlayerSelected, isOpen = true, onSelectPlayer }: SelectPlayerModalProps) {
   console.log('[SelectPlayerModal] Rendering with isOpen:', isOpen)
-  const { players, loading, error, selectPlayer, selectingPlayerId } = useAvailablePlayers(isOpen)
+  const { players, loading, error } = useAvailablePlayers(isOpen)
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null)
 
   const handleSelectClick = async () => {
     if (!selectedPlayerId) return
+    console.log('[SelectPlayerModal.handleSelectClick] Starting selection flow')
+    console.log('[SelectPlayerModal.handleSelectClick] selectedPlayerId:', selectedPlayerId)
+    console.log('[SelectPlayerModal.handleSelectClick] onSelectPlayer exists:', !!onSelectPlayer)
     try {
-      await selectPlayer(selectedPlayerId, sessionCode)
+      // Use the provided selectPlayer callback from usePlayback
+      if (onSelectPlayer) {
+        console.log('[SelectPlayerModal.handleSelectClick] Calling onSelectPlayer...')
+        await onSelectPlayer(selectedPlayerId)
+        console.log('[SelectPlayerModal.handleSelectClick] onSelectPlayer completed successfully')
+      } else {
+        console.error('[SelectPlayerModal.handleSelectClick] ERROR: onSelectPlayer not provided!')
+      }
       setSelectedPlayerId(null)
       // Trigger playback state refresh
       if (onPlayerSelected) {
+        console.log('[SelectPlayerModal.handleSelectClick] Calling onPlayerSelected...')
         await onPlayerSelected()
+        console.log('[SelectPlayerModal.handleSelectClick] onPlayerSelected completed')
       }
+      console.log('[SelectPlayerModal.handleSelectClick] Closing modal')
       onClose()
     } catch (err) {
-      console.error('Failed to select player:', err)
+      console.error('[SelectPlayerModal.handleSelectClick] ERROR:', err)
     }
   }
 

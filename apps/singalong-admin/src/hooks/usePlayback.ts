@@ -161,7 +161,9 @@ export function usePlayback(isPlayerModalOpen: boolean = false) {
 
   const selectPlayer = useCallback(
     async (playerId: string) => {
+      console.log('[usePlayback.selectPlayer] STARTING FLOW | playerId:', playerId)
       if (!currentSession?.code) {
+        console.error('[usePlayback.selectPlayer] ERROR: No session code')
         setState((prev) => ({
           ...prev,
           error: 'No session selected',
@@ -169,18 +171,23 @@ export function usePlayback(isPlayerModalOpen: boolean = false) {
         return
       }
 
+      console.log('[usePlayback.selectPlayer] Session code:', currentSession.code)
       setState((prev) => ({ ...prev, isLoading: true, error: null }))
       try {
         // Call Node API to select player
-        await api.post(`/api/sessions/${currentSession.code}/select-player`, {
+        console.log('[usePlayback.selectPlayer] Calling POST /api/sessions/{code}/select-player...')
+        const selectResponse = await api.post(`/api/sessions/${currentSession.code}/select-player`, {
           player_id: playerId,
         })
+        console.log('[usePlayback.selectPlayer] Selection API response:', selectResponse.status)
 
         // Fetch the assigned player from the dedicated endpoint to confirm
+        console.log('[usePlayback.selectPlayer] Fetching assigned player from GET /sessions/{code}/player...')
         const playerResponse = await api.get(
           `/sessions/${currentSession.code}/player`
         )
         const playerData = playerResponse.data
+        console.log('[usePlayback.selectPlayer] Raw response data:', playerData)
         
         if (playerData) {
           const assignedPlayer: Player = {
@@ -189,14 +196,22 @@ export function usePlayback(isPlayerModalOpen: boolean = false) {
             platform: playerData.player_platform,
             status: 'connected',
           }
-          console.log('[usePlayback.selectPlayer] ✓ Player selected:', assignedPlayer.name)
-          setState((prev) => ({
-            ...prev,
-            assignedPlayer: assignedPlayer,
-            isLoading: false,
-          }))
+          console.log('[usePlayback.selectPlayer] ✓ PLAYER SELECTED & CONFIRMED:')
+          console.log('  - name:', assignedPlayer.name)
+          console.log('  - platform:', assignedPlayer.platform, '(type:', typeof assignedPlayer.platform, ')')
+          console.log('  - id:', assignedPlayer.id)
+          
+          setState((prev) => {
+            console.log('[usePlayback.selectPlayer] Updating state with assignedPlayer')
+            return {
+              ...prev,
+              assignedPlayer: assignedPlayer,
+              isLoading: false,
+            }
+          })
+          console.log('[usePlayback.selectPlayer] ✓ State updated successfully')
         } else {
-          console.warn('[usePlayback.selectPlayer] No player returned after selection')
+          console.warn('[usePlayback.selectPlayer] WARNING: No player data returned')
           setState((prev) => ({
             ...prev,
             isLoading: false,
@@ -204,7 +219,7 @@ export function usePlayback(isPlayerModalOpen: boolean = false) {
         }
       } catch (err) {
         const errorMsg = err instanceof Error ? err.message : 'Failed to select player'
-        console.error('[usePlayback.selectPlayer] Error:', errorMsg)
+        console.error('[usePlayback.selectPlayer] ✗ SELECTION FAILED:', errorMsg)
         setState((prev) => ({
           ...prev,
           error: errorMsg,
