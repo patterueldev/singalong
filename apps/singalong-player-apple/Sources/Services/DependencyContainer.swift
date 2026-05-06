@@ -5,6 +5,13 @@ import Foundation
 @MainActor
 class DependencyContainer {
     
+    // MARK: - Singleton
+    
+    static let shared = DependencyContainer(
+        mdnsService: MDNSDiscoveryService.shared,
+        webSocketDiscoveryManager: WebSocketDiscoveryManager.shared
+    )
+    
     // MARK: - Singleton Services
     
     let mdnsService: MDNSDiscoveryService
@@ -30,25 +37,11 @@ class DependencyContainer {
         print("[DependencyContainer] Initialized with default services")
     }
     
-    // MARK: - Player Session Manager Factory
+    // MARK: - Factory Methods
     
-    /// Create and store a player session manager
-    /// Called when player transitions from discovery to session phase
     func createPlayerSessionManager() -> WebSocketPlayerSessionManager {
-        let manager = WebSocketPlayerSessionManager.shared
+        let manager = WebSocketPlayerSessionManager()
         self.playerSessionManager = manager
-        print("[DependencyContainer] Created player session manager")
         return manager
     }
-    
-    /// Clear player session manager
-    /// Called when player disconnects
-    func clearPlayerSessionManager() {
-        self.playerSessionManager = nil
-        print("[DependencyContainer] Cleared player session manager")
-    }
 }
-
-/// Global app container instance
-/// Accessed via dependency injection where possible, but can be referenced globally if needed
-let appContainer = DependencyContainer()

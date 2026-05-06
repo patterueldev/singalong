@@ -1,153 +1,60 @@
 import SwiftUI
 import Foundation
 
-/// Main app state manager for the player
+/// Simplified app state for routing and global app configuration
 @MainActor
 class PlayerAppState: ObservableObject {
     
     // MARK: - Published Properties
     
-    @Published var discoveredNodes: [DiscoveredNode] = []
-    @Published var activeConnections: [String: NodeConnectionStatus] = [:]
-    @Published var selectedNodeId: String? = nil
-    @Published var isDiscovering: Bool = false
-    @Published var errorMessage: String? = nil
-    
-    @Published var lockedSessionCode: String? = nil
-    @Published var lockedSessionToken: String? = nil
+    /// Current player ID (persisted across app launches)
     @Published var playerId: String? = nil
     
-    // MARK: - Private Properties
+    /// Current screen to display
+    @Published var currentScreen: PlayerScreen = .idle
     
-    private let mdnsService = MDNSDiscoveryService.shared
-    private let wsManager = WebSocketDiscoveryManager.shared
+    /// Session code and token when player is in active session
+    @Published var lockedSessionCode: String? = nil
+    @Published var lockedSessionToken: String? = nil
+    
+    /// Dependency injection container
+    private let dependencyContainer = DependencyContainer.shared
     
     // MARK: - Initialization
     
     init() {
-        setupCallbacks()
-    }
-    
-    // MARK: - Public Methods
-    
-    /// Start discovery of local nodes
-    func startDiscovery() {
-        guard !isDiscovering else { return }
-        isDiscovering = true
-        errorMessage = nil
-        print("[PlayerApp] Starting discovery...")
-        
-        Task {
-            await mdnsService.startDiscovery()
+        // Restore persisted player ID if available
+        if let savedPlayerId = UserDefaults.standard.string(forKey: "player_id") {
+            self.playerId = savedPlayerId
         }
     }
     
-    /// Stop discovery
-    func stopDiscovery() {
-        isDiscovering = false
-        Task {
-            await mdnsService.stopDiscovery()
-        }
+    // MARK: - Screen Navigation
+    
+    /// Transition to the idle screen (node discovery phase)
+    func transitionToIdleScreen() {
+        currentScreen = .idle
+        lockedSessionCode = nil
+        lockedSessionToken = nil
     }
     
-    /// Connect to a specific discovered node
-    func connectToNode(_ node: DiscoveredNode) {
-        Task {
-            do {
-                try await wsManager.connect(to: node)
-            } catch {
-                await setError("Failed to connect to \(node.name): \(error.localizedDescription)")
-            }
-        }
-    }
-    
-    /// Disconnect from all nodes
-    func disconnectAll() {
-        Task {
-            await wsManager.disconnectAll()
-            selectedNodeId = nil
-        }
-    }
-    
-    /// Handle lock message received from node
-    func handleLockMessage(sessionCode: String, token: String, fromNodeId nodeId: String) {
-        selectedNodeId = nodeId
+    /// Transition to the main screen (session active phase)
+    func transitionToMainScreen(sessionCode: String, sessionToken: String) {
         lockedSessionCode = sessionCode
-        lockedSessionToken = token
-        
-        print("[PlayerApp] Locked to session \(sessionCode) on node \(nodeId)")
-        
-        // Now transition to playback WebSocket
-        // This will be implemented in next phase (P2.7)
+        lockedSessionToken = sessionToken
+        currentScreen = .main
     }
     
-    /// Handle registration response from node
-    func handleRegisteredMessage(playerId: String, fromNodeId nodeId: String) {
-        self.playerId = playerId
-        print("[PlayerApp] Registered with player ID: \(playerId)")
+    /// Set the player ID (persisted to UserDefaults)
+    func setPlayerId(_ id: String) {
+        playerId = id
+        UserDefaults.standard.set(id, forKey: "player_id")
     }
-    
-    // MARK: - Private Methods
-    
-    private func setupCallbacks() {
-        // Set up mDNS callbacks
-        Task {
-            await mdnsService.onNodesUpdated = { [weak self] nodes in
-                DispatchQueue.main.async {
-                    self?.discoveredNodes = nodes
-                }
-            }
-            
-            await mdnsService.onNodeRemoved = { [weak self] node in
-                DispatchQueue.main.async {
-                    self?.activeConnections.removeValue(forKey: node.id)
-                    if self?.selectedNodeId == node.id {
-                        self?.selectedNodeId = nil
-                    }
-                }
-            }
-        }
-        
-        // Set up WebSocket callbacks
-        wsManager.onConnectionStatusChanged = { [weak self] nodeId, status in
-            DispatchQueue.main.async {
-                self?.activeConnections[nodeId] = status
-            }
-        }
-        
-        wsManager.onMessageReceived = { [weak self] nodeId, message in
-            DispatchQueue.main.async {
-                self?.handleNodeMessage(message, fromNodeId: nodeId)
-            }
-        }
-        
-        wsManager.onConnectionClosed = { [weak self] nodeId in
-            DispatchQueue.main.async {
-                self?.activeConnections.removeValue(forKey: nodeId)
-            }
-        }
-    }
-    
-    private func handleNodeMessage(_ message: NodeMessage, fromNodeId nodeId: String) {
-        switch message {
-        case .registered(let playerId):
-            handleRegisteredMessage(playerId: playerId, fromNodeId: nodeId)
-            
-        case .lock(let sessionCode, let token):
-            handleLockMessage(sessionCode: sessionCode, token: token, fromNodeId: nodeId)
-            
-        case .pong:
-            print("[PlayerApp] Received pong from \(nodeId)")
-            
-        case .error(let code, let errorMsg):
-            setError("Node error (\(code)): \(errorMsg)")
-        }
-    }
-    
-    private func setError(_ message: String) {
-        DispatchQueue.main.async {
-            self.errorMessage = message
-            print("[PlayerApp] Error: \(message)")
-        }
-    }
+}
+
+// MARK: - Enums
+
+enum PlayerScreen {
+    case idle
+    case main
 }

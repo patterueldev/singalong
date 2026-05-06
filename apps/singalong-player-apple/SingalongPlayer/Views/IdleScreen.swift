@@ -1,12 +1,19 @@
 import SwiftUI
 
+// MARK: - IdleScreen View
+
 /// The main Idle Screen showing discovered nodes and connection status
 struct IdleScreen: View {
     
-    @StateObject var appState: PlayerAppState
+    @StateObject private var viewModel: IdleScreenViewModel
+    @EnvironmentObject var appState: PlayerAppState
     @State private var showManualSetup = false
     @State private var manualURL = ""
     @State private var manualAPIKey = ""
+    
+    init(viewModel: IdleScreenViewModel) {
+        _viewModel = StateObject(wrappedValue: viewModel)
+    }
     
     var body: some View {
         ZStack {
@@ -22,7 +29,7 @@ struct IdleScreen: View {
                         .fontWeight(.bold)
                         .foregroundColor(.white)
                     
-                    Text(appState.isDiscovering ? "Discovering nodes..." : "Ready")
+                    Text(viewModel.isDiscovering ? "Discovering nodes..." : "Ready")
                         .font(.subheadline)
                         .foregroundColor(Color(red: 0.612, green: 0.639, blue: 0.686)) // #9ca3af
                 }
@@ -31,17 +38,17 @@ struct IdleScreen: View {
                 // Status indicator
                 HStack(spacing: 8) {
                     Circle()
-                        .fill(appState.isDiscovering ? Color(red: 0.753, green: 0.522, blue: 0.992) : Color.gray) // #c084fc
+                        .fill(viewModel.isDiscovering ? Color(red: 0.753, green: 0.522, blue: 0.992) : Color.gray) // #c084fc
                         .frame(width: 12, height: 12)
                     
-                    Text(appState.discoveredNodes.isEmpty ? "No nodes found" : "\(appState.discoveredNodes.count) node(s) found")
+                    Text(viewModel.discoveredNodes.isEmpty ? "No nodes found" : "\(viewModel.discoveredNodes.count) node(s) found")
                         .font(.caption)
                         .foregroundColor(Color(red: 0.612, green: 0.639, blue: 0.686))
                 }
                 .padding(.horizontal, 24)
                 
                 // Nodes list
-                if appState.discoveredNodes.isEmpty {
+                if viewModel.discoveredNodes.isEmpty {
                     VStack(spacing: 16) {
                         Image(systemName: "network")
                             .font(.system(size: 48))
@@ -62,12 +69,12 @@ struct IdleScreen: View {
                 } else {
                     ScrollView {
                         VStack(spacing: 12) {
-                            ForEach(appState.discoveredNodes) { node in
-                                let status = appState.activeConnections[node.id] ?? .connecting
+                            ForEach(viewModel.discoveredNodes) { node in
+                                let status = viewModel.activeConnections[node.id] ?? .connecting
                                 NodeCard(
                                     node: node,
                                     status: status,
-                                    appState: appState
+                                    onSelect: { viewModel.selectNode(node) }
                                 )
                             }
                         }
@@ -78,7 +85,7 @@ struct IdleScreen: View {
                 Spacer()
                 
                 // Error message
-                if let error = appState.errorMessage {
+                if let error = viewModel.errorMessage {
                     HStack(spacing: 8) {
                         Image(systemName: "exclamationmark.circle.fill")
                             .foregroundColor(.red)
@@ -111,7 +118,10 @@ struct IdleScreen: View {
             }
         }
         .onAppear {
-            appState.startDiscovery()
+            viewModel.startDiscovery()
+        }
+        .onDisappear {
+            viewModel.stopDiscovery()
         }
         .sheet(isPresented: $showManualSetup) {
             ManualSetupSheet(
@@ -128,9 +138,8 @@ struct IdleScreen: View {
 struct NodeCard: View {
     
     let node: DiscoveredNode
-    let status: NodeConnectionStatus
-    let appState: PlayerAppState
-    @Environment(\.scenePhase) var scenePhase
+    let status: ConnectionStatus
+    let onSelect: () -> Void
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -152,11 +161,17 @@ struct NodeCard: View {
                 
                 Spacer()
                 
-                // Status text only - no secondary text
-                Text(status.displayText)
-                    .font(.caption)
-                    .fontWeight(.semibold)
-                    .foregroundColor(status.statusColor)
+                // Status indicator
+                HStack(spacing: 4) {
+                    Circle()
+                        .fill(statusColor)
+                        .frame(width: 8, height: 8)
+                    
+                    Text(statusText)
+                        .font(.caption)
+                        .fontWeight(.semibold)
+                        .foregroundColor(statusColor)
+                }
             }
         }
         .padding(16)
@@ -165,16 +180,30 @@ struct NodeCard: View {
         .overlay(
             RoundedRectangle(cornerRadius: 12)
                 .stroke(
-                    status == .locked ? Color(red: 0.753, green: 0.522, blue: 0.992) : Color.clear,
+                    status == .connected ? Color(red: 0.753, green: 0.522, blue: 0.992) : Color.clear,
                     lineWidth: 2
                 )
         )
-        .onAppear {
-            // Auto-connect when node is discovered
-            if case .connecting = status {
-                print("[NodeCard] Auto-connecting to \(node.name)")
-                appState.connectToNode(node)
-            }
+        .onTapGesture {
+            onSelect()
+        }
+    }
+    
+    private var statusText: String {
+        switch status {
+        case .disconnected: return "Disconnected"
+        case .connecting: return "Connecting..."
+        case .connected: return "Ready"
+        case .error: return "Error"
+        }
+    }
+    
+    private var statusColor: Color {
+        switch status {
+        case .disconnected: return Color.gray
+        case .connecting: return Color(red: 0.612, green: 0.639, blue: 0.686)
+        case .connected: return Color(red: 0.753, green: 0.522, blue: 0.992)
+        case .error: return Color.red
         }
     }
 }
@@ -255,5 +284,8 @@ struct ManualSetupSheet: View {
 }
 
 #Preview {
-    IdleScreen(appState: PlayerAppState())
+    let container = DependencyContainer.shared
+    let coordinator = container.discoveryCoordinator
+    let viewModel = IdleScreenViewModel(discoveryCoordinator: coordinator, dependencyContainer: container)
+    return IdleScreen(viewModel: viewModel)
 }

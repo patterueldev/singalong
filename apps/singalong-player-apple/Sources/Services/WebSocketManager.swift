@@ -25,7 +25,7 @@ protocol WebSocketManager: AnyObject, Sendable {
 }
 
 /// Connection status for any WebSocket connection
-enum ConnectionStatus: String, Sendable {
+enum ConnectionStatus: Sendable {
     case disconnected
     case connecting
     case connected
@@ -47,39 +47,6 @@ enum ConnectionStatus: String, Sendable {
             return "Disconnecting..."
         case .error(let message):
             return "Error: \(message)"
-        }
-    }
-}
-
-/// WebSocket-related errors
-enum WebSocketError: LocalizedError, Sendable {
-    case invalidURL
-    case connectionFailed(String)
-    case messageSendFailed(String)
-    case messageReceiveFailed(String)
-    case decodingFailed(String)
-    case encodingFailed(String)
-    case disconnected
-    case timeout
-    
-    var errorDescription: String? {
-        switch self {
-        case .invalidURL:
-            return "Invalid WebSocket URL"
-        case .connectionFailed(let msg):
-            return "Connection failed: \(msg)"
-        case .messageSendFailed(let msg):
-            return "Failed to send message: \(msg)"
-        case .messageReceiveFailed(let msg):
-            return "Failed to receive message: \(msg)"
-        case .decodingFailed(let msg):
-            return "Failed to decode message: \(msg)"
-        case .encodingFailed(let msg):
-            return "Failed to encode message: \(msg)"
-        case .disconnected:
-            return "WebSocket disconnected"
-        case .timeout:
-            return "Connection timeout"
         }
     }
 }

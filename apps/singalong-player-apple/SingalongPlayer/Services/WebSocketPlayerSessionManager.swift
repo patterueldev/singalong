@@ -1,151 +1,45 @@
 import Foundation
 
-/// Manages WebSocket connection to player session endpoint
-/// Handles player control commands and state updates after player is locked to a session
-actor WebSocketPlayerSessionManager {
+/// WebSocket manager for player session phase (after player is locked)
+/// Handles connection to /ws/player/session/{code} and communicates with Node
+class WebSocketPlayerSessionManager: NSObject {
     
-    static let shared = WebSocketPlayerSessionManager()
+    // MARK: - Properties
     
-    private var sessionWebSocketTask: URLSessionWebSocketTask?
     private var isConnected = false
+    private var sessionCode: String = ""
+    private var token: String = ""
     
-    // MARK: - Callbacks
-    
-    var onMessageReceived: ((NodeSessionMessage) -> Void)?
     var onConnectionStatusChanged: ((ConnectionStatus) -> Void)?
-    var onConnectionClosed: (() -> Void)?
     var onError: ((WebSocketError) -> Void)?
     
-    private let maxRetryAttempts = 5
-    private let initialBackoffSeconds: Double = 1.0
+    // MARK: - Methods
     
-    nonisolated init() {
-        print("[PlayerSessionManager] Initialized")
-    }
-    
-    // MARK: - Connection Management
-    
-    func connect(sessionCode: String, token: String) async throws {
-        print("[PlayerSessionManager] Connecting to session: \(sessionCode)")
-        
-        // Build WebSocket URL
-        let wsURL = URL(string: "ws://localhost:5002/ws/player/session/\(sessionCode)")!
-        
-        let urlSession = URLSession(configuration: .default)
-        let webSocketTask = urlSession.webSocketTask(with: wsURL)
-        
-        self.sessionWebSocketTask = webSocketTask
-        
-        // Start connection
-        webSocketTask.resume()
-        
-        // Update status
-        await MainActor.run {
-            self.onConnectionStatusChanged?(.connecting)
-        }
-        
-        // Send authentication message
-        let authMessage = PlayerSessionMessage.auth(sessionCode: sessionCode, token: token)
-        do {
-            try await send(message: authMessage)
-            print("[PlayerSessionManager] ✓ Auth message sent")
-        } catch {
-            print("[PlayerSessionManager] ✗ Failed to send auth: \(error)")
-            throw error
-        }
-        
-        // Start receiving messages
-        await receiveMessages()
-    }
-    
-    func disconnect() async {
-        print("[PlayerSessionManager] Disconnecting from session")
-        
-        if let task = sessionWebSocketTask {
-            try? await task.send(.string("{\"type\": \"disconnect\"}"))
-            task.cancel(with: .goingAway, reason: nil)
-        }
-        
-        sessionWebSocketTask = nil
-        isConnected = false
-        
-        await MainActor.run {
-            self.onConnectionClosed?()
-        }
-        
-        print("[PlayerSessionManager] Disconnected")
-    }
-    
-    // MARK: - Message Sending
-    
-    private func send(message: PlayerSessionMessage) async throws {
-        guard let task = sessionWebSocketTask else {
-            throw WebSocketError.disconnected
-        }
-        
-        let encoder = JSONEncoder()
-        let jsonData = try encoder.encode(message)
-        let jsonString = String(data: jsonData, encoding: .utf8) ?? ""
-        
-        print("[PlayerSessionManager] Sending message: \(jsonString)")
-        
-        try await task.send(.string(jsonString))
-    }
-    
-    // MARK: - Message Receiving
-    
-    private func receiveMessages() async {
-        guard let task = sessionWebSocketTask else {
-            print("[PlayerSessionManager] No WebSocket task available")
-            return
-        }
-        
+    func connect(sessionCode: String) async throws {
+        self.sessionCode = sessionCode
+        // Will construct WebSocket URL from sessionCode
+        // e.g., ws://node:5002/ws/player/session/{code}
         isConnected = true
-        
-        await MainActor.run {
-            self.onConnectionStatusChanged?(.connected)
+        onConnectionStatusChanged?(.connected)
+    }
+    
+    func disconnect() async throws {
+        isConnected = false
+        onConnectionStatusChanged?(.disconnected)
+    }
+    
+    func send(_ message: PlayerSessionMessage) async throws {
+        guard isConnected else {
+            throw WebSocketError.notConnected
         }
-        
-        do {
-            while isConnected {
-                let message = try await task.receive()
-                
-                switch message {
-                case .string(let text):
-                    if let jsonData = text.data(using: .utf8) {
-                        do {
-                            let decoder = JSONDecoder()
-                            let nodeMessage = try decoder.decode(NodeSessionMessage.self, from: jsonData)
-                            
-                            print("[PlayerSessionManager] Received message: \(text)")
-                            
-                            // Dispatch message to callback on main thread
-                            await MainActor.run {
-                                self.onMessageReceived?(nodeMessage)
-                            }
-                        } catch {
-                            print("[PlayerSessionManager] ✗ Failed to decode message: \(error)")
-                            await MainActor.run {
-                                self.onError?(.decodingFailed(error.localizedDescription))
-                            }
-                        }
-                    }
-                    
-                case .data(let data):
-                    print("[PlayerSessionManager] Received binary data: \(data.count) bytes")
-                    
-                @unknown default:
-                    print("[PlayerSessionManager] Received unknown message type")
-                }
-            }
-        } catch {
-            print("[PlayerSessionManager] ✗ WebSocket error: \(error)")
-            isConnected = false
-            
-            await MainActor.run {
-                self.onConnectionStatusChanged?(.disconnected)
-                self.onError?(.messageReceiveFailed(error.localizedDescription))
-            }
+        // Placeholder: Will implement message sending to WebSocket
+    }
+    
+    func receiveMessages(handler: @escaping (NodeSessionMessage) -> Void) async throws {
+        // Placeholder: Will implement session message receiving
+        while isConnected {
+            // Simulate receiving messages
+            try? await Task.sleep(nanoseconds: 1_000_000_000)
         }
     }
 }
