@@ -24,6 +24,11 @@ export function DashboardPage() {
     [createSession]
   )
 
+  const handlePlayerSelected = useCallback(async () => {
+    await refreshPlayback()
+    setShowPlayerSelection(false)
+  }, [refreshPlayback])
+
   if (!currentSession) {
     return (
       <div className="dashboard-container">
@@ -66,7 +71,7 @@ export function DashboardPage() {
           <SelectPlayerModal
             sessionCode={currentSession.code}
             onClose={() => setShowPlayerSelection(false)}
-            onPlayerSelected={refreshPlayback}
+            onPlayerSelected={handlePlayerSelected}
             isOpen={showPlayerSelection}
           />
         )}

@@ -20,6 +20,7 @@ export function PlaybackPanel({ onOpenPlayerDiscovery }: PlaybackPanelProps) {
   const [isDisconnecting, setIsDisconnecting] = useState(false)
 
   // Fetch assigned player from session on mount and when session changes
+  // Real-time updates will come from WebSocket in future phases
   useEffect(() => {
     if (!currentSession?.code) {
       setAssignedPlayer(null)
@@ -49,15 +50,8 @@ export function PlaybackPanel({ onOpenPlayerDiscovery }: PlaybackPanelProps) {
       }
     }
 
-    // Fetch immediately on mount
+    // Fetch once on session change
     fetchSessionData()
-
-    // Also poll every 3 seconds to catch updates (player selection, disconnection)
-    const pollInterval = setInterval(fetchSessionData, 3000)
-
-    return () => {
-      clearInterval(pollInterval)
-    }
   }, [currentSession?.code])
 
   const handleDisconnectClick = async () => {
