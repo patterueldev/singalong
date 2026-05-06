@@ -375,13 +375,13 @@ async def websocket_player_discovery_endpoint(websocket: WebSocket):
 
 
 @router.websocket("/ws/player/session/{session_code}")
-async def websocket_player_playback_endpoint(session_code: str, websocket: WebSocket):
+async def websocket_player_session_endpoint(session_code: str, websocket: WebSocket):
     """
-    WebSocket endpoint for player playback connection.
+    WebSocket endpoint for player session connection.
     
-    After player is locked to a session, player opens this connection for:
-    1. Receiving playback commands (play, pause, seek)
-    2. Sending playback state updates (progress, finished)
+    After player is locked to a session, player opens this connection to:
+    1. Receive player control commands (play, pause, seek, volume, disconnect, etc.)
+    2. Send player state updates (progress, ended, etc.)
     
     **Authentication**: Player must send token from lock message in first message
     
@@ -404,7 +404,7 @@ async def websocket_player_playback_endpoint(session_code: str, websocket: WebSo
     
     Then bidirectional communication:
     
-    Node → Player (playback commands):
+    Node → Player (player control commands):
     ```json
     {
       "type": "play",
@@ -413,11 +413,18 @@ async def websocket_player_playback_endpoint(session_code: str, websocket: WebSo
     }
     ```
     
-    Player → Node (status updates):
+    Or:
     ```json
     {
-      "type": "status",
-      "state": "playing",
+      "type": "disconnect",
+      "reason": "admin_requested"
+    }
+    ```
+    
+    Player → Node (player state updates):
+    ```json
+    {
+      "type": "progress",
       "elapsed_seconds": 45,
       "total_seconds": 180
     }
