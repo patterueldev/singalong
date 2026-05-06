@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import Swal from 'sweetalert2'
 import { usePlayback } from '../hooks/usePlayback'
 import { useSessions } from '../hooks/useSessions'
 import api from '../services/authService'
@@ -62,23 +63,45 @@ export function PlaybackPanel({ onOpenPlayerDiscovery }: PlaybackPanelProps) {
   const handleDisconnectClick = async () => {
     if (!assignedPlayer || !currentSession?.code) return
 
-    const confirmed = window.confirm(
-      `Are you sure you want to disconnect "${assignedPlayer.name}" from this session?\n\nYou will need to re-enable discovery and select a new player.`
-    )
+    const result = await Swal.fire({
+      title: 'Disconnect Player?',
+      html: `<strong>${assignedPlayer.name}</strong> will be disconnected from this session and returned to discovery mode.`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#c084fc',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Yes, disconnect',
+      cancelButtonText: 'Cancel',
+    })
 
-    if (!confirmed) return
+    if (!result.isConfirmed) return
 
     setIsDisconnecting(true)
     try {
       await api.post(`/sessions/${currentSession.code}/disconnect-player`)
       setAssignedPlayer(null)
       console.log('[PlaybackPanel] Player disconnected successfully')
-      // Automatically open player selection to re-enable discovery
+      
+      // Show success message
+      await Swal.fire({
+        title: 'Disconnected!',
+        text: `${assignedPlayer.name} has been disconnected. Select a new player when ready.`,
+        icon: 'success',
+        confirmButtonColor: '#c084fc',
+      })
+      
+      // Automatically open player selection to show discovery is re-enabled
       onOpenPlayerDiscovery?.()
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Failed to disconnect player'
       console.error('[PlaybackPanel] Disconnect error:', errorMsg)
-      alert(`Failed to disconnect player: ${errorMsg}`)
+      
+      await Swal.fire({
+        title: 'Disconnection Failed',
+        text: errorMsg,
+        icon: 'error',
+        confirmButtonColor: '#c084fc',
+      })
     } finally {
       setIsDisconnecting(false)
     }
