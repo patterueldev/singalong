@@ -33,7 +33,54 @@ export function usePlayback(isPlayerModalOpen: boolean = false) {
     error: null,
   })
 
-  // Poll available players and session details every 5 seconds - ONLY when modal is open
+  // ALWAYS fetch assigned player on mount and when session changes
+  // This is separate from the polling of available players
+  useEffect(() => {
+    if (!currentSession?.code) {
+      console.log('[usePlayback] No currentSession, clearing assigned player')
+      setState((prev) => ({ ...prev, assignedPlayer: null }))
+      return
+    }
+
+    const fetchAssignedPlayer = async () => {
+      try {
+        const sessionResponse = await api.get(
+          `/sessions/${currentSession.code}`
+        )
+        const sessionData = sessionResponse.data
+        console.log('[usePlayback] Fetched assigned player:', {
+          player_id: sessionData?.player_id,
+          player_name: sessionData?.player_name,
+          player_platform: sessionData?.player_platform,
+        })
+
+        let assignedPlayer: Player | null = null
+        if (sessionData?.player_id && sessionData?.player_name) {
+          assignedPlayer = {
+            id: sessionData.player_id,
+            name: sessionData.player_name,
+            platform: sessionData.player_platform || 'unknown',
+            status: 'connected' as any,
+          }
+          console.log('[usePlayback] ✓ Assigned player:', assignedPlayer.name, `(${assignedPlayer.platform})`)
+        } else {
+          console.log('[usePlayback] No assigned player')
+        }
+
+        setState((prev) => ({
+          ...prev,
+          assignedPlayer: assignedPlayer,
+        }))
+      } catch (err) {
+        const errorMsg = err instanceof Error ? err.message : 'Failed to fetch session'
+        console.error('[usePlayback] Error fetching assigned player:', errorMsg)
+      }
+    }
+
+    fetchAssignedPlayer()
+  }, [currentSession?.code])
+
+  // Poll available players ONLY when modal is open
   useEffect(() => {
     if (!currentSession?.code) {
       console.log('[usePlayback] No currentSession, skipping poll')
@@ -45,10 +92,10 @@ export function usePlayback(isPlayerModalOpen: boolean = false) {
       return
     }
 
-    console.log('[usePlayback] Starting poll for session:', currentSession.code)
+    console.log('[usePlayback] Starting poll for available players')
 
-    const fetchData = async () => {
-      console.log('[usePlayback.fetchData] Polling available players')
+    const fetchAvailablePlayers = async () => {
+      console.log('[usePlayback] Polling available players')
       setState((prev) => ({ ...prev, isLoading: true, error: null }))
       try {
         // Fetch available players
@@ -59,7 +106,7 @@ export function usePlayback(isPlayerModalOpen: boolean = false) {
         const players = Array.isArray(playersResponse.data) 
           ? playersResponse.data 
           : (playersResponse.data?.players || playersResponse.data?.available_players || [])
-        console.log('[usePlayback.fetchData] Fetched', players.length, 'available players')
+        console.log('[usePlayback] Fetched', players.length, 'available players')
         
         // Convert Node response format to Player model
         const mappedPlayers: Player[] = players.map(
@@ -71,35 +118,13 @@ export function usePlayback(isPlayerModalOpen: boolean = false) {
           })
         )
 
-        // Fetch session details to get current assigned player
-        const sessionResponse = await api.get(
-          `/sessions/${currentSession.code}`
-        )
-        const sessionData = sessionResponse.data
-        console.log('[usePlayback] Session details response:', { player_id: sessionData?.player_id, player_name: sessionData?.player_name, player_platform: sessionData?.player_platform })
-
-        // If player is assigned in session, use that; otherwise None Selected
-        let assignedPlayer: Player | null = null
-        if (sessionData?.player_id && sessionData?.player_name) {
-          assignedPlayer = {
-            id: sessionData.player_id,
-            name: sessionData.player_name,
-            platform: sessionData.player_platform || 'unknown',
-            status: 'connected' as any,
-          }
-          console.log('[usePlayback] ✓ Assigned player found:', assignedPlayer.name, `(${assignedPlayer.platform})`)
-        } else {
-          console.log('[usePlayback] No assigned player yet')
-        }
-
         setState((prev) => ({
           ...prev,
           availablePlayers: mappedPlayers,
-          assignedPlayer: assignedPlayer,
           isLoading: false,
         }))
       } catch (err) {
-        const errorMsg = err instanceof Error ? err.message : 'Failed to fetch data'
+        const errorMsg = err instanceof Error ? err.message : 'Failed to fetch available players'
         console.error('[usePlayback] Fetch error:', errorMsg)
         setState((prev) => ({
           ...prev,
@@ -109,15 +134,15 @@ export function usePlayback(isPlayerModalOpen: boolean = false) {
       }
     }
 
-    // Fetch immediately on mount
-    fetchData()
+    // Fetch immediately on modal open
+    fetchAvailablePlayers()
 
     // Set up polling every 5 seconds
     console.log('[usePlayback] Setting up 5-second poll interval')
-    const pollInterval = setInterval(fetchData, 5000)
+    const pollInterval = setInterval(fetchAvailablePlayers, 5000)
 
     return () => {
-      console.log('[usePlayback] Cleaning up poll interval for session:', currentSession.code)
+      console.log('[usePlayback] Cleaning up poll interval')
       clearInterval(pollInterval)
     }
   }, [currentSession?.code, isPlayerModalOpen])
@@ -181,68 +206,61 @@ export function usePlayback(isPlayerModalOpen: boolean = false) {
   const refreshPlayback = useCallback(async () => {
     if (!currentSession?.code) return
     
-    const fetchData = async () => {
-      setState((prev) => ({ ...prev, isLoading: true, error: null }))
-      try {
-        // Fetch available players
-        const playersResponse = await api.get(
-          `/players/available`
-        )
-        // Handle both direct array, {players: [...]}, and {available_players: [...]} response
-        const players = Array.isArray(playersResponse.data) 
-          ? playersResponse.data 
-          : (playersResponse.data?.players || playersResponse.data?.available_players || [])
-        console.log('[usePlayback.refreshPlayback] Fetched', players.length, 'available players')
-        
-        // Convert Node response format to Player model
-        const mappedPlayers: Player[] = players.map(
-          (p: { id: string; name: string; platform: string; status: string }) => ({
-            id: p.id,
-            name: p.name,
-            platform: p.platform,
-            status: p.status as any,
-          })
-        )
+    setState((prev) => ({ ...prev, isLoading: true, error: null }))
+    try {
+      // Fetch available players
+      const playersResponse = await api.get('/players/available')
+      const players = Array.isArray(playersResponse.data) 
+        ? playersResponse.data 
+        : (playersResponse.data?.players || playersResponse.data?.available_players || [])
+      console.log('[usePlayback.refreshPlayback] Fetched', players.length, 'available players')
+      
+      const mappedPlayers: Player[] = players.map(
+        (p: { id: string; name: string; platform: string; status: string }) => ({
+          id: p.id,
+          name: p.name,
+          platform: p.platform,
+          status: p.status as any,
+        })
+      )
 
-        // Fetch session details to get current assigned player
-        const sessionResponse = await api.get(
-          `/sessions/${currentSession.code}`
-        )
-        const sessionData = sessionResponse.data
-        console.log('[usePlayback] Refreshed playback data:', { player_id: sessionData?.player_id, player_name: sessionData?.player_name, player_platform: sessionData?.player_platform })
+      // Fetch session details to get current assigned player
+      const sessionResponse = await api.get(`/sessions/${currentSession.code}`)
+      const sessionData = sessionResponse.data
+      console.log('[usePlayback.refreshPlayback] Fetched assigned player:', {
+        player_id: sessionData?.player_id,
+        player_name: sessionData?.player_name,
+        player_platform: sessionData?.player_platform,
+      })
 
-        // If player is assigned in session, use that; otherwise None Selected
-        let assignedPlayer: Player | null = null
-        if (sessionData?.player_id && sessionData?.player_name) {
-          assignedPlayer = {
-            id: sessionData.player_id,
-            name: sessionData.player_name,
-            platform: sessionData.player_platform || 'unknown',
-            status: 'connected' as any,
-          }
-          console.log('[usePlayback] ✓ Assigned player found after refresh:', assignedPlayer.name, `(${assignedPlayer.platform})`)
-        } else {
-          console.log('[usePlayback] No assigned player after refresh')
+      let assignedPlayer: Player | null = null
+      if (sessionData?.player_id && sessionData?.player_name) {
+        assignedPlayer = {
+          id: sessionData.player_id,
+          name: sessionData.player_name,
+          platform: sessionData.player_platform || 'unknown',
+          status: 'connected' as any,
         }
-
-        setState((prev) => ({
-          ...prev,
-          availablePlayers: mappedPlayers,
-          assignedPlayer: assignedPlayer,
-          isLoading: false,
-        }))
-      } catch (err) {
-        const errorMsg = err instanceof Error ? err.message : 'Failed to refresh playback data'
-        console.error('[usePlayback] Refresh error:', errorMsg)
-        setState((prev) => ({
-          ...prev,
-          error: errorMsg,
-          isLoading: false,
-        }))
+        console.log('[usePlayback.refreshPlayback] ✓ Assigned player:', assignedPlayer.name, `(${assignedPlayer.platform})`)
+      } else {
+        console.log('[usePlayback.refreshPlayback] No assigned player')
       }
-    }
 
-    await fetchData()
+      setState((prev) => ({
+        ...prev,
+        availablePlayers: mappedPlayers,
+        assignedPlayer: assignedPlayer,
+        isLoading: false,
+      }))
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : 'Failed to refresh playback'
+      console.error('[usePlayback.refreshPlayback] Error:', errorMsg)
+      setState((prev) => ({
+        ...prev,
+        error: errorMsg,
+        isLoading: false,
+      }))
+    }
   }, [currentSession?.code])
 
   return {
