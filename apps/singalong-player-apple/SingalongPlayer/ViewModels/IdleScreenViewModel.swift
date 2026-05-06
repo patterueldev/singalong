@@ -71,8 +71,26 @@ final class IdleScreenViewModel: ObservableObject {
     }
     
     private func handleNodeDiscovered(_ node: DiscoveredNode) {
+        print("[IdleScreenViewModel] handleNodeDiscovered() called for: \(node.name)")
+        
         if !discoveredNodes.contains(where: { $0.id == node.id }) {
+            print("[IdleScreenViewModel] Node is new, adding to list: \(node.name)")
             discoveredNodes.append(node)
+            
+            // Automatically connect to discovered node via WebSocket
+            print("[IdleScreenViewModel] Automatically connecting to discovered node...")
+            Task {
+                do {
+                    print("[IdleScreenViewModel] Auto-connecting to: \(node.name)")
+                    try await discoveryCoordinator.selectNode(node)
+                    print("[IdleScreenViewModel] ✓ Auto-connection to \(node.name) initiated")
+                } catch {
+                    print("[IdleScreenViewModel] ✗ Auto-connection failed: \(error)")
+                    self.errorMessage = "Auto-connect failed: \(error.localizedDescription)"
+                }
+            }
+        } else {
+            print("[IdleScreenViewModel] Node already in list, skipping: \(node.name)")
         }
     }
     
