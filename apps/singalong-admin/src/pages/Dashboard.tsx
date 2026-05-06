@@ -12,7 +12,7 @@ import './Dashboard.css'
 export function DashboardPage() {
   const { sessions, currentSession, selectSession, createSession } = useSessions()
   const [showPlayerSelection, setShowPlayerSelection] = useState(false)
-  const { refreshPlayback, selectPlayer } = usePlayback(showPlayerSelection)
+  const playbackState = usePlayback(showPlayerSelection)
 
   console.log('[DashboardPage] Rendering with currentSession:', currentSession?.code, 'showPlayerSelection:', showPlayerSelection)
 
@@ -26,11 +26,11 @@ export function DashboardPage() {
 
   const handlePlayerSelected = useCallback(async () => {
     console.log('[DashboardPage.handlePlayerSelected] Called')
-    await refreshPlayback()
+    await playbackState.refreshPlayback()
     console.log('[DashboardPage.handlePlayerSelected] refreshPlayback completed')
     setShowPlayerSelection(false)
     console.log('[DashboardPage.handlePlayerSelected] Modal closed')
-  }, [refreshPlayback])
+  }, [playbackState])
 
   if (!currentSession) {
     return (
@@ -54,7 +54,10 @@ export function DashboardPage() {
         <SessionHeader session={currentSession} />
         <div className="dashboard-panels">
           <div className="panel top-left">
-            <PlaybackPanel onOpenPlayerDiscovery={() => setShowPlayerSelection(true)} />
+            <PlaybackPanel 
+              onOpenPlayerDiscovery={() => setShowPlayerSelection(true)}
+              playbackState={playbackState}
+            />
           </div>
           <div className="panel top-right">
             <DownloadsPanel />
@@ -76,7 +79,7 @@ export function DashboardPage() {
             onClose={() => setShowPlayerSelection(false)}
             onPlayerSelected={handlePlayerSelected}
             isOpen={showPlayerSelection}
-            onSelectPlayer={selectPlayer}
+            onSelectPlayer={playbackState.selectPlayer}
           />
         )}
       </main>

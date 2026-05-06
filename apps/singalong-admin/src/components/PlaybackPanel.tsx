@@ -8,11 +8,14 @@ import './PlaybackPanel.css'
 
 interface PlaybackPanelProps {
   onOpenPlayerDiscovery?: () => void
+  playbackState?: ReturnType<typeof usePlayback>
 }
 
-export function PlaybackPanel({ onOpenPlayerDiscovery }: PlaybackPanelProps) {
+export function PlaybackPanel({ onOpenPlayerDiscovery, playbackState }: PlaybackPanelProps) {
+  const defaultPlaybackState = usePlayback()
+  // Use passed state or fall back to local hook (for standalone usage)
   const { nowPlaying, availablePlayers, assignedPlayer, isLoading, selectPlayer, refreshPlayback, play, pause } =
-    usePlayback()
+    playbackState || defaultPlaybackState
   const { currentSession } = useSessions()
   const [isDisconnecting, setIsDisconnecting] = useState(false)
 
