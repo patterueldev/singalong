@@ -152,12 +152,7 @@ app = FastAPI(
 # CORS middleware using Starlette's built-in (much more reliable)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3001",
-        "http://localhost:3002",
-        "https://singalongadmin-dev.nicenature.space",
-        "https://singalongcontroller-dev.nicenature.space",
-    ],
+    allow_origins=settings.get_cors_origins(),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

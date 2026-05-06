@@ -51,6 +51,12 @@ class Settings(BaseSettings):
     # OpenAI Configuration
     openai_api_key: str = Field(default="", validation_alias="OPENAI_API_KEY")
 
+    # CORS Configuration (comma-separated origins)
+    cors_origins: str = Field(
+        default="http://localhost:3001,http://localhost:3002,http://thursday.local:3001,http://thursday.local:3002,https://singalongadmin-dev.nicenature.space,https://singalongcontroller-dev.nicenature.space",
+        validation_alias="CORS_ORIGINS",
+    )
+
     # Service configuration
     service_name: str = "singalong-node"
     api_version: str = "v1"
@@ -65,6 +71,12 @@ class Settings(BaseSettings):
         if not self.node_player_api_keys:
             return []
         return [key.strip() for key in self.node_player_api_keys.split(",") if key.strip()]
+
+    def get_cors_origins(self) -> list[str]:
+        """Parse comma-separated CORS origins from CORS_ORIGINS env var"""
+        if not self.cors_origins:
+            return []
+        return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
 
 
 settings = Settings()
