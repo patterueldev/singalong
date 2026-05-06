@@ -145,6 +145,7 @@ class SessionDetailsResponse(BaseModel):
     created_by: str = Field(..., description="Creator user ID")
     player_id: Optional[str] = Field(None, description="Locked player ID (None if not assigned)")
     player_name: Optional[str] = Field(None, description="Locked player name (None if not assigned)")
+    player_platform: Optional[str] = Field(None, description="Locked player platform (macos, ios, ipados, tvos)")
 
 
 class QueueItemResponse(BaseModel):
@@ -368,6 +369,7 @@ async def get_session_details(
             created_by=str(session.created_by),
             player_id=session.player_id,
             player_name=session.player_name,
+            player_platform=session.player_platform,
         )
 
     except HTTPException:
@@ -1226,6 +1228,7 @@ async def select_player(
         # Update session with player info
         session.player_id = request.player_id
         session.player_name = player.name
+        session.player_platform = player.platform
         db.commit()
         
         # Send lock message to player over WebSocket
@@ -1346,6 +1349,7 @@ async def disconnect_player(
         # Clear player assignment from session
         session.player_id = None
         session.player_name = None
+        session.player_platform = None
         db.commit()
         
         logger.info(

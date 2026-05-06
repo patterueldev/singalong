@@ -36,7 +36,7 @@ export function PlaybackPanel({ onOpenPlayerDiscovery }: PlaybackPanelProps) {
           setAssignedPlayer({
             id: sessionData.player_id,
             name: sessionData.player_name,
-            platform: 'unknown',
+            platform: sessionData.player_platform || 'unknown',
             status: 'connected' as any,
           })
           console.log('[PlaybackPanel] Assigned player loaded:', sessionData.player_name)
