@@ -7,6 +7,7 @@ from fastapi import Depends, HTTPException, Header, status
 
 from app.config import settings
 from app.services.auth_service import AuthService
+from app.api.dependencies import TokenPayload
 
 
 # Global auth service instance
@@ -31,7 +32,7 @@ def get_auth_service() -> AuthService:
     return _auth_service
 
 
-def verify_bearer_token(authorization: str = Header(None)) -> dict:
+def verify_bearer_token(authorization: str = Header(None)) -> TokenPayload:
     """
     Verify Bearer token from Authorization header
 
@@ -39,7 +40,7 @@ def verify_bearer_token(authorization: str = Header(None)) -> dict:
         authorization: Value of Authorization header
 
     Returns:
-        Decoded token payload
+        TokenPayload object wrapping the decoded token payload
 
     Raises:
         HTTPException: If token is missing, invalid, or expired
@@ -63,7 +64,7 @@ def verify_bearer_token(authorization: str = Header(None)) -> dict:
 
     try:
         payload = auth_service.validate_token(token)
-        return payload
+        return TokenPayload(payload)
     except jwt.ExpiredSignatureError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
