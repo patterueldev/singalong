@@ -1,0 +1,58 @@
+client:
+  name: basic
+  file-system: device-agnostic
+tools: {}
+targets:
+  "PackageStructure": ["<PackageStructure>"]
+  "SingalongPlayer-arm64-apple-macosx26.0-debug.module": ["<SingalongPlayer-arm64-apple-macosx26.0-debug.module>"]
+  "main": ["<SingalongPlayer-arm64-apple-macosx26.0-debug.module>"]
+  "test": ["<SingalongPlayer-arm64-apple-macosx26.0-debug.module>"]
+default: "main"
+nodes:
+  "/Users/pat/Projects/PAT/singalong/apps/singalong-player-apple/SingalongPlayer/":
+    is-directory-structure: true
+    content-exclusion-patterns: [".git",".build"]
+commands:
+  "/Users/pat/Projects/PAT/singalong/apps/singalong-player-apple/.build/index-build/arm64-apple-macosx/debug/SingalongPlayer.build/sources":
+    tool: write-auxiliary-file
+    inputs: ["<sources-file-list>","/Users/pat/Projects/PAT/singalong/apps/singalong-player-apple/SingalongPlayer/App/PlayerAppState.swift","/Users/pat/Projects/PAT/singalong/apps/singalong-player-apple/SingalongPlayer/App/SingalongPlayerApp.swift","/Users/pat/Projects/PAT/singalong/apps/singalong-player-apple/SingalongPlayer/Models/DiscoveredNode.swift","/Users/pat/Projects/PAT/singalong/apps/singalong-player-apple/SingalongPlayer/Models/WebSocketMessages.swift","/Users/pat/Projects/PAT/singalong/apps/singalong-player-apple/SingalongPlayer/Services/MDNSDiscoveryService.swift","/Users/pat/Projects/PAT/singalong/apps/singalong-player-apple/SingalongPlayer/Services/WebSocketDiscoveryManager.swift","/Users/pat/Projects/PAT/singalong/apps/singalong-player-apple/SingalongPlayer/Views/IdleScreen.swift","/Users/pat/Projects/PAT/singalong/apps/singalong-player-apple/SingalongPlayer/Views/MainScreen.swift","/Users/pat/Projects/PAT/singalong/apps/singalong-player-apple/.build/index-build/arm64-apple-macosx/debug/SingalongPlayer.build/DerivedSources/resource_bundle_accessor.swift"]
+    outputs: ["/Users/pat/Projects/PAT/singalong/apps/singalong-player-apple/.build/index-build/arm64-apple-macosx/debug/SingalongPlayer.build/sources"]
+    description: "Write auxiliary file /Users/pat/Projects/PAT/singalong/apps/singalong-player-apple/.build/index-build/arm64-apple-macosx/debug/SingalongPlayer.build/sources"
+
+  "/Users/pat/Projects/PAT/singalong/apps/singalong-player-apple/.build/index-build/arm64-apple-macosx/debug/SingalongPlayer_SingalongPlayer.bundle/Assets.xcassets":
+    tool: copy-tool
+    inputs: ["/Users/pat/Projects/PAT/singalong/apps/singalong-player-apple/SingalongPlayer/Assets.xcassets/"]
+    outputs: ["/Users/pat/Projects/PAT/singalong/apps/singalong-player-apple/.build/index-build/arm64-apple-macosx/debug/SingalongPlayer_SingalongPlayer.bundle/Assets.xcassets/"]
+    description: "Copying /Users/pat/Projects/PAT/singalong/apps/singalong-player-apple/SingalongPlayer/Assets.xcassets"
+
+  "/Users/pat/Projects/PAT/singalong/apps/singalong-player-apple/.build/index-build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt":
+    tool: write-auxiliary-file
+    inputs: ["<swift-get-version>","/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc"]
+    outputs: ["/Users/pat/Projects/PAT/singalong/apps/singalong-player-apple/.build/index-build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt"]
+    always-out-of-date: "true"
+    description: "Write auxiliary file /Users/pat/Projects/PAT/singalong/apps/singalong-player-apple/.build/index-build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt"
+
+  "<SingalongPlayer-arm64-apple-macosx26.0-debug.module>":
+    tool: phony
+    inputs: ["/Users/pat/Projects/PAT/singalong/apps/singalong-player-apple/.build/index-build/arm64-apple-macosx/debug/Modules/SingalongPlayer.swiftmodule"]
+    outputs: ["<SingalongPlayer-arm64-apple-macosx26.0-debug.module>"]
+
+  "C.SingalongPlayer-arm64-apple-macosx26.0-debug.module":
+    tool: shell
+    inputs: ["/Users/pat/Projects/PAT/singalong/apps/singalong-player-apple/SingalongPlayer/App/PlayerAppState.swift","/Users/pat/Projects/PAT/singalong/apps/singalong-player-apple/SingalongPlayer/App/SingalongPlayerApp.swift","/Users/pat/Projects/PAT/singalong/apps/singalong-player-apple/SingalongPlayer/Models/DiscoveredNode.swift","/Users/pat/Projects/PAT/singalong/apps/singalong-player-apple/SingalongPlayer/Models/WebSocketMessages.swift","/Users/pat/Projects/PAT/singalong/apps/singalong-player-apple/SingalongPlayer/Services/MDNSDiscoveryService.swift","/Users/pat/Projects/PAT/singalong/apps/singalong-player-apple/SingalongPlayer/Services/WebSocketDiscoveryManager.swift","/Users/pat/Projects/PAT/singalong/apps/singalong-player-apple/SingalongPlayer/Views/IdleScreen.swift","/Users/pat/Projects/PAT/singalong/apps/singalong-player-apple/SingalongPlayer/Views/MainScreen.swift","/Users/pat/Projects/PAT/singalong/apps/singalong-player-apple/.build/index-build/arm64-apple-macosx/debug/SingalongPlayer.build/DerivedSources/resource_bundle_accessor.swift","/Users/pat/Projects/PAT/singalong/apps/singalong-player-apple/.build/index-build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt","<SingalongPlayer-arm64-apple-macosx26.0-debug.module-resources>","/Users/pat/Projects/PAT/singalong/apps/singalong-player-apple/.build/index-build/arm64-apple-macosx/debug/SingalongPlayer.build/sources"]
+    outputs: ["/Users/pat/Projects/PAT/singalong/apps/singalong-player-apple/.build/index-build/arm64-apple-macosx/debug/Modules/SingalongPlayer.swiftmodule"]
+    description: "Compiling Swift Module 'SingalongPlayer' (9 sources)"
+    args: ["/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc","-module-name","SingalongPlayer","-emit-dependencies","-emit-module","-emit-module-path","/Users/pat/Projects/PAT/singalong/apps/singalong-player-apple/.build/index-build/arm64-apple-macosx/debug/Modules/SingalongPlayer.swiftmodule","-output-file-map","/Users/pat/Projects/PAT/singalong/apps/singalong-player-apple/.build/index-build/arm64-apple-macosx/debug/SingalongPlayer.build/output-file-map.json","-parse-as-library","-incremental","@/Users/pat/Projects/PAT/singalong/apps/singalong-player-apple/.build/index-build/arm64-apple-macosx/debug/SingalongPlayer.build/sources","-I","/Users/pat/Projects/PAT/singalong/apps/singalong-player-apple/.build/index-build/arm64-apple-macosx/debug/Modules","-target","arm64-apple-macosx13.0","-incremental","-enable-batch-mode","-serialize-diagnostics","-Onone","-enable-testing","-j12","-DSWIFT_PACKAGE","-DDEBUG","-DSWIFT_MODULE_RESOURCE_BUNDLE_AVAILABLE","-module-cache-path","/Users/pat/Projects/PAT/singalong/apps/singalong-player-apple/.build/index-build/arm64-apple-macosx/debug/ModuleCache","-parseable-output","-parse-as-library","-emit-objc-header","-emit-objc-header-path","/Users/pat/Projects/PAT/singalong/apps/singalong-player-apple/.build/index-build/arm64-apple-macosx/debug/SingalongPlayer.build/include/SingalongPlayer-Swift.h","-swift-version","5","-Xfrontend","-experimental-lazy-typecheck","-Xfrontend","-experimental-skip-all-function-bodies","-Xfrontend","-experimental-allow-module-with-compiler-errors","-Xfrontend","-empty-abi-descriptor","-plugin-path","/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing","-sdk","/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk","-F","/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks","-F","/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks","-I","/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib","-L","/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib","-g","-Xcc","-isysroot","-Xcc","/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk","-Xcc","-F","-Xcc","/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks","-Xcc","-F","-Xcc","/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks","-Xcc","-fPIC","-Xcc","-g","-package-name","singalong_player_apple"]
+
+  "PackageStructure":
+    tool: package-structure-tool
+    inputs: ["/Users/pat/Projects/PAT/singalong/apps/singalong-player-apple/SingalongPlayer/","/Users/pat/Projects/PAT/singalong/apps/singalong-player-apple/Package.swift","/Users/pat/Projects/PAT/singalong/apps/singalong-player-apple/Package.resolved"]
+    outputs: ["<PackageStructure>"]
+    description: "Planning build"
+    allow-missing-inputs: true
+
+  "SingalongPlayer-arm64-apple-macosx26.0-debug.module-resources":
+    tool: phony
+    inputs: ["/Users/pat/Projects/PAT/singalong/apps/singalong-player-apple/.build/index-build/arm64-apple-macosx/debug/SingalongPlayer_SingalongPlayer.bundle/Assets.xcassets/"]
+    outputs: ["<SingalongPlayer-arm64-apple-macosx26.0-debug.module-resources>"]
+

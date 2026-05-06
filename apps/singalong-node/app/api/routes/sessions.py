@@ -1265,3 +1265,101 @@ async def select_player(
     except Exception as e:
         logger.exception(f"Error selecting player: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to select player")
+
+
+@router.post("/{session_code}/disconnect-player", status_code=200, response_model=dict)
+async def disconnect_player(
+    session_code: str,
+    db: SQLSession = Depends(get_db),
+    token: TokenPayload = Depends(verify_bearer_token),
+) -> dict:
+    """
+    Disconnect the current player from a session.
+    
+    When an admin disconnects a player:
+    1. Node sends disconnect message to player over WebSocket
+    2. Player closes playback connection, returns to idle discovery screen
+    3. Node re-enables discovery WebSocket for new player registrations
+    4. Session transitions back to discovery mode
+    
+    **Request**: None (POST to the session endpoint)
+    
+    **Response**:
+    ```json
+    {
+      "success": true,
+      "message": "Player disconnected from session"
+    }
+    ```
+    """
+    try:
+        # Validate session exists and is active
+        session = _validate_session_exists(session_code, db)
+        if session.status.value != "active":
+            raise HTTPException(
+                status_code=400,
+                detail=f"Session is not active (status: {session.status.value})",
+            )
+        
+        # Check authorization (admin only)
+        _check_session_authorization(session, token, allow_admin_only=True)
+        
+        # Check if a player is actually assigned
+        if not session.player_id:
+            raise HTTPException(
+                status_code=409,
+                detail="No player currently assigned to this session",
+            )
+        
+        player_id = session.player_id
+        player_name = session.player_name
+        
+        # Get player from discovery manager to send disconnect message
+        from app.services.player_discovery_manager import PlayerDiscoveryManager
+        discovery_manager = PlayerDiscoveryManager.get_instance()
+        
+        player = discovery_manager.get_player(player_id)
+        
+        # Send disconnect message to player over WebSocket (if still connected)
+        if player and player.ws_connection:
+            try:
+                import json
+                disconnect_message = {
+                    "type": "disconnect",
+                    "reason": "admin_requested",
+                }
+                await player.ws_connection.send_json(disconnect_message)
+                logger.info(
+                    f"[API] Disconnect message sent to player | "
+                    f"player_id={player_id} | session={session_code}"
+                )
+            except Exception as e:
+                logger.warning(
+                    f"[API] Failed to send disconnect message to player | error={str(e)}"
+                )
+                # Don't fail the request if WS send fails
+        
+        # Unlock player in discovery manager (make it available again)
+        if player:
+            discovery_manager.unlock_player(player_id)
+        
+        # Clear player assignment from session
+        session.player_id = None
+        session.player_name = None
+        db.commit()
+        
+        logger.info(
+            f"[API] Player disconnected from session | player_id={player_id} | "
+            f"player_name={player_name} | session={session_code}"
+        )
+        
+        return {
+            "success": True,
+            "message": "Player disconnected from session",
+        }
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception(f"Error disconnecting player: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to disconnect player")
