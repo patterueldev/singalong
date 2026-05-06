@@ -46,8 +46,10 @@ services:
       - ./apps/singalong-admin:/app
       - /app/node_modules  # Exclude node_modules from volume mount
     environment:
-      # Admin accesses Node API directly at localhost:8080
-      - VITE_API_BASE_URL=http://localhost:8080/api
+      # Admin will use Vite proxy for /api calls (no hardcoded localhost URL)
+      # This allows access from any hostname (localhost, thursday.local, etc.)
+      # Vite proxy forwards /api to NODE_HOST:5002
+      - HMR_HOST=${HMR_HOST:-localhost}
       - ENVIRONMENT=development
       - WATCHPACK_POLLING=true  # Enable polling for file changes
     networks:

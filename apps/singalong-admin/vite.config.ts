@@ -28,13 +28,14 @@ export default defineConfig({
       interval: 100,
     },
     hmr: {
-      host: 'localhost',
+      host: process.env.HMR_HOST || 'localhost',
       port: 3001,
       protocol: 'ws',
     },
     allowedHosts: [
       'localhost',
       '127.0.0.1',
+      'thursday.local',
       'singalongadmin-dev.nicenature.space',
       'singalong-admin',
       '0.0.0.0',
