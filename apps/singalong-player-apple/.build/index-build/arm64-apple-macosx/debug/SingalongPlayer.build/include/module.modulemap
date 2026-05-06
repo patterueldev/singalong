@@ -1,3 +1,0 @@
-module SingalongPlayer {
-    header "/Users/pat/Projects/PAT/singalong/apps/singalong-player-apple/.build/index-build/arm64-apple-macosx/debug/SingalongPlayer.build/include/SingalongPlayer-Swift.h"
-}
