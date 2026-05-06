@@ -227,11 +227,16 @@ private class MDNSServiceResolver: NSObject, NetServiceDelegate {
             if let hostName = sender.hostName {
                 print("[mDNS] Resolving hostname: \(hostName)")
                 ipAddress = resolveHostname(hostName)
+                // If DNS resolution failed or returned localhost, use hostname as fallback
+                if ipAddress == nil || ipAddress == "127.0.0.1" {
+                    print("[mDNS] DNS resolution returned localhost or failed, using hostname instead: \(hostName)")
+                    ipAddress = hostName.replacingOccurrences(of: ".local.", with: "")
+                }
             }
         }
         
         guard let ipAddress = ipAddress else {
-            print("[mDNS] ✗✗ FAILED: No IPv4 address found in mDNS or DNS")
+            print("[mDNS] ✗✗ FAILED: No IPv4 address found in mDNS or DNS, and no hostname available")
             cleanup()
             sender.stop()
             return
@@ -313,18 +318,18 @@ private class MDNSServiceResolver: NSObject, NetServiceDelegate {
     }
     
     private func extractIPAddress(from addressData: Data) -> String? {
-        // First, read the address family from the first 2 bytes
-        guard addressData.count >= MemoryLayout<sa_family_t>.size else {
-            print("[mDNS]   Data length: \(addressData.count), Family: unknown (too small for sa_family_t)")
+        // sockaddr format on BSD/macOS:
+        // Byte 0: sa_len (length of the structure)
+        // Byte 1: sa_family (address family)
+        // Byte 2+: address data
+        
+        guard addressData.count >= 2 else {
+            print("[mDNS]   Data length: \(addressData.count), too small to read family")
             return nil
         }
         
-        // Read the family byte
-        var family: sa_family_t = 0
-        addressData.withUnsafeBytes { ptr in
-            family = ptr.load(as: sa_family_t.self)
-        }
-        
+        // Read family from byte 1 (not byte 0, which is length)
+        let family = sa_family_t(addressData[1])
         print("[mDNS]   Data length: \(addressData.count), Family: \(family)", terminator: "")
         
         if family == sa_family_t(AF_INET) {
