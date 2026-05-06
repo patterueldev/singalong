@@ -17,6 +17,12 @@ actor WebSocketDiscoveryManager {
     var onConnectionStatusChanged: ((String, NodeConnectionStatus) -> Void)?
     var onConnectionClosed: ((String) -> Void)?
     
+    // MARK: - Callback Setup (actor-safe)
+    
+    func setOnConnectionStatusChanged(_ callback: @escaping (String, NodeConnectionStatus) -> Void) {
+        self.onConnectionStatusChanged = callback
+    }
+    
     // MARK: - Helper Methods
     
     /// Dispatch callback to main thread (actor runs on background thread)
@@ -341,7 +347,8 @@ actor WebSocketDiscoveryManager {
         // Send registration again
         let playerName = getDeviceName()
         let platform = getPlatformName()
-        let registerMessage = PlayerMessage.register(name: playerName, platform: platform)
+        let playerId = PlayerIdentityService.shared.playerId
+        let registerMessage = PlayerMessage.register(playerId: playerId, name: playerName, platform: platform)
         
         do {
             try await send(message: registerMessage, toNodeId: nodeId)

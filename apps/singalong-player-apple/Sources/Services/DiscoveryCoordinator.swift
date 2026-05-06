@@ -24,8 +24,10 @@ class DiscoveryCoordinator {
     // MARK: - Setup
     
     private func setupWebSocketCallbacks() {
-        webSocketManager.onConnectionStatusChanged = { [weak self] nodeId, status in
-            self?.onConnectionStatusChanged?(nodeId, status)
+        Task {
+            await webSocketManager.setOnConnectionStatusChanged { [weak self] nodeId, status in
+                self?.onConnectionStatusChanged?(nodeId, status)
+            }
         }
     }
     

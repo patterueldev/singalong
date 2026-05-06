@@ -13,6 +13,9 @@ targets:
       iOS: "16.0"
       macOS: "13.0"
     sources:
+      - path: Sources
+        includes:
+          - "**/*.swift"
       - path: SingalongPlayer
         includes:
           - "**/*.swift"
