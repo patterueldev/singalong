@@ -198,7 +198,8 @@ app.include_router(auth.router, prefix="/api")
 app.include_router(sessions.router, prefix="/api")
 app.include_router(songs.router, prefix="/api")
 app.include_router(players.router, prefix="/api")
-app.include_router(websocket.router, prefix="/api")
+# WebSocket routes are served at root level (/ws/*), not under /api
+app.include_router(websocket.router)
 
 
 @app.get("/health", tags=["Health"])
