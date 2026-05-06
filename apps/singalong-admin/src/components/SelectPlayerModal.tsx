@@ -6,10 +6,11 @@ interface SelectPlayerModalProps {
   sessionCode: string
   onClose: () => void
   onPlayerSelected?: () => Promise<void>
+  isOpen?: boolean
 }
 
-export function SelectPlayerModal({ sessionCode, onClose, onPlayerSelected }: SelectPlayerModalProps) {
-  const { players, loading, error, selectPlayer, selectingPlayerId } = useAvailablePlayers()
+export function SelectPlayerModal({ sessionCode, onClose, onPlayerSelected, isOpen = true }: SelectPlayerModalProps) {
+  const { players, loading, error, selectPlayer, selectingPlayerId } = useAvailablePlayers(isOpen)
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null)
 
   const handleSelectClick = async () => {

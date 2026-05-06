@@ -12,11 +12,11 @@ export interface UseAvailablePlayersReturn {
 
 /**
  * Hook to manage available players with auto-refresh
- * - Fetches available players on mount and every 2 seconds
- * - Handles loading/error states
- * - Provides methods to refresh and select players
+ * - Only fetches when isOpen is true
+ * - Auto-refreshes every 2 seconds while open
+ * - Stops polling when closed to save bandwidth
  */
-export function useAvailablePlayers(): UseAvailablePlayersReturn {
+export function useAvailablePlayers(isOpen: boolean = true): UseAvailablePlayersReturn {
   const [players, setPlayers] = useState<AvailablePlayer[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -58,11 +58,20 @@ export function useAvailablePlayers(): UseAvailablePlayersReturn {
     [refreshPlayers]
   )
 
-  // Initial fetch and set up auto-refresh
+  // Initial fetch and set up auto-refresh (only when modal is open)
   useEffect(() => {
+    if (!isOpen) {
+      // Stop polling when modal is closed
+      if (refreshIntervalRef.current) {
+        clearInterval(refreshIntervalRef.current)
+        refreshIntervalRef.current = null
+      }
+      return
+    }
+
     refreshPlayers()
 
-    // Auto-refresh every 2 seconds
+    // Auto-refresh every 2 seconds while open
     refreshIntervalRef.current = setInterval(() => {
       refreshPlayers()
     }, 2000)
@@ -72,7 +81,7 @@ export function useAvailablePlayers(): UseAvailablePlayersReturn {
         clearInterval(refreshIntervalRef.current)
       }
     }
-  }, [refreshPlayers])
+  }, [refreshPlayers, isOpen])
 
   return {
     players,

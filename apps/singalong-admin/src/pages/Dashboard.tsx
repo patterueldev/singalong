@@ -65,6 +65,7 @@ export function DashboardPage() {
             sessionCode={currentSession.code}
             onClose={() => setShowPlayerSelection(false)}
             onPlayerSelected={refreshPlayback}
+            isOpen={showPlayerSelection}
           />
         )}
       </main>
