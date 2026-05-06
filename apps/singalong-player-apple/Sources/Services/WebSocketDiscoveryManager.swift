@@ -17,6 +17,13 @@ actor WebSocketDiscoveryManager {
     var onConnectionStatusChanged: ((String, NodeConnectionStatus) -> Void)?
     var onConnectionClosed: ((String) -> Void)?
     
+    // MARK: - Helper Methods
+    
+    /// Dispatch callback to main thread (actor runs on background thread)
+    private func dispatchToMain(_ callback: @escaping () -> Void) {
+        DispatchQueue.main.async(execute: callback)
+    }
+    
     // MARK: - Public Methods
     
     /// Connect to a discovered node's discovery WebSocket endpoint
@@ -68,7 +75,9 @@ actor WebSocketDiscoveryManager {
         
         // Update status
         print("[WS Discovery] Updating connection status to .connecting...")
-        onConnectionStatusChanged?(node.id, .connecting)
+        dispatchToMain {
+            self.onConnectionStatusChanged?(node.id, .connecting)
+        }
         
         // Send registration message
         let playerName = getDeviceName()
@@ -200,7 +209,9 @@ actor WebSocketDiscoveryManager {
                                 activeConnections[nodeId]?.status = .waiting
                                 print("[WS Discovery] Message is 'registered', updating status to .waiting")
                                 print("[WS Discovery] Calling onConnectionStatusChanged callback with nodeId=\(nodeId), status=.waiting")
-                                onConnectionStatusChanged?(nodeId, .waiting)
+                                dispatchToMain {
+                                    self.onConnectionStatusChanged?(nodeId, .waiting)
+                                }
                                 print("[WS Discovery] ✓ Player registered successfully - now waiting for admin selection")
                             }
                             
@@ -243,8 +254,10 @@ actor WebSocketDiscoveryManager {
                 } else {
                     print("[WS Discovery] Max retries exceeded or connection not found")
                     activeConnections[nodeId]?.status = .reconnecting(attemptNumber: activeConnections[nodeId]?.retryAttempt ?? 0)
-                    onConnectionStatusChanged?(nodeId, .reconnecting(attemptNumber: activeConnections[nodeId]?.retryAttempt ?? 0))
-                    onConnectionClosed?(nodeId)
+                    dispatchToMain {
+                        self.onConnectionStatusChanged?(nodeId, .reconnecting(attemptNumber: self.activeConnections[nodeId]?.retryAttempt ?? 0))
+                        self.onConnectionClosed?(nodeId)
+                    }
                     activeConnections.removeValue(forKey: nodeId)
                     return  // Exit when max retries exceeded
                 }
@@ -269,7 +282,9 @@ actor WebSocketDiscoveryManager {
         
         print("[WS Discovery] Retrying connection to \(connection.nodeName) (attempt \(nextAttempt)/\(connection.maxRetryAttempts)) in \(String(format: "%.1f", actualDelay))s")
         
-        onConnectionStatusChanged?(nodeId, .reconnecting(attemptNumber: nextAttempt))
+        dispatchToMain {
+            self.onConnectionStatusChanged?(nodeId, .reconnecting(attemptNumber: nextAttempt))
+        }
         
         // Wait before retrying
         try? await Task.sleep(nanoseconds: UInt64(actualDelay * 1_000_000_000))
@@ -284,7 +299,9 @@ actor WebSocketDiscoveryManager {
         guard let originalURL = connection.webSocketTask.currentRequest?.url else {
             print("[WS Discovery] ✗ Cannot retry: missing URL from current request")
             activeConnections[nodeId]?.status = .reconnecting(attemptNumber: nextAttempt)
-            onConnectionStatusChanged?(nodeId, .reconnecting(attemptNumber: nextAttempt))
+            dispatchToMain {
+                self.onConnectionStatusChanged?(nodeId, .reconnecting(attemptNumber: nextAttempt))
+            }
             activeConnections.removeValue(forKey: nodeId)
             return
         }
@@ -307,7 +324,9 @@ actor WebSocketDiscoveryManager {
             print("[WS Discovery]   Original URL: \(originalURL.absoluteString)")
             print("[WS Discovery]   Converted URL: \(wsURL.absoluteString)")
             activeConnections[nodeId]?.status = .reconnecting(attemptNumber: nextAttempt)
-            onConnectionStatusChanged?(nodeId, .reconnecting(attemptNumber: nextAttempt))
+            dispatchToMain {
+                self.onConnectionStatusChanged?(nodeId, .reconnecting(attemptNumber: nextAttempt))
+            }
             activeConnections.removeValue(forKey: nodeId)
             return
         }
