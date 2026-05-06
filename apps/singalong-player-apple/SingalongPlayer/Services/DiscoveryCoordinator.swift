@@ -23,6 +23,10 @@ class DiscoveryCoordinator {
     
     func startDiscovery(onNodeDiscovered: @escaping (DiscoveredNode) -> Void) async throws {
         self.onNodeDiscovered = onNodeDiscovered
+        
+        // Bridge mDNS onNodeAdded callback to the view model callback
+        await mdnsService.setCallback(onNodeAdded: onNodeDiscovered)
+        
         try await mdnsService.startDiscovery()
     }
     
