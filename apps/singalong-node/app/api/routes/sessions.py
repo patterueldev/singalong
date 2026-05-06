@@ -1150,6 +1150,13 @@ class PlayerInfo(BaseModel):
     status: str
 
 
+class AssignedPlayerResponse(BaseModel):
+    """Response with assigned player information"""
+    player_id: str
+    player_name: str
+    player_platform: str
+
+
 class SelectPlayerRequest(BaseModel):
     """Request to select/lock a player to a session"""
     player_id: str
@@ -1161,6 +1168,43 @@ class SelectPlayerResponse(BaseModel):
     player_id: str
     player_name: str
     message: str
+
+
+@router.get("/{session_code}/player", response_model=Optional[AssignedPlayerResponse])
+async def get_assigned_player(
+    session_code: str,
+    db: SQLSession = Depends(get_db),
+    admin: dict = Depends(verify_admin_role),
+) -> Optional[AssignedPlayerResponse]:
+    """
+    Get the currently assigned player for a session.
+    
+    Returns the player currently locked to this session, or null if no player assigned.
+    """
+    try:
+        session = _validate_session_exists(session_code, db)
+        
+        if not session.player_id or not session.player_name:
+            logger.info(f"[Discovery] get_assigned_player | session={session_code} | no_player_assigned")
+            return None
+        
+        logger.info(
+            f"[Discovery] get_assigned_player | session={session_code} | "
+            f"player_id={session.player_id[:8]}...{session.player_id[-4:]} | "
+            f"player_name={session.player_name}"
+        )
+        
+        return AssignedPlayerResponse(
+            player_id=session.player_id,
+            player_name=session.player_name,
+            player_platform=session.player_platform or 'unknown',
+        )
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception(f"[Discovery] get_assigned_player_error | session={session_code} | error={str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to get assigned player")
 
 
 @router.post("/{session_code}/select-player", status_code=200, response_model=SelectPlayerResponse)
