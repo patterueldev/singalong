@@ -14,6 +14,8 @@ export function DashboardPage() {
   const { refreshPlayback } = usePlayback()
   const [showPlayerSelection, setShowPlayerSelection] = useState(false)
 
+  console.log('[DashboardPage] Rendering with currentSession:', currentSession?.code, 'showPlayerSelection:', showPlayerSelection)
+
   // Wrapper to convert Promise<Session> to Promise<void>
   const handleCreateSession = useCallback(
     async (title: string, vibes?: string) => {

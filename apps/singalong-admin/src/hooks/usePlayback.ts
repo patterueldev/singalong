@@ -40,7 +40,10 @@ export function usePlayback() {
       return
     }
 
+    console.log('[usePlayback] Starting poll for session:', currentSession.code)
+
     const fetchData = async () => {
+      console.log('[usePlayback.fetchData] Polling available players for session:', currentSession.code)
       setState((prev) => ({ ...prev, isLoading: true, error: null }))
       try {
         // Fetch available players
@@ -48,6 +51,7 @@ export function usePlayback() {
           `/api/sessions/${currentSession.code}/available-players`
         )
         const players = playersResponse.data || []
+        console.log('[usePlayback.fetchData] Fetched', players.length, 'available players')
         
         // Convert Node response format to Player model
         const mappedPlayers: Player[] = players.map(
@@ -61,7 +65,7 @@ export function usePlayback() {
 
         // Fetch session details to get current assigned player
         const sessionResponse = await api.get(
-          `/api/sessions/${currentSession.code}`
+          `/sessions/${currentSession.code}`
         )
         const sessionData = sessionResponse.data
         console.log('[usePlayback] Session details response:', { player_id: sessionData?.player_id, player_name: sessionData?.player_name })
@@ -101,9 +105,13 @@ export function usePlayback() {
     fetchData()
 
     // Set up polling every 5 seconds
+    console.log('[usePlayback] Setting up 5-second poll interval')
     const pollInterval = setInterval(fetchData, 5000)
 
-    return () => clearInterval(pollInterval)
+    return () => {
+      console.log('[usePlayback] Cleaning up poll interval for session:', currentSession.code)
+      clearInterval(pollInterval)
+    }
   }, [currentSession?.code])
 
   const selectPlayer = useCallback(
@@ -170,9 +178,10 @@ export function usePlayback() {
       try {
         // Fetch available players
         const playersResponse = await api.get(
-          `/api/sessions/${currentSession.code}/available-players`
+          `/sessions/${currentSession.code}/available-players`
         )
         const players = playersResponse.data || []
+        console.log('[usePlayback.fetchData] Fetched', players.length, 'available players')
         
         // Convert Node response format to Player model
         const mappedPlayers: Player[] = players.map(
@@ -186,7 +195,7 @@ export function usePlayback() {
 
         // Fetch session details to get current assigned player
         const sessionResponse = await api.get(
-          `/api/sessions/${currentSession.code}`
+          `/sessions/${currentSession.code}`
         )
         const sessionData = sessionResponse.data
         console.log('[usePlayback] Refreshed playback data:', { player_id: sessionData?.player_id, player_name: sessionData?.player_name })

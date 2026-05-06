@@ -23,6 +23,8 @@ export function useAvailablePlayers(isOpen: boolean = true): UseAvailablePlayers
   const [selectingPlayerId, setSelectingPlayerId] = useState<string | null>(null)
   const refreshIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
+  console.log('[useAvailablePlayers] Hook instantiated with isOpen:', isOpen)
+
   // Fetch available players
   const refreshPlayers = useCallback(async () => {
     try {
@@ -60,23 +62,29 @@ export function useAvailablePlayers(isOpen: boolean = true): UseAvailablePlayers
 
   // Initial fetch and set up auto-refresh (only when modal is open)
   useEffect(() => {
+    console.log('[useAvailablePlayers.useEffect] isOpen changed to:', isOpen)
     if (!isOpen) {
+      console.log('[useAvailablePlayers.useEffect] Modal is closed, stopping polling')
       // Stop polling when modal is closed
       if (refreshIntervalRef.current) {
+        console.log('[useAvailablePlayers.useEffect] Clearing interval')
         clearInterval(refreshIntervalRef.current)
         refreshIntervalRef.current = null
       }
       return
     }
 
+    console.log('[useAvailablePlayers.useEffect] Modal is open, starting polling')
     refreshPlayers()
 
     // Auto-refresh every 2 seconds while open
     refreshIntervalRef.current = setInterval(() => {
+      console.log('[useAvailablePlayers.useEffect] Polling interval triggered')
       refreshPlayers()
     }, 2000)
 
     return () => {
+      console.log('[useAvailablePlayers.useEffect] Cleanup: clearing interval')
       if (refreshIntervalRef.current) {
         clearInterval(refreshIntervalRef.current)
       }

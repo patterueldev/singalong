@@ -10,6 +10,7 @@ interface SelectPlayerModalProps {
 }
 
 export function SelectPlayerModal({ sessionCode, onClose, onPlayerSelected, isOpen = true }: SelectPlayerModalProps) {
+  console.log('[SelectPlayerModal] Rendering with isOpen:', isOpen)
   const { players, loading, error, selectPlayer, selectingPlayerId } = useAvailablePlayers(isOpen)
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null)
 
