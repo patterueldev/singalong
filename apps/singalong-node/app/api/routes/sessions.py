@@ -1191,13 +1191,16 @@ async def get_assigned_player(
         logger.info(
             f"[Discovery] get_assigned_player | session={session_code} | "
             f"player_id={session.player_id[:8]}...{session.player_id[-4:]} | "
-            f"player_name={session.player_name}"
+            f"player_name={session.player_name} | player_platform={session.player_platform}"
         )
+        
+        platform = session.player_platform or 'unknown'
+        logger.info(f"[Discovery] returning_platform={platform}")
         
         return AssignedPlayerResponse(
             player_id=session.player_id,
             player_name=session.player_name,
-            player_platform=session.player_platform or 'unknown',
+            player_platform=platform,
         )
     
     except HTTPException:
@@ -1275,6 +1278,13 @@ async def select_player(
         session.player_name = player.name
         session.player_platform = player.platform
         session.player_last_seen = datetime.now(timezone.utc)  # Mark as responsive right now
+        
+        logger.info(
+            f"[Discovery] select_player_assigned | session={session_code} | "
+            f"player_id={player.player_id[:8]}...{player.player_id[-4:]} | "
+            f"player_name={player.name} | player_platform='{player.platform}'"
+        )
+        
         db.commit()
         
         # Send lock message to player over WebSocket

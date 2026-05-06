@@ -48,6 +48,7 @@ export function usePlayback(isPlayerModalOpen: boolean = false) {
           `/sessions/${currentSession.code}/player`
         )
         const playerData = playerResponse.data
+        console.log('[usePlayback] Raw playerData from endpoint:', playerData)
         
         if (!playerData) {
           console.log('[usePlayback] No assigned player')
@@ -64,7 +65,13 @@ export function usePlayback(isPlayerModalOpen: boolean = false) {
           platform: playerData.player_platform,
           status: 'connected' as any,
         }
-        console.log('[usePlayback] ✓ Assigned player:', assignedPlayer.name, `(${assignedPlayer.platform})`)
+        console.log('[usePlayback] ✓ Assigned player:', {
+          name: assignedPlayer.name,
+          platform: assignedPlayer.platform,
+          platformType: typeof assignedPlayer.platform,
+          platformNull: assignedPlayer.platform === null,
+          platformUndefined: assignedPlayer.platform === undefined,
+        })
 
         setState((prev) => ({
           ...prev,
