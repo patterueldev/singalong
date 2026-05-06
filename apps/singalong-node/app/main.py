@@ -94,7 +94,11 @@ async def lifespan(app: FastAPI):
                 # Player will register via WebSocket when it connects
     finally:
         db_session.close()
-
+    
+    # Initialize session cleanup job (removes stale player assignments)
+    from app.services.session_cleanup_job import start_session_cleanup_job
+    await start_session_cleanup_job()
+    print("✓ Session cleanup job started (30s interval, 60s timeout)")
     
     # Initialize WebSocket services (Event Bus, Connection Manager, etc.)
     from app.services.websocket_service_container import init_websocket_services

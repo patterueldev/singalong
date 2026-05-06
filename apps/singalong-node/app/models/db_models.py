@@ -111,6 +111,7 @@ class Session(Base):
     player_id = Column(String(255), nullable=True, index=True)  # Player instance ID (e.g., UUID or name)
     player_name = Column(String(255), nullable=True)  # Human-readable player name (e.g., "Pat's MacBook")
     player_platform = Column(String(50), nullable=True)  # Player platform (macos, ios, ipados, tvos)
+    player_last_seen = Column(DateTime(timezone=True), nullable=True)  # Track when player was last responsive
 
     def __repr__(self):
         return f"<Session {self.code}: {self.title} ({self.status}) [player: {self.player_name}]>"

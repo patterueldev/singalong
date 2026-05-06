@@ -1226,9 +1226,11 @@ async def select_player(
         discovery_manager.lock_player(request.player_id, session_code)
         
         # Update session with player info
+        from datetime import datetime, timezone
         session.player_id = request.player_id
         session.player_name = player.name
         session.player_platform = player.platform
+        session.player_last_seen = datetime.now(timezone.utc)  # Mark as responsive right now
         db.commit()
         
         # Send lock message to player over WebSocket
@@ -1366,6 +1368,7 @@ async def disconnect_player(
         session.player_id = None
         session.player_name = None
         session.player_platform = None
+        session.player_last_seen = None  # Clear last seen timestamp
         db.commit()
         
         logger.info(
