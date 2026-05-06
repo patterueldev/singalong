@@ -23,7 +23,7 @@ export interface PlaybackState {
   error: string | null
 }
 
-export function usePlayback() {
+export function usePlayback(isPlayerModalOpen: boolean = false) {
   const { currentSession } = useSessions()
   const [state, setState] = useState<PlaybackState>({
     nowPlaying: MOCK_PLAYBACK,
@@ -33,10 +33,15 @@ export function usePlayback() {
     error: null,
   })
 
-  // Poll available players and session details every 5 seconds
+  // Poll available players and session details every 5 seconds - ONLY when modal is open
   useEffect(() => {
     if (!currentSession?.code) {
       console.log('[usePlayback] No currentSession, skipping poll')
+      return
+    }
+
+    if (!isPlayerModalOpen) {
+      console.log('[usePlayback] SelectPlayerModal is closed, skipping poll')
       return
     }
 
@@ -112,7 +117,7 @@ export function usePlayback() {
       console.log('[usePlayback] Cleaning up poll interval for session:', currentSession.code)
       clearInterval(pollInterval)
     }
-  }, [currentSession?.code])
+  }, [currentSession?.code, isPlayerModalOpen])
 
   const selectPlayer = useCallback(
     async (playerId: string) => {

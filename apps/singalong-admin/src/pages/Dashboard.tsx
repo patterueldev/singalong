@@ -11,8 +11,8 @@ import './Dashboard.css'
 
 export function DashboardPage() {
   const { sessions, currentSession, selectSession, createSession } = useSessions()
-  const { refreshPlayback } = usePlayback()
   const [showPlayerSelection, setShowPlayerSelection] = useState(false)
+  const { refreshPlayback } = usePlayback(showPlayerSelection)
 
   console.log('[DashboardPage] Rendering with currentSession:', currentSession?.code, 'showPlayerSelection:', showPlayerSelection)
 
