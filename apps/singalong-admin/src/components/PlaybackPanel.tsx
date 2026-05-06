@@ -1,9 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import Swal from 'sweetalert2'
 import { usePlayback } from '../hooks/usePlayback'
 import { useSessions } from '../hooks/useSessions'
 import api from '../services/authService'
-import type { Player } from '../types/models'
 import { PlayerSelectionModal } from './PlayerSelectionModal'
 import './PlaybackPanel.css'
 
@@ -12,47 +11,18 @@ interface PlaybackPanelProps {
 }
 
 export function PlaybackPanel({ onOpenPlayerDiscovery }: PlaybackPanelProps) {
-  const { nowPlaying, availablePlayers, isLoading, selectPlayer, play, pause } =
+  const { nowPlaying, availablePlayers, assignedPlayer, isLoading, selectPlayer, refreshPlayback, play, pause } =
     usePlayback()
   const { currentSession } = useSessions()
-  const [assignedPlayer, setAssignedPlayer] = useState<Player | null>(null)
-  const [showPlayerModal, setShowPlayerModal] = useState(false)
   const [isDisconnecting, setIsDisconnecting] = useState(false)
 
-  // Fetch assigned player from session on mount and when session changes
-  // Real-time updates will come from WebSocket in future phases
-  useEffect(() => {
-    if (!currentSession?.code) {
-      setAssignedPlayer(null)
-      return
+  const handlePlayerButton = () => {
+    if (assignedPlayer) {
+      handleDisconnectClick()
+    } else {
+      onOpenPlayerDiscovery?.()
     }
-
-    const fetchSessionData = async () => {
-      try {
-        const response = await api.get(`/sessions/${currentSession.code}`)
-        const sessionData = response.data
-        
-        if (sessionData?.player_id && sessionData?.player_name) {
-          setAssignedPlayer({
-            id: sessionData.player_id,
-            name: sessionData.player_name,
-            platform: sessionData.player_platform || 'unknown',
-            status: 'connected' as any,
-          })
-          console.log('[PlaybackPanel] Assigned player loaded:', sessionData.player_name)
-        } else {
-          setAssignedPlayer(null)
-          console.log('[PlaybackPanel] No assigned player in session')
-        }
-      } catch (err) {
-        console.error('[PlaybackPanel] Failed to fetch session data:', err)
-        setAssignedPlayer(null)
-      }
-    }
-
-    // Fetch once on session change
-    fetchSessionData()
-  }, [currentSession?.code])
+  }
 
   const handleDisconnectClick = async () => {
     if (!assignedPlayer || !currentSession?.code) return
@@ -73,7 +43,6 @@ export function PlaybackPanel({ onOpenPlayerDiscovery }: PlaybackPanelProps) {
     setIsDisconnecting(true)
     try {
       await api.post(`/sessions/${currentSession.code}/disconnect-player`)
-      setAssignedPlayer(null)
       console.log('[PlaybackPanel] Player disconnected successfully')
       
       // Show success message
@@ -84,6 +53,8 @@ export function PlaybackPanel({ onOpenPlayerDiscovery }: PlaybackPanelProps) {
         confirmButtonColor: '#c084fc',
       })
       
+      // Refresh to clear assigned player from UI
+      await refreshPlayback()
       // Automatically open player selection to show discovery is re-enabled
       onOpenPlayerDiscovery?.()
     } catch (err) {
@@ -169,22 +140,12 @@ export function PlaybackPanel({ onOpenPlayerDiscovery }: PlaybackPanelProps) {
         </div>
         <button 
           className="btn-select-player" 
-          onClick={assignedPlayer ? handleDisconnectClick : () => onOpenPlayerDiscovery?.()}
+          onClick={handlePlayerButton}
           disabled={isDisconnecting}
         >
           {isDisconnecting ? 'Disconnecting...' : (assignedPlayer ? 'Disconnect' : 'Select Player')}
         </button>
       </div>
-
-      {showPlayerModal && (
-        <PlayerSelectionModal
-          availablePlayers={availablePlayers}
-          assignedPlayer={assignedPlayer}
-          onClose={() => setShowPlayerModal(false)}
-          onSelectPlayer={selectPlayer}
-          isLoading={isLoading}
-        />
-      )}
     </div>
   )
 }

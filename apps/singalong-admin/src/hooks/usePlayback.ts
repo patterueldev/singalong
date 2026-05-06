@@ -55,7 +55,10 @@ export function usePlayback(isPlayerModalOpen: boolean = false) {
         const playersResponse = await api.get(
           `/players/available`
         )
-        const players = playersResponse.data || []
+        // Handle both direct array and wrapped {players: [...]} response
+        const players = Array.isArray(playersResponse.data) 
+          ? playersResponse.data 
+          : (playersResponse.data?.players || [])
         console.log('[usePlayback.fetchData] Fetched', players.length, 'available players')
         
         // Convert Node response format to Player model
@@ -73,7 +76,7 @@ export function usePlayback(isPlayerModalOpen: boolean = false) {
           `/sessions/${currentSession.code}`
         )
         const sessionData = sessionResponse.data
-        console.log('[usePlayback] Session details response:', { player_id: sessionData?.player_id, player_name: sessionData?.player_name })
+        console.log('[usePlayback] Session details response:', { player_id: sessionData?.player_id, player_name: sessionData?.player_name, player_platform: sessionData?.player_platform })
 
         // If player is assigned in session, use that; otherwise None Selected
         let assignedPlayer: Player | null = null
@@ -81,10 +84,10 @@ export function usePlayback(isPlayerModalOpen: boolean = false) {
           assignedPlayer = {
             id: sessionData.player_id,
             name: sessionData.player_name,
-            platform: 'unknown',
+            platform: sessionData.player_platform || 'unknown',
             status: 'connected' as any,
           }
-          console.log('[usePlayback] ✓ Assigned player found:', assignedPlayer.name)
+          console.log('[usePlayback] ✓ Assigned player found:', assignedPlayer.name, `(${assignedPlayer.platform})`)
         } else {
           console.log('[usePlayback] No assigned player yet')
         }
@@ -185,8 +188,11 @@ export function usePlayback(isPlayerModalOpen: boolean = false) {
         const playersResponse = await api.get(
           `/players/available`
         )
-        const players = playersResponse.data || []
-        console.log('[usePlayback.fetchData] Fetched', players.length, 'available players')
+        // Handle both direct array and wrapped {players: [...]} response
+        const players = Array.isArray(playersResponse.data) 
+          ? playersResponse.data 
+          : (playersResponse.data?.players || [])
+        console.log('[usePlayback.refreshPlayback] Fetched', players.length, 'available players')
         
         // Convert Node response format to Player model
         const mappedPlayers: Player[] = players.map(
@@ -203,7 +209,7 @@ export function usePlayback(isPlayerModalOpen: boolean = false) {
           `/sessions/${currentSession.code}`
         )
         const sessionData = sessionResponse.data
-        console.log('[usePlayback] Refreshed playback data:', { player_id: sessionData?.player_id, player_name: sessionData?.player_name })
+        console.log('[usePlayback] Refreshed playback data:', { player_id: sessionData?.player_id, player_name: sessionData?.player_name, player_platform: sessionData?.player_platform })
 
         // If player is assigned in session, use that; otherwise None Selected
         let assignedPlayer: Player | null = null
@@ -211,10 +217,10 @@ export function usePlayback(isPlayerModalOpen: boolean = false) {
           assignedPlayer = {
             id: sessionData.player_id,
             name: sessionData.player_name,
-            platform: 'unknown',
+            platform: sessionData.player_platform || 'unknown',
             status: 'connected' as any,
           }
-          console.log('[usePlayback] ✓ Assigned player found after refresh:', assignedPlayer.name)
+          console.log('[usePlayback] ✓ Assigned player found after refresh:', assignedPlayer.name, `(${assignedPlayer.platform})`)
         } else {
           console.log('[usePlayback] No assigned player after refresh')
         }
