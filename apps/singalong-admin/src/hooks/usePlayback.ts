@@ -55,10 +55,10 @@ export function usePlayback(isPlayerModalOpen: boolean = false) {
         const playersResponse = await api.get(
           `/players/available`
         )
-        // Handle both direct array and wrapped {players: [...]} response
+        // Handle both direct array, {players: [...]}, and {available_players: [...]} response
         const players = Array.isArray(playersResponse.data) 
           ? playersResponse.data 
-          : (playersResponse.data?.players || [])
+          : (playersResponse.data?.players || playersResponse.data?.available_players || [])
         console.log('[usePlayback.fetchData] Fetched', players.length, 'available players')
         
         // Convert Node response format to Player model
@@ -188,10 +188,10 @@ export function usePlayback(isPlayerModalOpen: boolean = false) {
         const playersResponse = await api.get(
           `/players/available`
         )
-        // Handle both direct array and wrapped {players: [...]} response
+        // Handle both direct array, {players: [...]}, and {available_players: [...]} response
         const players = Array.isArray(playersResponse.data) 
           ? playersResponse.data 
-          : (playersResponse.data?.players || [])
+          : (playersResponse.data?.players || playersResponse.data?.available_players || [])
         console.log('[usePlayback.refreshPlayback] Fetched', players.length, 'available players')
         
         // Convert Node response format to Player model
