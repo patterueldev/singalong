@@ -162,21 +162,33 @@ actor MDNSDiscoveryService: NSObject, NetServiceBrowserDelegate {
     func addNode(_ node: DiscoveredNode) {
         discoveredNodes[node.id] = node
         print("[mDNS] ✓ Added node: '\(node.name)' at \(node.ipAddress ?? "unknown"):\(node.port)")
-        onNodeAdded?(node)
-        notifyUpdate()
+        
+        // Dispatch callbacks to main thread to avoid SwiftUI threading violations
+        DispatchQueue.main.async {
+            self.onNodeAdded?(node)
+            self.notifyUpdate()
+        }
     }
     
     func updateNode(_ node: DiscoveredNode) {
         discoveredNodes[node.id] = node
         print("[mDNS] Updated node: \(node.name)")
-        notifyUpdate()
+        
+        // Dispatch callbacks to main thread
+        DispatchQueue.main.async {
+            self.notifyUpdate()
+        }
     }
     
     func removeNode(withId id: String) {
         if let removed = discoveredNodes.removeValue(forKey: id) {
             print("[mDNS] Removed node: \(removed.name)")
-            onNodeRemoved?(removed)
-            notifyUpdate()
+            
+            // Dispatch callbacks to main thread
+            DispatchQueue.main.async {
+                self.onNodeRemoved?(removed)
+                self.notifyUpdate()
+            }
         }
     }
     
