@@ -300,12 +300,14 @@ async def websocket_player_discovery_endpoint(websocket: WebSocket):
         # Extract player info
         name = message.get("name", "Unknown Player")
         platform = message.get("platform", "unknown")
+        player_id = message.get("player_id")  # Optional: for reconnections
         
-        # Register player
+        # Register player (reuses player_id if provided)
         player_info = await discovery_manager.register_player(
             name=name,
             platform=platform,
             websocket=websocket,
+            player_id=player_id,  # None = new player, or existing player_id
         )
         
         # Send registered confirmation
@@ -314,9 +316,10 @@ async def websocket_player_discovery_endpoint(websocket: WebSocket):
             "player_id": player_info.player_id,
         })
         
+        is_reconnect = player_id and player_id in discovery_manager.players
         logger.info(
-            f"[Player Discovery] Player connection established | "
-            f"player_id={player_info.player_id} | name={name} | platform={platform}"
+            f"[Discovery] ws_connect | player_id={player_info.player_id[:8]}...{player_info.player_id[-4:]} | "
+            f"name={name} | platform={platform} | reconnect={is_reconnect}"
         )
         
         # Keep connection alive and wait for lock message from admin
@@ -351,21 +354,22 @@ async def websocket_player_discovery_endpoint(websocket: WebSocket):
                     )
                     
             except json.JSONDecodeError:
-                logger.debug(f"[Player Discovery] Invalid JSON from player")
+                logger.debug(f"[Discovery] invalid_json_from_player")
     
     except WebSocketDisconnect:
         if player_info:
             await discovery_manager.unregister_player(player_info.player_id)
             logger.info(
-                f"[Player Discovery] Player disconnected | "
-                f"player_id={player_info.player_id} | name={player_info.name}"
+                f"[Discovery] ws_disconnect | player_id={player_info.player_id[:8]}...{player_info.player_id[-4:]} | "
+                f"name={player_info.name}"
             )
     
     except Exception as e:
         if player_info:
             await discovery_manager.unregister_player(player_info.player_id)
         logger.error(
-            f"[Player Discovery] WebSocket error | error={str(e)}",
+            f"[Discovery] ws_error | player_id={player_info.player_id[:8] if player_info and len(player_info.player_id) >= 8 else 'unknown'} | "
+            f"error={str(e)}",
             exc_info=True,
         )
 

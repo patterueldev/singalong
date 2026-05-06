@@ -478,3 +478,113 @@ async def select_player(
     except Exception as e:
         logger.exception(f"Error selecting player: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to select player")
+
+
+class PlayerReconnectRequest(BaseModel):
+    """Player reconnection request after being closed/reopened"""
+    player_id: str = Field(..., description="Player ID from previous connection")
+    name: str = Field(..., description="Player name")
+    platform: str = Field(..., description="Platform (macos, ios, ipados, tvos)")
+
+
+class PlayerReconnectResponse(BaseModel):
+    """Player reconnection response"""
+    status: str = Field(..., description="reconnected|not_assigned|not_found")
+    session_code: Optional[str] = Field(None, description="Session code if still assigned")
+    message: str = Field(..., description="Human-readable message")
+
+
+@router.post("/reconnect", status_code=200, response_model=PlayerReconnectResponse)
+async def reconnect_player(
+    request: PlayerReconnectRequest,
+    db = None,  # Placeholder for potential future DB queries
+) -> PlayerReconnectResponse:
+    """
+    Handle player reconnection after being closed/reopened
+    
+    When a player loses connection and reconnects, send its previous player_id
+    to maintain continuity. Node will:
+    1. Re-register player if not in memory
+    2. Check if still assigned to a session
+    3. Return session code if assigned, or "not_assigned" if not
+    
+    **Request**:
+    ```json
+    {
+      "player_id": "39d16667-b28d-4c27-ac30-ed750e73158f",
+      "name": "Pat's MacBook Pro",
+      "platform": "macos"
+    }
+    ```
+    
+    **Response** (if reconnected to session):
+    ```json
+    {
+      "status": "reconnected",
+      "session_code": "3059",
+      "message": "Welcome back to session 3059"
+    }
+    ```
+    
+    **Response** (if not assigned to session):
+    ```json
+    {
+      "status": "not_assigned",
+      "session_code": null,
+      "message": "No active session. Please wait for admin selection."
+    }
+    ```
+    """
+    try:
+        from app.services.player_discovery_manager import PlayerDiscoveryManager
+        from app.models.db_models import Session
+        from app.api.dependencies import get_db
+        from fastapi import Depends
+        
+        # Get database session
+        db = next(get_db())
+        
+        # Re-register player in discovery manager (reuses player_id if exists)
+        discovery_manager = PlayerDiscoveryManager.get_instance()
+        player = await discovery_manager.register_player(
+            name=request.name,
+            platform=request.platform,
+            websocket=None,  # No WebSocket yet (REST endpoint)
+            player_id=request.player_id
+        )
+        
+        logger.info(
+            f"[Discovery] reconnect_attempt | player_id={request.player_id[:8]}...{request.player_id[-4:]} | "
+            f"name={request.name} | platform={request.platform}"
+        )
+        
+        # Check if player is still assigned to a session
+        session = db.query(Session).filter(
+            Session.player_id == request.player_id,
+            Session.status == "active"
+        ).first()
+        
+        if session:
+            logger.info(
+                f"[Discovery] reconnect_success | player_id={request.player_id[:8]}...{request.player_id[-4:]} | "
+                f"session={session.code}"
+            )
+            return PlayerReconnectResponse(
+                status="reconnected",
+                session_code=session.code,
+                message=f"Welcome back to session {session.code}"
+            )
+        else:
+            logger.info(
+                f"[Discovery] reconnect_no_assignment | player_id={request.player_id[:8]}...{request.player_id[-4:]} | "
+                f"entering_discovery_mode"
+            )
+            return PlayerReconnectResponse(
+                status="not_assigned",
+                session_code=None,
+                message="No active session. Please wait for admin selection."
+            )
+    
+    except Exception as e:
+        logger.exception(f"[Discovery] reconnect_error | player_id={request.player_id[:8] if len(request.player_id) >= 8 else request.player_id} | error={str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to process reconnection")

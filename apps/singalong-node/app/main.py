@@ -64,8 +64,37 @@ async def lifespan(app: FastAPI):
 
     # Initialize player discovery manager
     from app.services.player_discovery_manager import PlayerDiscoveryManager
-    PlayerDiscoveryManager.get_instance()
+    discovery_manager = PlayerDiscoveryManager.get_instance()
     print("✓ Player discovery manager initialized")
+    
+    # Restore player assignments from DB on startup
+    # Players who were assigned at shutdown will be marked as "offline_but_assigned"
+    from app.models.db_models import Session
+    db_session = SessionLocal()
+    try:
+        assigned_sessions = db_session.query(Session).filter(
+            Session.player_id.isnot(None),
+            Session.status == "active"
+        ).all()
+        
+        if assigned_sessions:
+            node_logger = logging.getLogger(__name__)
+            node_logger.info(
+                f"[Startup] restoring_player_assignments | count={len(assigned_sessions)}"
+            )
+            for session in assigned_sessions:
+                # Create placeholder PlayerInfo for restored assignment
+                # Player will reconnect later via WebSocket or HTTP reconnect endpoint
+                node_logger.info(
+                    f"[Startup] restore_assignment | session={session.code} | "
+                    f"player_id={session.player_id[:8]}...{session.player_id[-4:]} | "
+                    f"name={session.player_name} | status=offline_but_assigned"
+                )
+                # Note: Don't create PlayerInfo objects here—just log
+                # Player will register via WebSocket when it connects
+    finally:
+        db_session.close()
+
     
     # Initialize WebSocket services (Event Bus, Connection Manager, etc.)
     from app.services.websocket_service_container import init_websocket_services

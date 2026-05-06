@@ -58,19 +58,38 @@ class PlayerDiscoveryManager:
         name: str,
         platform: str,
         websocket: WebSocket,
+        player_id: str = None,
     ) -> PlayerInfo:
         """
-        Register a new player discovery connection
+        Register a new player discovery connection or reconnect existing player
         
         Args:
             name: Player name (e.g., "Pat's MacBook")
             platform: Platform (macos, ios, ipados, tvos)
             websocket: WebSocket connection from player
+            player_id: Optional player ID for reconnections (reuses same ID)
             
         Returns:
-            PlayerInfo object with assigned player_id
+            PlayerInfo object with assigned (or reused) player_id
         """
-        player_id = str(uuid.uuid4())
+        # Reconnection: reuse existing player_id, update connection
+        if player_id and player_id in self.players:
+            player = self.players[player_id]
+            old_status = player.status
+            player.ws_connection = websocket
+            player.status = "discovering"
+            player.connected_at = datetime.now(timezone.utc)
+            logger.info(
+                f"[Discovery] reconnect | player_id={player_id[:8]}...{player_id[-4:]} | "
+                f"name={name} | {old_status}→discovering"
+            )
+            return player
+        
+        # New player: generate UUID if not provided
+        if player_id is None:
+            player_id = str(uuid.uuid4())
+        
+        # Create new player entry
         player = PlayerInfo(
             player_id=player_id,
             name=name,
@@ -80,8 +99,8 @@ class PlayerDiscoveryManager:
         self.players[player_id] = player
         
         logger.info(
-            f"[Player Discovery] Player registered | player_id={player_id} | "
-            f"name={name} | platform={platform}"
+            f"[Discovery] register | player_id={player_id[:8]}...{player_id[-4:]} | "
+            f"name={name} | platform={platform} | status=discovering"
         )
         return player
     
@@ -113,16 +132,17 @@ class PlayerDiscoveryManager:
             PlayerInfo if successful, None if player not found
         """
         if player_id not in self.players:
-            logger.warning(f"[Player Discovery] Lock attempt on non-existent player | {player_id}")
+            logger.warning(f"[Discovery] lock_failed | player_id={player_id[:8]}...{player_id[-4:]} | not_in_memory")
             return None
         
         player = self.players[player_id]
+        old_status = player.status
         player.status = "locked"
         player.session_code = session_code
         
         logger.info(
-            f"[Player Discovery] Player locked | player_id={player_id} | "
-            f"session={session_code} | name={player.name}"
+            f"[Discovery] lock | player_id={player_id[:8]}...{player_id[-4:]} | "
+            f"session={session_code} | name={player.name} | {old_status}→locked"
         )
         return player
     
@@ -139,15 +159,17 @@ class PlayerDiscoveryManager:
             PlayerInfo if successful, None if player not found
         """
         if player_id not in self.players:
-            logger.warning(f"[Player Discovery] Unlock attempt on non-existent player | {player_id}")
+            logger.warning(f"[Discovery] unlock_failed | player_id={player_id[:8]}...{player_id[-4:]} | not_in_memory")
             return None
         
         player = self.players[player_id]
+        old_status = player.status
         player.status = "discovering"
         player.session_code = None
         
         logger.info(
-            f"[Player Discovery] Player unlocked | player_id={player_id} | name={player.name}"
+            f"[Discovery] unlock | player_id={player_id[:8]}...{player_id[-4:]} | "
+            f"name={player.name} | {old_status}→discovering"
         )
         return player
     

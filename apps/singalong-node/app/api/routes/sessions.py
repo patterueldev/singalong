@@ -1242,18 +1242,19 @@ async def select_player(
                 }
                 await player.ws_connection.send_json(lock_message)
                 logger.info(
-                    f"[API] Lock message sent to player | "
-                    f"player_id={request.player_id} | session={session_code}"
+                    f"[Discovery] lock_msg_sent | player_id={request.player_id[:8]}...{request.player_id[-4:]} | "
+                    f"session={session_code} | name={player.name}"
                 )
             except Exception as e:
                 logger.warning(
-                    f"[API] Failed to send lock message to player | error={str(e)}"
+                    f"[Discovery] lock_msg_failed | player_id={request.player_id[:8]}...{request.player_id[-4:]} | "
+                    f"error={str(e)}"
                 )
                 # Don't fail the request if WS send fails
         
         logger.info(
-            f"[API] Player selected and locked | player_id={request.player_id} | "
-            f"session={session_code} | player_name={player.name}"
+            f"[Discovery] lock | player_id={request.player_id[:8]}...{request.player_id[-4:]} | "
+            f"session={session_code} | name={player.name} | discovering→locked"
         )
         
         return SelectPlayerResponse(
@@ -1324,6 +1325,7 @@ async def disconnect_player(
         player = discovery_manager.get_player(player_id)
         
         # Send disconnect message to player over WebSocket (if still connected)
+        # Gracefully handle case where player is already offline
         if player and player.ws_connection:
             try:
                 import json
@@ -1333,37 +1335,46 @@ async def disconnect_player(
                 }
                 await player.ws_connection.send_json(disconnect_message)
                 logger.info(
-                    f"[API] Disconnect message sent to player | "
-                    f"player_id={player_id} | session={session_code}"
+                    f"[Discovery] disconnect_sent | player_id={player_id[:8]}...{player_id[-4:]} | "
+                    f"session={session_code} | name={player_name}"
                 )
             except Exception as e:
                 logger.warning(
-                    f"[API] Failed to send disconnect message to player | error={str(e)}"
+                    f"[Discovery] disconnect_msg_failed | player_id={player_id[:8]}...{player_id[-4:]} | "
+                    f"error={str(e)}"
                 )
                 # Don't fail the request if WS send fails
+        else:
+            # Player already offline—this is normal for scenario 2d
+            if not player:
+                logger.warning(
+                    f"[Discovery] player_offline_on_disconnect | player_id={player_id[:8]}...{player_id[-4:]} | "
+                    f"session={session_code} | skipping_disconnect_msg"
+                )
+            else:
+                logger.warning(
+                    f"[Discovery] player_no_ws_connection | player_id={player_id[:8]}...{player_id[-4:]} | "
+                    f"skipping_disconnect_msg"
+                )
         
         # Unlock player in discovery manager (make it available again)
+        # Only if player is still in memory
         if player:
             discovery_manager.unlock_player(player_id)
         
-        # Clear player assignment from session
+        # ALWAYS clear player assignment from session (DB is source of truth)
         session.player_id = None
         session.player_name = None
         session.player_platform = None
         db.commit()
         
         logger.info(
-            f"[API] Player disconnected from session | player_id={player_id} | "
-            f"player_name={player_name} | session={session_code}"
+            f"[Discovery] session_cleared | session={session_code} | "
+            f"player_id={player_id[:8]}...{player_id[-4:]} | player_name={player_name}"
         )
         
+        # Return success regardless (idempotent operation)
         return {
             "success": True,
             "message": "Player disconnected from session",
         }
-    
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.exception(f"Error disconnecting player: {str(e)}")
-        raise HTTPException(status_code=500, detail="Failed to disconnect player")
