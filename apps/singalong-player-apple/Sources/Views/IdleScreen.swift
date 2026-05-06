@@ -194,7 +194,9 @@ struct NodeCard: View {
         case .disconnected: return "Disconnected"
         case .connecting: return "Connecting..."
         case .connected: return "Ready"
-        case .error: return "Error"
+        case .reconnecting(let attemptNumber): return "Reconnecting... (Attempt \(attemptNumber))"
+        case .disconnecting: return "Disconnecting..."
+        case .error(let message): return "Error: \(message)"
         }
     }
     
@@ -203,6 +205,8 @@ struct NodeCard: View {
         case .disconnected: return Color.gray
         case .connecting: return Color(red: 0.612, green: 0.639, blue: 0.686)
         case .connected: return Color(red: 0.753, green: 0.522, blue: 0.992)
+        case .reconnecting: return Color(red: 0.612, green: 0.639, blue: 0.686)
+        case .disconnecting: return Color.gray
         case .error: return Color.red
         }
     }

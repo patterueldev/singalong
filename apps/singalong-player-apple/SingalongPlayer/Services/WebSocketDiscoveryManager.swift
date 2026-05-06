@@ -8,7 +8,7 @@ actor WebSocketDiscoveryManager {
     
     static let shared = WebSocketDiscoveryManager()
     
-    private var activeConnections: [String: DiscoveryWebSocketConnection] = [:]
+    var activeConnections: [String: DiscoveryWebSocketConnection] = [:]
     private let maxRetryAttempts = 10
     private let initialBackoffSeconds: Double = 1.0
     
@@ -300,7 +300,7 @@ actor WebSocketDiscoveryManager {
 }
 
 /// Represents an active discovery WebSocket connection
-private class DiscoveryWebSocketConnection {
+class DiscoveryWebSocketConnection {
     let nodeId: String
     let nodeName: String
     var webSocketTask: URLSessionWebSocketTask

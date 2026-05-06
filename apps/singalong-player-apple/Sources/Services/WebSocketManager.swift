@@ -25,7 +25,7 @@ protocol WebSocketManager: AnyObject, Sendable {
 }
 
 /// Connection status for any WebSocket connection
-enum ConnectionStatus: Sendable {
+enum ConnectionStatus: Sendable, Equatable {
     case disconnected
     case connecting
     case connected
@@ -41,12 +41,28 @@ enum ConnectionStatus: Sendable {
             return "Connecting..."
         case .connected:
             return "Connected"
-        case .reconnecting(let attempt):
-            return "Reconnecting (\(attempt))..."
+        case .reconnecting(let attemptNumber):
+            return "Reconnecting... (Attempt \(attemptNumber))"
         case .disconnecting:
             return "Disconnecting..."
         case .error(let message):
             return "Error: \(message)"
+        }
+    }
+    
+    static func == (lhs: ConnectionStatus, rhs: ConnectionStatus) -> Bool {
+        switch (lhs, rhs) {
+        case (.disconnected, .disconnected),
+             (.connecting, .connecting),
+             (.connected, .connected),
+             (.disconnecting, .disconnecting):
+            return true
+        case let (.reconnecting(lhsAttempt), .reconnecting(rhsAttempt)):
+            return lhsAttempt == rhsAttempt
+        case let (.error(lhsMsg), .error(rhsMsg)):
+            return lhsMsg == rhsMsg
+        default:
+            return false
         }
     }
 }

@@ -1,11 +1,8 @@
 import Foundation
-import Observation
 
 /// ViewModel for the Idle Screen (player discovery phase)
-/// Responsible for managing mDNS discovery, node selection, and transitions to locked state
 @MainActor
 final class IdleScreenViewModel: ObservableObject {
-    // MARK: - State
     
     @Published private(set) var discoveredNodes: [DiscoveredNode] = []
     @Published private(set) var activeConnections: [String: ConnectionStatus] = [:]
@@ -14,19 +11,13 @@ final class IdleScreenViewModel: ObservableObject {
     
     var currentPhase: PlayerPhase = .idle
     
-    // MARK: - Dependencies
-    
     private let discoveryCoordinator: DiscoveryCoordinator
     private let dependencyContainer: DependencyContainer
-    
-    // MARK: - Initialization
     
     init(discoveryCoordinator: DiscoveryCoordinator, dependencyContainer: DependencyContainer) {
         self.discoveryCoordinator = discoveryCoordinator
         self.dependencyContainer = dependencyContainer
     }
-    
-    // MARK: - Discovery Management
     
     func startDiscovery() {
         guard !isDiscovering else { return }
@@ -36,15 +27,11 @@ final class IdleScreenViewModel: ObservableObject {
         Task {
             do {
                 try await discoveryCoordinator.startDiscovery { [weak self] node in
-                    await MainActor.run {
-                        self?.handleNodeDiscovered(node)
-                    }
+                    self?.handleNodeDiscovered(node)
                 }
             } catch {
-                await MainActor.run {
-                    self.isDiscovering = false
-                    self.errorMessage = "Discovery failed: \(error.localizedDescription)"
-                }
+                self.isDiscovering = false
+                self.errorMessage = "Discovery failed: \(error.localizedDescription)"
             }
         }
     }
@@ -57,8 +44,6 @@ final class IdleScreenViewModel: ObservableObject {
             await discoveryCoordinator.stopDiscovery()
         }
     }
-    
-    // MARK: - Node Selection
     
     func selectNode(_ node: DiscoveredNode) {
         errorMessage = nil
@@ -78,8 +63,6 @@ final class IdleScreenViewModel: ObservableObject {
         }
     }
     
-    // MARK: - Private Helpers
-    
     private func handleNodeDiscovered(_ node: DiscoveredNode) {
         if !discoveredNodes.contains(where: { $0.id == node.id }) {
             discoveredNodes.append(node)
@@ -92,8 +75,6 @@ final class IdleScreenViewModel: ObservableObject {
         }
     }
 }
-
-// MARK: - Supporting Types
 
 enum PlayerPhase {
     case idle

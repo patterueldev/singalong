@@ -153,9 +153,11 @@ struct MainScreen: View {
         .onDisappear {
             viewModel.disconnectFromSession()
         }
-        .onChange(of: viewModel.isDisconnected) { _, isDisconnected in
-            if isDisconnected {
-                appState.transitionToIdleScreen()
+        .task {
+            for await isDisconnected in viewModel.$isDisconnected.values {
+                if isDisconnected {
+                    appState.transitionToIdleScreen()
+                }
             }
         }
     }
