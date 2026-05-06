@@ -48,12 +48,12 @@ export function usePlayback(isPlayerModalOpen: boolean = false) {
     console.log('[usePlayback] Starting poll for session:', currentSession.code)
 
     const fetchData = async () => {
-      console.log('[usePlayback.fetchData] Polling available players for session:', currentSession.code)
+      console.log('[usePlayback.fetchData] Polling available players')
       setState((prev) => ({ ...prev, isLoading: true, error: null }))
       try {
         // Fetch available players
         const playersResponse = await api.get(
-          `/sessions/${currentSession.code}/available-players`
+          `/players/available`
         )
         const players = playersResponse.data || []
         console.log('[usePlayback.fetchData] Fetched', players.length, 'available players')
@@ -183,7 +183,7 @@ export function usePlayback(isPlayerModalOpen: boolean = false) {
       try {
         // Fetch available players
         const playersResponse = await api.get(
-          `/sessions/${currentSession.code}/available-players`
+          `/players/available`
         )
         const players = playersResponse.data || []
         console.log('[usePlayback.fetchData] Fetched', players.length, 'available players')
