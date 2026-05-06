@@ -138,7 +138,7 @@ struct IdleScreen: View {
 struct NodeCard: View {
     
     let node: DiscoveredNode
-    let status: ConnectionStatus
+    let status: NodeConnectionStatus
     let onSelect: () -> Void
     
     var body: some View {
@@ -164,13 +164,13 @@ struct NodeCard: View {
                 // Status indicator
                 HStack(spacing: 4) {
                     Circle()
-                        .fill(statusColor)
+                        .fill(status.statusColor)
                         .frame(width: 8, height: 8)
                     
-                    Text(statusText)
+                    Text(status.displayText)
                         .font(.caption)
                         .fontWeight(.semibold)
-                        .foregroundColor(statusColor)
+                        .foregroundColor(status.statusColor)
                 }
             }
         }
@@ -180,34 +180,12 @@ struct NodeCard: View {
         .overlay(
             RoundedRectangle(cornerRadius: 12)
                 .stroke(
-                    status == .connected ? Color(red: 0.753, green: 0.522, blue: 0.992) : Color.clear,
+                    status == .waiting ? Color(red: 0.753, green: 0.522, blue: 0.992) : Color.clear,
                     lineWidth: 2
                 )
         )
         .onTapGesture {
             onSelect()
-        }
-    }
-    
-    private var statusText: String {
-        switch status {
-        case .disconnected: return "Disconnected"
-        case .connecting: return "Connecting..."
-        case .connected: return "Ready"
-        case .reconnecting(let attemptNumber): return "Reconnecting... (Attempt \(attemptNumber))"
-        case .disconnecting: return "Disconnecting..."
-        case .error(let message): return "Error: \(message)"
-        }
-    }
-    
-    private var statusColor: Color {
-        switch status {
-        case .disconnected: return Color.gray
-        case .connecting: return Color(red: 0.612, green: 0.639, blue: 0.686)
-        case .connected: return Color(red: 0.753, green: 0.522, blue: 0.992)
-        case .reconnecting: return Color(red: 0.612, green: 0.639, blue: 0.686)
-        case .disconnecting: return Color.gray
-        case .error: return Color.red
         }
     }
 }

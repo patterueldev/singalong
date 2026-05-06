@@ -11,12 +11,22 @@ class DiscoveryCoordinator {
     
     var onNodeDiscovered: ((DiscoveredNode) -> Void)?
     var onNodeSelected: (() -> Void)?
+    var onConnectionStatusChanged: ((String, NodeConnectionStatus) -> Void)?
     
     // MARK: - Initialization
     
     init(mdnsService: MDNSDiscoveryService, webSocketManager: WebSocketDiscoveryManager) {
         self.mdnsService = mdnsService
         self.webSocketManager = webSocketManager
+        setupWebSocketCallbacks()
+    }
+    
+    // MARK: - Setup
+    
+    private func setupWebSocketCallbacks() {
+        webSocketManager.onConnectionStatusChanged = { [weak self] nodeId, status in
+            self?.onConnectionStatusChanged?(nodeId, status)
+        }
     }
     
     // MARK: - Discovery Lifecycle

@@ -5,7 +5,7 @@ import Foundation
 final class IdleScreenViewModel: ObservableObject {
     
     @Published private(set) var discoveredNodes: [DiscoveredNode] = []
-    @Published private(set) var activeConnections: [String: ConnectionStatus] = [:]
+    @Published private(set) var activeConnections: [String: NodeConnectionStatus] = [:]
     @Published private(set) var isDiscovering = false
     @Published private(set) var errorMessage: String?
     
@@ -17,6 +17,13 @@ final class IdleScreenViewModel: ObservableObject {
     init(discoveryCoordinator: DiscoveryCoordinator, dependencyContainer: DependencyContainer) {
         self.discoveryCoordinator = discoveryCoordinator
         self.dependencyContainer = dependencyContainer
+        setupCallbacks()
+    }
+    
+    private func setupCallbacks() {
+        discoveryCoordinator.onConnectionStatusChanged = { [weak self] nodeId, status in
+            self?.activeConnections[nodeId] = status
+        }
     }
     
     func startDiscovery() {
