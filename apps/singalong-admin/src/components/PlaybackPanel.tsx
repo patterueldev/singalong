@@ -1,5 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { usePlayback } from '../hooks/usePlayback'
+import { useSessions } from '../hooks/useSessions'
+import api from '../services/authService'
+import type { Player } from '../types/models'
 import { PlayerSelectionModal } from './PlayerSelectionModal'
 import './PlaybackPanel.css'
 
@@ -8,9 +11,52 @@ interface PlaybackPanelProps {
 }
 
 export function PlaybackPanel({ onOpenPlayerDiscovery }: PlaybackPanelProps) {
-  const { nowPlaying, assignedPlayer, availablePlayers, isLoading, selectPlayer, play, pause } =
+  const { nowPlaying, availablePlayers, isLoading, selectPlayer, play, pause } =
     usePlayback()
+  const { currentSession } = useSessions()
+  const [assignedPlayer, setAssignedPlayer] = useState<Player | null>(null)
   const [showPlayerModal, setShowPlayerModal] = useState(false)
+
+  // Fetch assigned player from session on mount and when session changes
+  useEffect(() => {
+    if (!currentSession?.code) {
+      setAssignedPlayer(null)
+      return
+    }
+
+    const fetchSessionData = async () => {
+      try {
+        const response = await api.get(`/sessions/${currentSession.code}`)
+        const sessionData = response.data
+        
+        if (sessionData?.player_id && sessionData?.player_name) {
+          setAssignedPlayer({
+            id: sessionData.player_id,
+            name: sessionData.player_name,
+            platform: 'unknown',
+            status: 'connected' as any,
+          })
+          console.log('[PlaybackPanel] Assigned player loaded:', sessionData.player_name)
+        } else {
+          setAssignedPlayer(null)
+          console.log('[PlaybackPanel] No assigned player in session')
+        }
+      } catch (err) {
+        console.error('[PlaybackPanel] Failed to fetch session data:', err)
+        setAssignedPlayer(null)
+      }
+    }
+
+    // Fetch immediately on mount
+    fetchSessionData()
+
+    // Also poll every 3 seconds to catch updates (player selection, disconnection)
+    const pollInterval = setInterval(fetchSessionData, 3000)
+
+    return () => {
+      clearInterval(pollInterval)
+    }
+  }, [currentSession?.code])
 
   const progressPercent =
     nowPlaying.duration > 0 ? (nowPlaying.elapsed / nowPlaying.duration) * 100 : 0
