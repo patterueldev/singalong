@@ -35,7 +35,7 @@ def get_auth_service() -> AuthService:
     return _auth_service
 
 
-def verify_bearer_token(authorization: str = Header(None)) -> "TokenPayload":
+def verify_bearer_token(authorization: str = Header(None)) -> dict:
     """
     Verify Bearer token from Authorization header
 
@@ -67,9 +67,7 @@ def verify_bearer_token(authorization: str = Header(None)) -> "TokenPayload":
 
     try:
         payload = auth_service.validate_token(token)
-        # Import here to avoid circular import
-        from app.api.dependencies import TokenPayload
-        return TokenPayload(payload)
+        return payload
     except jwt.ExpiredSignatureError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -111,12 +109,12 @@ def require_role(*allowed_roles: str):
     return decorator
 
 
-def verify_admin_role(token_payload: "TokenPayload" = Depends(verify_bearer_token)) -> "TokenPayload":
+def verify_admin_role(token_payload: dict = Depends(verify_bearer_token)) -> dict:
     """
     Verify that the token payload has admin role
     
     Args:
-        token_payload: TokenPayload object from verify_bearer_token
+        token_payload: Decoded JWT token payload (dict)
         
     Returns:
         The token payload if role is admin
@@ -124,7 +122,7 @@ def verify_admin_role(token_payload: "TokenPayload" = Depends(verify_bearer_toke
     Raises:
         HTTPException: If role is not admin
     """
-    if token_payload.role != "admin":
+    if token_payload.get("role") != "admin":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Admin role required to access this resource",
