@@ -22,7 +22,11 @@ final class IdleScreenViewModel: ObservableObject {
     
     private func setupCallbacks() {
         discoveryCoordinator.onConnectionStatusChanged = { [weak self] nodeId, status in
-            self?.activeConnections[nodeId] = status
+            // Must reassign the entire dictionary to trigger @Published notification
+            // (direct mutations don't notify subscribers)
+            var updated = self?.activeConnections ?? [:]
+            updated[nodeId] = status
+            self?.activeConnections = updated
         }
     }
     
