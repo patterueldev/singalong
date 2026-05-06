@@ -1161,65 +1161,6 @@ class SelectPlayerResponse(BaseModel):
     message: str
 
 
-@router.get("/{session_code}/available-players", response_model=dict)
-async def get_available_players(
-    session_code: str,
-    db: SQLSession = Depends(get_db),
-    token: TokenPayload = Depends(verify_bearer_token),
-) -> dict:
-    """
-    Get list of available players (in discovering state) for a session.
-    
-    Players in "discovering" state are available to be selected.
-    Once a player is locked to a session, it's no longer available.
-    
-    **Response**:
-    ```json
-    {
-      "session_code": "0001",
-      "available_players": [
-        {
-          "id": "player-uuid",
-          "name": "Pat's MacBook",
-          "platform": "macos",
-          "status": "discovering"
-        }
-      ]
-    }
-    ```
-    """
-    try:
-        # Validate session exists
-        session = _validate_session_exists(session_code, db)
-        
-        # Check authorization (admin or session participant)
-        _check_session_authorization(session, token, allow_admin_only=False)
-        
-        # Get available players from discovery manager
-        from app.services.player_discovery_manager import PlayerDiscoveryManager
-        discovery_manager = PlayerDiscoveryManager.get_instance()
-        available_players = discovery_manager.get_available_players()
-        
-        # Filter and format response
-        player_list = [player.to_dict() for player in available_players]
-        
-        logger.info(
-            f"[API] Get available players | session={session_code} | "
-            f"count={len(player_list)}"
-        )
-        
-        return {
-            "session_code": session_code,
-            "available_players": player_list,
-        }
-    
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.exception(f"Error getting available players: {str(e)}")
-        raise HTTPException(status_code=500, detail="Failed to get available players")
-
-
 @router.post("/{session_code}/select-player", status_code=200, response_model=SelectPlayerResponse)
 async def select_player(
     session_code: str,
