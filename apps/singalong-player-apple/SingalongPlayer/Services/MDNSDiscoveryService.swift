@@ -313,47 +313,61 @@ private class MDNSServiceResolver: NSObject, NetServiceDelegate {
     }
     
     private func extractIPAddress(from addressData: Data) -> String? {
-        guard addressData.count >= MemoryLayout<sockaddr_storage>.size else {
-            print("Data length: \(addressData.count), Family: unknown (data too small)")
+        // First, read the address family from the first 2 bytes
+        guard addressData.count >= MemoryLayout<sa_family_t>.size else {
+            print("[mDNS]   Data length: \(addressData.count), Family: unknown (too small for sa_family_t)")
             return nil
         }
         
-        var address = sockaddr_storage()
-        let addressBytes = addressData.withUnsafeBytes { ptr in
-            ptr.baseAddress.map { Array(UnsafeRawBufferPointer(start: $0, count: addressData.count)) } ?? []
+        // Read the family byte
+        var family: sa_family_t = 0
+        addressData.withUnsafeBytes { ptr in
+            family = ptr.load(as: sa_family_t.self)
         }
         
-        guard addressBytes.count >= MemoryLayout<sockaddr_storage>.size else {
-            return nil
-        }
+        print("[mDNS]   Data length: \(addressData.count), Family: \(family)", terminator: "")
         
-        memcpy(&address, addressBytes, min(addressBytes.count, MemoryLayout<sockaddr_storage>.size))
-        
-        // Check address family
-        let family = Int32(address.ss_family)
-        
-        if family == AF_INET {
-            // IPv4
-            let sockaddr = UnsafeRawPointer(&address).assumingMemoryBound(to: sockaddr_in.self).pointee
+        if family == sa_family_t(AF_INET) {
+            // IPv4: sockaddr_in is 16 bytes
+            guard addressData.count >= MemoryLayout<sockaddr_in>.size else {
+                print(" -> IPv4 (data too small)")
+                return nil
+            }
+            
+            var sockaddr = sockaddr_in()
+            addressData.withUnsafeBytes { ptr in
+                memcpy(&sockaddr, ptr.baseAddress, MemoryLayout<sockaddr_in>.size)
+            }
+            
             var ip = sockaddr.sin_addr
             let ipString = String(cString: inet_ntoa(ip))
-            print("Data length: \(addressData.count), Family: 2 -> IPv4: \(ipString)")
+            print(" -> IPv4: \(ipString)")
             return ipString
-        } else if family == AF_INET6 {
-            // IPv6
-            let sockaddr = UnsafeRawPointer(&address).assumingMemoryBound(to: sockaddr_in6.self).pointee
-            var ip = sockaddr.sin6_addr
             
+        } else if family == sa_family_t(AF_INET6) {
+            // IPv6: sockaddr_in6 is 28 bytes
+            guard addressData.count >= MemoryLayout<sockaddr_in6>.size else {
+                print(" -> IPv6 (data too small)")
+                return nil
+            }
+            
+            var sockaddr = sockaddr_in6()
+            addressData.withUnsafeBytes { ptr in
+                memcpy(&sockaddr, ptr.baseAddress, MemoryLayout<sockaddr_in6>.size)
+            }
+            
+            var ip = sockaddr.sin6_addr
             var buffer = [CChar](repeating: 0, count: Int(INET6_ADDRSTRLEN))
             if inet_ntop(AF_INET6, &ip, &buffer, socklen_t(INET6_ADDRSTRLEN)) != nil {
                 let ipString = String(cString: buffer)
-                print("Data length: \(addressData.count), Family: 28 -> IPv6: \(ipString)")
+                print(" -> IPv6: \(ipString)")
                 return ipString
             }
+            print(" -> IPv6 (inet_ntop failed)")
+            return nil
         } else {
-            print("Data length: \(addressData.count), Family: \(family) -> Unknown family \(family) (skipping)")
+            print(" -> Unknown family (skipping)")
+            return nil
         }
-        
-        return nil
     }
 }
