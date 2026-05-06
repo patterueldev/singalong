@@ -21,23 +21,34 @@ actor WebSocketDiscoveryManager {
     
     /// Connect to a discovered node's discovery WebSocket endpoint
     func connect(to node: DiscoveredNode) async throws {
+        print("[WS Discovery] ===== ATTEMPT TO CONNECT TO NODE =====")
+        print("[WS Discovery] Node ID: \(node.id)")
+        print("[WS Discovery] Node Name: \(node.name)")
+        print("[WS Discovery] Node Host: \(node.host)")
+        print("[WS Discovery] Node IP: \(node.ipAddress ?? "nil")")
+        print("[WS Discovery] Node Port: \(node.port)")
+        
         guard let wsURL = node.discoveryWSURL else {
-            print("[WS Discovery] ✗ Failed to create WebSocket URL for \(node.name)")
+            print("[WS Discovery] ✗ FAILED: Could not create WebSocket URL for \(node.name)")
             print("[WS Discovery]   IP: \(node.ipAddress ?? "nil")")
             print("[WS Discovery]   Port: \(node.port)")
             print("[WS Discovery]   Host: \(node.host)")
             throw WebSocketError.invalidURL
         }
         
-        print("[WS Discovery] ===== CONNECTING TO NODE =====")
-        print("[WS Discovery] Node: \(node.name)")
-        print("[WS Discovery] IP: \(node.ipAddress ?? "nil")")
-        print("[WS Discovery] Port: \(node.port)")
-        print("[WS Discovery] Host: \(node.host)")
+        print("[WS Discovery] ✓ WebSocket URL created successfully")
         print("[WS Discovery] URL: \(wsURL.absoluteString)")
+        print("[WS Discovery] URL Scheme: \(wsURL.scheme ?? "nil")")
+        print("[WS Discovery] URL Host: \(wsURL.host ?? "nil")")
+        print("[WS Discovery] URL Port: \(wsURL.port ?? -1)")
+        print("[WS Discovery] URL Path: \(wsURL.path)")
         
+        print("[WS Discovery] Creating URLSession with default configuration...")
         let urlSession = URLSession(configuration: .default)
+        
+        print("[WS Discovery] Creating WebSocket task...")
         let webSocketTask = urlSession.webSocketTask(with: wsURL)
+        print("[WS Discovery] ✓ WebSocket task created")
         
         let connection = DiscoveryWebSocketConnection(
             nodeId: node.id,
@@ -48,31 +59,40 @@ actor WebSocketDiscoveryManager {
         )
         
         activeConnections[node.id] = connection
+        print("[WS Discovery] Connection object stored in activeConnections")
         
         // Start connection
-        print("[WS Discovery] Starting WebSocket task...")
+        print("[WS Discovery] Calling webSocketTask.resume()...")
         webSocketTask.resume()
+        print("[WS Discovery] ✓ WebSocket task resumed, connection should be establishing...")
         
         // Update status
+        print("[WS Discovery] Updating connection status to .connecting...")
         onConnectionStatusChanged?(node.id, .connecting)
         
         // Send registration message
         let playerName = getDeviceName()
         let platform = getPlatformName()
-        print("[WS Discovery] Sending registration: name='\(playerName)' platform='\(platform)'")
+        print("[WS Discovery] Preparing registration message...")
+        print("[WS Discovery]   Player Name: \(playerName)")
+        print("[WS Discovery]   Platform: \(platform)")
         let registerMessage = PlayerMessage.register(name: playerName, platform: platform)
         
         do {
+            print("[WS Discovery] Attempting to send registration message...")
             try await send(message: registerMessage, toNodeId: node.id)
-            print("[WS Discovery] ✓ Registration message sent")
+            print("[WS Discovery] ✓ Registration message sent successfully")
         } catch {
-            print("[WS Discovery] ✗ Failed to send registration: \(error)")
+            print("[WS Discovery] ✗ FAILED to send registration message")
+            print("[WS Discovery]   Error: \(error)")
+            print("[WS Discovery]   Error description: \(error.localizedDescription)")
             throw error
         }
         
         // Start receiving messages
-        print("[WS Discovery] Starting to receive messages...")
+        print("[WS Discovery] Starting message receive loop...")
         await receiveMessages(fromNodeId: node.id)
+        print("[WS Discovery] Message receive loop ended")
     }
     
     /// Disconnect from a node
@@ -93,15 +113,33 @@ actor WebSocketDiscoveryManager {
     
     /// Send message to specific node
     func send(message: PlayerMessage, toNodeId nodeId: String) async throws {
+        print("[WS Discovery] send() called")
+        print("[WS Discovery]   Target Node ID: \(nodeId)")
+        print("[WS Discovery]   Message type: \(message)")
+        
         guard let connection = activeConnections[nodeId] else {
+            print("[WS Discovery] ✗ send() failed: No connection found for nodeId=\(nodeId)")
+            print("[WS Discovery]   Active connections count: \(activeConnections.count)")
+            print("[WS Discovery]   Available node IDs: \(activeConnections.keys.joined(separator: ", "))")
             throw WebSocketError.notConnected
         }
         
+        print("[WS Discovery] Connection found, encoding message...")
         let encoder = JSONEncoder()
         let jsonData = try encoder.encode(message)
         let jsonString = String(data: jsonData, encoding: .utf8) ?? ""
         
-        try await connection.webSocketTask.send(.string(jsonString))
+        print("[WS Discovery] JSON message: \(jsonString)")
+        print("[WS Discovery] Sending via WebSocket task...")
+        
+        do {
+            try await connection.webSocketTask.send(.string(jsonString))
+            print("[WS Discovery] ✓ Message sent successfully to \(connection.nodeName)")
+        } catch {
+            print("[WS Discovery] ✗ Failed to send message: \(error)")
+            print("[WS Discovery]   Error description: \(error.localizedDescription)")
+            throw error
+        }
     }
     
     /// Get connection status
@@ -130,39 +168,57 @@ actor WebSocketDiscoveryManager {
     // MARK: - Private Methods
     
     private func receiveMessages(fromNodeId nodeId: String) async {
+        print("[WS Discovery] receiveMessages() starting for nodeId: \(nodeId)")
+        
         guard activeConnections[nodeId] != nil else { 
-            print("[WS Discovery] Connection not found for nodeId: \(nodeId)")
+            print("[WS Discovery] ✗ receiveMessages() failed: Connection not found for nodeId: \(nodeId)")
             return 
         }
         
+        print("[WS Discovery] Entering receive message loop...")
         let decoder = JSONDecoder()
         
         while let connection = activeConnections[nodeId] {
+            print("[WS Discovery] Calling webSocketTask.receive()...")
             do {
                 let message = try await connection.webSocketTask.receive()
+                print("[WS Discovery] ✓ Received message from \(connection.nodeName)")
                 
                 switch message {
                 case .string(let jsonString):
-                    print("[WS Discovery] ✓ Received string message from \(connection.nodeName)")
+                    print("[WS Discovery] ✓ Received string message (length: \(jsonString.count) bytes)")
+                    print("[WS Discovery] Message content: \(jsonString)")
                     if let jsonData = jsonString.data(using: .utf8) {
-                        let nodeMessage = try decoder.decode(NodeMessage.self, from: jsonData)
-                        
-                        // Update connection status based on message type
-                        if case .registered = nodeMessage {
-                            activeConnections[nodeId]?.status = .waiting
-                            print("[WS Discovery] Calling onConnectionStatusChanged callback with nodeId=\(nodeId), status=.waiting")
-                            onConnectionStatusChanged?(nodeId, .waiting)
-                            print("[WS Discovery] ✓ Player registered successfully - now waiting for admin selection")
+                        do {
+                            let nodeMessage = try decoder.decode(NodeMessage.self, from: jsonData)
+                            print("[WS Discovery] ✓ Decoded message type: \(nodeMessage)")
+                            
+                            // Update connection status based on message type
+                            if case .registered = nodeMessage {
+                                activeConnections[nodeId]?.status = .waiting
+                                print("[WS Discovery] Message is 'registered', updating status to .waiting")
+                                print("[WS Discovery] Calling onConnectionStatusChanged callback with nodeId=\(nodeId), status=.waiting")
+                                onConnectionStatusChanged?(nodeId, .waiting)
+                                print("[WS Discovery] ✓ Player registered successfully - now waiting for admin selection")
+                            }
+                            
+                            onMessageReceived?(nodeId, nodeMessage)
+                        } catch {
+                            print("[WS Discovery] ✗ Failed to decode message: \(error)")
+                            print("[WS Discovery]   Raw JSON: \(jsonString)")
                         }
-                        
-                        onMessageReceived?(nodeId, nodeMessage)
                     }
                 case .data(let data):
-                    print("[WS Discovery] ✓ Received data message from \(connection.nodeName)")
+                    print("[WS Discovery] ✓ Received data message (length: \(data.count) bytes)")
                     if let jsonString = String(data: data, encoding: .utf8) {
+                        print("[WS Discovery] Message content: \(jsonString)")
                         if let jsonData = jsonString.data(using: .utf8) {
-                            let nodeMessage = try decoder.decode(NodeMessage.self, from: jsonData)
-                            onMessageReceived?(nodeId, nodeMessage)
+                            do {
+                                let nodeMessage = try decoder.decode(NodeMessage.self, from: jsonData)
+                                onMessageReceived?(nodeId, nodeMessage)
+                            } catch {
+                                print("[WS Discovery] ✗ Failed to decode data message: \(error)")
+                            }
                         }
                     }
                 @unknown default:
@@ -170,7 +226,7 @@ actor WebSocketDiscoveryManager {
                     break
                 }
             } catch {
-                print("[WS Discovery] ✗ Error receiving message from \(nodeId): \(error)")
+                print("[WS Discovery] ✗ Error in receive loop: \(error)")
                 if let urlError = error as? URLError {
                     print("[WS Discovery]   URLError code: \(urlError.code.rawValue)")
                     print("[WS Discovery]   Error description: \(urlError.localizedDescription)")
@@ -179,9 +235,11 @@ actor WebSocketDiscoveryManager {
                 // Attempt retry
                 if let connection = activeConnections[nodeId],
                    connection.retryAttempt < connection.maxRetryAttempts {
+                    print("[WS Discovery] Will attempt retry...")
                     await retryConnection(nodeId: nodeId)
                     return  // Exit after retry is handled (retryConnection continues the loop)
                 } else {
+                    print("[WS Discovery] Max retries exceeded or connection not found")
                     activeConnections[nodeId]?.status = .reconnecting(attemptNumber: activeConnections[nodeId]?.retryAttempt ?? 0)
                     onConnectionStatusChanged?(nodeId, .reconnecting(attemptNumber: activeConnections[nodeId]?.retryAttempt ?? 0))
                     onConnectionClosed?(nodeId)
@@ -190,6 +248,7 @@ actor WebSocketDiscoveryManager {
                 }
             }
         }
+        print("[WS Discovery] Exited receive message loop for nodeId: \(nodeId)")
     }
     
     private func retryConnection(nodeId: String) async {
