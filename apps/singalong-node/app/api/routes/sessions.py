@@ -1381,3 +1381,9 @@ async def disconnect_player(
             "success": True,
             "message": "Player disconnected from session",
         }
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception(f"[Discovery] disconnect_error | session={session_code} | error={str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to disconnect player")
