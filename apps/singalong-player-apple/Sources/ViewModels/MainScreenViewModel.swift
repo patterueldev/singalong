@@ -3,218 +3,238 @@ import Foundation
 /// ViewModel for the Main Screen (player session phase)
 @MainActor
 final class MainScreenViewModel: ObservableObject {
-    // MARK: - Session State
     
-    @Published private(set) var sessionCode: String = ""
-    @Published private(set) var sessionToken: String = ""
+    // MARK: - Published Properties
     
-    // MARK: - Playback State
-    
+    @Published private(set) var sessionCode: String?
+    @Published private(set) var sessionToken: String?
     @Published private(set) var queueItems: [QueueItem] = []
-    @Published private(set) var currentPlayback: PlaybackState?
-    @Published private(set) var elapsedSeconds: Int = 0
-    @Published private(set) var totalSeconds: Int = 0
-    
-    // MARK: - Session Management
-    
     @Published private(set) var isConnected = false
-    @Published private(set) var errorMessage: String?
     @Published private(set) var isDisconnected = false
+    @Published private(set) var currentPlayback: PlaybackState?
+    @Published private(set) var errorMessage: String?
+    @Published private(set) var attendeeCount = 0
     
-    // MARK: - Dependencies
+    // MARK: - Private Properties
     
-    private let dependencyContainer: DependencyContainer
     private var sessionManager: WebSocketPlayerSessionManager?
-    
-    var onDisconnect: (() -> Void)?
+    private var messageStreamTask: Task<Void, Never>?
     
     // MARK: - Initialization
     
-    init(sessionCode: String, sessionToken: String, dependencyContainer: DependencyContainer) {
+    init(sessionCode: String, sessionToken: String) {
         self.sessionCode = sessionCode
         self.sessionToken = sessionToken
-        self.dependencyContainer = dependencyContainer
+        print("[MainScreenViewModel] Init with session \(sessionCode)")
     }
     
-    // MARK: - Session Lifecycle
+    // MARK: - Connection Methods
     
     func connectToSession() {
-        guard !isConnected else { return }
+        guard !isConnected, let code = sessionCode, let token = sessionToken else {
+            print("[MainScreenViewModel] Cannot connect: already connected or missing credentials")
+            return
+        }
+        
+        print("[MainScreenViewModel] Connecting to session \(code)")
         
         sessionManager = WebSocketPlayerSessionManager()
+        setupMessageHandlers()
         
         Task {
             do {
-                try await sessionManager?.connect(sessionCode: sessionCode)
-                try await sessionManager?.send(.auth(sessionCode: sessionCode, token: sessionToken))
-                isConnected = true
+                try await sessionManager?.connect(to: code, token: token)
+                self.isConnected = true
+                print("[MainScreenViewModel] ✓ Connected to session")
+                
                 startListeningToMessages()
             } catch {
-                errorMessage = "Failed to connect to session: \(error.localizedDescription)"
+                self.errorMessage = "Failed to connect: \(error.localizedDescription)"
+                print("[MainScreenViewModel] ✗ Connect failed: \(error)")
             }
         }
     }
     
     func disconnectFromSession() {
-        Task {
-            await try? sessionManager?.disconnect()
-            isConnected = false
-        }
-    }
-    
-    // MARK: - Playback Control
-    
-    func handlePlayCommand(songId: String, url: String) {
-        currentPlayback = PlaybackState(
-            songId: songId,
-            videoUrl: url,
-            status: .playing,
-            startedAt: Date()
-        )
-        elapsedSeconds = 0
-    }
-    
-    func handlePauseCommand() {
-        currentPlayback?.status = .paused
-    }
-    
-    func handleSeekCommand(seconds: Int) {
-        elapsedSeconds = seconds
-    }
-    
-    func handleVolumeCommand(level: Float) {
-        // Delegate to AV player
-    }
-    
-    func updateProgress(elapsed: Int, total: Int) {
-        elapsedSeconds = elapsed
-        totalSeconds = total
+        guard isConnected else { return }
+        
+        print("[MainScreenViewModel] Disconnecting from session")
+        
+        messageStreamTask?.cancel()
         
         Task {
-            guard let songId = currentPlayback?.songId else { return }
-            try? await sessionManager?.send(.progress(elapsedSeconds: elapsed, totalSeconds: total))
+            try await sessionManager?.disconnect()
+            
+            self.isConnected = false
+            self.isDisconnected = true
+            self.sessionManager = nil
+            self.clearSessionState()
         }
     }
     
-    func handleVideoEnded() {
-        guard let songId = currentPlayback?.songId else { return }
-        currentPlayback?.status = .ended
+    // MARK: - Message Handlers Setup
+    
+    private func setupMessageHandlers() {
+        sessionManager?.onAuthenticated = { [weak self] in
+            print("[MainScreenViewModel] Session authenticated")
+            self?.isConnected = true
+        }
         
-        Task {
-            try? await sessionManager?.send(.ended(songId: songId))
+        sessionManager?.onDisconnect = { [weak self] in
+            print("[MainScreenViewModel] Disconnect received from node")
+            self?.handleDisconnect()
+        }
+        
+        sessionManager?.onQueueUpdated = { [weak self] songIds in
+            print("[MainScreenViewModel] Queue updated: \(songIds)")
+            self?.handleQueueUpdated(songIds)
+        }
+        
+        sessionManager?.onPlay = { [weak self] songId, url in
+            print("[MainScreenViewModel] Play: \(songId)")
+            self?.handlePlayCommand(songId: songId, url: url)
+        }
+        
+        sessionManager?.onPause = { [weak self] in
+            print("[MainScreenViewModel] Pause command")
+            self?.handlePauseCommand()
+        }
+        
+        sessionManager?.onSeek = { [weak self] seconds in
+            print("[MainScreenViewModel] Seek to \(seconds)s")
+            self?.handleSeekCommand(seconds: seconds)
+        }
+        
+        sessionManager?.onVolume = { [weak self] level in
+            print("[MainScreenViewModel] Volume: \(level)")
+            self?.handleVolumeCommand(level: level)
+        }
+        
+        sessionManager?.onAttendees = { [weak self] count in
+            print("[MainScreenViewModel] Attendee count: \(count)")
+            self?.attendeeCount = count
+        }
+        
+        sessionManager?.onSessionMessage = { [weak self] message in
+            print("[MainScreenViewModel] Message: \(message)")
+        }
+        
+        sessionManager?.onSessionEnded = { [weak self] in
+            print("[MainScreenViewModel] Session ended by admin")
+            self?.handleSessionEnded()
+        }
+        
+        sessionManager?.onError = { [weak self] error in
+            print("[MainScreenViewModel] ✗ Error: \(error)")
+            self?.errorMessage = error.localizedDescription
         }
     }
     
-    // MARK: - Queue Management
-    
-    func handleQueueUpdate(songs: [String]) {
-        queueItems = songs.map { QueueItem(id: $0, title: "Song: \($0)") }
-    }
-    
-    func handleAttendeesUpdate(count: Int) {
-        // Update UI with attendee count
-    }
-    
-    func handleSessionMessage(text: String) {
-        // Display toast or notification
-    }
-    
-    // MARK: - Disconnection Handling
-    
-    func handleDisconnect(reason: String) {
-        isDisconnected = true
-        isConnected = false
-        errorMessage = reason
-        onDisconnect?()
-    }
-    
-    func handleSessionEnded(reason: String) {
-        isDisconnected = true
-        isConnected = false
-        errorMessage = "Session ended: \(reason)"
-        onDisconnect?()
-    }
-    
-    // MARK: - Private Helpers
+    // MARK: - Message Listener
     
     private func startListeningToMessages() {
-        Task {
-            while isConnected, let manager = sessionManager {
-                do {
-                    try await manager.receiveMessages { [weak self] message in
-                        Task { @MainActor in
-                            self?.handleSessionMessage(message)
-                        }
-                    }
-                } catch {
-                    await MainActor.run {
-                        self.isConnected = false
-                        self.errorMessage = "Connection lost: \(error.localizedDescription)"
-                    }
-                    break
-                }
+        guard let sessionManager = sessionManager else { return }
+        
+        messageStreamTask = Task {
+            for await message in sessionManager.receiveStream() {
+                // Messages are handled by callbacks in setupMessageHandlers()
+                print("[MainScreenViewModel] Processed message")
             }
         }
     }
     
-    private func handleSessionMessage(_ message: NodeSessionMessage) {
-        switch message {
-        case .authenticated:
-            break
-        case .disconnect(let reason):
-            handleDisconnect(reason: reason)
-        case .queueUpdated(let songs):
-            handleQueueUpdate(songs: songs)
-        case .play(let songId, let url):
-            handlePlayCommand(songId: songId, url: url)
-        case .pause:
-            handlePauseCommand()
-        case .seek(let seconds):
-            handleSeekCommand(seconds: seconds)
-        case .volume(let level):
-            handleVolumeCommand(level: level)
-        case .attendees(let count):
-            handleAttendeesUpdate(count: count)
-        case .sessionMessage(let text):
-            handleSessionMessage(text: text)
-        case .sessionEnded(let reason):
-            handleSessionEnded(reason: reason)
-        case .pong:
-            break
-        case .error(let code, let message):
-            errorMessage = "Session error [\(code)]: \(message)"
+    // MARK: - Playback Command Handlers
+    
+    private func handlePlayCommand(songId: String, url: String) {
+        currentPlayback = PlaybackState(
+            songId: songId,
+            url: url,
+            status: .playing,
+            progressSeconds: 0,
+            totalSeconds: 0
+        )
+    }
+    
+    private func handlePauseCommand() {
+        if var playback = currentPlayback {
+            playback.status = .paused
+            currentPlayback = playback
         }
     }
+    
+    private func handleSeekCommand(seconds: Int) {
+        if var playback = currentPlayback {
+            playback.progressSeconds = seconds
+            currentPlayback = playback
+        }
+    }
+    
+    private func handleVolumeCommand(level: Float) {
+        if var playback = currentPlayback {
+            playback.volume = level
+            currentPlayback = playback
+        }
+    }
+    
+    // MARK: - Session State Handlers
+    
+    private func handleQueueUpdated(_ songIds: [String]) {
+        // TODO: Fetch actual queue items from API and populate queueItems
+        queueItems = songIds.map { id in
+            QueueItem(id: id, title: "Song", artist: "Unknown")
+        }
+    }
+    
+    private func handleDisconnect() {
+        isDisconnected = true
+        clearSessionState()
+    }
+    
+    private func handleSessionEnded() {
+        isDisconnected = true
+        errorMessage = "Session ended by admin"
+        clearSessionState()
+    }
+    
+    private func clearSessionState() {
+        queueItems = []
+        currentPlayback = nil
+        attendeeCount = 0
+        messageStreamTask?.cancel()
+    }
+    
+    // MARK: - Cleanup
     
     deinit {
+        messageStreamTask?.cancel()
         Task {
-            await try? sessionManager?.disconnect()
+            try await sessionManager?.disconnect()
         }
     }
 }
 
-// MARK: - Supporting Types
-
-struct QueueItem: Identifiable {
-    let id: String
-    let title: String
-}
+// MARK: - Domain Models
 
 struct PlaybackState {
-    let songId: String
-    let videoUrl: String
+    var songId: String
+    var url: String
     var status: PlaybackStatus
-    let startedAt: Date
-    
-    var elapsedTime: TimeInterval {
-        Date().timeIntervalSince(startedAt)
-    }
+    var progressSeconds: Int
+    var totalSeconds: Int
+    var volume: Float = 1.0
 }
 
 enum PlaybackStatus {
+    case idle
     case loading
     case playing
     case paused
     case ended
     case error(String)
+}
+
+struct QueueItem: Identifiable {
+    let id: String
+    let title: String
+    let artist: String
 }

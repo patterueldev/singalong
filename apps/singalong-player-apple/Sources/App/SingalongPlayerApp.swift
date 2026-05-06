@@ -15,8 +15,7 @@ struct SingalongPlayerApp: App {
         )
         let mainVM = MainScreenViewModel(
             sessionCode: "",
-            sessionToken: "",
-            dependencyContainer: container
+            sessionToken: ""
         )
         _idleScreenViewModel = StateObject(wrappedValue: idleVM)
         _mainScreenViewModel = StateObject(wrappedValue: mainVM)

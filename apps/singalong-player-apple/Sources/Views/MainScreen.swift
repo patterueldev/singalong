@@ -26,8 +26,8 @@ struct MainScreen: View {
                         .fontWeight(.bold)
                         .foregroundColor(.white)
                     
-                    if !viewModel.sessionCode.isEmpty {
-                        Text("Code: \(viewModel.sessionCode)")
+                    if let code = viewModel.sessionCode, !code.isEmpty {
+                        Text("Code: \(code)")
                             .font(.headline)
                             .foregroundColor(Color(red: 0.753, green: 0.522, blue: 0.992)) // #c084fc
                     }
@@ -74,19 +74,19 @@ struct MainScreen: View {
                                     
                                     RoundedRectangle(cornerRadius: 4)
                                         .fill(Color(red: 0.753, green: 0.522, blue: 0.992))
-                                        .frame(width: CGFloat(viewModel.elapsedSeconds) / CGFloat(max(viewModel.totalSeconds, 1)) * geometry.size.width)
+                                        .frame(width: CGFloat(viewModel.currentPlayback?.progressSeconds ?? 0) / CGFloat(max(viewModel.currentPlayback?.totalSeconds ?? 0, 1)) * geometry.size.width)
                                 }
                             }
                             .frame(height: 4)
                             
                             HStack {
-                                Text(formatTime(viewModel.elapsedSeconds))
+                                Text(formatTime(viewModel.currentPlayback?.progressSeconds ?? 0))
                                     .font(.caption2)
                                     .foregroundColor(Color(red: 0.612, green: 0.639, blue: 0.686))
                                 
                                 Spacer()
                                 
-                                Text(formatTime(viewModel.totalSeconds))
+                                Text(formatTime(viewModel.currentPlayback?.totalSeconds ?? 0))
                                     .font(.caption2)
                                     .foregroundColor(Color(red: 0.612, green: 0.639, blue: 0.686))
                             }
@@ -170,11 +170,9 @@ struct MainScreen: View {
 }
 
 #Preview {
-    let container = DependencyContainer.shared
     let viewModel = MainScreenViewModel(
         sessionCode: "1234",
-        sessionToken: "token",
-        dependencyContainer: container
+        sessionToken: "token"
     )
     return MainScreen(viewModel: viewModel)
         .environmentObject(PlayerAppState())
