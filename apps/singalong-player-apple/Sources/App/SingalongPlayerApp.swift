@@ -9,14 +9,17 @@ struct SingalongPlayerApp: App {
     
     init() {
         let container = DependencyContainer.shared
+        let appState = PlayerAppState()
         let idleVM = IdleScreenViewModel(
             discoveryCoordinator: container.discoveryCoordinator,
-            dependencyContainer: container
+            dependencyContainer: container,
+            appState: appState
         )
         let mainVM = MainScreenViewModel(
             sessionCode: "",
             sessionToken: ""
         )
+        _appState = StateObject(wrappedValue: appState)
         _idleScreenViewModel = StateObject(wrappedValue: idleVM)
         _mainScreenViewModel = StateObject(wrappedValue: mainVM)
     }

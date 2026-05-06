@@ -13,10 +13,12 @@ final class IdleScreenViewModel: ObservableObject {
     
     private let discoveryCoordinator: DiscoveryCoordinator
     private let dependencyContainer: DependencyContainer
+    private let appState: PlayerAppState
     
-    init(discoveryCoordinator: DiscoveryCoordinator, dependencyContainer: DependencyContainer) {
+    init(discoveryCoordinator: DiscoveryCoordinator, dependencyContainer: DependencyContainer, appState: PlayerAppState) {
         self.discoveryCoordinator = discoveryCoordinator
         self.dependencyContainer = dependencyContainer
+        self.appState = appState
         setupCallbacks()
     }
     
@@ -66,6 +68,11 @@ final class IdleScreenViewModel: ObservableObject {
             // Transition to locked phase
             self.currentPhase = .locked
             print("[IdleScreenViewModel] ✓ Player locked to session: \(sessionCode)")
+            
+            // Transition app state to show main screen
+            print("[IdleScreenViewModel] Transitioning to main screen for session: \(sessionCode)")
+            self.appState.transitionToMainScreen(sessionCode: sessionCode, sessionToken: token)
+            print("[IdleScreenViewModel] ✓ App transitioned to main screen")
         }
         
         print("[IdleScreenViewModel] ✓ Callback setup complete")

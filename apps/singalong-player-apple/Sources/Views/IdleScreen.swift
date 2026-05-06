@@ -268,6 +268,7 @@ struct ManualSetupSheet: View {
 #Preview {
     let container = DependencyContainer.shared
     let coordinator = container.discoveryCoordinator
-    let viewModel = IdleScreenViewModel(discoveryCoordinator: coordinator, dependencyContainer: container)
-    return IdleScreen(viewModel: viewModel)
+    let appState = PlayerAppState()
+    let viewModel = IdleScreenViewModel(discoveryCoordinator: coordinator, dependencyContainer: container, appState: appState)
+    IdleScreen(viewModel: viewModel)
 }
