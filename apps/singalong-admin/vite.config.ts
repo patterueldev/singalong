@@ -4,9 +4,10 @@ import react from '@vitejs/plugin-react'
 // Use /admin/ for production builds, / for development
 const base = process.env.NODE_ENV === 'production' ? '/admin/' : '/'
 
-// For dev, proxy /api to the gateway (8080) or Node service (5002)
-// If running dev locally, use gateway on localhost:8080 (/api/* routes to node)
-const apiTarget = process.env.API_URL || 'http://localhost:8080'
+// For dev, proxy /api to the Node service
+// Inside Docker Compose: use service name 'node' which resolves via Docker's internal DNS
+// This works for both localhost:3001 and thursday.local:3001 access
+const apiTarget = process.env.API_URL || 'http://node:5002'
 
 // https://vite.dev/config/
 export default defineConfig({
