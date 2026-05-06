@@ -111,12 +111,12 @@ def require_role(*allowed_roles: str):
     return decorator
 
 
-def verify_admin_role(token_payload: dict = Depends(verify_bearer_token)) -> dict:
+def verify_admin_role(token_payload: "TokenPayload" = Depends(verify_bearer_token)) -> "TokenPayload":
     """
     Verify that the token payload has admin role
     
     Args:
-        token_payload: Decoded JWT token payload
+        token_payload: TokenPayload object from verify_bearer_token
         
     Returns:
         The token payload if role is admin
@@ -124,8 +124,7 @@ def verify_admin_role(token_payload: dict = Depends(verify_bearer_token)) -> dic
     Raises:
         HTTPException: If role is not admin
     """
-    user_role = token_payload.get("role")
-    if user_role != "admin":
+    if token_payload.role != "admin":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Admin role required to access this resource",
