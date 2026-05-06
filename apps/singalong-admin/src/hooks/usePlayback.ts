@@ -48,7 +48,7 @@ export function usePlayback() {
       try {
         // Fetch available players
         const playersResponse = await api.get(
-          `/api/sessions/${currentSession.code}/available-players`
+          `/sessions/${currentSession.code}/available-players`
         )
         const players = playersResponse.data || []
         console.log('[usePlayback.fetchData] Fetched', players.length, 'available players')
