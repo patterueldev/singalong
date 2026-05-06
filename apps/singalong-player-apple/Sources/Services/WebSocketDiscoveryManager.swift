@@ -73,10 +73,12 @@ actor WebSocketDiscoveryManager {
         // Send registration message
         let playerName = getDeviceName()
         let platform = getPlatformName()
+        let playerId = PlayerIdentityService.shared.playerId
         print("[WS Discovery] Preparing registration message...")
+        print("[WS Discovery]   Player ID: \(playerId)")
         print("[WS Discovery]   Player Name: \(playerName)")
         print("[WS Discovery]   Platform: \(platform)")
-        let registerMessage = PlayerMessage.register(name: playerName, platform: platform)
+        let registerMessage = PlayerMessage.register(playerId: playerId, name: playerName, platform: platform)
         
         do {
             print("[WS Discovery] Attempting to send registration message...")

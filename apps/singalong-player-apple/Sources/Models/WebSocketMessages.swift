@@ -2,16 +2,16 @@ import Foundation
 
 /// Messages sent from Player to Node during discovery phase
 enum PlayerMessage: Codable {
-    case register(name: String, platform: String)
+    case register(playerId: String, name: String, platform: String)
     case locked(playerId: String)
     case auth(sessionCode: String, token: String)
     case ping
     
     private enum CodingKeys: String, CodingKey {
         case type
+        case playerId = "player_id"
         case name
         case platform
-        case playerId = "player_id"
         case sessionCode = "session_code"
         case token
     }
@@ -27,8 +27,9 @@ enum PlayerMessage: Codable {
         var container = encoder.container(keyedBy: CodingKeys.self)
         
         switch self {
-        case .register(let name, let platform):
+        case .register(let playerId, let name, let platform):
             try container.encode(MessageType.register, forKey: .type)
+            try container.encode(playerId, forKey: .playerId)
             try container.encode(name, forKey: .name)
             try container.encode(platform, forKey: .platform)
         case .locked(let playerId):
@@ -49,9 +50,10 @@ enum PlayerMessage: Codable {
         
         switch type {
         case .register:
+            let playerId = try container.decode(String.self, forKey: .playerId)
             let name = try container.decode(String.self, forKey: .name)
             let platform = try container.decode(String.self, forKey: .platform)
-            self = .register(name: name, platform: platform)
+            self = .register(playerId: playerId, name: name, platform: platform)
         case .locked:
             let playerId = try container.decode(String.self, forKey: .playerId)
             self = .locked(playerId: playerId)

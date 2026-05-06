@@ -21,13 +21,25 @@ final class IdleScreenViewModel: ObservableObject {
     }
     
     private func setupCallbacks() {
+        print("[IdleScreenViewModel] Setting up onConnectionStatusChanged callback...")
         discoveryCoordinator.onConnectionStatusChanged = { [weak self] nodeId, status in
+            print("[IdleScreenViewModel] 🔔 CALLBACK FIRED: nodeId=\(nodeId), status=\(status)")
+            guard let self = self else {
+                print("[IdleScreenViewModel] ⚠️ Self was deallocated, callback not executed")
+                return
+            }
+            print("[IdleScreenViewModel] Current activeConnections before update: \(self.activeConnections)")
+            
             // Must reassign the entire dictionary to trigger @Published notification
             // (direct mutations don't notify subscribers)
-            var updated = self?.activeConnections ?? [:]
+            var updated = self.activeConnections
             updated[nodeId] = status
-            self?.activeConnections = updated
+            print("[IdleScreenViewModel] Updated activeConnections: \(updated)")
+            
+            self.activeConnections = updated
+            print("[IdleScreenViewModel] ✓ @Published property reassigned, UI should update")
         }
+        print("[IdleScreenViewModel] ✓ Callback setup complete")
     }
     
     func startDiscovery() {
