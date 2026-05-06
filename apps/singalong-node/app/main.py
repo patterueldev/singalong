@@ -116,42 +116,19 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS middleware - MUST be before routes are included
-@app.middleware("http")
-async def cors_middleware(request, call_next):
-    """Handle CORS for requests"""
-    origin = request.headers.get("origin")
-    
-    # List of allowed origins
-    allowed_origins = [
+# CORS middleware using Starlette's built-in (much more reliable)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
         "http://localhost:3001",
         "http://localhost:3002",
         "https://singalongadmin-dev.nicenature.space",
         "https://singalongcontroller-dev.nicenature.space",
-    ]
-    
-    # Check if origin is allowed
-    if origin in allowed_origins or origin and any(origin.startswith(ao) for ao in allowed_origins):
-        # Handle preflight OPTIONS request
-        if request.method == "OPTIONS":
-            from fastapi.responses import Response
-            return Response(
-                headers={
-                    "Access-Control-Allow-Origin": origin,
-                    "Access-Control-Allow-Credentials": "true",
-                    "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-                    "Access-Control-Allow-Headers": "Content-Type, Authorization",
-                }
-            )
-        
-        # Handle actual request
-        response = await call_next(request)
-        response.headers["Access-Control-Allow-Origin"] = origin
-        response.headers["Access-Control-Allow-Credentials"] = "true"
-        return response
-    
-    # If origin not allowed, process normally
-    return await call_next(request)
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Mount static admin UI files
 import os
