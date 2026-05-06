@@ -20,28 +20,54 @@ const api = axios.create({
   },
 })
 
+console.log('[authService] Created axios instance with baseURL:', API_BASE_URL)
+
 // Auto-add token to requests
 api.interceptors.request.use((config) => {
   const token = getToken()
+  console.log('[authService] REQUEST INTERCEPTOR:', {
+    url: config.url,
+    method: config.method,
+    hasToken: !!token,
+    tokenLength: token?.length || 0,
+  })
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
   }
   return config
 })
 
+console.log('[authService] Registered request interceptor')
+
 // Handle 401 errors with automatic token refresh
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    console.log('[authService] RESPONSE SUCCESS:', {
+      url: response.config.url,
+      status: response.status,
+    })
+    return response
+  },
   async (error: AxiosError) => {
     const originalRequest = error.config as CustomAxiosRequestConfig
+    
+    console.log('[authService] RESPONSE ERROR:', {
+      url: originalRequest?.url,
+      status: error.response?.status,
+      message: error.message,
+    })
 
     // Only handle 401 errors
     if (error.response?.status !== 401) {
+      console.log('[authService] Not a 401, passing through')
       return Promise.reject(error)
     }
 
+    console.log('[authService] 401 DETECTED - Starting refresh flow')
+
     // Prevent infinite loop: don't retry the refresh endpoint itself
     if (originalRequest?.url?.includes('/auth/refresh')) {
+      console.log('[authService] 401 on refresh endpoint, clearing tokens and redirecting')
       // Refresh token is invalid, clear everything and redirect to login
       clearTokens()
       window.location.href = '/login'
@@ -50,6 +76,7 @@ api.interceptors.response.use(
 
     // Prevent multiple retries of the same request
     if (originalRequest._retry) {
+      console.log('[authService] Already retried once, giving up and redirecting')
       // Already tried to refresh and retry, give up
       clearTokens()
       window.location.href = '/login'
@@ -62,17 +89,29 @@ api.interceptors.response.use(
       // Attempt to refresh the token
       const refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY)
       
+      console.log('[authService] Attempting refresh with token:', {
+        hasRefreshToken: !!refreshToken,
+        refreshTokenLength: refreshToken?.length || 0,
+      })
+      
       if (!refreshToken) {
+        console.log('[authService] No refresh token available, redirecting')
         // No refresh token available
         window.location.href = '/login'
         return Promise.reject(error)
       }
 
+      console.log('[authService] Calling POST /auth/refresh')
       const response = await api.post('/auth/refresh', {
         refresh_token: refreshToken,
       })
 
       const { access_token, refresh_token, expires_in } = response.data
+
+      console.log('[authService] Refresh successful, updating tokens:', {
+        newTokenLength: access_token?.length || 0,
+        expiresIn: expires_in,
+      })
 
       // Update tokens in localStorage
       localStorage.setItem(ACCESS_TOKEN_KEY, access_token)
@@ -81,9 +120,13 @@ api.interceptors.response.use(
       localStorage.setItem(TOKEN_EXPIRY_KEY, expiryTime.toString())
 
       // Retry the original request with new token
+      console.log('[authService] Retrying original request:', originalRequest.url)
       originalRequest.headers.Authorization = `Bearer ${access_token}`
       return api(originalRequest)
-    } catch {
+    } catch (err) {
+      console.error('[authService] Refresh failed:', {
+        error: err instanceof Error ? err.message : String(err),
+      })
       // Refresh failed, redirect to login
       clearTokens()
       window.location.href = '/login'
@@ -91,6 +134,8 @@ api.interceptors.response.use(
     }
   }
 )
+
+console.log('[authService] Registered response interceptor')
 
 export const authService = {
   async login(username: string, password: string): Promise<string> {

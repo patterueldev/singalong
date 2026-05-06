@@ -1,4 +1,5 @@
 import api from './authService'
+import { getToken } from './authService'
 import type { Session } from '../types/models'
 
 interface SessionsListResponse {
@@ -10,7 +11,13 @@ interface SessionsListResponse {
 
 export const sessionService = {
   async getSessions(): Promise<Session[]> {
+    const token = getToken()
+    console.log('[sessionService] Calling getSessions', {
+      hasToken: !!token,
+      tokenLength: token?.length || 0,
+    })
     const response = await api.get<SessionsListResponse>('/sessions')
+    console.log('[sessionService] getSessions response:', response.status)
     return response.data.sessions
   },
 

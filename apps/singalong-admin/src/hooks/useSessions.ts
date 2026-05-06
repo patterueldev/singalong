@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { sessionService } from '../services/sessionService'
 import type { Session } from '../types/models'
 
@@ -10,6 +11,7 @@ export interface SessionsState {
 }
 
 export function useSessions() {
+  const [searchParams, setSearchParams] = useSearchParams()
   const [state, setState] = useState<SessionsState>({
     sessions: [],
     currentSession: null,
@@ -32,6 +34,30 @@ export function useSessions() {
     refreshSessions()
   }, [refreshSessions])
 
+  const selectSession = useCallback(
+    async (code: string) => {
+      setState((prev) => ({ ...prev, isLoading: true, error: null }))
+      try {
+        const session = await sessionService.getSession(code)
+        setState((prev) => ({ ...prev, currentSession: session, isLoading: false }))
+        // Update URL to include session code
+        setSearchParams({ sessionCode: code })
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Failed to load session'
+        setState((prev) => ({ ...prev, isLoading: false, error: message }))
+      }
+    },
+    [setSearchParams]
+  )
+
+  // Restore session from URL on mount or when URL changes
+  useEffect(() => {
+    const sessionCode = searchParams.get('sessionCode')
+    if (sessionCode && state.currentSession?.code !== sessionCode) {
+      selectSession(sessionCode)
+    }
+  }, [searchParams, state.currentSession?.code, selectSession])
+
   const createSession = useCallback(
     async (title: string, vibes?: string) => {
       setState((prev) => ({ ...prev, isLoading: true, error: null }))
@@ -53,17 +79,6 @@ export function useSessions() {
     },
     [refreshSessions]
   )
-
-  const selectSession = useCallback(async (code: string) => {
-    setState((prev) => ({ ...prev, isLoading: true, error: null }))
-    try {
-      const session = await sessionService.getSession(code)
-      setState((prev) => ({ ...prev, currentSession: session, isLoading: false }))
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to load session'
-      setState((prev) => ({ ...prev, isLoading: false, error: message }))
-    }
-  }, [])
 
   const endSession = useCallback(async (code: string) => {
     setState((prev) => ({ ...prev, isLoading: true, error: null }))
