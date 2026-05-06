@@ -44,6 +44,11 @@ export function SelectPlayerModal({ sessionCode, onClose, onPlayerSelected, isOp
     }
   }
 
+  const formatPlayerId = (id: string): string => {
+    if (id.length <= 12) return id
+    return `${id.substring(0, 8)}...${id.substring(id.length - 4)}`
+  }
+
   const getStatusColor = (status: string): string => {
     switch (status) {
       case 'connecting':
@@ -111,6 +116,7 @@ export function SelectPlayerModal({ sessionCode, onClose, onPlayerSelected, isOp
                         {player.status}
                       </span>
                       <span className="player-platform">{player.platform}</span>
+                      <span className="player-id">ID: {formatPlayerId(player.id)}</span>
                     </div>
                   </div>
                   <div className="selection-indicator">

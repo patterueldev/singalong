@@ -16,6 +16,11 @@ export function PlaybackPanel({ onOpenPlayerDiscovery }: PlaybackPanelProps) {
   const { currentSession } = useSessions()
   const [isDisconnecting, setIsDisconnecting] = useState(false)
 
+  const formatPlayerId = (id: string): string => {
+    if (id.length <= 12) return id
+    return `${id.substring(0, 8)}...${id.substring(id.length - 4)}`
+  }
+
   const handlePlayerButton = () => {
     if (assignedPlayer) {
       handleDisconnectClick()
@@ -136,6 +141,9 @@ export function PlaybackPanel({ onOpenPlayerDiscovery }: PlaybackPanelProps) {
           <span className="player-name">{assignedPlayer?.name || 'None Selected'}</span>
           {assignedPlayer?.platform && (
             <span className="player-platform">({assignedPlayer.platform})</span>
+          )}
+          {assignedPlayer?.id && (
+            <span className="player-id">ID: {formatPlayerId(assignedPlayer.id)}</span>
           )}
         </div>
         <button 

@@ -203,6 +203,13 @@
   letter-spacing: 0.5px;
 }
 
+.player-id {
+  color: #4b5563;
+  font-family: 'Monaco', 'Courier New', monospace;
+  font-size: 11px;
+  letter-spacing: 0px;
+}
+
 .selection-indicator {
   width: 24px;
   height: 24px;
