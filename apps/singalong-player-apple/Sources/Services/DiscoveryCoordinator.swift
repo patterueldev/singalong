@@ -35,8 +35,16 @@ class DiscoveryCoordinator {
     }
     
     func selectNode(_ node: DiscoveredNode) async throws {
+        print("[DiscoveryCoordinator] selectNode() called for: \(node.name)")
+        print("[DiscoveryCoordinator]   Node ID: \(node.id)")
+        print("[DiscoveryCoordinator]   Node Host: \(node.host)")
+        print("[DiscoveryCoordinator]   Node IP: \(node.ipAddress ?? "nil")")
+        print("[DiscoveryCoordinator]   Node Port: \(node.port)")
+        
+        print("[DiscoveryCoordinator] About to call webSocketManager.connect(to:)...")
         // Connect to the selected node via WebSocket
         try await webSocketManager.connect(to: node)
+        print("[DiscoveryCoordinator] ✓ webSocketManager.connect() completed")
     }
     
     func deselectNode() async {

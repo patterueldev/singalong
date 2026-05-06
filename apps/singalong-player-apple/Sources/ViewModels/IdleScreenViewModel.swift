@@ -46,15 +46,22 @@ final class IdleScreenViewModel: ObservableObject {
     }
     
     func selectNode(_ node: DiscoveredNode) {
+        print("[IdleScreenViewModel] selectNode() called for node: \(node.name)")
         errorMessage = nil
         
         Task {
+            print("[IdleScreenViewModel] selectNode Task started, calling coordinator.selectNode()...")
             do {
+                print("[IdleScreenViewModel] About to await discoveryCoordinator.selectNode(node)")
                 try await discoveryCoordinator.selectNode(node)
+                print("[IdleScreenViewModel] ✓ selectNode completed successfully")
             } catch {
+                print("[IdleScreenViewModel] ✗ selectNode failed with error: \(error)")
+                print("[IdleScreenViewModel]   Error description: \(error.localizedDescription)")
                 self.errorMessage = "Failed to select node: \(error.localizedDescription)"
             }
         }
+        print("[IdleScreenViewModel] selectNode() exiting (Task scheduled)")
     }
     
     func deselectNode() {
