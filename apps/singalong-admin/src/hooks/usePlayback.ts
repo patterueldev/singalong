@@ -175,8 +175,8 @@ export function usePlayback(isPlayerModalOpen: boolean = false) {
       setState((prev) => ({ ...prev, isLoading: true, error: null }))
       try {
         // Call Node API to select player
-        console.log('[usePlayback.selectPlayer] Calling POST /api/sessions/{code}/select-player...')
-        const selectResponse = await api.post(`/api/sessions/${currentSession.code}/select-player`, {
+        console.log('[usePlayback.selectPlayer] Calling POST /sessions/{code}/select-player...')
+        const selectResponse = await api.post(`/sessions/${currentSession.code}/select-player`, {
           player_id: playerId,
         })
         console.log('[usePlayback.selectPlayer] Selection API response:', selectResponse.status)
