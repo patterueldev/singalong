@@ -33,8 +33,8 @@ export function usePlayback(isPlayerModalOpen: boolean = false) {
     error: null,
   })
 
-  // CONTINUOUSLY fetch assigned player to reflect real-time state from server
-  // This polls even when modal is closed to ensure assigned player is always current
+  // Fetch assigned player ONLY on page load and when session changes
+  // NOT continuous polling - we update via selectPlayer callback
   useEffect(() => {
     if (!currentSession?.code) {
       console.log('[usePlayback] No currentSession, clearing assigned player')
@@ -48,7 +48,7 @@ export function usePlayback(isPlayerModalOpen: boolean = false) {
           `/sessions/${currentSession.code}`
         )
         const sessionData = sessionResponse.data
-        console.log('[usePlayback.refreshPlayback] Fetched assigned player:', {
+        console.log('[usePlayback] Fetched assigned player on load:', {
           player_id: sessionData?.player_id,
           player_name: sessionData?.player_name,
           player_platform: sessionData?.player_platform,
@@ -62,9 +62,9 @@ export function usePlayback(isPlayerModalOpen: boolean = false) {
             platform: sessionData.player_platform || 'unknown',
             status: 'connected' as any,
           }
-          console.log('[usePlayback.refreshPlayback] ✓ Assigned player:', assignedPlayer.name, `(${assignedPlayer.platform})`)
+          console.log('[usePlayback] ✓ Assigned player:', assignedPlayer.name, `(${assignedPlayer.platform})`)
         } else {
-          console.log('[usePlayback.refreshPlayback] No assigned player')
+          console.log('[usePlayback] No assigned player')
         }
 
         setState((prev) => ({
@@ -73,22 +73,12 @@ export function usePlayback(isPlayerModalOpen: boolean = false) {
         }))
       } catch (err) {
         const errorMsg = err instanceof Error ? err.message : 'Failed to fetch session'
-        console.error('[usePlayback.refreshPlayback] Error fetching assigned player:', errorMsg)
+        console.error('[usePlayback] Error fetching assigned player:', errorMsg)
       }
     }
 
-    // Fetch immediately
+    // Fetch on page load or when session changes
     fetchAssignedPlayer()
-
-    // ALWAYS poll assigned player every 2 seconds (independent of modal state)
-    // This ensures the UI reflects the current server state even after modal closes
-    console.log('[usePlayback.refreshPlayback] Starting continuous poll for assigned player')
-    const assignedPlayerInterval = setInterval(fetchAssignedPlayer, 2000)
-
-    return () => {
-      console.log('[usePlayback.refreshPlayback] Cleanup: clearing assigned player poll interval')
-      clearInterval(assignedPlayerInterval)
-    }
   }, [currentSession?.code])
 
   // Poll available players ONLY when modal is open
@@ -175,17 +165,37 @@ export function usePlayback(isPlayerModalOpen: boolean = false) {
           player_id: playerId,
         })
 
-        // Update local state with selected player
+        // Immediately update local state with selected player from availablePlayers
+        // We KNOW the selection succeeded, so set it immediately
         const selectedPlayer = state.availablePlayers.find((p) => p.id === playerId)
-        setState((prev) => ({
-          ...prev,
-          assignedPlayer: selectedPlayer || null,
-          isLoading: false,
-        }))
+        if (selectedPlayer) {
+          console.log('[usePlayback.selectPlayer] ✓ Player selected:', selectedPlayer.name)
+          setState((prev) => ({
+            ...prev,
+            assignedPlayer: selectedPlayer,
+            isLoading: false,
+          }))
+        } else {
+          // Fallback: construct player from what we know
+          console.warn('[usePlayback.selectPlayer] Selected player not found in available players, constructing from ID')
+          const constructedPlayer: Player = {
+            id: playerId,
+            name: 'Unknown Player',
+            platform: 'unknown',
+            status: 'connected',
+          }
+          setState((prev) => ({
+            ...prev,
+            assignedPlayer: constructedPlayer,
+            isLoading: false,
+          }))
+        }
       } catch (err) {
+        const errorMsg = err instanceof Error ? err.message : 'Failed to select player'
+        console.error('[usePlayback.selectPlayer] Error:', errorMsg)
         setState((prev) => ({
           ...prev,
-          error: err instanceof Error ? err.message : 'Failed to select player',
+          error: errorMsg,
           isLoading: false,
         }))
       }
