@@ -42,7 +42,7 @@ def _validate_session_exists(session_code: str, db: SQLSession) -> db_models.Ses
 
 
 def _check_session_authorization(
-    session: db_models.Session, token: TokenPayload, allow_admin_only: bool = False
+    session: db_models.Session, token: dict, allow_admin_only: bool = False
 ) -> None:
     """
     Check if user is authorized to modify session.
@@ -51,14 +51,14 @@ def _check_session_authorization(
     Creator: allowed if allow_admin_only=False
     Others: 403 Forbidden
     """
-    if token.role == "admin":
+    if token.get("role") == "admin":
         return
 
     if allow_admin_only:
         raise HTTPException(status_code=403, detail="Only admins can perform this action")
 
     # Check if creator
-    if str(session.created_by) != token.sub:
+    if str(session.created_by) != token.get("sub"):
         raise HTTPException(
             status_code=403, detail="Only session creator or admin can perform this action"
         )
@@ -1215,7 +1215,7 @@ async def select_player(
     session_code: str,
     request: SelectPlayerRequest,
     db: SQLSession = Depends(get_db),
-    token: TokenPayload = Depends(verify_bearer_token),
+    token: dict = Depends(verify_bearer_token),
 ) -> SelectPlayerResponse:
     """
     Select and lock a player to a session.
@@ -1331,7 +1331,7 @@ async def select_player(
 async def disconnect_player(
     session_code: str,
     db: SQLSession = Depends(get_db),
-    token: TokenPayload = Depends(verify_bearer_token),
+    token: dict = Depends(verify_bearer_token),
 ) -> dict:
     """
     Disconnect the current player from a session.
