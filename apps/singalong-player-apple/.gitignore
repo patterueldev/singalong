@@ -1,0 +1,24 @@
+# Xcode build artifacts
+.build/
+.swiftpm/
+*.xcodeproj/
+*.xcworkspace/
+DerivedData/
+Build/
+
+# macOS
+.DS_Store
+*.swp
+*.swo
+*~
+
+# SwiftPM
+.package.resolved
+
+# IDE
+.vscode/
+*.code-workspace
+
+# Runtime
+.env
+.env.local
