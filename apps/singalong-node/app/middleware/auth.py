@@ -1,13 +1,16 @@
 """Authentication middleware for validating Bearer tokens"""
 
 from functools import wraps
+from typing import TYPE_CHECKING
 
 import jwt
 from fastapi import Depends, HTTPException, Header, status
 
 from app.config import settings
 from app.services.auth_service import AuthService
-from app.api.dependencies import TokenPayload
+
+if TYPE_CHECKING:
+    from app.api.dependencies import TokenPayload
 
 
 # Global auth service instance
@@ -32,7 +35,7 @@ def get_auth_service() -> AuthService:
     return _auth_service
 
 
-def verify_bearer_token(authorization: str = Header(None)) -> TokenPayload:
+def verify_bearer_token(authorization: str = Header(None)) -> "TokenPayload":
     """
     Verify Bearer token from Authorization header
 
@@ -64,6 +67,8 @@ def verify_bearer_token(authorization: str = Header(None)) -> TokenPayload:
 
     try:
         payload = auth_service.validate_token(token)
+        # Import here to avoid circular import
+        from app.api.dependencies import TokenPayload
         return TokenPayload(payload)
     except jwt.ExpiredSignatureError:
         raise HTTPException(
