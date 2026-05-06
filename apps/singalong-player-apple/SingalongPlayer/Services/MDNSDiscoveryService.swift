@@ -11,6 +11,7 @@ actor MDNSDiscoveryService: NSObject, NetServiceBrowserDelegate {
     private var discoveredNodes: [String: DiscoveredNode] = [:]
     private var activeResolvers: [String: MDNSServiceResolver] = [:]  // Keep resolvers alive
     private var activeServices: [String: NetService] = [:]  // ALSO keep NetService objects alive
+    private var resolvedServices: Set<String> = []  // Track which services have been resolved
     
     // MARK: - Properties
     var onNodesUpdated: (([DiscoveredNode]) -> Void)?
@@ -41,6 +42,7 @@ actor MDNSDiscoveryService: NSObject, NetServiceBrowserDelegate {
         discoveredNodes.removeAll()
         activeResolvers.removeAll()
         activeServices.removeAll()
+        resolvedServices.removeAll()
         print("[mDNS] Stopped scanning")
     }
     
@@ -100,7 +102,14 @@ actor MDNSDiscoveryService: NSObject, NetServiceBrowserDelegate {
         print("[mDNS] ✗ Service removed: \(netService.name)")
         
         Task {
-            await self.removeNode(withId: netService.name)
+            // Only remove the node if it was already resolved (not during initial discovery)
+            let wasResolved = await self.isServiceResolved(netService.name)
+            if wasResolved {
+                print("[mDNS] Service was resolved, removing node")
+                await self.removeNode(withId: netService.name)
+            } else {
+                print("[mDNS] Service not yet resolved, skipping node removal")
+            }
         }
     }
     
@@ -134,6 +143,15 @@ actor MDNSDiscoveryService: NSObject, NetServiceBrowserDelegate {
     fileprivate func removeService(forId serviceId: String) async {
         activeServices.removeValue(forKey: serviceId)
         print("[mDNS] Removed NetService for: \(serviceId)")
+    }
+    
+    fileprivate func markServiceResolved(_ serviceId: String) async {
+        resolvedServices.insert(serviceId)
+        print("[mDNS] Marked service as resolved: \(serviceId)")
+    }
+    
+    fileprivate func isServiceResolved(_ serviceId: String) async -> Bool {
+        return resolvedServices.contains(serviceId)
     }
     
     func addNode(_ node: DiscoveredNode) {
@@ -229,12 +247,12 @@ private class MDNSServiceResolver: NSObject, NetServiceDelegate {
         print("[mDNS] ✓ Successfully resolved: \(ipAddress):\(port)")
         
         Task {
+            // Mark as resolved BEFORE adding node to prevent removal in didRemove
+            await discoveryService.markServiceResolved(self.serviceId)
             await discoveryService.addNode(node)
-            await discoveryService.removeResolver(forService: self.serviceId)
-            await discoveryService.removeService(forId: self.serviceId)
+            // DON'T remove the resolver/service yet - keep them alive
+            // They will be cleaned up when the service is actually removed from the network
         }
-        
-        sender.stop()
     }
     
     private func resolveHostname(_ hostname: String) -> String? {
@@ -255,14 +273,14 @@ private class MDNSServiceResolver: NSObject, NetServiceDelegate {
         var current = info
         while true {
             if current.pointee.ai_family == AF_INET,
-               let sockaddr = current.pointee.ai_addr {
-                let addr = UnsafeRawPointer(sockaddr).assumingMemoryBound(to: sockaddr_in.self).pointee
-                var ip = addr.sin_addr
-                
-                let ipString = String(cString: inet_ntoa(ip))
-                print("[mDNS]   ✓ Resolved '\(hostname)' to \(ipString) via DNS")
-                return ipString
-            }
+                let sockaddr = current.pointee.ai_addr {
+                 let addr = UnsafeRawPointer(sockaddr).assumingMemoryBound(to: sockaddr_in.self).pointee
+                 var ip = addr.sin_addr
+                 
+                 let ipString = String(cString: inet_ntoa(ip))
+                 print("[mDNS]   ✓ Resolved '\(hostname)' to \(ipString) via DNS")
+                 return ipString
+             }
             
             if current.pointee.ai_next == nil { break }
             current = current.pointee.ai_next!
@@ -279,10 +297,10 @@ private class MDNSServiceResolver: NSObject, NetServiceDelegate {
             print("[mDNS]   Error code: \(errorCode)")
         }
         cleanup()
-        sender.stop()
     }
     
     private func cleanup() {
+        print("[mDNS] Cleaning up resolver for: \(serviceId)")
         Task {
             await discoveryService.removeResolver(forService: serviceId)
             await discoveryService.removeService(forId: serviceId)
@@ -290,45 +308,47 @@ private class MDNSServiceResolver: NSObject, NetServiceDelegate {
     }
     
     private func extractIPAddress(from addressData: Data) -> String? {
-        var ipAddress: String?
-        
-        addressData.withUnsafeBytes { buffer in
-            let rawBytes = buffer.baseAddress!.assumingMemoryBound(to: UInt8.self)
-            let sa_family = rawBytes.pointee
-            
-            print("[mDNS]     Data length: \(addressData.count), Family: \(sa_family)", terminator: "")
-            
-            // AF_INET = 2 (IPv4), AF_INET6 = 30 (IPv6), AF_LINK = 18 (link layer)
-            if sa_family == 2 {
-                // IPv4: sockaddr_in structure
-                let octets = (rawBytes + 4).pointee
-                let ips = (rawBytes + 5).pointee
-                let ipa = (rawBytes + 6).pointee
-                let ipa2 = (rawBytes + 7).pointee
-                ipAddress = "\(octets).\(ips).\(ipa).\(ipa2)"
-                print(" -> IPv4: \(ipAddress!)")
-            } else if sa_family == 30 || sa_family == 28 {
-                // IPv6: sockaddr_in6 structure (family 30 or 28 depending on iOS version)
-                print(" -> IPv6: ", terminator: "")
-                var ipv6Parts: [String] = []
-                
-                // IPv6 address starts at offset 8 in sockaddr_in6
-                for i in stride(from: 8, to: 24, by: 2) {
-                    let byte1 = (rawBytes + i).pointee
-                    let byte2 = (rawBytes + i + 1).pointee
-                    let value = UInt16(byte1) << 8 | UInt16(byte2)
-                    ipv6Parts.append(String(format: "%x", value))
-                }
-                
-                ipAddress = ipv6Parts.joined(separator: ":")
-                print("\(ipAddress!)")
-            } else if sa_family == 18 {
-                print(" -> AF_LINK/MAC address (skipping)")
-            } else {
-                print(" -> Unknown family \(sa_family) (skipping)")
-            }
+        guard addressData.count >= MemoryLayout<sockaddr_storage>.size else {
+            print("Data length: \(addressData.count), Family: unknown (data too small)")
+            return nil
         }
         
-        return ipAddress
+        var address = sockaddr_storage()
+        let addressBytes = addressData.withUnsafeBytes { ptr in
+            ptr.baseAddress.map { Array(UnsafeRawBufferPointer(start: $0, count: addressData.count)) } ?? []
+        }
+        
+        guard addressBytes.count >= MemoryLayout<sockaddr_storage>.size else {
+            return nil
+        }
+        
+        memcpy(&address, addressBytes, min(addressBytes.count, MemoryLayout<sockaddr_storage>.size))
+        
+        // Check address family
+        let family = Int32(address.ss_family)
+        
+        if family == AF_INET {
+            // IPv4
+            let sockaddr = UnsafeRawPointer(&address).assumingMemoryBound(to: sockaddr_in.self).pointee
+            var ip = sockaddr.sin_addr
+            let ipString = String(cString: inet_ntoa(ip))
+            print("Data length: \(addressData.count), Family: 2 -> IPv4: \(ipString)")
+            return ipString
+        } else if family == AF_INET6 {
+            // IPv6
+            let sockaddr = UnsafeRawPointer(&address).assumingMemoryBound(to: sockaddr_in6.self).pointee
+            var ip = sockaddr.sin6_addr
+            
+            var buffer = [CChar](repeating: 0, count: Int(INET6_ADDRSTRLEN))
+            if inet_ntop(AF_INET6, &ip, &buffer, socklen_t(INET6_ADDRSTRLEN)) != nil {
+                let ipString = String(cString: buffer)
+                print("Data length: \(addressData.count), Family: 28 -> IPv6: \(ipString)")
+                return ipString
+            }
+        } else {
+            print("Data length: \(addressData.count), Family: \(family) -> Unknown family \(family) (skipping)")
+        }
+        
+        return nil
     }
 }
