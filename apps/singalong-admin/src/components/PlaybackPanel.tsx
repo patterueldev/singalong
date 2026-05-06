@@ -125,7 +125,7 @@ export function PlaybackPanel({ onOpenPlayerDiscovery }: PlaybackPanelProps) {
           )}
         </div>
         <button className="btn-select-player" onClick={() => onOpenPlayerDiscovery?.()}>
-          {assignedPlayer ? 'Change Player' : 'Select Player'}
+          {assignedPlayer ? 'Disconnect' : 'Select Player'}
         </button>
       </div>
 
