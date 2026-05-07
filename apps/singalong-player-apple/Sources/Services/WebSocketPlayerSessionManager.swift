@@ -147,43 +147,43 @@ class WebSocketPlayerSessionManager {
         switch message {
         case .authenticated:
             print("[PlayerSession] ✓ Authenticated with node")
-            onAuthenticated?()
+            DispatchQueue.main.async { self.onAuthenticated?() }
             
         case .disconnect(let reason):
             print("[PlayerSession] ⚠ Disconnect: \(reason)")
-            onDisconnect?()
+            DispatchQueue.main.async { self.onDisconnect?() }
             
         case .queueUpdated(let songs):
             print("[PlayerSession] Queue updated: \(songs.count) items")
-            onQueueUpdated?(songs)
+            DispatchQueue.main.async { self.onQueueUpdated?(songs) }
             
         case .play(let songId, let url):
             print("[PlayerSession] Play: \(songId) - \(url)")
-            onPlay?(songId, url)
+            DispatchQueue.main.async { self.onPlay?(songId, url) }
             
         case .pause:
             print("[PlayerSession] Pause command")
-            onPause?()
+            DispatchQueue.main.async { self.onPause?() }
             
         case .seek(let seconds):
             print("[PlayerSession] Seek to \(seconds)s")
-            onSeek?(seconds)
+            DispatchQueue.main.async { self.onSeek?(seconds) }
             
         case .volume(let level):
             print("[PlayerSession] Volume: \(level)")
-            onVolume?(level)
+            DispatchQueue.main.async { self.onVolume?(level) }
             
         case .attendees(let count):
             print("[PlayerSession] Attendees: \(count)")
-            onAttendees?(count)
+            DispatchQueue.main.async { self.onAttendees?(count) }
             
         case .sessionMessage(let text):
             print("[PlayerSession] Message: \(text)")
-            onSessionMessage?(text)
+            DispatchQueue.main.async { self.onSessionMessage?(text) }
             
         case .sessionEnded(let reason):
             print("[PlayerSession] Session ended: \(reason)")
-            onSessionEnded?()
+            DispatchQueue.main.async { self.onSessionEnded?() }
             
         case .pong:
             print("[PlayerSession] Pong received")
@@ -191,7 +191,7 @@ class WebSocketPlayerSessionManager {
         case .error(let code, let msg):
             print("[PlayerSession] ✗ Error (\(code)): \(msg)")
             let error = NSError(domain: "PlayerSessionError", code: -1, userInfo: [NSLocalizedDescriptionKey: msg])
-            onError?(error)
+            DispatchQueue.main.async { self.onError?(error) }
         }
     }
     
@@ -199,7 +199,7 @@ class WebSocketPlayerSessionManager {
         guard retryCount < maxRetries else {
             print("[PlayerSession] ✗ Max retries reached, giving up")
             isConnected = false
-            onDisconnect?()
+            DispatchQueue.main.async { self.onDisconnect?() }
             return
         }
         
