@@ -531,13 +531,12 @@ async def websocket_player_session_endpoint(session_code: str, websocket: WebSoc
             except json.JSONDecodeError:
                 logger.debug(f"[Player Playback] Invalid JSON from player | session={session_code}")
     
-    except WebSocketDisconnect:
+    except (WebSocketDisconnect, KeyError):
+        # KeyError('text') is raised by Starlette when client drops mid-receive
         logger.info(
             f"[Player Playback] Player disconnected | "
             f"player_id={player_info.player_id} | session={session_code}"
         )
-        # TODO: Unlock player and update session
-        # TODO: Notify admin that player disconnected
     
     except Exception as e:
         logger.error(
