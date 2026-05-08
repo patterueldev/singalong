@@ -34,6 +34,11 @@ class WebSocketPlayerSessionManager {
     
     /// Connect to player session WebSocket
     func connect(to sessionCode: String, token: String, nodeBaseUrl: String) async throws {
+        // Cancel any existing connection first
+        webSocketTask?.cancel(with: .goingAway, reason: nil)
+        webSocketTask = nil
+        isConnected = false
+        
         self.sessionCode = sessionCode
         self.token = token
         self.nodeBaseUrl = nodeBaseUrl
@@ -87,9 +92,11 @@ class WebSocketPlayerSessionManager {
         encoder.keyEncodingStrategy = .convertToSnakeCase
         
         let data = try encoder.encode(message)
-        let wsMessage = URLSessionWebSocketTask.Message.data(data)
-        
-        try await task.send(wsMessage)
+        guard let jsonString = String(data: data, encoding: .utf8) else {
+            throw WebSocketError.encodingFailed
+        }
+        // Send as text frame — server uses receive_text(), binary frames cause KeyError
+        try await task.send(.string(jsonString))
         print("[PlayerSession] ✓ Sent message: \(message)")
     }
     
@@ -97,27 +104,30 @@ class WebSocketPlayerSessionManager {
     func receiveStream() -> AsyncStream<NodeSessionMessage> {
         return AsyncStream { continuation in
             Task {
+                let decoder = JSONDecoder()
+                decoder.keyDecodingStrategy = .convertFromSnakeCase
+                
                 while isConnected, let task = webSocketTask {
                     do {
                         let message = try await task.receive()
                         
+                        let data: Data?
                         switch message {
-                        case .data(let data):
-                            let decoder = JSONDecoder()
-                            decoder.keyDecodingStrategy = .convertFromSnakeCase
-                            
-                            if let nodeMessage = try? decoder.decode(NodeSessionMessage.self, from: data) {
-                                continuation.yield(nodeMessage)
-                                handleMessage(nodeMessage)
-                            } else {
-                                print("[PlayerSession] ✗ Failed to decode message")
-                            }
-                            
+                        case .data(let bytes):
+                            data = bytes
                         case .string(let string):
-                            print("[PlayerSession] Received string message: \(string)")
-                            
+                            data = string.data(using: .utf8)
                         @unknown default:
-                            print("[PlayerSession] Unknown message type")
+                            print("[PlayerSession] Unknown message frame type")
+                            data = nil
+                        }
+                        
+                        if let data = data,
+                           let nodeMessage = try? decoder.decode(NodeSessionMessage.self, from: data) {
+                            continuation.yield(nodeMessage)
+                            handleMessage(nodeMessage)
+                        } else {
+                            print("[PlayerSession] ✗ Failed to decode message")
                         }
                     } catch {
                         if isConnected {
