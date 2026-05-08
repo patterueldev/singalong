@@ -138,12 +138,92 @@ final class IdleScreenViewModel: ObservableObject {
                     print("[IdleScreenViewModel] ✓ Auto-connection to \(node.name) initiated")
                 } catch {
                     print("[IdleScreenViewModel] ✗ Auto-connection failed: \(error)")
-                    self.errorMessage = "Auto-connect failed: \(error.localizedDescription)"
+                    // Discovery WS may be locked (player already assigned to a session)
+                    // Try HTTP reconnect to check if this player has an active session
+                    await tryReconnectViaHTTP(node: node)
                 }
             }
         } else {
             print("[IdleScreenViewModel] Node already in list, skipping: \(node.name)")
         }
+    }
+    
+    /// Called when discovery WS is rejected (e.g., locked because a player is already assigned).
+    /// Checks via HTTP if this player is that assigned player and restores the session if so.
+    private func tryReconnectViaHTTP(node: DiscoveredNode) async {
+        guard let playerId = appState.playerId,
+              let httpBase = node.nodeHTTPBaseURL,
+              let nodeBaseURL = node.nodeBaseURL,
+              let url = URL(string: "\(httpBase)/api/players/reconnect") else {
+            errorMessage = "Cannot connect to node"
+            return
+        }
+        
+        print("[IdleScreenViewModel] Attempting HTTP reconnect: playerId=\(playerId) url=\(url)")
+        
+        let body: [String: Any] = [
+            "player_id": playerId,
+            "name": getDeviceName(),
+            "platform": getPlatformName(),
+        ]
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try? JSONSerialization.data(withJSONObject: body)
+        
+        do {
+            let (data, response) = try await URLSession.shared.data(for: request)
+            guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
+                errorMessage = "Cannot connect to node"
+                return
+            }
+            guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+                errorMessage = "Cannot connect to node"
+                return
+            }
+            
+            let status = json["status"] as? String
+            if status == "reconnected",
+               let sessionCode = json["session_code"] as? String,
+               let sessionToken = json["session_token"] as? String {
+                print("[IdleScreenViewModel] ✓ Reconnected to session \(sessionCode) via HTTP")
+                appState.transitionToMainScreen(
+                    sessionCode: sessionCode,
+                    sessionToken: sessionToken,
+                    nodeBaseUrl: nodeBaseURL
+                )
+            } else {
+                // Node is locked to another player — just wait
+                print("[IdleScreenViewModel] Node is locked to another player, waiting...")
+                errorMessage = "Node is busy with another session"
+            }
+        } catch {
+            print("[IdleScreenViewModel] ✗ HTTP reconnect failed: \(error)")
+            errorMessage = "Cannot reach node: \(error.localizedDescription)"
+        }
+    }
+    
+    private func getDeviceName() -> String {
+        #if os(macOS)
+        return (try? Host.current().localizedName) ?? "Mac Player"
+        #elseif os(iOS) || os(tvOS)
+        return UIDevice.current.name
+        #else
+        return "Singalong Player"
+        #endif
+    }
+    
+    private func getPlatformName() -> String {
+        #if os(macOS)
+        return "macos"
+        #elseif os(iOS)
+        return UIDevice.current.userInterfaceIdiom == .pad ? "ipados" : "ios"
+        #elseif os(tvOS)
+        return "tvos"
+        #else
+        return "unknown"
+        #endif
     }
     
     deinit {

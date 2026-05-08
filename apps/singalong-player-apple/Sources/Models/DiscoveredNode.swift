@@ -18,6 +18,14 @@ struct DiscoveredNode: Identifiable, Hashable {
         return "ws://\(target):\(port)"
     }
     
+    /// Resolved base URL (http://host:port) used for HTTP REST endpoints
+    var nodeHTTPBaseURL: String? {
+        let hostWithoutDot = host.hasSuffix(".") ? String(host.dropLast()) : host
+        let target = !hostWithoutDot.isEmpty ? hostWithoutDot : ipAddress
+        guard let target = target, !target.isEmpty else { return nil }
+        return "http://\(target):\(port)"
+    }
+    
     /// Full WebSocket URL for discovery endpoint
     var discoveryWSURL: URL? {
         guard let base = nodeBaseURL else {

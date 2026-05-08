@@ -1290,11 +1290,18 @@ async def select_player(
         # Send lock message to player over WebSocket
         if player.ws_connection:
             try:
-                import json
+                from app.middleware.auth import get_auth_service
+                auth_service = get_auth_service()
+                playback_token = auth_service._generate_token(
+                    user_id=str(request.player_id),
+                    role="player",
+                    token_type="access",
+                    expires_in_seconds=3600,
+                )
                 lock_message = {
                     "type": "lock",
                     "session_code": session_code,
-                    "token": "placeholder-token",  # TODO: Generate real token
+                    "token": playback_token,
                 }
                 await player.ws_connection.send_json(lock_message)
                 logger.info(

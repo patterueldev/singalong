@@ -538,6 +538,7 @@ class PlayerReconnectResponse(BaseModel):
     """Player reconnection response"""
     status: str = Field(..., description="reconnected|not_assigned|not_found")
     session_code: Optional[str] = Field(None, description="Session code if still assigned")
+    session_token: Optional[str] = Field(None, description="JWT token to authenticate session WS")
     message: str = Field(..., description="Human-readable message")
 
 
@@ -583,35 +584,35 @@ async def reconnect_player(
     ```
     """
     try:
-        from app.services.player_discovery_manager import PlayerDiscoveryManager
         from app.models.db_models import Session
-        from app.api.dependencies import get_db
-        from fastapi import Depends
-        
-        # Get database session
-        db = next(get_db())
-        
-        # Re-register player in discovery manager (reuses player_id if exists)
-        discovery_manager = PlayerDiscoveryManager.get_instance()
-        player = await discovery_manager.register_player(
-            name=request.name,
-            platform=request.platform,
-            websocket=None,  # No WebSocket yet (REST endpoint)
-            player_id=request.player_id
-        )
+        from app.database import get_db
+        from app.middleware.auth import get_auth_service
         
         logger.info(
             f"[Discovery] reconnect_attempt | player_id={request.player_id[:8]}...{request.player_id[-4:]} | "
             f"name={request.name} | platform={request.platform}"
         )
         
-        # Check if player is still assigned to a session
-        session = db.query(Session).filter(
-            Session.player_id == request.player_id,
-            Session.status == "active"
-        ).first()
+        # Query DB to check if player is still assigned to an active session
+        # Do NOT call register_player here — it would overwrite the locked state in memory
+        db = next(get_db())
+        try:
+            session = db.query(Session).filter(
+                Session.player_id == request.player_id,
+                Session.status == "active"
+            ).first()
+        finally:
+            db.close()
         
         if session:
+            # Generate a fresh JWT so player can auth on the session WS
+            auth_service = get_auth_service()
+            session_token = auth_service._generate_token(
+                user_id=str(request.player_id),
+                role="player",
+                token_type="access",
+                expires_in_seconds=3600,
+            )
             logger.info(
                 f"[Discovery] reconnect_success | player_id={request.player_id[:8]}...{request.player_id[-4:]} | "
                 f"session={session.code}"
@@ -619,6 +620,7 @@ async def reconnect_player(
             return PlayerReconnectResponse(
                 status="reconnected",
                 session_code=session.code,
+                session_token=session_token,
                 message=f"Welcome back to session {session.code}"
             )
         else:
@@ -629,6 +631,7 @@ async def reconnect_player(
             return PlayerReconnectResponse(
                 status="not_assigned",
                 session_code=None,
+                session_token=None,
                 message="No active session. Please wait for admin selection."
             )
     
