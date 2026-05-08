@@ -273,6 +273,30 @@ async def websocket_player_discovery_endpoint(websocket: WebSocket):
     Then player closes this discovery connection and opens playback connection
     to /ws/player/session/{code}
     """
+    # Check if discovery is locked (active session has a player assigned)
+    # This check persists across node restarts because it reads from DB
+    from app.api.dependencies import get_db
+    from app.models.db_models import Session as DBSession, SessionStatus
+    db = next(get_db())
+    try:
+        locked_session = db.query(DBSession).filter(
+            DBSession.player_id.isnot(None),
+            DBSession.status == SessionStatus.ACTIVE,
+        ).first()
+    finally:
+        db.close()
+
+    if locked_session:
+        logger.info(
+            f"[Discovery] rejecting_connection | reason=discovery_locked | "
+            f"session={locked_session.code} | player_id={locked_session.player_id}"
+        )
+        await websocket.close(
+            code=status.WS_1008_POLICY_VIOLATION,
+            reason="Discovery locked: node already has an active session player",
+        )
+        return
+
     await websocket.accept()
     
     from app.services.player_discovery_manager import PlayerDiscoveryManager
@@ -438,12 +462,38 @@ async def websocket_player_session_endpoint(session_code: str, websocket: WebSoc
     player_info = discovery_manager.get_session_player(session_code)
     
     if not player_info:
-        logger.warning(
-            f"[Player Playback] No locked player for session | session={session_code}"
-        )
-        await websocket.close(code=status.WS_1008_POLICY_VIOLATION, reason="No player locked")
-        return
-    
+        # Player not in memory — check DB (handles node restart scenario)
+        from app.api.dependencies import get_db
+        from app.models.db_models import Session as DBSession, SessionStatus
+        db = next(get_db())
+        try:
+            db_session = db.query(DBSession).filter(
+                DBSession.code == session_code,
+                DBSession.status == SessionStatus.ACTIVE,
+                DBSession.player_id.isnot(None),
+            ).first()
+        finally:
+            db.close()
+
+        if db_session:
+            logger.info(
+                f"[Player Playback] Restoring player from DB after node restart | "
+                f"session={session_code} | player_id={db_session.player_id}"
+            )
+            player_info = await discovery_manager.register_player(
+                name=db_session.player_name or "Unknown Player",
+                platform=db_session.player_platform or "unknown",
+                websocket=websocket,
+                player_id=db_session.player_id,
+            )
+            discovery_manager.lock_player(db_session.player_id, session_code)
+        else:
+            logger.warning(
+                f"[Player Playback] No locked player for session | session={session_code}"
+            )
+            await websocket.close(code=status.WS_1008_POLICY_VIOLATION, reason="No player locked")
+            return
+
     # Update player connection to this new WS
     player_info.ws_connection = websocket
     
