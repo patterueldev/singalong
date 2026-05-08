@@ -192,13 +192,14 @@ final class MainScreenViewModel: ObservableObject {
     
     private func handleDisconnect() {
         isDisconnected = true
-        clearSessionState()
+        // Close WS proactively; onDisappear will also call disconnectFromSession but it guards on isConnected
+        disconnectFromSession()
     }
     
     private func handleSessionEnded() {
         isDisconnected = true
         errorMessage = "Session ended by admin"
-        clearSessionState()
+        disconnectFromSession()
     }
     
     private func clearSessionState() {
@@ -212,8 +213,11 @@ final class MainScreenViewModel: ObservableObject {
     
     deinit {
         messageStreamTask?.cancel()
+        // Capture manager locally — do NOT capture self in the Task or deinit will retain self past deallocation
+        let manager = sessionManager
+        sessionManager = nil
         Task {
-            try await sessionManager?.disconnect()
+            try? await manager?.disconnect()
         }
     }
 }
