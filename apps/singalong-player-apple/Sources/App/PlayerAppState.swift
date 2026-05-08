@@ -41,12 +41,22 @@ class PlayerAppState: ObservableObject {
         // Restore active session if one was persisted (e.g. after app restart)
         if let code = defaults.string(forKey: Keys.sessionCode),
            let token = defaults.string(forKey: Keys.sessionToken),
-           let nodeUrl = defaults.string(forKey: Keys.nodeBaseUrl) {
+           let nodeUrl = defaults.string(forKey: Keys.nodeBaseUrl),
+           // Validate stored values are not stale/malformed legacy data
+           nodeUrl.hasPrefix("ws://"),
+           token != "placeholder-token",
+           !token.isEmpty {
             self.lockedSessionCode = code
             self.lockedSessionToken = token
             self.lockedNodeBaseUrl = nodeUrl
             self.currentScreen = .main
             print("[PlayerAppState] Restored session from UserDefaults: \(code) @ \(nodeUrl)")
+        } else if defaults.string(forKey: Keys.sessionCode) != nil {
+            // Stale/invalid data — clear it so we start fresh
+            defaults.removeObject(forKey: Keys.sessionCode)
+            defaults.removeObject(forKey: Keys.sessionToken)
+            defaults.removeObject(forKey: Keys.nodeBaseUrl)
+            print("[PlayerAppState] Cleared stale session data from UserDefaults")
         }
     }
     
