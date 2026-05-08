@@ -275,7 +275,7 @@ async def websocket_player_discovery_endpoint(websocket: WebSocket):
     """
     # Check if discovery is locked (active session has a player assigned)
     # This check persists across node restarts because it reads from DB
-    from app.api.dependencies import get_db
+    from app.database import get_db
     from app.models.db_models import Session as DBSession, SessionStatus
     db = next(get_db())
     try:
@@ -463,7 +463,7 @@ async def websocket_player_session_endpoint(session_code: str, websocket: WebSoc
     
     if not player_info:
         # Player not in memory — check DB (handles node restart scenario)
-        from app.api.dependencies import get_db
+        from app.database import get_db
         from app.models.db_models import Session as DBSession, SessionStatus
         db = next(get_db())
         try:
