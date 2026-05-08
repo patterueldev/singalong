@@ -173,6 +173,10 @@ class PlayerDiscoveryManager:
         )
         return player
     
+    def is_discovery_locked(self) -> bool:
+        """Returns True if any player is currently locked to a session (discovery should be blocked)"""
+        return any(p.status == "locked" for p in self.players.values())
+
     def get_player(self, player_id: str) -> Optional[PlayerInfo]:
         """Get player info by ID"""
         return self.players.get(player_id)

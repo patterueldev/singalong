@@ -68,30 +68,36 @@ async def lifespan(app: FastAPI):
     print("✓ Player discovery manager initialized")
     
     # Restore player assignments from DB on startup
-    # Players who were assigned at shutdown will be marked as "offline_but_assigned"
-    from app.models.db_models import Session
+    # Players who were assigned at shutdown will be restored as locked (offline, waiting to reconnect)
+    from app.models.db_models import Session, SessionStatus
+    node_logger = logging.getLogger(__name__)
     db_session = SessionLocal()
     try:
         assigned_sessions = db_session.query(Session).filter(
             Session.player_id.isnot(None),
-            Session.status == "active"
+            Session.status == SessionStatus.ACTIVE,
         ).all()
         
         if assigned_sessions:
-            node_logger = logging.getLogger(__name__)
             node_logger.info(
                 f"[Startup] restoring_player_assignments | count={len(assigned_sessions)}"
             )
             for session in assigned_sessions:
-                # Create placeholder PlayerInfo for restored assignment
-                # Player will reconnect later via WebSocket or HTTP reconnect endpoint
+                # Restore locked PlayerInfo in memory (no WS yet — player will reconnect)
+                await discovery_manager.register_player(
+                    name=session.player_name or "Unknown Player",
+                    platform=session.player_platform or "unknown",
+                    websocket=None,
+                    player_id=session.player_id,
+                )
+                discovery_manager.lock_player(session.player_id, session.code)
                 node_logger.info(
                     f"[Startup] restore_assignment | session={session.code} | "
                     f"player_id={session.player_id[:8]}...{session.player_id[-4:]} | "
-                    f"name={session.player_name} | status=offline_but_assigned"
+                    f"name={session.player_name} | status=locked_offline"
                 )
-                # Note: Don't create PlayerInfo objects here—just log
-                # Player will register via WebSocket when it connects
+        else:
+            node_logger.info("[Startup] no_player_assignments_to_restore")
     finally:
         db_session.close()
     
