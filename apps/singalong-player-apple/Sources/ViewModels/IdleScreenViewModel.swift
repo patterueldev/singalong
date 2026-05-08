@@ -75,6 +75,9 @@ final class IdleScreenViewModel: ObservableObject {
         guard !isDiscovering else { return }
         isDiscovering = true
         errorMessage = nil
+        // Reset state so nodes discovered in a previous session don't block auto-connect
+        discoveredNodes = []
+        activeConnections = [:]
         
         Task {
             do {
