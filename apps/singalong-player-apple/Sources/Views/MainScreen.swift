@@ -8,8 +8,12 @@ struct MainScreen: View {
     @StateObject private var viewModel: MainScreenViewModel
     @EnvironmentObject var appState: PlayerAppState
     
-    init(viewModel: MainScreenViewModel) {
-        _viewModel = StateObject(wrappedValue: viewModel)
+    init(sessionCode: String, sessionToken: String, nodeBaseUrl: String) {
+        _viewModel = StateObject(wrappedValue: MainScreenViewModel(
+            sessionCode: sessionCode,
+            sessionToken: sessionToken,
+            nodeBaseUrl: nodeBaseUrl
+        ))
     }
     
     var body: some View {
@@ -170,10 +174,6 @@ struct MainScreen: View {
 }
 
 #Preview {
-    let viewModel = MainScreenViewModel(
-        sessionCode: "1234",
-        sessionToken: "token"
-    )
-    return MainScreen(viewModel: viewModel)
+    MainScreen(sessionCode: "1234", sessionToken: "token", nodeBaseUrl: "ws://localhost:8080")
         .environmentObject(PlayerAppState())
 }

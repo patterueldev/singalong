@@ -8,6 +8,7 @@ final class MainScreenViewModel: ObservableObject {
     
     @Published private(set) var sessionCode: String?
     @Published private(set) var sessionToken: String?
+    @Published private(set) var nodeBaseUrl: String?
     @Published private(set) var queueItems: [QueueItem] = []
     @Published private(set) var isConnected = false
     @Published private(set) var isDisconnected = false
@@ -22,28 +23,32 @@ final class MainScreenViewModel: ObservableObject {
     
     // MARK: - Initialization
     
-    init(sessionCode: String, sessionToken: String) {
+    init(sessionCode: String, sessionToken: String, nodeBaseUrl: String) {
         self.sessionCode = sessionCode
         self.sessionToken = sessionToken
-        print("[MainScreenViewModel] Init with session \(sessionCode)")
+        self.nodeBaseUrl = nodeBaseUrl
+        print("[MainScreenViewModel] Init with session \(sessionCode) @ \(nodeBaseUrl)")
     }
     
     // MARK: - Connection Methods
     
     func connectToSession() {
-        guard !isConnected, let code = sessionCode, let token = sessionToken else {
+        guard !isConnected,
+              let code = sessionCode,
+              let token = sessionToken,
+              let nodeUrl = nodeBaseUrl else {
             print("[MainScreenViewModel] Cannot connect: already connected or missing credentials")
             return
         }
         
-        print("[MainScreenViewModel] Connecting to session \(code)")
+        print("[MainScreenViewModel] Connecting to session \(code) @ \(nodeUrl)")
         
         sessionManager = WebSocketPlayerSessionManager()
         setupMessageHandlers()
         
         Task {
             do {
-                try await sessionManager?.connect(to: code, token: token)
+                try await sessionManager?.connect(to: code, token: token, nodeBaseUrl: nodeUrl)
                 self.isConnected = true
                 print("[MainScreenViewModel] ✓ Connected to session")
                 

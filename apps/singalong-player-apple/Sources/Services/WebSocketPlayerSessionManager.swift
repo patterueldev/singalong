@@ -11,6 +11,7 @@ class WebSocketPlayerSessionManager {
     
     private var sessionCode: String?
     private var token: String?
+    private var nodeBaseUrl: String?
     private var isConnected = false
     private var retryCount = 0
     private let maxRetries = 5
@@ -32,13 +33,14 @@ class WebSocketPlayerSessionManager {
     // MARK: - Public Methods
     
     /// Connect to player session WebSocket
-    func connect(to sessionCode: String, token: String) async throws {
+    func connect(to sessionCode: String, token: String, nodeBaseUrl: String) async throws {
         self.sessionCode = sessionCode
         self.token = token
+        self.nodeBaseUrl = nodeBaseUrl
         
-        print("[PlayerSession] Connecting to session \(sessionCode)")
+        print("[PlayerSession] Connecting to session \(sessionCode) at \(nodeBaseUrl)")
         
-        guard let url = URL(string: "ws://localhost:5002/ws/player/session/\(sessionCode)") else {
+        guard let url = URL(string: "\(nodeBaseUrl)/ws/player/session/\(sessionCode)") else {
             throw WebSocketError.invalidURL
         }
         
@@ -210,13 +212,13 @@ class WebSocketPlayerSessionManager {
         
         try? await Task.sleep(nanoseconds: UInt64(backoffSeconds * 1_000_000_000))
         
-        guard let code = sessionCode, let tok = token else {
-            print("[PlayerSession] ✗ Missing session code or token for reconnect")
+        guard let code = sessionCode, let tok = token, let nodeUrl = nodeBaseUrl else {
+            print("[PlayerSession] ✗ Missing session code, token, or node URL for reconnect")
             return
         }
         
         do {
-            try await connect(to: code, token: tok)
+            try await connect(to: code, token: tok, nodeBaseUrl: nodeUrl)
             print("[PlayerSession] ✓ Reconnected successfully")
         } catch {
             print("[PlayerSession] ✗ Reconnect failed: \(error)")

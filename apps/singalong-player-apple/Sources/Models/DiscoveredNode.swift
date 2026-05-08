@@ -10,24 +10,33 @@ struct DiscoveredNode: Identifiable, Hashable {
     var ipAddress: String?
     var discoveredAt: Date
     
-    /// Full WebSocket URL for discovery endpoint
-    var discoveryWSURL: URL? {
-        // Prefer hostname (resolves to IPv4), fall back to IP if needed
-        // mDNS returns hostName with trailing dot, so strip it
+    /// Resolved base URL (ws://host:port) used for WebSocket endpoints
+    var nodeBaseURL: String? {
         let hostWithoutDot = host.hasSuffix(".") ? String(host.dropLast()) : host
         let target = !hostWithoutDot.isEmpty ? hostWithoutDot : ipAddress
-        guard let target = target, !target.isEmpty else { 
+        guard let target = target, !target.isEmpty else { return nil }
+        return "ws://\(target):\(port)"
+    }
+    
+    /// Full WebSocket URL for discovery endpoint
+    var discoveryWSURL: URL? {
+        guard let base = nodeBaseURL else {
             print("[DiscoveredNode] No valid target: host='\(host)' ipAddress='\(ipAddress ?? "nil")'")
-            return nil 
+            return nil
         }
-        
-        let urlString = "ws://\(target):\(port)/ws/player/discovery"
+        let urlString = "\(base)/ws/player/discovery"
         print("[DiscoveredNode] Generated URL: \(urlString)")
         let url = URL(string: urlString)
         if url == nil {
             print("[DiscoveredNode] ✗ Failed to create URL from: \(urlString)")
         }
         return url
+    }
+    
+    /// Full WebSocket URL for the player session endpoint
+    func sessionWSURL(sessionCode: String) -> URL? {
+        guard let base = nodeBaseURL else { return nil }
+        return URL(string: "\(base)/ws/player/session/\(sessionCode)")
     }
     
     func hash(into hasher: inout Hasher) {

@@ -12,7 +12,9 @@ class DiscoveryCoordinator {
     var onNodeDiscovered: ((DiscoveredNode) -> Void)?
     var onNodeSelected: (() -> Void)?
     var onConnectionStatusChanged: ((String, NodeConnectionStatus) -> Void)?
-    var onPlayerLocked: ((String, String) -> Void)?  // (sessionCode, token)
+    var onPlayerLocked: ((String, String, String) -> Void)?  // (sessionCode, token, nodeBaseUrl)
+    
+    private var nodeBaseUrls: [String: String] = [:]
     
     // MARK: - Initialization
     
@@ -36,8 +38,8 @@ class DiscoveryCoordinator {
                 
                 if case .lock(let sessionCode, let token) = message {
                     print("[DiscoveryCoordinator] Player locked to session: \(sessionCode)")
-                    // Notify that player has been locked
-                    self?.onPlayerLocked?(sessionCode, token)
+                    let nodeUrl = self?.nodeBaseUrls[nodeId] ?? ""
+                    self?.onPlayerLocked?(sessionCode, token, nodeUrl)
                 }
             })
         }
@@ -65,8 +67,13 @@ class DiscoveryCoordinator {
         print("[DiscoveryCoordinator]   Node IP: \(node.ipAddress ?? "nil")")
         print("[DiscoveryCoordinator]   Node Port: \(node.port)")
         
+        // Store base URL so we can pass it through the lock callback later
+        if let base = node.nodeBaseURL {
+            nodeBaseUrls[node.id] = base
+            print("[DiscoveryCoordinator]   Node Base URL: \(base)")
+        }
+        
         print("[DiscoveryCoordinator] About to call webSocketManager.connect(to:)...")
-        // Connect to the selected node via WebSocket
         try await webSocketManager.connect(to: node)
         print("[DiscoveryCoordinator] ✓ webSocketManager.connect() completed")
     }

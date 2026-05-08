@@ -43,18 +43,13 @@ final class IdleScreenViewModel: ObservableObject {
         }
         
         print("[IdleScreenViewModel] Setting up onPlayerLocked callback...")
-        discoveryCoordinator.onPlayerLocked = { [weak self] sessionCode, token in
-            print("[IdleScreenViewModel] 🔔 PLAYER LOCKED CALLBACK: sessionCode=\(sessionCode)")
+        discoveryCoordinator.onPlayerLocked = { [weak self] sessionCode, token, nodeBaseUrl in
+            print("[IdleScreenViewModel] 🔔 PLAYER LOCKED CALLBACK: sessionCode=\(sessionCode) nodeUrl=\(nodeBaseUrl)")
             guard let self = self else {
                 print("[IdleScreenViewModel] ⚠️ Self was deallocated, callback not executed")
                 return
             }
             
-            // Store session info for playback phase
-            print("[IdleScreenViewModel] Storing session code and token for playback phase")
-            
-            // Find the connected node ID to send acknowledgment
-            // For now, find the first (and should be only) connected node
             if let connectedNodeId = self.activeConnections.first(where: { $0.value == .waiting })?.key {
                 print("[IdleScreenViewModel] Sending acknowledgment for node: \(connectedNodeId)")
                 Task {
@@ -65,13 +60,11 @@ final class IdleScreenViewModel: ObservableObject {
                 }
             }
             
-            // Transition to locked phase
             self.currentPhase = .locked
             print("[IdleScreenViewModel] ✓ Player locked to session: \(sessionCode)")
             
-            // Transition app state to show main screen
             print("[IdleScreenViewModel] Transitioning to main screen for session: \(sessionCode)")
-            self.appState.transitionToMainScreen(sessionCode: sessionCode, sessionToken: token)
+            self.appState.transitionToMainScreen(sessionCode: sessionCode, sessionToken: token, nodeBaseUrl: nodeBaseUrl)
             print("[IdleScreenViewModel] ✓ App transitioned to main screen")
         }
         
